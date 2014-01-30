@@ -92,7 +92,7 @@
     <Folder Include="ECore\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\LUDN2\LUDN2.Android.csproj">
+    <ProjectReference Include="..\LUDN2\LUDN2.Android.csproj">
       <Project>{10AF3B15-8F92-411C-82C3-EB0D8831E972}</Project>
       <Name>LUDN2.Android</Name>
     </ProjectReference>

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECore.Android", "ECore.Android.csproj", "{3BA275CC-3EEC-47C1-BBFD-000CDEB66D07}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LUDN2.Android", "..\..\LUDN2\LUDN2.Android.csproj", "{10AF3B15-8F92-411C-82C3-EB0D8831E972}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LUDN2.Android", "..\LUDN2\LUDN2.Android.csproj", "{10AF3B15-8F92-411C-82C3-EB0D8831E972}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
