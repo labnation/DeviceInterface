@@ -1,0 +1,3 @@
+[submodule "MatlabFileIO"]
+	path = MatlabFileIO
+	url = ../MatlabFileIO/

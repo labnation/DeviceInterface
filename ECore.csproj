@@ -119,6 +119,12 @@
   <ItemGroup>
     <Content Include="ToDo.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="MatlabFileIO\MatlabFileIO.csproj">
+      <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
+      <Name>MatlabFileIO</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
