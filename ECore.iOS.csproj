@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F09EF291-65DB-4412-8C6E-D6869DAD5343}</ProjectGuid>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ECore.iOS</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>ECore.iOS</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG; IPHONE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <DefineConstants>IPHONE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="monotouch" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <Folder Include="DeviceMemories\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Compile Include="EDataPackage.cs" />
+    <Compile Include="EDevice.cs" />
+    <Compile Include="EDeviceParameters.cs" />
+    <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
+    <Compile Include="DeviceImplementations\Scop3v1.cs" />
+    <Compile Include="DeviceMemories\EDeviceMemory.cs" />
+    <Compile Include="DeviceMemories\MAX19506Memory.cs" />
+    <Compile Include="DeviceMemories\Scop3FpgaRegisterMemory.cs" />
+    <Compile Include="DeviceMemories\Scop3FpgaRomMemory.cs" />
+    <Compile Include="DeviceMemories\Scop3StrobeMemory.cs" />
+    <Compile Include="EDataNodes\EDataNode.cs" />
+    <Compile Include="EDataNodes\EDataNodeFromDevice.cs" />
+    <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
+    <Compile Include="EFuctionalities\EFCalibrationVoltage.cs" />
+    <Compile Include="EFuctionalities\EFDivisionFactor.cs" />
+    <Compile Include="EFuctionalities\EFMultiplicationFactor.cs" />
+    <Compile Include="EFuctionalities\EFOffset.cs" />
+    <Compile Include="EFuctionalities\EFSamplingFrequency.cs" />
+    <Compile Include="EFuctionalities\EFunctionality.cs" />
+    <Compile Include="EInterfaces\ICalibrationVoltage.cs" />
+    <Compile Include="EInterfaces\IScopeChannel.cs" />
+    <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
+    <Compile Include="MemoryRegisters\BoolRegister.cs" />
+    <Compile Include="MemoryRegisters\ByteRegister.cs" />
+    <Compile Include="MemoryRegisters\EDeviceMemoryRegister.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="DeviceMemories\Scop3PICRegisterMemory.cs" />
+    <Compile Include="DeviceImplementations\Scop3v2.cs" />
+    <Compile Include="EFuctionalities\EFTriggerPosition.cs" />
+    <Compile Include="EInterfaces\ITriggerPosition.cs" />
+    <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
+    <Compile Include="EDataNodes\EDataNodeFromEmbeddedResource.cs" />
+    <Compile Include="DeviceImplementations\Scop3v2_ROM.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LUDN2\LUDN2.csproj">
+      <Project>{558E1773-40C4-47C9-8D72-4B81E0C99878}</Project>
+      <Name>LUDN2</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

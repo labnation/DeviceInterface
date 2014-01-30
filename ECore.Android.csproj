@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{3BA275CC-3EEC-47C1-BBFD-000CDEB66D07}</ProjectGuid>
+    <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ECore.Android</RootNamespace>
+    <AndroidResgenFile>Resources\Resource.designer.cs</AndroidResgenFile>
+    <AndroidResgenClass>Resource</AndroidResgenClass>
+    <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
+    <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
+    <AndroidUseLatestPlatformSdk>True</AndroidUseLatestPlatformSdk>
+    <AssemblyName>ECore.Android</AssemblyName>
+    <TargetFrameworkVersion>v4.0.3</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;__MOBILE__;ANDROID;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <AndroidLinkMode>None</AndroidLinkMode>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <DefineConstants>__MOBILE__;__ANDROID__;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="Mono.Android" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="EDevice.cs" />
+    <Compile Include="EDataPackage.cs" />
+    <Compile Include="EDeviceParameters.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
+    <Compile Include="DeviceImplementations\Scop3v1.cs" />
+    <Compile Include="DeviceImplementations\Scop3v2.cs" />
+    <Compile Include="DeviceMemories\EDeviceMemory.cs" />
+    <Compile Include="DeviceMemories\MAX19506Memory.cs" />
+    <Compile Include="DeviceMemories\Scop3FpgaRegisterMemory.cs" />
+    <Compile Include="DeviceMemories\Scop3FpgaRomMemory.cs" />
+    <Compile Include="DeviceMemories\Scop3PICRegisterMemory.cs" />
+    <Compile Include="DeviceMemories\Scop3StrobeMemory.cs" />
+    <Compile Include="EDataNodes\EDataNode.cs" />
+    <Compile Include="EDataNodes\EDataNodeFromDevice.cs" />
+    <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
+    <Compile Include="EFuctionalities\EFCalibrationVoltage.cs" />
+    <Compile Include="EFuctionalities\EFDivisionFactor.cs" />
+    <Compile Include="EFuctionalities\EFMultiplicationFactor.cs" />
+    <Compile Include="EFuctionalities\EFOffset.cs" />
+    <Compile Include="EFuctionalities\EFSamplingFrequency.cs" />
+    <Compile Include="EFuctionalities\EFTriggerPosition.cs" />
+    <Compile Include="EFuctionalities\EFunctionality.cs" />
+    <Compile Include="EInterfaces\ICalibrationVoltage.cs" />
+    <Compile Include="EInterfaces\IScopeChannel.cs" />
+    <Compile Include="EInterfaces\ITriggerPosition.cs" />
+    <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
+    <Compile Include="MemoryRegisters\BoolRegister.cs" />
+    <Compile Include="MemoryRegisters\ByteRegister.cs" />
+    <Compile Include="MemoryRegisters\EDeviceMemoryRegister.cs" />
+    <Compile Include="HardwareInterfaces\HWInterfacePIC_Xamarin.cs" />
+    <Compile Include="EDataNodes\EDataNodeFromEmbeddedResource.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AboutResources.txt" />
+    <None Include="HardwareInterfaces\LibUsbDotNet.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values\Strings.xml" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="ECore\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LUDN2\LUDN2.Android.csproj">
+      <Project>{10AF3B15-8F92-411C-82C3-EB0D8831E972}</Project>
+      <Name>LUDN2.Android</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
