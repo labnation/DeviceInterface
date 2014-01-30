@@ -120,7 +120,7 @@
     <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="MatlabFileIO\MatlabFileIO.csproj">
+    <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
       <Name>MatlabFileIO</Name>
     </ProjectReference>

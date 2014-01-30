@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECore", "ECore.csproj", "{85EC5920-5B60-4E6F-83C2-7A44367C8DFB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatlabFileIO", "MatlabFileIO\MatlabFileIO.csproj", "{28E13C37-54E1-4219-A3E0-EE30247F65FC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatlabFileIO", "..\MatlabFileIO\MatlabFileIO.csproj", "{28E13C37-54E1-4219-A3E0-EE30247F65FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
