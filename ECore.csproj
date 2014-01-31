@@ -122,7 +122,7 @@
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
       <Name>MatlabFileIO</Name>
     </ProjectReference>
-    <ProjectReference Include="..\LibWinUsb\LibUsbDotNet.csproj">
+    <ProjectReference Include="..\LibUsbDotNet\LibUsbDotNet.csproj">
       <Project>{0A78F6FF-5586-4052-8104-E23FF83A7CE1}</Project>
       <Name>LibUsbDotNet</Name>
     </ProjectReference>
