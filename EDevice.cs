@@ -121,7 +121,7 @@ namespace ECore
             hardwareInterface.StopInterface();
 
             //add entry to log
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped");
+            Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped now");
         }
 
         public EDeviceHWInterface HWInterface { get { return this.hardwareInterface; } }
