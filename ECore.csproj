@@ -80,6 +80,11 @@
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="DeviceImplementations\Scop3v2.cs" />
     <Compile Include="DeviceImplementations\Scop3v2_ROM.cs" />
+    <Compile Include="DeviceMemories\Scop3Constants1.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Scop3Constants.tt</DependentUpon>
+    </Compile>
     <Compile Include="DeviceMemories\Scop3PICRegisterMemory.cs" />
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
     <Compile Include="DeviceMemories\Scop3FpgaRomMemory.cs" />
@@ -115,6 +120,10 @@
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DeviceMemories\Scop3Constants.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Scop3Constants1.cs</LastGenOutput>
+    </None>
     <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -127,7 +136,14 @@
       <Name>LibUsbDotNet</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

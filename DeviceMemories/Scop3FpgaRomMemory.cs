@@ -10,28 +10,15 @@ namespace ECore.DeviceMemories
     public class Scop3FpgaRomMemory: EDeviceMemory
     {       
         //this method defines which type of registers are stored in the memory
-        public Scop3FpgaRomMemory(EDevice eDevice, Dictionary<string, int> registerNames)
+        public Scop3FpgaRomMemory(EDevice eDevice)
         {
             this.eDevice = eDevice;
-            this.registerIndices = registerNames;
                         
-            //look up how many registers are required
-            int largestIndex = 0;
-            foreach (KeyValuePair<string, int> kvp in registerNames)
-                if (kvp.Value > largestIndex) 
-                    largestIndex = kvp.Value;
-
             //instantiate registerList
             registers = new List<EDeviceMemoryRegister>();
-            for (int i = 0; i < largestIndex+1; i++)
+            foreach (ROM reg in Enum.GetValues(typeof(ROM)))
             {
-                //find name of this register
-                string regName = "<none>";
-                foreach (KeyValuePair<string, int> kvp in registerNames)
-                    if (kvp.Value == i)
-                        regName = kvp.Key;
-
-                registers.Add(new MemoryRegisters.ByteRegister(regName, this));
+                registers.Add(new MemoryRegisters.ByteRegister((int)reg, Enum.GetName(typeof(ROM), reg), this));
             }
 
         }
@@ -78,6 +65,19 @@ namespace ECore.DeviceMemories
         public override void WriteRange(int startAddress, int burstSize)
         {
             throw new NotImplementedException("This is a ROM memory -- no write operations allowed!");
+        }
+
+        public void WriteSingle(ROM r)
+        {
+            this.WriteSingle((int)r);
+        }
+        public void ReadSingle(ROM r)
+        {
+            this.ReadSingle((int)r);
+        }
+        public EDeviceMemoryRegister GetRegister(ROM r)
+        {
+            return Registers[(int)r];
         }
     }
 }

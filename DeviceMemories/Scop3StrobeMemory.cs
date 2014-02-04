@@ -9,32 +9,18 @@ namespace ECore.DeviceMemories
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class Scop3StrobeMemory: EDeviceMemory
     {
-        private EDeviceMemory accessorMemory;
+        private Scop3FpgaRegisterMemory accessorMemory;
 
         //this method defines which type of registers are stored in the memory
-        public Scop3StrobeMemory(EDevice eDevice, Dictionary<string, int> strobeNames, EDeviceMemory accessorMemory)
+        public Scop3StrobeMemory(EDevice eDevice, Scop3FpgaRegisterMemory accessorMemory)
         {
             this.eDevice = eDevice;
-            this.registerIndices = strobeNames;
             this.accessorMemory = accessorMemory;
                         
-            //look up how many registers are required
-            int largestIndex = 0;
-            foreach (KeyValuePair<string, int> kvp in strobeNames)
-                if (kvp.Value > largestIndex) 
-                    largestIndex = kvp.Value;
-
-            //instantiate registerList
             registers = new List<EDeviceMemoryRegister>();
-            for (int i = 0; i < largestIndex+1; i++)
+            foreach (STR str in Enum.GetValues(typeof(STR)))
             {
-                //find name of this register
-                string regName = "<none>";
-                foreach (KeyValuePair<string, int> kvp in strobeNames)
-                    if (kvp.Value == i)
-                        regName = kvp.Key;
-
-                registers.Add(new MemoryRegisters.BoolRegister(regName, this));
+                registers.Add(new MemoryRegisters.ByteRegister((int)str, Enum.GetName(typeof(STR), str), this));
             }
 
         }
@@ -68,10 +54,10 @@ namespace ECore.DeviceMemories
                 valToSend += strobeValue; //set strobe high or low
 
                 //now put this in the correct FPGA register
-                accessorMemory.RegisterByName("REG_STROBE_UPDATE").InternalValue = (byte)valToSend;
+                accessorMemory.GetRegister(REG.STROBE_UPDATE).InternalValue = (byte)valToSend;
 
                 //and send to FPGA
-                accessorMemory.WriteSingle("REG_STROBE_UPDATE");
+                accessorMemory.WriteSingle(REG.STROBE_UPDATE);
 
                 /*
                 writeBuffer[0] = 123; //preamble
@@ -83,6 +69,19 @@ namespace ECore.DeviceMemories
                 eDevice.HWInterface.WriteControlBytes(writeBuffer);
                  * */
             }            
+        }
+
+        public void WriteSingle(STR r)
+        {
+            this.WriteSingle((int)r);
+        }
+        public void ReadSingle(STR r)
+        {
+            this.ReadSingle((int)r);
+        }
+        public EDeviceMemoryRegister GetRegister(STR r)
+        {
+            return Registers[(int)r];
         }
     }
 }

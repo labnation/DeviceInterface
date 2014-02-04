@@ -21,6 +21,7 @@ namespace ECore
         abstract public byte InternalValue { get; set; }
         abstract public int MaxValue { get; }
         abstract public string Name { get; }
+        abstract public int Address { get; }
 
         public EDeviceMemory ParentMemory { get { return parentMemory; } }
     }

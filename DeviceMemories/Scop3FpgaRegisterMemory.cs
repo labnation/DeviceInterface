@@ -10,28 +10,15 @@ namespace ECore.DeviceMemories
     public class Scop3FpgaRegisterMemory: EDeviceMemory
     {       
         //this method defines which type of registers are stored in the memory
-        public Scop3FpgaRegisterMemory(EDevice eDevice, Dictionary<string, int> registerNames)
+        public Scop3FpgaRegisterMemory(EDevice eDevice)
         {
             this.eDevice = eDevice;
-            this.registerIndices = registerNames;
-                        
-            //look up how many registers are required
-            int largestIndex = 0;
-            foreach (KeyValuePair<string, int> kvp in registerNames)
-                if (kvp.Value > largestIndex) 
-                    largestIndex = kvp.Value;
 
             //instantiate registerList
             registers = new List<EDeviceMemoryRegister>();
-            for (int i = 0; i < largestIndex+1; i++)
+            foreach(REG reg in Enum.GetValues(typeof(REG)))
             {
-                //find name of this register
-                string regName = "<none>";
-                foreach (KeyValuePair<string, int> kvp in registerNames)
-                    if (kvp.Value == i)
-                        regName = kvp.Key;
-
-                registers.Add(new MemoryRegisters.ByteRegister(regName, this));
+                registers.Add(new MemoryRegisters.ByteRegister((int)reg, Enum.GetName(typeof(REG), reg), this));
             }
 
         }
@@ -92,6 +79,18 @@ namespace ECore.DeviceMemories
                 toSend[i++] = this.registers[startAddress + j].InternalValue;
 
             eDevice.HWInterface.WriteControlBytes(toSend);
+        }
+        public void WriteSingle(REG r)
+        {
+            this.WriteSingle((int)r);
+        }
+        public void ReadSingle(REG r)
+        {
+            this.ReadSingle((int)r);
+        }
+        public EDeviceMemoryRegister GetRegister(REG r)
+        {
+            return Registers[(int)r];
         }
     }
 }

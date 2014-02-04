@@ -7,31 +7,23 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
+    public enum PIC
+    {
+        FORCE_STREAMING = 0,
+    }
+
     public class Scop3PICRegisterMemory: EDeviceMemory
     {       
         //this method defines which type of registers are stored in the memory
         public Scop3PICRegisterMemory(EDevice eDevice, Dictionary<string, int> registerNames)
         {
             this.eDevice = eDevice;
-            this.registerIndices = registerNames;
                         
-            //look up how many registers are required
-            int largestIndex = 0;
-            foreach (KeyValuePair<string, int> kvp in registerNames)
-                if (kvp.Value > largestIndex) 
-                    largestIndex = kvp.Value;
-
             //instantiate registerList
             registers = new List<EDeviceMemoryRegister>();
-            for (int i = 0; i < largestIndex+1; i++)
+            foreach (PIC reg in Enum.GetValues(typeof(PIC)))
             {
-                //find name of this register
-                string regName = "<none>";
-                foreach (KeyValuePair<string, int> kvp in registerNames)
-                    if (kvp.Value == i)
-                        regName = kvp.Key;
-
-                registers.Add(new MemoryRegisters.ByteRegister(regName, this));
+                registers.Add(new MemoryRegisters.ByteRegister((int) reg, Enum.GetName(typeof(PIC), reg), this));
             }
 
         }
@@ -76,6 +68,18 @@ namespace ECore.DeviceMemories
                 toSend[i++] = this.registers[startAddress + j].InternalValue;
 
             eDevice.HWInterface.WriteControlBytes(toSend);
+        }
+        public void WriteSingle(PIC r)
+        {
+            this.WriteSingle((int)r);
+        }
+        public void ReadSingle(PIC r)
+        {
+            this.ReadSingle((int)r);
+        }
+        public EDeviceMemoryRegister GetRegister(PIC r)
+        {
+            return Registers[(int)r];
         }
 
     }

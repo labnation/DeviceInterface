@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.EFuctionalities;
+using ECore.DeviceMemories;
 
 namespace ECore.DeviceImplementations
 {
@@ -41,18 +42,15 @@ namespace ECore.DeviceImplementations
             memories = new List<EDeviceMemory>();
             
             //add FPGA register memory
-            Dictionary<string, int> fpgaRegisters = Utils.VhdlReader(LoadMultilineVHDL(), "REG");
-            fpgaMemory = new DeviceMemories.Scop3FpgaRegisterMemory(eDevice, fpgaRegisters);
+            fpgaMemory = new DeviceMemories.Scop3FpgaRegisterMemory(eDevice);
             memories.Add(fpgaMemory);
 
             //add FPGA rom memory     
-            Dictionary<string, int> fpgaRoms = Utils.VhdlReader(LoadMultilineVHDL(), "ROM");
-            romMemory = new DeviceMemories.Scop3FpgaRomMemory(eDevice, fpgaRoms);
+            romMemory = new DeviceMemories.Scop3FpgaRomMemory(eDevice);
             memories.Add(romMemory);
 
             //add strobe memory
-            Dictionary<string, int> fpgaStrobes = Utils.VhdlReader(LoadMultilineVHDL(), "STR");
-            strobeMemory = new DeviceMemories.Scop3StrobeMemory(eDevice, fpgaStrobes, fpgaMemory);
+            strobeMemory = new DeviceMemories.Scop3StrobeMemory(eDevice, fpgaMemory);
             memories.Add(strobeMemory);
 
             //add ADC memory
@@ -124,32 +122,32 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
         override public void StartDevice()
         {
             //set feedback loopand to 1V for demo purpose and enable
-            strobeMemory.RegisterByName("STR_CHB_DIV1").InternalValue = 1;
-            strobeMemory.WriteSingle("STR_CHB_DIV1");
+            strobeMemory.GetRegister(STR.CHB_DIV1).InternalValue = 1;
+            strobeMemory.WriteSingle(STR.CHB_DIV1);
 
-            strobeMemory.RegisterByName("STR_CHB_MULT1").InternalValue = 1;
-            strobeMemory.WriteSingle("STR_CHB_MULT1");
+            strobeMemory.GetRegister(STR.CHB_MULT1).InternalValue = 1;
+            strobeMemory.WriteSingle(STR.CHB_MULT1);
 
-            fpgaMemory.RegisterByName("REG_CALIB_VOLTAGE").InternalValue = 78;
-            fpgaMemory.WriteSingle("REG_CALIB_VOLTAGE");
+            fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
+            fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
 
             //set ADC output resistance to 300ohm instead of 50ohm
-            adcMemory.RegisterByName("MAX_CHA_TERMINATION").InternalValue = 4;
-            adcMemory.WriteSingle("MAX_CHA_TERMINATION");
-            adcMemory.RegisterByName("MAX_CHB_TERMINATION").InternalValue = 4;
-            adcMemory.WriteSingle("MAX_CHB_TERMINATION");
+            adcMemory.GetRegister(MAX19506.CHA_TERMINATION).InternalValue = 4;
+            adcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
+            adcMemory.GetRegister(MAX19506.CHB_TERMINATION).InternalValue = 4;
+            adcMemory.WriteSingle(MAX19506.CHB_TERMINATION);
 
             //set ADC to offset binary output (required for FPGA triggering)
-            adcMemory.RegisterByName("MAX_FORMAT/PATTERN").InternalValue = 16;
-            adcMemory.WriteSingle("MAX_FORMAT/PATTERN");
+            adcMemory.GetRegister(MAX19506.FORMAT_PATTERN).InternalValue = 16;
+            adcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
 
 			//output counter by default
-			strobeMemory.RegisterByName ("STR_DEBUGCOUNTER_PIC_OUTPUT").InternalValue = 1;
-			strobeMemory.WriteSingle ("STR_DEBUGCOUNTER_PIC_OUTPUT");
+			strobeMemory.GetRegister (STR.DEBUGCOUNTER_PIC_OUTPUT).InternalValue = 1;
+			strobeMemory.WriteSingle (STR.DEBUGCOUNTER_PIC_OUTPUT);
 
             //freerunning as global enable
-            strobeMemory.RegisterByName("STR_FREE_RUNNING").InternalValue = 1;
-            strobeMemory.WriteSingle("STR_FREE_RUNNING");
+            strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue = 1;
+            strobeMemory.WriteSingle(STR.FREE_RUNNING);
         }
 
         override public void StopDevice()
@@ -197,7 +195,7 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
 
             public Scope3v1CalibrationVoltage(Scop3v1 deviceImplementation)
             {
-                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaMemory.RegisterByName("REG_CALIB_VOLTAGE"), 3.3f);
+                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaMemory.GetRegister(REG.CALIB_VOLTAGE), 3.3f);
                 //this.calibrationEnabled = new EFunctionality("Calibration enabled", "", deviceImplementation.strobeMemory, new string[] { "STR_CHB_DIV1" }, F2H_CalibEnabled, H2F_CalibEnabled);
             }
         }
@@ -217,9 +215,9 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
             public Scope3v1ScopeChannelB(Scop3v1 deviceImplementation)
             {
                 EDeviceMemoryRegister[] multiplicationStrobes = new EDeviceMemoryRegister[3];
-                multiplicationStrobes[0] = deviceImplementation.strobeMemory.RegisterByName("STR_CHB_MULT1");
-                multiplicationStrobes[1] = deviceImplementation.strobeMemory.RegisterByName("STR_CHB_MULT2");
-                multiplicationStrobes[2] = deviceImplementation.strobeMemory.RegisterByName("STR_CHB_MULT3");
+                multiplicationStrobes[0] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT1);
+                multiplicationStrobes[1] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT2);
+                multiplicationStrobes[2] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT3);
 
                 int[] multiplyingResistors = new int[3] { 0, 1000, 6200 };
 

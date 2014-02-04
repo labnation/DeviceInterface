@@ -60,7 +60,7 @@ namespace ECore
 
             //now upload all registers to HW!
             for (int i = 0; i < registerList.Count; i++)
-                registerList[i].ParentMemory.WriteSingle(registerList[i].Name);
+                registerList[i].ParentMemory.WriteSingle(registerList[i].Address);
 
             return rangedVal;
         }
@@ -70,7 +70,7 @@ namespace ECore
         {            
             //have the registers read their values from HW into their internal memory
             for (int i = 0; i < registerList.Count; i++)
-                registerList[i].ParentMemory.ReadSingle(registerList[i].Name);
+                registerList[i].ParentMemory.ReadSingle(registerList[i].Address);
 
             return InternalValue; //as this will fetch the internal memories of the registers, which have just been updated
         }

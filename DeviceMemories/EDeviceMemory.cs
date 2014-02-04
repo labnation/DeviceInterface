@@ -11,7 +11,6 @@ namespace ECore
     abstract public class EDeviceMemory
     {
         protected List<EDeviceMemoryRegister> registers;
-        protected Dictionary<string, int> registerIndices;
         protected EDevice eDevice;
 
         abstract public void WriteRange(int startAddress, int burstSize);
@@ -31,23 +30,5 @@ namespace ECore
         public int NumberOfRegisters { get { return registers.Count; } }
         public List<EDeviceMemoryRegister> Registers { get { return registers; } }
 
-        public void WriteSingle(string regName)
-        {
-            WriteSingle(registerIndices[regName]);
-        }
-
-        public void ReadSingle(string regName)
-        {
-            ReadSingle(registerIndices[regName]);
-        }
-
-        public EDeviceMemoryRegister RegisterByName(string regName)
-        {
-            foreach (KeyValuePair<string, int> kvp in registerIndices)
-                if (kvp.Key == regName)
-                    return Registers[kvp.Value];
-
-            return null;
-        }
     }
 }

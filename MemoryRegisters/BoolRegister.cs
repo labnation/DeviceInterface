@@ -8,18 +8,21 @@ namespace ECore.MemoryRegisters
     public class BoolRegister: EDeviceMemoryRegister
     {
         private byte internalValue;
+        private int address;
         private string name;
         //private bool readOnly;
 
-        public BoolRegister(string name, EDeviceMemory parentMemory)
+        public BoolRegister(int address, string name, EDeviceMemory parentMemory)
         {
             //this.readOnly = readOnly;
             this.internalValue = 0;
+            this.address = address;
             this.name = name;
             this.parentMemory = parentMemory;
         }
 
         public override int MaxValue { get { return 1; } }
+        public override int Address { get { return address; } }
         public override string Name { get { return name; } }
         public override event RegisterInternalValueChangedHandler OnInternalValueChanged;
 

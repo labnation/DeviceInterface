@@ -5,60 +5,42 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
+    public enum MAX19506
+    {
+        POWER_MANAGEMENT = 0,
+        OUTPUT_FORMAT = 1,
+        OUTPUT_PWR_MNGMNT = 2,
+        DATA_CLK_TIMING = 3,
+        CHA_TERMINATION = 4,
+        CHB_TERMINATION = 5,
+        FORMAT_PATTERN = 6,
+        COMMON_MODE = 8,
+        SOFT_RESET = 10,
+    }
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class MAX19506Memory: EDeviceMemory
     {
-        private EDeviceMemory fpgaMemory;
-        private EDeviceMemory strobeMemory;
-        private EDeviceMemory romMemory;
+        private Scop3FpgaRegisterMemory fpgaMemory;
+        private Scop3StrobeMemory strobeMemory;
+        private Scop3FpgaRomMemory romMemory;
 
         //this method defines which type of registers are stored in the memory
-        public MAX19506Memory(EDevice eDevice, EDeviceMemory fpgaMemory, EDeviceMemory strobeMemory, EDeviceMemory romMemory)
+        public MAX19506Memory(EDevice eDevice,
+            Scop3FpgaRegisterMemory fpgaMemory, Scop3StrobeMemory strobeMemory, Scop3FpgaRomMemory romMemory)
         {
             this.eDevice = eDevice;
             this.fpgaMemory = fpgaMemory;
             this.strobeMemory = strobeMemory;
             this.romMemory = romMemory;
 
-            //fetch list of register names from predefined list
-            registerIndices = PredefinedStrobeNames();
-                        
             //look up how many registers are required
-            int largestIndex = 0;
-            foreach (KeyValuePair<string, int> kvp in registerIndices)
-                if (kvp.Value > largestIndex) 
-                    largestIndex = kvp.Value;
-
-            //instantiate registerList
             registers = new List<EDeviceMemoryRegister>();
-            for (int i = 0; i < largestIndex+1; i++)
+            foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
             {
-                //find name of this register
-                string regName = "<none>";
-                foreach (KeyValuePair<string, int> kvp in registerIndices)
-                    if (kvp.Value == i)
-                        regName = kvp.Key;
-
-                registers.Add(new MemoryRegisters.ByteRegister(regName, this));
+                registers.Add(new MemoryRegisters.ByteRegister((int)reg, Enum.GetName(typeof(MAX19506), reg), this));
             }
 
-        }
-
-        private Dictionary<string, int> PredefinedStrobeNames()
-        {
-            Dictionary<string, int> strobeNames = new Dictionary<string, int>();
-            strobeNames.Add("MAX_POWER_MANAGEMENT", 0);
-            strobeNames.Add("MAX_OUTPUT_FORMAT", 1);
-            strobeNames.Add("MAX_OUTPUT_PWR_MNGMNT", 2);
-            strobeNames.Add("MAX_DATA/CLK_TIMING", 3);
-            strobeNames.Add("MAX_CHA_TERMINATION", 4);
-            strobeNames.Add("MAX_CHB_TERMINATION", 5);
-            strobeNames.Add("MAX_FORMAT/PATTERN", 6);
-            strobeNames.Add("MAX_COMMON_MODE", 8);
-            strobeNames.Add("MAX_SOFT_RESET", 10);
-
-            return strobeNames;
         }
 
         public override void ReadRange(int startAddress, int burstSize)
@@ -67,18 +49,18 @@ namespace ECore.DeviceMemories
             {
                 //first send correct address to FPGA
                 int address = startAddress + i;
-                fpgaMemory.RegisterByName("REG_SPI_ADDRESS").InternalValue = (byte)(address+128); //for a read, MSB must be 1
-                fpgaMemory.WriteSingle("REG_SPI_ADDRESS");
+                fpgaMemory.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)(address+128); //for a read, MSB must be 1
+                fpgaMemory.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, trigger rising edge to initiate SPI comm
-                strobeMemory.RegisterByName("STR_INIT_SPI_TRANSFER").InternalValue = 0;
-                strobeMemory.WriteSingle("STR_INIT_SPI_TRANSFER");
-                strobeMemory.RegisterByName("STR_INIT_SPI_TRANSFER").InternalValue = 1;
-                strobeMemory.WriteSingle("STR_INIT_SPI_TRANSFER");
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 0;
+                strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 1;
+                strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
 
                 //finally read acquired value
-                romMemory.ReadSingle("ROM_SPI_RECEIVED_VALUE");
-                int acquiredVal = romMemory.RegisterByName("ROM_SPI_RECEIVED_VALUE").InternalValue;
+                romMemory.ReadSingle(ROM.SPI_RECEIVED_VALUE);
+                int acquiredVal = romMemory.GetRegister(ROM.SPI_RECEIVED_VALUE).InternalValue;
                 Registers[address].InternalValue = (byte)acquiredVal;
             }            
             
@@ -90,20 +72,32 @@ namespace ECore.DeviceMemories
             {
                 //first send correct address to FPGA
                 int address = startAddress + i; //for a write, MSB must be 0
-                fpgaMemory.RegisterByName("REG_SPI_ADDRESS").InternalValue = (byte)address;
-                fpgaMemory.WriteSingle("REG_SPI_ADDRESS");
+                fpgaMemory.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)address;
+                fpgaMemory.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, send the write value to FPGA
                 int valToWrite = Registers[address].InternalValue;
-                fpgaMemory.RegisterByName("REG_SPI_WRITE_VALUE").InternalValue = (byte)valToWrite;
-                fpgaMemory.WriteSingle("REG_SPI_WRITE_VALUE");
+                fpgaMemory.GetRegister(REG.SPI_WRITE_VALUE).InternalValue = (byte)valToWrite;
+                fpgaMemory.WriteSingle(REG.SPI_WRITE_VALUE);
 
                 //finally, trigger rising edge
-                strobeMemory.RegisterByName("STR_INIT_SPI_TRANSFER").InternalValue = 0;
-                strobeMemory.WriteSingle("STR_INIT_SPI_TRANSFER");
-                strobeMemory.RegisterByName("STR_INIT_SPI_TRANSFER").InternalValue = 1;
-                strobeMemory.WriteSingle("STR_INIT_SPI_TRANSFER");
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 0;
+                strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 1;
+                strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
             }
+        }
+        public void WriteSingle(MAX19506 r)
+        {
+            this.WriteSingle((int)r);
+        }
+        public void ReadSingle(MAX19506 r)
+        {
+            this.ReadSingle((int)r);
+        }
+        public EDeviceMemoryRegister GetRegister(MAX19506 r)
+        {
+            return Registers[(int)r];
         }
     }
 }
