@@ -80,10 +80,10 @@
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="DeviceImplementations\Scop3v2.cs" />
     <Compile Include="DeviceImplementations\Scop3v2_ROM.cs" />
-    <Compile Include="DeviceMemories\Scop3Constants1.cs">
+    <Compile Include="DeviceMemories\Scop3Constants_GEN.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Scop3Constants.tt</DependentUpon>
+      <DependentUpon>Scop3Constants_GEN.tt</DependentUpon>
     </Compile>
     <Compile Include="DeviceMemories\Scop3PICRegisterMemory.cs" />
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
@@ -120,9 +120,9 @@
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DeviceMemories\Scop3Constants.tt">
+    <None Include="DeviceMemories\Scop3Constants_GEN.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Scop3Constants1.cs</LastGenOutput>
+      <LastGenOutput>Scop3Constants_GEN.cs</LastGenOutput>
     </None>
     <Content Include="ToDo.txt" />
   </ItemGroup>
