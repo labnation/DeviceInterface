@@ -116,67 +116,6 @@ namespace ECore.DeviceImplementations
 
             return functionalities;
         }
-     
-        private string LoadMultilineVHDL()
-        {
-            string multiline = @"
-                //       ||   add VHDL      ||        
-                //       \/                 \/
-                
-constant REG_STROBE_UPDATE	 			: INTEGER := 0;
-constant REG_SPI_ADDRESS	  			: INTEGER := 1;
-constant REG_SPI_WRITE_VALUE	  		: INTEGER := 2;
-constant REG_CALIB_VOLTAGE		  		: INTEGER := 3;
-constant REG_TRIGGERLEVEL		  		: INTEGER := 4;
-constant REG_TRIGGERHOLDOFF_B0	  		: INTEGER := 5;
-constant REG_TRIGGERHOLDOFF_B1	  		: INTEGER := 6;
-constant REG_SAMPLECLOCKDIVIDER_B0 		: INTEGER := 7;
-constant REG_SAMPLECLOCKDIVIDER_B1  		: INTEGER := 8;
-constant REG_CHA_YOFFSET_VOLTAGE  		: INTEGER := 9;
-constant REG_CHB_YOFFSET_VOLTAGE  		: INTEGER := 10;
-constant REG_NEG_DCDC_PWM		  		: INTEGER := 11;
-constant REG_RAM_CONFIGURATION	  		: INTEGER := 12;
-
-constant STR_DEBUGCOUNTER_PIC_OUTPUT  		: INTEGER := 0;
-constant STR_INIT_SPI_TRANSFER  			: INTEGER := 1;
-constant STR_GLOBAL_RESET	  			: INTEGER := 2;
-constant STR_DEBUG_FIFO_A				: INTEGER := 3;
-constant STR_FORCE_TRIGGER				: INTEGER := 4;
-constant STR_FREE_RUNNING				: INTEGER := 5;
-constant STR_CHB_DIV1					: INTEGER := 6;
-constant STR_CHB_DIV10				: INTEGER := 7;
-constant STR_CHB_DIV100				: INTEGER := 8;
-constant STR_CHB_MULT1				: INTEGER := 9;
-constant STR_CHB_MULT2				: INTEGER := 10;
-constant STR_CHB_MULT3				: INTEGER := 11;
-constant STR_CHB_MULT4				: INTEGER := 12;
-constant STR_CHB_ENABLECALIB			: INTEGER := 13;
-constant STR_CHB_DCCOUPLING				: INTEGER := 14;
-constant STR_RESET_DCM				: INTEGER := 15;
-constant STR_CHA_DIV1					: INTEGER := 16;
-constant STR_CHA_DIV10				: INTEGER := 17;
-constant STR_CHA_DIV100				: INTEGER := 18;
-constant STR_CHA_MULT1				: INTEGER := 19;
-constant STR_CHA_MULT2				: INTEGER := 20;
-constant STR_CHA_MULT3				: INTEGER := 21;
-constant STR_CHA_MULT4				: INTEGER := 22;
-constant STR_CHA_ENABLECALIB			: INTEGER := 23;
-constant STR_CHA_DCCOUPLING				: INTEGER := 24;
-constant STR_ENABLE_NEG_DCDC			: INTEGER := 25;
-
-constant ROM_FW_MSB	  				: INTEGER := 0;
-constant ROM_FW_LSB	  				: INTEGER := 1;
-constant ROM_FW_BUILD	  				: INTEGER := 2;
-constant ROM_SPI_RECEIVED_VALUE 			: INTEGER := 3;
-constant ROM_FPGA_STATUS	 			: INTEGER := 4;
-
-
-                //       /\                 /\
-                //       ||    end VHDL     ||
-                //";
-
-            return multiline;
-        }
 
         override public void StartDevice()
         {
