@@ -68,10 +68,8 @@ namespace ECore.DeviceImplementations
         {
             memories = new List<EDeviceMemory>();
 
-            //add PIC register memory
-            Dictionary<string, int> picRegisters = new Dictionary<string, int>();
-            picRegisters.Add("ForceStreaming", 0);
-            picMemory = new DeviceMemories.Scop3PICRegisterMemory(eDevice, picRegisters);
+            //add PIC register memory;
+            picMemory = new DeviceMemories.Scop3PICRegisterMemory(eDevice);
             //memories.Add(picMemory);
             
             //add FPGA register memory

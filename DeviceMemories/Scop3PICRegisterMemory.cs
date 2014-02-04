@@ -15,7 +15,7 @@ namespace ECore.DeviceMemories
     public class Scop3PICRegisterMemory: EDeviceMemory
     {       
         //this method defines which type of registers are stored in the memory
-        public Scop3PICRegisterMemory(EDevice eDevice, Dictionary<string, int> registerNames)
+        public Scop3PICRegisterMemory(EDevice eDevice)
         {
             this.eDevice = eDevice;
                         
