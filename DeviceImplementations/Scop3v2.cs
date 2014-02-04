@@ -538,7 +538,7 @@ constant ROM_FPGA_STATUS	 			: INTEGER := 4;
 //#else
 		public override void FlashHW()
 		{
-			string fileName = "FPGA_FW_v2.bin";
+			string fileName = "topentity.bin";
 
 
 
