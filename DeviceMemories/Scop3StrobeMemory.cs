@@ -38,20 +38,20 @@ namespace ECore.DeviceMemories
             for (int i = 0; i < burstSize; i++)
             {
                 int strobeAddress = startAddress+i;
-                int strobeValue = Registers[strobeAddress].InternalValue;
+                EDeviceMemoryRegister reg = Registers[strobeAddress];
 
                 //range check
-                if (strobeValue<0)
-                    Logger.AddEntry(this, LogMessageType.ECoreError, "Cannot upload " + strobeValue.ToString() + " into strobe " + strobeAddress.ToString());
-                else if(strobeValue>1)
-                    Logger.AddEntry(this, LogMessageType.ECoreError, "Cannot upload "+strobeValue.ToString()+" into strobe " + strobeAddress.ToString());
+                if (reg.InternalValue < 0)
+                    Logger.AddEntry(this, LogMessageType.ECoreError, "Cannot upload " + reg.InternalValue + " into strobe " + reg.Name + "(" + reg.Address + ")");
+                else if(reg.InternalValue > 1)
+                    Logger.AddEntry(this, LogMessageType.ECoreError, "Cannot upload " + reg.InternalValue + " into strobe " + reg.Name + "(" + reg.Address + ")");
                 else
-                    Logger.AddEntry(this, LogMessageType.ECoreInfo, "Request to upload "+strobeValue.ToString()+" into strobe " + strobeAddress.ToString());
+                    Logger.AddEntry(this, LogMessageType.ECoreInfo, "Request to upload "+ reg.InternalValue +" into strobe " +  reg.Name + "(" + reg.Address + ")");
 
                 //prepare data te be sent
                 int valToSend = strobeAddress;
                 valToSend = valToSend << 1;
-                valToSend += strobeValue; //set strobe high or low
+                valToSend += reg.InternalValue; //set strobe high or low
 
                 //now put this in the correct FPGA register
                 accessorMemory.GetRegister(REG.STROBE_UPDATE).InternalValue = (byte)valToSend;
