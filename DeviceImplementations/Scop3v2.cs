@@ -68,25 +68,19 @@ namespace ECore.DeviceImplementations
         {
             memories = new List<EDeviceMemory>();
 
-            //add PIC register memory;
+            //Create memories
             picMemory = new DeviceMemories.Scop3PICRegisterMemory(eDevice);
-            //memories.Add(picMemory);
-            
-            //add FPGA register memory
             fpgaMemory = new DeviceMemories.Scop3FpgaRegisterMemory(eDevice);
-            memories.Add(fpgaMemory);
-
-            //add FPGA rom memory     
             romMemory = new DeviceMemories.Scop3FpgaRomMemory(eDevice);
-            memories.Add(romMemory);
-
-            //add strobe memory
             strobeMemory = new DeviceMemories.Scop3StrobeMemory(eDevice, fpgaMemory);
-            memories.Add(strobeMemory);
-
-            //add ADC memory
             adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaMemory, strobeMemory, romMemory);
+            //Add them in order we'd like them in the GUI
+            
+            memories.Add(romMemory);
+            memories.Add(fpgaMemory);
             memories.Add(adcMemory);
+            memories.Add(strobeMemory);
+            //memories.Add(picMemory);
 
             return memories;
         }
