@@ -682,24 +682,26 @@ namespace ECore.DeviceImplementations
             }*/
 
             //this section converts twos complement to a physical voltage value
+            float yOffFPGA = (float)fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
+            float totalOffset = fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
             for (int i = 0; i < rawData.Length; i++)
             {
-                byte byteVal = (byte)rawData[i];
+                float byteVal = (float)rawData[i];
 
                 bool calibration = false;
                 if (calibration)
                     voltageValues[i] = (float)byteVal;
                 else
                 {
-                    float yOffFPGA = (float)fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
-                    float gainedOffset = yOffFPGA*calibrationCoefficients[1];
-                    float yOffset = gainedOffset + calibrationCoefficients[2];
+
+                    //float gainedOffset = yOffFPGA * calibrationCoefficients[1];
+                    //float yOffset = gainedOffset + calibrationCoefficients[2];
                     float gainedVal = (float)byteVal * calibrationCoefficients[0];
-                    voltageValues[i] = (float)byteVal * calibrationCoefficients[0] + fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
+                    voltageValues[i] = gainedVal + totalOffset;
                 }
             }
 
-			if (true)
+			if (false)
 			{
 	            if (fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue < 10)
 	            {
