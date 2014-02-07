@@ -176,7 +176,7 @@ namespace ECore.DeviceImplementations
             strobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //generate negative voltage
-            fpgaMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 50;
+            fpgaMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 70;
             fpgaMemory.WriteSingle(REG.NEG_DCDC_PWM);
 
             strobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).InternalValue = 1;
