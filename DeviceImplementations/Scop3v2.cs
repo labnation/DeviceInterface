@@ -664,43 +664,16 @@ namespace ECore.DeviceImplementations
         }
 //#endif
 
-        public override float[] GetDataAndConvertToVoltageValues()
+        public override float[] GetRawData()
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
 			byte[] rawData = eDevice.HWInterface.GetData(bytesToFetch);
-            float[] voltageValues = new float[samplesToFetch];
-
-            /*
-            //this section converts twos complement to a physical voltage value
+            float[] rawFloats = new float[samplesToFetch];
             for (int i = 0; i < rawData.Length; i++)
-            {
-                byte byteVal = (byte)rawData[i];
-                float twosVal = (float)(sbyte)byteVal;
-                float scaledVal = twosVal + 128;
-                voltageValues[i] = scaledVal / 255f * 1.8f;
-            }*/
-
-            //this section converts twos complement to a physical voltage value
-            float yOffFPGA = (float)fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
-            float totalOffset = fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
-            for (int i = 0; i < rawData.Length; i++)
-            {
-                float byteVal = (float)rawData[i];
-
-                bool calibration = false;
-                if (calibration)
-                    voltageValues[i] = (float)byteVal;
-                else
-                {
-
-                    //float gainedOffset = yOffFPGA * calibrationCoefficients[1];
-                    //float yOffset = gainedOffset + calibrationCoefficients[2];
-                    float gainedVal = (float)byteVal * calibrationCoefficients[0];
-                    voltageValues[i] = gainedVal + totalOffset;
-                }
-            }
-
+                rawFloats[i] = (float)rawData[i];
+            
+            //dirty code for generating equally dirty square wave
 			if (false)
 			{
 	            if (fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue < 10)
@@ -714,7 +687,23 @@ namespace ECore.DeviceImplementations
 	            fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
 			}
 
-            return voltageValues;            
+            return rawFloats;            
+        }
+
+        public override float[] ConvertRawDataToVoltages(float[] rawData)
+        {
+            float[] voltageValues = new float[rawData.Length];
+
+            //this section converts twos complement to a physical voltage value
+            float yOffFPGA = (float)fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
+            float totalOffset = fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
+            for (int i = 0; i < rawData.Length; i++)
+            {                
+                float gainedVal = rawData[i] * calibrationCoefficients[0];
+                voltageValues[i] = gainedVal + totalOffset;
+            }
+
+            return voltageValues;
         }
 
         public int FreqDivider 

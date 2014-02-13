@@ -26,7 +26,8 @@ namespace ECore
         abstract public List<object> CreateFunctionalities();
         abstract public EDeviceHWInterface CreateHWInterface();
         abstract public DeviceImplementations.Scop3v2.Scop3v2RomManager CreateRomManager();
-        abstract public float[] GetDataAndConvertToVoltageValues();
+        abstract public float[] GetRawData();
+        abstract public float[] ConvertRawDataToVoltages(float[] rawFloats);
         abstract public void StartDevice();
         abstract public void StopDevice();
 		abstract public void FlashHW ();

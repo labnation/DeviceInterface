@@ -154,33 +154,21 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
         {
         }
 
-        public override float[] GetDataAndConvertToVoltageValues()
+        public override float[] GetRawData()
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
             byte[] rawData = eDevice.HWInterface.GetData(bytesToFetch);
-            float[] voltageValues = new float[samplesToFetch];
-
-            /*
-            //this section converts twos complement to a physical voltage value
+            float[] rawFloats = new float[samplesToFetch];
             for (int i = 0; i < rawData.Length; i++)
-            {
-                byte byteVal = (byte)rawData[i];
-                float twosVal = (float)(sbyte)byteVal;
-                float scaledVal = twosVal + 128;
-                voltageValues[i] = scaledVal / 255f * 1.8f;
-            }*/
+                rawFloats[i] = (float)rawData[i];
 
-            //this section converts twos complement to a physical voltage value
-            for (int i = 0; i < rawData.Length; i++)
-            {
-                byte byteVal = (byte)rawData[i];
-                //float twosVal = (float)byteVal;
-                //float scaledVal = twosVal + 128;
-                voltageValues[i] = (float)byteVal / 255f * 255f;
-            }
+            return rawFloats;
+        }
 
-            return voltageValues;            
+        public override float[] ConvertRawDataToVoltages(float[] rawFloats)
+        {            
+            return rawFloats;            
         }
 
         //private nested classes, shielding this from the outside.
