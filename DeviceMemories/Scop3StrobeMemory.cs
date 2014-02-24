@@ -27,7 +27,7 @@ namespace ECore.DeviceMemories
 
         public override void ReadRange(int startAddress, int burstSize)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public override void WriteRange(int startAddress, int burstSize)

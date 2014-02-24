@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 //#if IPHONE
 //#else
 using LibUsbDotNet;
@@ -101,11 +102,11 @@ namespace ECore.HardwareInterfaces
                     commandWriteEndpoint = scop3UsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
                     commandReadEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
-		if (commandWriteEndpoint == null)
-		{
-			Logger.AddEntry(this, LogMessageType.Persistent, "commandWriteEndpoint==null");
-			return;
-		}
+		            if (commandWriteEndpoint == null)
+		            {
+			            Logger.AddEntry(this, LogMessageType.Persistent, "commandWriteEndpoint==null");
+			            return;
+		            }
 
                     //indicate device is connected
                     isConnected = true;
@@ -214,13 +215,25 @@ namespace ECore.HardwareInterfaces
                 int bytesRead;
                 errorCode = dataEndpoint.Read(readBuffer, 10000, out bytesRead);
 
+                // Asynchronously check for data
+                /*
+                UsbTransfer dataReadTransfer;
+                errorCode = dataEndpoint.SubmitAsyncTransfer(readBuffer, 0, 4096, 100, out dataReadTransfer);
+                if(errorCode != ErrorCode.None) throw new Exception("Failed to send async USB transfer");
+                dataReadTransfer.AsyncWaitHandle.WaitOne(200);
+                if (!dataReadTransfer.IsCompleted) dataReadTransfer.Cancel();
+                errorCode = dataReadTransfer.Wait(out bytesRead);
+                dataReadTransfer.Dispose();
+                */
+
 				if (tempFrameCounter++ < 10)
 				{
 					string dataString = "";
 					for (int i = 0; i < 10; i++) {
 						dataString = dataString + readBuffer[i].ToString ()+";";
 					}
-					Logger.AddEntry (this, LogMessageType.ECoreInfo, numberOfBytes.ToString () + " " + errorCode.ToString () + "| Bytes received:" + dataString);
+                    //This line causes a deadlock on the thread.join() called from the GUI thread - should be async somehow!
+					//Logger.AddEntry (this, LogMessageType.ECoreInfo, numberOfBytes.ToString () + " " + errorCode.ToString () + "| Bytes received:" + dataString);
 				}
 
                 //return read data
@@ -260,31 +273,46 @@ namespace ECore.HardwareInterfaces
             if ((dataEndpoint != null) && (!dataEndpoint.IsDisposed))
             {
                 /*
-
                 dataEndpoint.Reset();
                 commandWriteEndpoint.Reset();
                 commandReadEndpoint.Reset();
+                */
+                if (dataEndpoint != null)
+                {
+                    dataEndpoint.Abort();
+                    dataEndpoint.Dispose();
+                    dataEndpoint = null;
+                }
+                if (commandWriteEndpoint != null)
+                {
+                    commandWriteEndpoint.Abort();
+                    commandWriteEndpoint.Dispose();
+                    commandWriteEndpoint = null;
+                }
 
-                dataEndpoint.Abort();
-                commandWriteEndpoint.Abort();
-                commandReadEndpoint.Abort();
-
-                commandReadEndpoint.Dispose();
-                commandWriteEndpoint.Dispose();
-                dataEndpoint.Dispose();
-            
-                 * */
+                if (commandReadEndpoint!= null)
+                {
+                    commandReadEndpoint.Abort();
+                    commandReadEndpoint.Dispose();
+                    commandReadEndpoint = null;
+                }
+                
+                /*
                 scop3UsbDevice.ActiveEndpoints.Remove(commandReadEndpoint);
                 scop3UsbDevice.ActiveEndpoints.Remove(commandWriteEndpoint);
                 scop3UsbDevice.ActiveEndpoints.Remove(dataEndpoint);
-
+                */
                 /*
                 dataEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
                 commandWriteEndpoint = scop3UsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
-                commandReadEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);*/
-
+                commandReadEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
+                */
+                if (scop3UsbDevice == null) return;
+                
                 scop3UsbDevice.Close();
-
+                scop3UsbDevice = null;
+                
+                UsbDeviceNotifier.Enabled = false;
                 UsbDevice.Exit();
             }
         }

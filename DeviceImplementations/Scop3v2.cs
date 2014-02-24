@@ -87,6 +87,7 @@ namespace ECore.DeviceImplementations
 
         public void SetTriggerPos(int trigPos)
         {
+            Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + trigPos);
             fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)trigPos;
             fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
@@ -136,10 +137,10 @@ namespace ECore.DeviceImplementations
             fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
             fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
 
-            fpgaMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 50;
+            fpgaMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 100;
             fpgaMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
 
-            fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = (byte)yOffset_Midrange0V;
+            fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 100;// (byte)yOffset_Midrange0V;
             fpgaMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
 
             //fpgaMemory.RegisterByName(REG.TRIGGERHOLDOFF_B1).InternalValue = 4;
@@ -469,7 +470,7 @@ namespace ECore.DeviceImplementations
 //#else
 		public override void FlashHW()
 		{
-			string fileName = "topentity.bin";
+			string fileName = "TopEntity_latest.bin";
 
 
 
@@ -678,7 +679,7 @@ namespace ECore.DeviceImplementations
 			{
 	            if (fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue < 10)
 	            {
-	                fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 23;
+	                fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 200;
 	            }
 	            else
 	            {
