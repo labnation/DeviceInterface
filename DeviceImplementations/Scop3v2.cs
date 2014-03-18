@@ -79,8 +79,8 @@ namespace ECore.DeviceImplementations
             memories.Add(romMemory);
             memories.Add(fpgaMemory);
             memories.Add(adcMemory);
+            memories.Add(picMemory);
             memories.Add(strobeMemory);
-            //memories.Add(picMemory);
 
             return memories;
         }
@@ -240,7 +240,7 @@ namespace ECore.DeviceImplementations
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // Convert HEX file into dictionary
             string fileName = "usb.hex";
-            StreamReader reader = new StreamReader("usb.hex");
+            StreamReader reader = new StreamReader(fileName);
 
             Dictionary<uint, byte[]> flashData = new Dictionary<uint, byte[]>();
             uint upperAddress = 0;
@@ -675,18 +675,17 @@ namespace ECore.DeviceImplementations
                 rawFloats[i] = (float)rawData[i];
             
             //dirty code for generating equally dirty square wave
-			if (false)
-			{
-	            if (fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue < 10)
-	            {
-	                fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 200;
-	            }
-	            else
-	            {
-	                fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 0;
-	            }           
-	            fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
-			}
+#if false
+            if (fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue < 10)
+	        {
+	            fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 200;
+	        }
+	        else
+	        {
+	            fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 0;
+	        }           
+	        fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
+#endif
 
             return rawFloats;            
         }

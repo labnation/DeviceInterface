@@ -8,7 +8,6 @@ namespace ECore.EFuctionalities
 {
     public class EFOffset : EFunctionality
     {
-        EDeviceMemoryRegister[] strobeRegisters;
         float lastValue = 0;
 
         //the constructor always takes name and unit

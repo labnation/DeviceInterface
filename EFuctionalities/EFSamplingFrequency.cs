@@ -8,8 +8,6 @@ namespace ECore.EFuctionalities
 {
     public class EFSamplingFrequency : EFunctionality
     {
-        EDeviceMemoryRegister[] strobeRegisters;
-
         //the constructor always takes name and unit
         //and then the registers/eFuncs specifically required for this eFunc.
         //it has to return a registerList to the base class. if no registers are used, an empty list can be returned.

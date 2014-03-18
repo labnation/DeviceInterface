@@ -8,11 +8,10 @@ namespace ECore.EFuctionalities
 {
     public class EFDivisionFactor : EFunctionality
     {
-        EDeviceMemoryRegister[] strobeRegisters;
-        int baseResistor;
-        int[] multiplyingResistors;
-        int switchResistance;
-        float[] possibleMultiplications;
+        //int baseResistor;
+        //int[] multiplyingResistors;
+        //int switchResistance;
+        //float[] possibleMultiplications;
 
         //the constructor always takes name and unit
         //and then the registers/eFuncs specifically required for this eFunc.

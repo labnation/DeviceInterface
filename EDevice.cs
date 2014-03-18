@@ -15,7 +15,6 @@ namespace ECore
     public class EDevice
     {
         //properties regarding camera
-        private List<EDeviceMemory> memories;
         private EDeviceHWInterface hardwareInterface;
         private EDeviceImplementation deviceImplementation;
         private DeviceImplementations.Scop3v2.Scop3v2RomManager romManager;
@@ -27,7 +26,8 @@ namespace ECore
 
 		//events
 		public event NewDataAvailableHandler OnNewDataAvailable;
-		/*
+
+#if false
 		#if ANDROID
 		public static Android.Content.Context ApplicationContext;
 		public EDevice(Type deviceImplementationType, Android.Content.Context appContext): this(deviceImplementationType)
@@ -35,7 +35,8 @@ namespace ECore
 			ApplicationContext = appContext;
 		}
 		#endif        
-*/
+#endif
+
         public EDevice(Type deviceImplementationType)
         {
             //creates an instance of the selected cameraImplementation
@@ -49,8 +50,6 @@ namespace ECore
 
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "EDevice initialized");
         }
-
-        public EDataNode OutputDataNode { get { return dataGeneratorNode; } }
 
         //start new thread, which will only fetch new data
         public void Start()

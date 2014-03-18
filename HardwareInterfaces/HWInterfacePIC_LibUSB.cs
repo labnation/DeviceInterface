@@ -268,7 +268,7 @@ namespace ECore.HardwareInterfaces
 
         ~HWInterfacePIC_LibUSB()
         {
-            int i = 0;
+            //int i = 0;
 
             if ((dataEndpoint != null) && (!dataEndpoint.IsDisposed))
             {

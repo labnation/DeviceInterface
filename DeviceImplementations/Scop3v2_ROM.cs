@@ -115,7 +115,6 @@ namespace ECore.DeviceImplementations
                     romContents.Add(elDef.elementType, (float)decValue/(float)Math.Pow(2, 8 * elDef.byteSize)*(elDef.maxBoundary-elDef.minBoundary)+elDef.minBoundary);
                 }
 
-                int sfd = 0;
             }
 
             // Convert an object to a byte array

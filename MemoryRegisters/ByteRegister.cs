@@ -38,8 +38,8 @@ namespace ECore.MemoryRegisters
                 this.internalValue = value;
 
                 //fire event, so linked values and GUIs can update
-                //if (OnInternalValueChanged != null)
-                //    OnInternalValueChanged(this, new EventArgs());
+                if (OnInternalValueChanged != null)
+                    OnInternalValueChanged(this, new EventArgs());
             }
         }
     }
