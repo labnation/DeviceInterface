@@ -16,7 +16,6 @@ namespace ECore
     {
         //properties regarding camera
         private List<EDeviceMemory> memories;
-        private EDeviceParameters parameters;
         private EDeviceHWInterface hardwareInterface;
         private EDeviceImplementation deviceImplementation;
         private DeviceImplementations.Scop3v2.Scop3v2RomManager romManager;

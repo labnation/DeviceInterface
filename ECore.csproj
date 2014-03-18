@@ -115,7 +115,6 @@
     <Compile Include="EDevice.cs" />
     <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
     <Compile Include="DeviceMemories\EDeviceMemory.cs" />
-    <Compile Include="EDeviceParameters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
