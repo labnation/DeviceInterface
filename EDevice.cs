@@ -18,7 +18,7 @@ namespace ECore
         //properties regarding camera
         private EDeviceImplementation deviceImplementation;
         //FIXME: what the hell is this romManager doing here?
-        private DeviceImplementations.Scop3v2.Scop3v2RomManager romManager;
+        private DeviceImplementations.ScopeV2.ScopeV2RomManager romManager;
         
         //properties regarding thread management
         private Thread dataFetchThread;
@@ -43,7 +43,7 @@ namespace ECore
             //creates an instance of the selected cameraImplementation
             //object[] parameters = {this};
             //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, parameters); ;
-            this.deviceImplementation = new DeviceImplementations.Scop3v2(this);
+            this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
             deviceImplementation.CreateHWInterface();
             this.romManager = deviceImplementation.CreateRomManager();
 
@@ -129,7 +129,7 @@ namespace ECore
 //FIXME: make the following 4 fields private when in RELEASE
         public EDeviceHWInterface HWInterface { get { return this.deviceImplementation.hardwareInterface; } }
         public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
-        public DeviceImplementations.Scop3v2.Scop3v2RomManager RomManager { get { return this.romManager; } }
+        public DeviceImplementations.ScopeV2.ScopeV2RomManager RomManager { get { return this.romManager; } }
         public bool IsRunning { get { return running; } }
 
 

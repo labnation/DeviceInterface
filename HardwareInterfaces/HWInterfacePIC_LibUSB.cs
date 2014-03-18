@@ -36,7 +36,7 @@ namespace ECore.HardwareInterfaces
         //needed for plug-unplug events
         private static IDeviceNotifier UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
 
-        private UsbDevice scop3UsbDevice;
+        private UsbDevice scopeUsbDevice;
         private UsbEndpointWriter commandWriteEndpoint;
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
@@ -71,18 +71,18 @@ namespace ECore.HardwareInterfaces
 			}
 
             //locate USB device
-            UsbDeviceFinder scop3UsbFinder = new UsbDeviceFinder(1240, 82);
-            scop3UsbDevice = UsbDevice.OpenUsbDevice(scop3UsbFinder);            
+            UsbDeviceFinder scopeUsbFinder = new UsbDeviceFinder(1240, 82);
+            scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder);            
             
             //if device is attached
-            if (scop3UsbDevice != null)
+            if (scopeUsbDevice != null)
             {
 				Logger.AddEntry(this, LogMessageType.ECoreInfo, "SmartScope connected!");
 
                 //check whether device was already connected, as in that case we don't have to do anything
                 if (!isConnected)
                 {
-					IUsbDevice wholeUsbDevice = scop3UsbDevice as IUsbDevice;
+					IUsbDevice wholeUsbDevice = scopeUsbDevice as IUsbDevice;
 					if (!ReferenceEquals(wholeUsbDevice, null))
 					{
 						// This is a "whole" USB device. Before it can be used,
@@ -98,9 +98,9 @@ namespace ECore.HardwareInterfaces
 					} 
 
                     //init endpoints
-                    dataEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
-                    commandWriteEndpoint = scop3UsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
-                    commandReadEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
+                    dataEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
+                    commandWriteEndpoint = scopeUsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
+                    commandReadEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
 		            if (commandWriteEndpoint == null)
 		            {
@@ -260,9 +260,9 @@ namespace ECore.HardwareInterfaces
                 Abort();
                 mUsbDevice.ActiveEndpoints.RemoveFromList(this);
                 */
-            //scop3UsbDevice.ActiveEndpoints.Remove(commandReadEndpoint);
-            //scop3UsbDevice.ActiveEndpoints.Remove(commandWriteEndpoint);
-            //scop3UsbDevice.ActiveEndpoints.Remove(dataEndpoint);
+            //scopeUsbDevice.ActiveEndpoints.Remove(commandReadEndpoint);
+            //scopeUsbDevice.ActiveEndpoints.Remove(commandWriteEndpoint);
+            //scopeUsbDevice.ActiveEndpoints.Remove(dataEndpoint);
 
         }
 
@@ -298,19 +298,19 @@ namespace ECore.HardwareInterfaces
                 }
                 
                 /*
-                scop3UsbDevice.ActiveEndpoints.Remove(commandReadEndpoint);
-                scop3UsbDevice.ActiveEndpoints.Remove(commandWriteEndpoint);
-                scop3UsbDevice.ActiveEndpoints.Remove(dataEndpoint);
+                scopeUsbDevice.ActiveEndpoints.Remove(commandReadEndpoint);
+                scopeUsbDevice.ActiveEndpoints.Remove(commandWriteEndpoint);
+                scopeUsbDevice.ActiveEndpoints.Remove(dataEndpoint);
                 */
                 /*
-                dataEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
-                commandWriteEndpoint = scop3UsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
-                commandReadEndpoint = scop3UsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
+                dataEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
+                commandWriteEndpoint = scopeUsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
+                commandReadEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
                 */
-                if (scop3UsbDevice == null) return;
+                if (scopeUsbDevice == null) return;
                 
-                scop3UsbDevice.Close();
-                scop3UsbDevice = null;
+                scopeUsbDevice.Close();
+                scopeUsbDevice = null;
                 
                 UsbDeviceNotifier.Enabled = false;
                 UsbDevice.Exit();

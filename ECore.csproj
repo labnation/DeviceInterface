@@ -79,23 +79,23 @@
   <ItemGroup>
     <Compile Include="Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
-    <Compile Include="DeviceImplementations\Scop3v2.cs" />
-    <Compile Include="DeviceImplementations\Scop3v2_ROM.cs" />
-    <Compile Include="DeviceMemories\Scop3Constants_GEN.cs">
+    <Compile Include="DeviceImplementations\ScopeV2.cs" />
+    <Compile Include="DeviceImplementations\ScopeV2_ROM.cs" />
+    <Compile Include="DeviceMemories\ScopeConstants_GEN.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Scop3Constants_GEN.tt</DependentUpon>
+      <DependentUpon>ScopeConstants_GEN.tt</DependentUpon>
     </Compile>
-    <Compile Include="DeviceMemories\Scop3PICRegisterMemory.cs" />
+    <Compile Include="DeviceMemories\ScopePicRegisterMemory.cs" />
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
-    <Compile Include="DeviceMemories\Scop3FpgaRomMemory.cs" />
+    <Compile Include="DeviceMemories\ScopeFpgaRom.cs" />
     <Compile Include="EDataNodes\EDataNodeFromEmbeddedResource.cs" />
     <Compile Include="EDataNodes\EDataNodeFromDevice.cs" />
     <Compile Include="EDataNodes\EDataNode.cs" />
     <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
-    <Compile Include="DeviceImplementations\Scop3v1.cs" />
-    <Compile Include="DeviceMemories\Scop3StrobeMemory.cs" />
-    <Compile Include="DeviceMemories\Scop3FpgaRegisterMemory.cs" />
+    <Compile Include="DeviceImplementations\ScopeV1.cs" />
+    <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
+    <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
     <Compile Include="EDataPackage.cs" />
     <Compile Include="EFuctionalities\EFTriggerPosition.cs" />
@@ -120,9 +120,9 @@
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DeviceMemories\Scop3Constants_GEN.tt">
+    <None Include="DeviceMemories\ScopeConstants_GEN.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Scop3Constants_GEN.cs</LastGenOutput>
+      <LastGenOutput>ScopeConstants_GEN.cs</LastGenOutput>
     </None>
     <Content Include="ToDo.txt" />
   </ItemGroup>

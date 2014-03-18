@@ -27,16 +27,16 @@ namespace ECore.DeviceImplementations
         }
     }
 
-    public partial class Scop3v2
+    public partial class ScopeV2
     {
-        public class Scop3v2RomManager
+        public class ScopeV2RomManager
         {
             private EDevice eDevice;
             private Dictionary<RomElementType, float> romContents;
             private List<RomElementDefinition> romV1Definition;
             private int romByteSize = 0;
 
-            public Scop3v2RomManager(EDevice eDevice)
+            public ScopeV2RomManager(EDevice eDevice)
             {
                 this.eDevice = eDevice;
 

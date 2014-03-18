@@ -24,5 +24,5 @@
 
 ======================================
 = Code to clean up
-- parse VHDL file at compile-time, so we can use Scop3Strobes.STR_ENABLE in code instead of strings
+- parse VHDL file at compile-time, so we can use ScopeStrobes.STR_ENABLE in code instead of strings
 - indicate strobe write register in FPGA as REG_STROBES instead of fixed address

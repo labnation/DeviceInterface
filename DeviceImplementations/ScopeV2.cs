@@ -15,21 +15,21 @@ namespace ECore.DeviceImplementations
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public partial class Scop3v2:EDeviceImplementation
+    public partial class ScopeV2:EDeviceImplementation
     {
 		public static string DemoStatusText = "";
-        private DeviceMemories.Scop3FpgaRegisterMemory fpgaMemory;
-        private DeviceMemories.Scop3FpgaRomMemory romMemory;
-        private DeviceMemories.Scop3StrobeMemory strobeMemory;
+        private DeviceMemories.ScopeFpgaSettingsMemory fpgaSettingsMemory;
+        private DeviceMemories.ScopeFpgaRom fpgaRom;
+        private DeviceMemories.ScopeStrobeMemory strobeMemory;
         private DeviceMemories.MAX19506Memory adcMemory;
-        private DeviceMemories.Scop3PICRegisterMemory picMemory;
+        private DeviceMemories.ScopePicRegisterMemory picMemory;
         //constructor relaying to base class
-        public Scop3v2(EDevice eDevice) : base(eDevice) { }      
+        public ScopeV2(EDevice eDevice) : base(eDevice) { }      
 		private bool temp = false;
         private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
         private int yOffset_Midrange0V;
         public float ChannelAYOffsetVoltage { get { return 0; } }
-        public float ChannelBYOffsetVoltage { get { return (float)((fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
+        public float ChannelBYOffsetVoltage { get { return (float)((fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
 
 		#if ANDROID
 		public Android.Content.Res.AssetManager Assets;
@@ -58,9 +58,9 @@ namespace ECore.DeviceImplementations
 			#endif
         }
 
-        public override Scop3v2RomManager CreateRomManager()
+        public override ScopeV2RomManager CreateRomManager()
         {
-            return new Scop3v2RomManager(eDevice);
+            return new ScopeV2RomManager(eDevice);
         }
 
         //master method where all memories, registers etc get defined and linked together
@@ -69,15 +69,15 @@ namespace ECore.DeviceImplementations
             memories = new List<EDeviceMemory>();
 
             //Create memories
-            picMemory = new DeviceMemories.Scop3PICRegisterMemory(eDevice);
-            fpgaMemory = new DeviceMemories.Scop3FpgaRegisterMemory(eDevice);
-            romMemory = new DeviceMemories.Scop3FpgaRomMemory(eDevice);
-            strobeMemory = new DeviceMemories.Scop3StrobeMemory(eDevice, fpgaMemory);
-            adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaMemory, strobeMemory, romMemory);
+            picMemory = new DeviceMemories.ScopePicRegisterMemory(eDevice);
+            fpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
+            fpgaRom = new DeviceMemories.ScopeFpgaRom(eDevice);
+            strobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, fpgaSettingsMemory);
+            adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaSettingsMemory, strobeMemory, fpgaRom);
             //Add them in order we'd like them in the GUI
             
-            memories.Add(romMemory);
-            memories.Add(fpgaMemory);
+            memories.Add(fpgaRom);
+            memories.Add(fpgaSettingsMemory);
             memories.Add(adcMemory);
             memories.Add(picMemory);
             memories.Add(strobeMemory);
@@ -88,24 +88,24 @@ namespace ECore.DeviceImplementations
         public void SetTriggerPos(int trigPos)
         {
             Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + trigPos);
-            fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)trigPos;
-            fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)trigPos;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
 
         public void SetTriggerPosBasedOnVoltage(float triggerVoltage)
         {
-            float fTriggerLevel = (triggerVoltage - fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
+            float fTriggerLevel = (triggerVoltage - fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
             if (fTriggerLevel < 0) fTriggerLevel = 0;
             if (fTriggerLevel > 255) fTriggerLevel = 255;
 
-            fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)fTriggerLevel;
-            fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)fTriggerLevel;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
 
         public override List<object> CreateFunctionalities()
         {
             List<object> functionalities = new List<object>();
-            functionalities.Add(new Scope3v2CalibrationVoltage(this));
+            functionalities.Add(new ScopeV2CalibrationVoltage(this));
             functionalities.Add(new Scope3v2ScopeChannelB(this));
             functionalities.Add(new Scope3v2TriggerPosition(this));
 
@@ -121,8 +121,8 @@ namespace ECore.DeviceImplementations
             //flush any transfers still queued on PIC
             //eDevice.HWInterface.FlushHW();
 
-            fpgaMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 0;
-            fpgaMemory.WriteSingle(REG.RAM_CONFIGURATION);
+            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 0;
+            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
             
             //set feedback loopand to 1V for demo purpose and enable
             strobeMemory.GetRegister(STR.CHA_DIV1).InternalValue = 1;
@@ -131,17 +131,17 @@ namespace ECore.DeviceImplementations
             strobeMemory.GetRegister(STR.CHB_DIV1).InternalValue = 1;
             strobeMemory.WriteSingle(STR.CHB_DIV1);            
 
-            fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
-            fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
+            fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
 
-            fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
-            fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
 
-            fpgaMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 100;
-            fpgaMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 100;
+            fpgaSettingsMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
 
-            fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 100;// (byte)yOffset_Midrange0V;
-            fpgaMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 100;// (byte)yOffset_Midrange0V;
+            fpgaSettingsMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
 
             //fpgaMemory.RegisterByName(REG.TRIGGERHOLDOFF_B1).InternalValue = 4;
             //fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
@@ -177,8 +177,8 @@ namespace ECore.DeviceImplementations
             strobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //generate negative voltage
-            fpgaMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 70;
-            fpgaMemory.WriteSingle(REG.NEG_DCDC_PWM);
+            fpgaSettingsMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 70;
+            fpgaSettingsMemory.WriteSingle(REG.NEG_DCDC_PWM);
 
             strobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).InternalValue = 1;
             strobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
@@ -200,17 +200,17 @@ namespace ECore.DeviceImplementations
 
         public void DecreaseReadoutSpead()
         {
-            fpgaMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 1;
-            fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
+            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 1;
+            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
         }
 
         public void ChangeCalibVoltage()
         {
-            int orig = fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue + 1;
+            int orig = fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue + 1;
             if (orig > 120) orig = 20;
 
-            fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = (byte)orig;
-            fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = (byte)orig;
+            fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
         }
 
         public void ToggleFreeRunning()
@@ -695,8 +695,8 @@ namespace ECore.DeviceImplementations
             float[] voltageValues = new float[rawData.Length];
 
             //this section converts twos complement to a physical voltage value
-            float yOffFPGA = (float)fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
-            float totalOffset = fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
+            float yOffFPGA = (float)fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
+            float totalOffset = fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
             for (int i = 0; i < rawData.Length; i++)
             {                
                 float gainedVal = rawData[i] * calibrationCoefficients[0];
@@ -710,19 +710,19 @@ namespace ECore.DeviceImplementations
         { 
             get 
             {
-                fpgaMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B1);
-                fpgaMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B0);
-                return fpgaMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue << 8 + fpgaMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).InternalValue+1;
+                fpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B1);
+                fpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B0);
+                return fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue << 8 + fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).InternalValue+1;
             }
         }
 
         public int GetTriggerPos()
         {
-            fpgaMemory.ReadSingle(REG.TRIGGERHOLDOFF_B1);
-            fpgaMemory.ReadSingle(REG.TRIGGERHOLDOFF_B0);
-            int msb = fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue;
+            fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B1);
+            fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B0);
+            int msb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue;
             msb = msb << 8;
-            int lsb = fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue;
+            int lsb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue;
             return msb + lsb + 1;
         }
 
@@ -732,10 +732,10 @@ namespace ECore.DeviceImplementations
             if (value < 0) value = 0;
             if (value > 2047) value = 2047;
 
-            fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = (byte)((value) >> 8);
-            fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
-            fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = (byte)((value));
-            fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = (byte)((value) >> 8);
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = (byte)((value));
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
         }
 
 		public void Temp()
@@ -744,8 +744,8 @@ namespace ECore.DeviceImplementations
 		}
 
         //private nested classes, shielding this from the outside.
-        //only Scop3v2 can instantiate this class!
-        private class Scope3v2CalibrationVoltage: EInterfaces.ICalibrationVoltage
+        //only ScopeV2 can instantiate this class!
+        private class ScopeV2CalibrationVoltage: EInterfaces.ICalibrationVoltage
         {
             //private EFunctionality calibrationEnabled;
             private EFunctionality calibrationVoltage;
@@ -753,9 +753,9 @@ namespace ECore.DeviceImplementations
             //public EFunctionality CalibrationEnabled { get { return calibrationEnabled; } }
             public EFunctionality CalibrationVoltage { get { return calibrationVoltage; } }
 
-            public Scope3v2CalibrationVoltage(Scop3v2 deviceImplementation)
+            public ScopeV2CalibrationVoltage(ScopeV2 deviceImplementation)
             {
-                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaMemory.GetRegister(REG.CALIB_VOLTAGE), 3.3f);
+                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE), 3.3f);
                 //this.calibrationEnabled = new EFunctionality("Calibration enabled", "", deviceImplementation.strobeMemory, new string[] { STR.CHB_DIV1" }, F2H_CalibEnabled, H2F_CalibEnabled);
             }
         }
@@ -765,9 +765,9 @@ namespace ECore.DeviceImplementations
             private EFunctionality triggerPosition;
             public EFunctionality TriggerPosition { get { return triggerPosition; } }
 
-            public Scope3v2TriggerPosition(Scop3v2 deviceImplementation)
+            public Scope3v2TriggerPosition(ScopeV2 deviceImplementation)
             {
-                this.triggerPosition = new EFTriggerPosition("Trigger position", "", 140, deviceImplementation.fpgaMemory.GetRegister(REG.TRIGGERLEVEL));
+                this.triggerPosition = new EFTriggerPosition("Trigger position", "", 140, deviceImplementation.fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL));
                 //this.calibrationEnabled = new EFunctionality("Calibration enabled", "", deviceImplementation.strobeMemory, new string[] { STR.CHB_DIV1" }, F2H_CalibEnabled, H2F_CalibEnabled);
             }
         }
@@ -784,7 +784,7 @@ namespace ECore.DeviceImplementations
             public EFunctionality SamplingFrequency { get { return samplingFrequency; } }
             public EFunctionality ChannelOffset { get { return channelOffset; } }
 
-            public Scope3v2ScopeChannelB(Scop3v2 deviceImplementation)
+            public Scope3v2ScopeChannelB(ScopeV2 deviceImplementation)
             {
                 EDeviceMemoryRegister[] multiplicationStrobes = new EDeviceMemoryRegister[3];
                 multiplicationStrobes[0] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT1);
@@ -810,12 +810,12 @@ namespace ECore.DeviceImplementations
             strobeMemory.WriteSingle(STR.GLOBAL_RESET);            
 
             //save previous ram config
-            fpgaMemory.ReadSingle(REG.RAM_CONFIGURATION);
-            byte previousRamConfiguration = fpgaMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue;
+            fpgaSettingsMemory.ReadSingle(REG.RAM_CONFIGURATION);
+            byte previousRamConfiguration = fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue;
 
             //set ram config to I2C input
-            fpgaMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 2; //sets RAM0 to I2C input
-            fpgaMemory.WriteSingle(REG.RAM_CONFIGURATION);            
+            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 2; //sets RAM0 to I2C input
+            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);            
 
             //lower global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
@@ -851,8 +851,8 @@ namespace ECore.DeviceImplementations
             }
 
             //set ram config to original state
-            fpgaMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = previousRamConfiguration; //sets RAM0 to I2C input
-            fpgaMemory.WriteSingle(REG.RAM_CONFIGURATION);
+            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = previousRamConfiguration; //sets RAM0 to I2C input
+            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
 
             //lower global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
@@ -861,17 +861,17 @@ namespace ECore.DeviceImplementations
 
         public void DemoLCTank()
         {
-            fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 78;
-            fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 78;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
 
-            fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = 230;
-            fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = 230;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
 
-            fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = 3;
-            fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = 3;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
 
-            fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 90;
-            fpgaMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 90;
+            fpgaSettingsMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
 
             strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue = 0;
             strobeMemory.WriteSingle(STR.FREE_RUNNING);
@@ -882,42 +882,42 @@ namespace ECore.DeviceImplementations
             strobeMemory.GetRegister(STR.CHB_MULT1).InternalValue = 0;
             strobeMemory.WriteSingle(STR.CHB_MULT1);
 
-            fpgaMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 0;
-            fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
+            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 0;
+            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
         }
 
 		public void ChangeOffset(int channel, int amount)
 		{
 			if (channel == 0) {
-				int newVal = (int)fpgaMemory.GetRegister (REG.CHA_YOFFSET_VOLTAGE).InternalValue + amount;
-				fpgaMemory.GetRegister (REG.CHA_YOFFSET_VOLTAGE).InternalValue = (byte)newVal;
-				fpgaMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
+				int newVal = (int)fpgaSettingsMemory.GetRegister (REG.CHA_YOFFSET_VOLTAGE).InternalValue + amount;
+				fpgaSettingsMemory.GetRegister (REG.CHA_YOFFSET_VOLTAGE).InternalValue = (byte)newVal;
+				fpgaSettingsMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
 			} else {
-				int newVal = (int)fpgaMemory.GetRegister (REG.CHB_YOFFSET_VOLTAGE).InternalValue + amount;
-				fpgaMemory.GetRegister (REG.CHB_YOFFSET_VOLTAGE).InternalValue = (byte)newVal;
-				fpgaMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
+				int newVal = (int)fpgaSettingsMemory.GetRegister (REG.CHB_YOFFSET_VOLTAGE).InternalValue + amount;
+				fpgaSettingsMemory.GetRegister (REG.CHB_YOFFSET_VOLTAGE).InternalValue = (byte)newVal;
+				fpgaSettingsMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
 			}
 		}
 
         public void DemoArduino()
         {
-            fpgaMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 119;
-            fpgaMemory.WriteSingle(REG.TRIGGERLEVEL);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 119;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
 
-            fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = 55;
-            fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = 55;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
 
-            fpgaMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = 1;
-            fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = 1;
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
 
-            fpgaMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 35;
-			fpgaMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 35;
+			fpgaSettingsMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
 
-            fpgaMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 36;
-			fpgaMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 36;
+			fpgaSettingsMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
 
-            fpgaMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 100;
-            fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
+            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 100;
+            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
 
             strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue = 0;
             strobeMemory.WriteSingle(STR.FREE_RUNNING);

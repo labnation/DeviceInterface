@@ -7,12 +7,12 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class Scop3StrobeMemory: EDeviceMemory
+    public class ScopeStrobeMemory: EDeviceMemory
     {
-        private Scop3FpgaRegisterMemory accessorMemory;
+        private ScopeFpgaSettingsMemory accessorMemory;
 
         //this method defines which type of registers are stored in the memory
-        public Scop3StrobeMemory(EDevice eDevice, Scop3FpgaRegisterMemory accessorMemory)
+        public ScopeStrobeMemory(EDevice eDevice, ScopeFpgaSettingsMemory accessorMemory)
         {
             this.eDevice = eDevice;
             this.accessorMemory = accessorMemory;

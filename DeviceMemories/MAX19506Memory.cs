@@ -21,18 +21,18 @@ namespace ECore.DeviceMemories
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class MAX19506Memory: EDeviceMemory
     {
-        private Scop3FpgaRegisterMemory fpgaMemory;
-        private Scop3StrobeMemory strobeMemory;
-        private Scop3FpgaRomMemory romMemory;
+        private ScopeFpgaSettingsMemory fpgaSettings;
+        private ScopeStrobeMemory strobeMemory;
+        private ScopeFpgaRom fpgaRom;
 
         //this method defines which type of registers are stored in the memory
         public MAX19506Memory(EDevice eDevice,
-            Scop3FpgaRegisterMemory fpgaMemory, Scop3StrobeMemory strobeMemory, Scop3FpgaRomMemory romMemory)
+            ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
             this.eDevice = eDevice;
-            this.fpgaMemory = fpgaMemory;
+            this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;
-            this.romMemory = romMemory;
+            this.fpgaRom = fpgaRom;
 
             //look up how many registers are required
             registers = new List<EDeviceMemoryRegister>();
@@ -49,8 +49,8 @@ namespace ECore.DeviceMemories
             {
                 //first send correct address to FPGA
                 int address = startAddress + i;
-                fpgaMemory.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)(address+128); //for a read, MSB must be 1
-                fpgaMemory.WriteSingle(REG.SPI_ADDRESS);
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)(address+128); //for a read, MSB must be 1
+                fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, trigger rising edge to initiate SPI comm
                 strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 0;
@@ -59,8 +59,8 @@ namespace ECore.DeviceMemories
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
 
                 //finally read acquired value
-                romMemory.ReadSingle(ROM.SPI_RECEIVED_VALUE);
-                int acquiredVal = romMemory.GetRegister(ROM.SPI_RECEIVED_VALUE).InternalValue;
+                fpgaRom.ReadSingle(ROM.SPI_RECEIVED_VALUE);
+                int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).InternalValue;
                 Registers[address].InternalValue = (byte)acquiredVal;
             }            
             
@@ -72,13 +72,13 @@ namespace ECore.DeviceMemories
             {
                 //first send correct address to FPGA
                 int address = startAddress + i; //for a write, MSB must be 0
-                fpgaMemory.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)address;
-                fpgaMemory.WriteSingle(REG.SPI_ADDRESS);
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)address;
+                fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, send the write value to FPGA
                 int valToWrite = Registers[address].InternalValue;
-                fpgaMemory.GetRegister(REG.SPI_WRITE_VALUE).InternalValue = (byte)valToWrite;
-                fpgaMemory.WriteSingle(REG.SPI_WRITE_VALUE);
+                fpgaSettings.GetRegister(REG.SPI_WRITE_VALUE).InternalValue = (byte)valToWrite;
+                fpgaSettings.WriteSingle(REG.SPI_WRITE_VALUE);
 
                 //finally, trigger rising edge
                 strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 0;

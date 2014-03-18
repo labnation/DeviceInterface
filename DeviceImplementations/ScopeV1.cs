@@ -9,14 +9,14 @@ namespace ECore.DeviceImplementations
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public class Scop3v1:EDeviceImplementation
+    public class ScopeV1:EDeviceImplementation
     {
-        private DeviceMemories.Scop3FpgaRegisterMemory fpgaMemory;
-        private DeviceMemories.Scop3FpgaRomMemory romMemory;
-        private DeviceMemories.Scop3StrobeMemory strobeMemory;
+        private DeviceMemories.ScopeFpgaSettingsMemory fpgaSettingsMemory;
+        private DeviceMemories.ScopeFpgaRom fpgaRom;
+        private DeviceMemories.ScopeStrobeMemory strobeMemory;
         private DeviceMemories.MAX19506Memory adcMemory;
         //constructor relaying to base class
-        public Scop3v1(EDevice eDevice) : base(eDevice) { }        
+        public ScopeV1(EDevice eDevice) : base(eDevice) { }        
         
         public override void CreateHWInterface()
         {
@@ -31,7 +31,7 @@ namespace ECore.DeviceImplementations
 		{
 		}
 
-        public override Scop3v2.Scop3v2RomManager CreateRomManager()
+        public override ScopeV2.ScopeV2RomManager CreateRomManager()
         {
             throw new NotImplementedException();
         }
@@ -42,19 +42,19 @@ namespace ECore.DeviceImplementations
             memories = new List<EDeviceMemory>();
             
             //add FPGA register memory
-            fpgaMemory = new DeviceMemories.Scop3FpgaRegisterMemory(eDevice);
-            memories.Add(fpgaMemory);
+            fpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
+            memories.Add(fpgaSettingsMemory);
 
             //add FPGA rom memory     
-            romMemory = new DeviceMemories.Scop3FpgaRomMemory(eDevice);
-            memories.Add(romMemory);
+            fpgaRom = new DeviceMemories.ScopeFpgaRom(eDevice);
+            memories.Add(fpgaRom);
 
             //add strobe memory
-            strobeMemory = new DeviceMemories.Scop3StrobeMemory(eDevice, fpgaMemory);
+            strobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, fpgaSettingsMemory);
             memories.Add(strobeMemory);
 
             //add ADC memory
-            adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaMemory, strobeMemory, romMemory);
+            adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaSettingsMemory, strobeMemory, fpgaRom);
             memories.Add(adcMemory);
 
             return memories;
@@ -63,7 +63,7 @@ namespace ECore.DeviceImplementations
         public override List<object> CreateFunctionalities()
         {
             List<object> functionalities = new List<object>();
-            functionalities.Add(new Scope3v1CalibrationVoltage(this));
+            functionalities.Add(new ScopeV1CalibrationVoltage(this));
             functionalities.Add(new Scope3v1ScopeChannelB(this));
 
             return functionalities;
@@ -128,8 +128,8 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
             strobeMemory.GetRegister(STR.CHB_MULT1).InternalValue = 1;
             strobeMemory.WriteSingle(STR.CHB_MULT1);
 
-            fpgaMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
-            fpgaMemory.WriteSingle(REG.CALIB_VOLTAGE);
+            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
+            fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
 
             //set ADC output resistance to 300ohm instead of 50ohm
             adcMemory.GetRegister(MAX19506.CHA_TERMINATION).InternalValue = 4;
@@ -172,8 +172,8 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
         }
 
         //private nested classes, shielding this from the outside.
-        //only Scop3v1 can instantiate this class!
-        private class Scope3v1CalibrationVoltage: EInterfaces.ICalibrationVoltage
+        //only ScopeV1 can instantiate this class!
+        private class ScopeV1CalibrationVoltage: EInterfaces.ICalibrationVoltage
         {
             //private EFunctionality calibrationEnabled;
             private EFunctionality calibrationVoltage;
@@ -181,9 +181,9 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
             //public EFunctionality CalibrationEnabled { get { return calibrationEnabled; } }
             public EFunctionality CalibrationVoltage { get { return calibrationVoltage; } }
 
-            public Scope3v1CalibrationVoltage(Scop3v1 deviceImplementation)
+            public ScopeV1CalibrationVoltage(ScopeV1 deviceImplementation)
             {
-                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaMemory.GetRegister(REG.CALIB_VOLTAGE), 3.3f);
+                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE), 3.3f);
                 //this.calibrationEnabled = new EFunctionality("Calibration enabled", "", deviceImplementation.strobeMemory, new string[] { "STR_CHB_DIV1" }, F2H_CalibEnabled, H2F_CalibEnabled);
             }
         }
@@ -200,7 +200,7 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
             public EFunctionality SamplingFrequency { get { return samplingFrequency; } }
             public EFunctionality ChannelOffset { get { return channelOffset; } }
 
-            public Scope3v1ScopeChannelB(Scop3v1 deviceImplementation)
+            public Scope3v1ScopeChannelB(ScopeV1 deviceImplementation)
             {
                 EDeviceMemoryRegister[] multiplicationStrobes = new EDeviceMemoryRegister[3];
                 multiplicationStrobes[0] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT1);
