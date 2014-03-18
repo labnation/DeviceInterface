@@ -35,7 +35,7 @@ namespace ECore.DeviceImplementations
 		public Android.Content.Res.AssetManager Assets;
 		#endif
         
-        public override EDeviceHWInterface CreateHWInterface()
+        public override void CreateHWInterface()
         {
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
@@ -53,7 +53,7 @@ namespace ECore.DeviceImplementations
 				resultString += b.ToString()+";";
 			Logger.AddEntry(this, LogMessageType.Persistent, resultString);
 
-			return hwInterface;
+			this.hardwareInterface = hwInterface;
 
 			#endif
         }

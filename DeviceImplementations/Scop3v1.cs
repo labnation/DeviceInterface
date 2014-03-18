@@ -18,12 +18,12 @@ namespace ECore.DeviceImplementations
         //constructor relaying to base class
         public Scop3v1(EDevice eDevice) : base(eDevice) { }        
         
-        public override EDeviceHWInterface CreateHWInterface()
+        public override void CreateHWInterface()
         {
 			#if ANDROID
-			return new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
-			#else
-            return new HardwareInterfaces.HWInterfacePIC_LibUSB();
+			this.hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
+            #else
+            this.hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB();
 			#endif
         }
 

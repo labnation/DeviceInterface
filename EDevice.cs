@@ -16,13 +16,12 @@ namespace ECore
     public class EDevice
     {
         //properties regarding camera
-        private EDeviceHWInterface hardwareInterface;
         private EDeviceImplementation deviceImplementation;
         private DeviceImplementations.Scop3v2.Scop3v2RomManager romManager;
         
         //properties regarding thread management
         private Thread dataFetchThread;
-        private bool isRunning;
+        private bool running;
         private EDataNode dataGeneratorNode;
 
 		//events
@@ -44,10 +43,10 @@ namespace ECore
             //object[] parameters = {this};
             //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, parameters); ;
             this.deviceImplementation = new DeviceImplementations.Scop3v2(this);
-            this.hardwareInterface = deviceImplementation.CreateHWInterface();
+            deviceImplementation.CreateHWInterface();
             this.romManager = deviceImplementation.CreateRomManager();
 
-            this.isRunning = false;
+            this.running = false;
 
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "EDevice initialized");
         }
@@ -55,7 +54,7 @@ namespace ECore
         //start new thread, which will only fetch new data
         public void Start()
         {
-            isRunning = true;            
+            running = true;            
 
             //check whether physical HW device is connected. if not, load data from a stream
 			if (HWInterface.Connected)
@@ -74,7 +73,7 @@ namespace ECore
 
         public void StartFromEmbedded()
         {
-            isRunning = true;
+            running = true;
 
             //check whether physical HW device is connected. if not, load data from a stream
             
@@ -93,11 +92,12 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread spawn");
 
             //start HW
-            hardwareInterface.StartInterface();
+            //FIXME: make this line part of StartDevice
+            HWInterface.StartInterface();
             deviceImplementation.StartDevice();
 
             //looping until device is stopped
-            while (isRunning)
+            while (running)
             {
                 //update data
                 dataGeneratorNode.Update(null, null);
@@ -113,23 +113,28 @@ namespace ECore
         public void Stop()
         {
             //stops acquisition thread
-            isRunning = false;
+            running = false;
 
             //stop HW
             //dataFetchThread.Join(); --> We should do this here but it causes deadlock cos of logging not being asynchronous!!!
             deviceImplementation.StopDevice();
-            hardwareInterface.StopInterface();
+            //FIXME: make this line part of StopDevice
+            deviceImplementation.hardwareInterface.StopInterface();
 
             //add entry to log
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped now");
         }
 
-        public EDeviceHWInterface HWInterface { get { return this.hardwareInterface; } }
+        public EDeviceHWInterface HWInterface { get { return this.deviceImplementation.hardwareInterface; } }
         public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
         public DeviceImplementations.Scop3v2.Scop3v2RomManager RomManager { get { return this.romManager; } }
-        public bool IsRunning { get { return isRunning; } }
+        public bool IsRunning { get { return running; } }
 
-        /* Settings handlers */
+
+        /**************
+         *  Settings  *
+         **************/
+
         static public String SettingSetterMethodName(Setting s)
         {
             String methodName = "Set" + Utils.SnakeToCamel(Enum.GetName(s.GetType(), s));

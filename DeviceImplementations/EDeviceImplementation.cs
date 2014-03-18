@@ -17,6 +17,8 @@ namespace ECore
         //////////////////////////////////////////////////////////////////
         //shared properties        
         protected EDevice eDevice;
+        //FIXME: make me protected
+        public EDeviceHWInterface hardwareInterface;
         protected List<EDeviceMemory> memories;
         protected List<object> functionalities;
 
@@ -24,7 +26,7 @@ namespace ECore
         //contract for inheriters
         abstract public List<EDeviceMemory> CreateMemories();
         abstract public List<object> CreateFunctionalities();
-        abstract public EDeviceHWInterface CreateHWInterface();
+        abstract public void CreateHWInterface();
         abstract public DeviceImplementations.Scop3v2.Scop3v2RomManager CreateRomManager();
         abstract public float[] GetRawData();
         abstract public float[] ConvertRawDataToVoltages(float[] rawFloats);
