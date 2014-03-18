@@ -150,7 +150,7 @@ namespace ECore
 
         public void Set(Setting s, Object[] parameters) {
             if (!this.deviceImplementation.HasSetting(s))
-                throw new MissingSettingException("The setting " + Enum.GetName(s.GetType(), s) + " is not implemetend by this device");
+                throw new MissingSettingException(this.deviceImplementation, s);
             MethodInfo m = this.deviceImplementation.GetType().GetMethod(SettingSetterMethodName(s));
             m.Invoke(this.deviceImplementation, parameters);
         }

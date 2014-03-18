@@ -9,7 +9,83 @@ namespace ECore.DeviceImplementations
 {
     partial class ScopeV2
     {
-        #region Settings
+        //FIXME: might have to be moved to more general class
+        #region helpers
+        private byte voltToByte(float volt)
+        {
+            //FIXME: implement this
+            return (byte)((int)volt);
+        }
+        private void validateChannel(uint ch)
+        {
+            if (ch != 0 && ch != 1) 
+                throw new ValidationException("Channel must be 0 or 1");
+        }
+        private void validateDivider(uint div)
+        {
+            if (div != 1 && div != 10 && div != 100) 
+                throw new ValidationException("Divider must be 1, 10 or 100");
+        }
+        private void validateMultiplier(uint mul)
+        {
+            throw new ValidationException("I have no idea what a valid multiplier would be. I do know about dividers. Try that instead...");
+        }
+        #endregion
+
+        #region vertical
+
+        /// <summary>Sets vertical offset of a channel</summary
+        /// <param name="channel">0 or 1 (channel A or B)</param>
+        /// <param name="offset">Vertical offset in Volt</param>
+        public void SetYOffset(uint channel, float offset)
+        {
+            REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
+            fpgaSettingsMemory.GetRegister(r).InternalValue = (byte)offset;
+            fpgaSettingsMemory.WriteSingle(r);
+        }
+
+        /// <summary>Set divider of a channel</summary
+        /// <param name="channel">0 or 1 (channel A or B)</param>
+        /// <param name="divider">1, 10 or 100</param>
+        public void SetDivider(uint channel, uint divider)
+        {
+            validateChannel(channel);
+            validateDivider(divider);
+            STR d1   = (channel == 0) ? STR.CHA_DIV1   : STR.CHB_DIV1;
+            STR d10  = (channel == 0) ? STR.CHA_DIV10  : STR.CHB_DIV10;
+            STR d100 = (channel == 0) ? STR.CHA_DIV100 : STR.CHB_DIV100;
+            strobeMemory.GetRegister(d1).set((divider == 1) ? 0 : 1);
+            strobeMemory.GetRegister(d10).set((divider == 10) ? 0 : 1);
+            strobeMemory.GetRegister(d100).set((divider == 100) ? 0 : 1);
+            strobeMemory.WriteSingle(d1);
+            strobeMemory.WriteSingle(d10);
+            strobeMemory.WriteSingle(d100);
+        }
+
+        ///<summary>Multiplier(unsigned integer channel, unsigned integer multiplier)</summary>
+        ///<param name="channel">0 or 1 (channel A or B)</param>
+        ///<param name="multiplier">Set input stage multiplier (?? or ??)</param>
+        public void SetMultiplier(uint channel, uint multiplier)
+        {
+            validateChannel(channel);
+            validateMultiplier(multiplier);
+            STR m1 = (channel == 0) ? STR.CHA_MULT1 : STR.CHB_MULT1;
+            STR m2 = (channel == 0) ? STR.CHA_MULT2 : STR.CHB_MULT2;
+            STR m3 = (channel == 0) ? STR.CHA_MULT3 : STR.CHB_MULT3;
+            //FIXME: do something with the registers
+            /*
+            strobeMemory.GetRegister(m1).Set(?);
+            strobeMemory.GetRegister(m2).Set(?);
+            strobeMemory.GetRegister(m3).Set(?);
+            strobeMemory.WriteSingle(m1);
+            strobeMemory.WriteSingle(m2);
+            strobeMemory.WriteSingle(m3);
+            */
+        }
+
+        #endregion
+        
+        #region the rest
 
         public void SetTriggerPos(int trigPos)
         {
@@ -145,30 +221,14 @@ namespace ECore.DeviceImplementations
 
                 int[] multiplyingResistors = new int[3] { 0, 1000, 6200 };
 
-                this.channelOffset = new EFOffset("Channel offset", "V", 0);
+                //this.channelOffset = new EFOffset("Channel offset", "V", 0);
                 this.multiplicationFactor = new EFMultiplicationFactor("Multiplication factor", "", 1, multiplicationStrobes, 1000, multiplyingResistors, 24, channelOffset);
-                this.divisionFactor = new EFDivisionFactor("Division factor", "", 1);
+                //this.divisionFactor = new EFDivisionFactor("Division factor", "", 1);
                 this.samplingFrequency = new EFSamplingFrequency("Sampling Frequency", "Hz", 100000000);
             }
 
             public float MaxRange { get { return 255f; } }
             public float ScalingFactor { get { return multiplicationFactor.InternalValue / divisionFactor.InternalValue; } }
-        }
-
-        public void ChangeOffset(int channel, int amount)
-        {
-            if (channel == 0)
-            {
-                int newVal = (int)fpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue + amount;
-                fpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = (byte)newVal;
-                fpgaSettingsMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
-            }
-            else
-            {
-                int newVal = (int)fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue + amount;
-                fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = (byte)newVal;
-                fpgaSettingsMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
-            }
         }
 
         public void UploadToRAM(byte[] inData)
