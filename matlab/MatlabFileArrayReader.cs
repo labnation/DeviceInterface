@@ -78,7 +78,7 @@ namespace MatlabFileIO
                     break;
                 default:
                     throw new Exception("Content of array not supported");
-                    break;
+                    //break;
             }
             streamReader.BaseStream.Seek(4, SeekOrigin.Current);
 

@@ -120,7 +120,7 @@ namespace MatlabFileIO
                     break;
                 default:
                     throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(T)).ToString() + " to .mat file not implemented");
-                    break;
+                    //break;
             }
 
             dataLength += dataToAppend.Length * MatlabFileHelper.MatlabBytesPerType<T>();
@@ -129,11 +129,11 @@ namespace MatlabFileIO
             firstDim++;
         }        
 
-        private int MatlabTypeNumber<T>()
+        private int MatlabTypeNumber<E>()
         {
             int typeNumber = 0;
 
-            switch (Type.GetTypeCode(typeof(T)))
+            switch (Type.GetTypeCode(typeof(E)))
             {
                 case TypeCode.Double:
                     typeNumber = 9;
@@ -157,8 +157,8 @@ namespace MatlabFileIO
                     typeNumber = 4;
                     break;
                 default:
-                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(T)).ToString() + " to .mat file not implemented");
-                    break;
+                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(E)).ToString() + " to .mat file not implemented");
+                    //break;
             }
 
             return typeNumber;
@@ -210,7 +210,7 @@ namespace MatlabFileIO
                 writeStream.Write((byte)0xff);
         }
 
-        private void WriteFlagsRG<T>()
+        private void WriteFlagsRG<E>()
         {
             //write 4 values for flag block
 
@@ -221,7 +221,7 @@ namespace MatlabFileIO
             writeStream.Write((int)8);
 
             //array class
-            switch (Type.GetTypeCode(typeof(T)))
+            switch (Type.GetTypeCode(typeof(E)))
             {
                 case TypeCode.Double:
                     writeStream.Write((int)6);
@@ -245,8 +245,8 @@ namespace MatlabFileIO
                     writeStream.Write((int)4);
                     break;
                 default:
-                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(T)).ToString() + " to .mat file not implemented");
-                    break;
+                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(E)).ToString() + " to .mat file not implemented");
+                    //break;
             }
 
             //padding (always 0)

@@ -57,7 +57,7 @@ namespace MatlabFileIO
                     break;
                 default:
                     throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(T)).ToString() + " to .mat file not implemented");
-                    break;
+                    //break;
             }
 
             return bytesPerData;
