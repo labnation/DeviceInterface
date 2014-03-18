@@ -97,5 +97,10 @@ namespace ECore
         {
             return true;
         }
+
+        public bool HasSetting(Setting s) 
+        {
+            return Utils.HasMethod(this, EDevice.SettingSetterMethodName(s));
+        }
     }
 }

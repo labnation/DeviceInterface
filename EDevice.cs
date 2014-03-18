@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Reflection;
 
 namespace ECore
 {
@@ -127,6 +128,25 @@ namespace ECore
         public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
         public DeviceImplementations.Scop3v2.Scop3v2RomManager RomManager { get { return this.romManager; } }
         public bool IsRunning { get { return isRunning; } }
+
+        /* Settings handlers */
+        static public String SettingSetterMethodName(Setting s)
+        {
+            String methodName = "Set" + Utils.SnakeToCamel(Enum.GetName(s.GetType(), s));
+            return methodName;
+        }
+
+        public bool HasSetting(Setting s)
+        {
+            return this.deviceImplementation.HasSetting(s);
+        }
+
+        public void Set(Setting s, Object[] parameters) {
+            if (!this.deviceImplementation.HasSetting(s))
+                throw new MissingSettingException("The setting " + Enum.GetName(s.GetType(), s) + " is not implemetend by this device");
+            MethodInfo m = this.deviceImplementation.GetType().GetMethod(SettingSetterMethodName(s));
+            m.Invoke(this.deviceImplementation, parameters);
+        }
     }
 }
 

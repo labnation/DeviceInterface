@@ -77,6 +77,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="DeviceImplementations\Scop3v2.cs" />
     <Compile Include="DeviceImplementations\Scop3v2_ROM.cs" />

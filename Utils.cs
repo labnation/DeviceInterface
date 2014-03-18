@@ -8,6 +8,29 @@ namespace ECore
 {
     static class Utils
     {
+        static public bool HasMethod(Object o, String methodName)
+        {
+            return o.GetType().GetMethod(methodName) != null;
+        }
+
+        static public String SnakeToCamel(String input)
+        {
+            bool new_word = true;
+            string result = string.Concat(input.Select((x, i) => {
+                String ret = "";
+                if (x == '_')
+                    new_word = true;
+                else if (new_word)
+                {
+                    ret = x.ToString().ToUpper();
+                    new_word = false;
+                }
+                else
+                    ret = x.ToString().ToLower();
+                return ret;
+            }));
+            return result;
+        }
         //scans a section of VHDL for constants beginning with prefix, then returns then name and the constant value
         //how: split lines up by 'prefix' and ';', then keep correct parts
         static public Dictionary<string, int> VhdlReader(string multilineInput, string prefix)
