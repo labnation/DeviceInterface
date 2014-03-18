@@ -77,6 +77,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeviceImplementations\ScopeV2Sandbox.cs" />
+    <Compile Include="DeviceImplementations\ScopeV2FlashHelpers.cs" />
+    <Compile Include="DeviceImplementations\ScopeV2Settings.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="DeviceImplementations\ScopeV2.cs" />

@@ -24,9 +24,9 @@ namespace ECore
 
         //////////////////////////////////////////////////////////////////
         //contract for inheriters
-        abstract public List<EDeviceMemory> CreateMemories();
-        abstract public List<object> CreateFunctionalities();
-        abstract public void CreateHWInterface();
+        abstract public void InitializeMemories();
+        abstract public void InitializeFunctionalities();
+        abstract public void InitializeHardwareInterface();
         abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();
         abstract public float[] GetRawData();
         abstract public float[] ConvertRawDataToVoltages(float[] rawFloats);
@@ -41,8 +41,10 @@ namespace ECore
             this.eDevice = eDevice;
 
             //automatically calls the methods which need to be executed during initialization
-            this.memories = CreateMemories();
-            this.functionalities = CreateFunctionalities();
+            memories = new List<EDeviceMemory>();
+            InitializeMemories();
+            functionalities = new List<object>();
+            InitializeFunctionalities();
         }
 
         //getters

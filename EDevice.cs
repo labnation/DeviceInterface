@@ -44,7 +44,7 @@ namespace ECore
             //object[] parameters = {this};
             //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, parameters); ;
             this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
-            deviceImplementation.CreateHWInterface();
+            deviceImplementation.InitializeHardwareInterface();
             this.romManager = deviceImplementation.CreateRomManager();
 
             this.running = false;

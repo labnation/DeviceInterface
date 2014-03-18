@@ -18,7 +18,7 @@ namespace ECore.DeviceImplementations
         //constructor relaying to base class
         public ScopeV1(EDevice eDevice) : base(eDevice) { }        
         
-        public override void CreateHWInterface()
+        public override void InitializeHardwareInterface()
         {
 			#if ANDROID
 			this.hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
@@ -37,10 +37,8 @@ namespace ECore.DeviceImplementations
         }
 
         //master method where all memories, registers etc get defined and linked together
-        public override List<EDeviceMemory> CreateMemories()
+        public override void InitializeMemories()
         {
-            memories = new List<EDeviceMemory>();
-            
             //add FPGA register memory
             fpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
             memories.Add(fpgaSettingsMemory);
@@ -56,17 +54,12 @@ namespace ECore.DeviceImplementations
             //add ADC memory
             adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaSettingsMemory, strobeMemory, fpgaRom);
             memories.Add(adcMemory);
-
-            return memories;
         }
 
-        public override List<object> CreateFunctionalities()
+        public override void InitializeFunctionalities()
         {
-            List<object> functionalities = new List<object>();
             functionalities.Add(new ScopeV1CalibrationVoltage(this));
             functionalities.Add(new Scope3v1ScopeChannelB(this));
-
-            return functionalities;
         }
      
         private string LoadMultilineVHDL()
