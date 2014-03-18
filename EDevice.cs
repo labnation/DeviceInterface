@@ -95,7 +95,7 @@ namespace ECore
             //start HW
             //FIXME: make this line part of StartDevice
             HWInterface.StartInterface();
-            deviceImplementation.StartDevice();
+            deviceImplementation.Start();
 
             //looping until device is stopped
             while (running)
@@ -118,7 +118,7 @@ namespace ECore
 
             //stop HW
             //dataFetchThread.Join(); --> We should do this here but it causes deadlock cos of logging not being asynchronous!!!
-            deviceImplementation.StopDevice();
+            deviceImplementation.Stop();
             //FIXME: make this line part of StopDevice
             deviceImplementation.hardwareInterface.StopInterface();
 

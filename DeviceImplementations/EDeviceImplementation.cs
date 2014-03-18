@@ -27,12 +27,13 @@ namespace ECore
         abstract public void InitializeMemories();
         abstract public void InitializeFunctionalities();
         abstract public void InitializeHardwareInterface();
+        abstract public void Start();
+        abstract public void Stop();
+        //FIXME: these are too specific for a "Device" -> either call it scope or move them down to the scope
         abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();
         abstract public float[] GetRawData();
         abstract public float[] ConvertRawDataToVoltages(float[] rawFloats);
-        abstract public void StartDevice();
-        abstract public void StopDevice();
-		abstract public void FlashHW ();
+        abstract public void FlashHW();
 
         //////////////////////////////////////////////////////////////////
         //base functionality implementation
@@ -50,19 +51,6 @@ namespace ECore
         //getters
         virtual public List<EDeviceMemory> Memories { get { return memories; } }
         virtual public List<object> Functionalities { get { return functionalities; } }
-
-        //searches if this implementation contains an instance of a sub-class which implements a certain interface T. 
-        //if so, returns this instance, so it can be used immediately by the calling code
-        /*virtual public List<T> GetInterface<T>()
-        {
-            foreach (object item in functionalities)
-            {
-                T castedObject = item as T;
-                if (castedObject != null)
-                    return castedObject;
-            }
-            return default(T);
-        }*/
 
         public virtual List<object> GetInterfaces(Type interfaceType)
         {

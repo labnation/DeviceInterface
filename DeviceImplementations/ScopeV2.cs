@@ -93,7 +93,7 @@ namespace ECore.DeviceImplementations
 
         #region start_stop
 
-        override public void StartDevice()
+        override public void Start()
         {
             //raise global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 1;
@@ -169,7 +169,7 @@ namespace ECore.DeviceImplementations
             //Logger.AddEntry(this, LogMessageType.ECoreError, "!!! DCMs not locked !!!");
         }
 
-        override public void StopDevice()
+        override public void Stop()
         {
         }
 

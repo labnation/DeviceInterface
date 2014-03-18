@@ -112,7 +112,7 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
             return multiline;
         }
 
-        override public void StartDevice()
+        override public void Start()
         {
             //set feedback loopand to 1V for demo purpose and enable
             strobeMemory.GetRegister(STR.CHB_DIV1).InternalValue = 1;
@@ -143,7 +143,7 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
             strobeMemory.WriteSingle(STR.FREE_RUNNING);
         }
 
-        override public void StopDevice()
+        override public void Stop()
         {
         }
 
