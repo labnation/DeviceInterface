@@ -152,6 +152,19 @@ namespace ECore
             if (!this.deviceImplementation.HasSetting(s))
                 throw new MissingSettingException(this.deviceImplementation, s);
             MethodInfo m = this.deviceImplementation.GetType().GetMethod(SettingSetterMethodName(s));
+            ParameterInfo[] pi = m.GetParameters();
+            if (parameters == null || pi.Length != parameters.Length)
+                throw new SettingParameterWrongNumberException(this.deviceImplementation, s,
+                    pi.Length, parameters != null ? parameters.Length : 0);
+            //Match parameters with method arguments
+            
+            for(int i = 0; i < pi.Length; i++)
+            {
+                if (!pi[i].ParameterType.Equals(parameters[i].GetType())) {
+                    throw new SettingParameterTypeMismatchException(this.deviceImplementation, s,
+                        i+1, pi[i].ParameterType, parameters[i].GetType());
+                }
+            }
             m.Invoke(this.deviceImplementation, parameters);
         }
     }

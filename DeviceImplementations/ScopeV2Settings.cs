@@ -222,7 +222,7 @@ namespace ECore.DeviceImplementations
                 int[] multiplyingResistors = new int[3] { 0, 1000, 6200 };
 
                 //this.channelOffset = new EFOffset("Channel offset", "V", 0);
-                this.multiplicationFactor = new EFMultiplicationFactor("Multiplication factor", "", 1, multiplicationStrobes, 1000, multiplyingResistors, 24, channelOffset);
+                //this.multiplicationFactor = new EFMultiplicationFactor("Multiplication factor", "", 1, multiplicationStrobes, 1000, multiplyingResistors, 24, channelOffset);
                 //this.divisionFactor = new EFDivisionFactor("Division factor", "", 1);
                 this.samplingFrequency = new EFSamplingFrequency("Sampling Frequency", "Hz", 100000000);
             }

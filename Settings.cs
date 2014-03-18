@@ -13,6 +13,22 @@ namespace ECore
                 " was not found in device of type " + d.GetType().Name) 
         { }
     }
+    public class SettingParameterWrongNumberException : Exception
+    {
+        public SettingParameterWrongNumberException(EDeviceImplementation d, Setting s, int expected, int received) :
+            base(
+                "The setting " + Enum.GetName(s.GetType(), s) + " in device of type " + d.GetType().Name +
+                " requires " + expected + " parameters, only received " + received)
+        { }
+    }
+    public class SettingParameterTypeMismatchException : Exception
+    {
+        public SettingParameterTypeMismatchException(EDeviceImplementation d, Setting s, int number, Type expected, Type received) :
+            base(
+                "The setting " + Enum.GetName(s.GetType(), s) + " in device of type " + d.GetType().Name +
+                " requires parameter " + number + " to be of type " + expected.Name + ", got " + received.Name)
+        { }
+    }
     public class ValidationException : Exception { public ValidationException(String msg) : base(msg) { } }
     /*
     public class InvalidSettingParameterException : Exception
