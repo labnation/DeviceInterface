@@ -34,7 +34,9 @@ namespace ECore.DeviceImplementations
 
         #region vertical
 
-        /// <summary>Sets vertical offset of a channel</summary
+        /// <summary>
+        /// Sets vertical offset of a channel
+        /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
         public void SetYOffset(uint channel, float offset)
@@ -44,7 +46,9 @@ namespace ECore.DeviceImplementations
             fpgaSettingsMemory.WriteSingle(r);
         }
 
-        /// <summary>Set divider of a channel</summary
+        /// <summary>
+        /// Set divider of a channel
+        /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="divider">1, 10 or 100</param>
         public void SetDivider(uint channel, uint divider)
@@ -54,15 +58,17 @@ namespace ECore.DeviceImplementations
             STR d1   = (channel == 0) ? STR.CHA_DIV1   : STR.CHB_DIV1;
             STR d10  = (channel == 0) ? STR.CHA_DIV10  : STR.CHB_DIV10;
             STR d100 = (channel == 0) ? STR.CHA_DIV100 : STR.CHB_DIV100;
-            strobeMemory.GetRegister(d1).set((divider == 1) ? 0 : 1);
-            strobeMemory.GetRegister(d10).set((divider == 10) ? 0 : 1);
-            strobeMemory.GetRegister(d100).set((divider == 100) ? 0 : 1);
+            strobeMemory.GetRegister(d1).Set((divider == 1) ? 1 : 0);
+            strobeMemory.GetRegister(d10).Set((divider == 10) ? 1 : 0);
+            strobeMemory.GetRegister(d100).Set((divider == 100) ? 1 : 0);
             strobeMemory.WriteSingle(d1);
             strobeMemory.WriteSingle(d10);
             strobeMemory.WriteSingle(d100);
         }
 
-        ///<summary>Multiplier(unsigned integer channel, unsigned integer multiplier)</summary>
+        ///<summary>
+        ///Set multiplier of a channel
+        ///</summary>
         ///<param name="channel">0 or 1 (channel A or B)</param>
         ///<param name="multiplier">Set input stage multiplier (?? or ??)</param>
         public void SetMultiplier(uint channel, uint multiplier)
@@ -84,61 +90,151 @@ namespace ECore.DeviceImplementations
         }
 
         #endregion
-        
-        #region the rest
 
-        public void SetTriggerPos(int trigPos)
+        #region horizontal
+        ///<summary>
+        ///Set scope trigger level
+        ///</summary>
+        ///<param name="level">Trigger level in volt</param>
+        public void SetTriggerLevel(float voltage)
         {
-            Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + trigPos);
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)trigPos;
+            float level = (voltage - fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
+            if (level < 0) level = 0;
+            if (level > 255) level = 255;
+
+            Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + level);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set(level);
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
-
-        public void SetTriggerPosBasedOnVoltage(float triggerVoltage)
+        ///<summary>
+        ///Set scope sample decimation
+        ///</summary>
+        ///<param name="decimation">Store every [decimation]nt sample</param>
+        public void SetDecimation(UInt16 decimation)
         {
-            float fTriggerLevel = (triggerVoltage - fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
-            if (fTriggerLevel < 0) fTriggerLevel = 0;
-            if (fTriggerLevel > 255) fTriggerLevel = 255;
-
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = (byte)fTriggerLevel;
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            //FIXME: validate
+            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).Set((byte)(decimation & 0xFF));
+            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).Set((byte)((decimation >> 8) & 0xFF));
+            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B0);
+            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
+        }
+        ///<summary>
+        ///Enable free running (don't wait for trigger)
+        ///</summary>
+        ///<param name="freerunning">Whether to enable free running mode</param>
+        public void SetEnableFreeRunning(bool freerunning)
+        {
+            strobeMemory.GetRegister(STR.FREE_RUNNING).Set((byte)(freerunning ? 1 : 0));
+            strobeMemory.WriteSingle(STR.FREE_RUNNING);
+        }
+        ///<summary>
+        ///Scope hold off
+        ///</summary>
+        ///<param name="samples">Store [samples] before trigger</param>
+        public void SetTriggerHoldOff(int samples)
+        {
+            if (samples < 0 || samples > 2047)
+                throw new ValidationException("Trigger hold off must be between 0 and 2047");
+            
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples) >> 8);
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
+            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
         }
 
+        #endregion
 
-        public void EnableCalib()
+        #region other
+        /// <summary>
+        /// Enable or disable the calibration voltage
+        /// </summary>
+        /// <param name="enableCalibration"></param>
+        public void SetEnableCalib(bool enableCalibration)
         {
-            strobeMemory.GetRegister(STR.CHB_ENABLECALIB).InternalValue = 1;
+            strobeMemory.GetRegister(STR.CHB_ENABLECALIB).Set((byte)(enableCalibration ? 1 : 0));
             strobeMemory.WriteSingle(STR.CHB_ENABLECALIB);
         }
 
-        public void DecreaseReadoutSpead()
+        /// <summary>
+        /// Sets the calibration voltage on a channel
+        /// </summary>
+        /// <param name="voltage">The desired voltage</param>
+        public void SetCalibrationVoltage(float voltage)
         {
-            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue = 1;
-            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
-        }
-
-        public void ChangeCalibVoltage()
-        {
-            int orig = fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue + 1;
-            if (orig > 120) orig = 20;
-
-            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = (byte)orig;
+            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).Set(voltToByte(voltage));
             fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
         }
 
-        public void ToggleFreeRunning()
+        #endregion
+
+        #region AWG
+        /// <summary>
+        /// Set the data with which the AWG runs
+        /// </summary>
+        /// <param name="data">AWG data</param>
+        public void setAwgData(byte[] data)
         {
+            if (data.Length != 2048)
+                throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
 
-            //fpgaMemory.RegisterByName(REG.SAMPLECLOCKDIV_B1).InternalValue = 1;
-            //fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIV_B1);
+            //raise global reset to reset RAM address counter, and to make sure the RAM switching is safe
+            strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)1);
+            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
-            if (strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue == 0)
-                strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue = 1;
-            else
-                strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue = 0;
-            strobeMemory.WriteSingle(STR.FREE_RUNNING);
+            //save previous ram config
+            fpgaSettingsMemory.ReadSingle(REG.RAM_CONFIGURATION);
+            byte previousRamConfiguration = fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Get();
+
+            //set ram config to I2C input
+            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set((byte)2); //sets RAM0 to I2C input
+            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
+
+            //lower global reset
+            strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
+            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+
+            //break data up into blocks of 8bytes
+            int blockSize = 8;
+            int fullLength = data.Length;
+            int blockCounter = 0;
+
+            while (blockCounter * blockSize < fullLength) // as long as not all data has been sent
+            {
+
+                ///////////////////////////////////////////////////////////////////////////
+                //////Start sending data
+                byte[] toSend = new byte[5 + blockSize];
+
+                //prep header
+                int i = 0;
+                toSend[i++] = 123; //message for FPGA
+                toSend[i++] = 10; //I2C send
+                toSend[i++] = (byte)(blockSize + 2); //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
+                toSend[i++] = (byte)(7 << 1); //first I2C byte: FPGA i2c address for RAM writing(7) + '0' as LSB, indicating write operation
+                toSend[i++] = (byte)0; //second I2C byte: dummy!
+
+                //append data to be sent
+                for (int c = 0; c < blockSize; c++)
+                    toSend[i++] = data[blockCounter * blockSize + c];
+
+                eDevice.HWInterface.WriteControlBytes(toSend);
+
+                blockCounter++;
+            }
+
+            //set ram config to original state
+            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set(previousRamConfiguration); //sets RAM0 to I2C input
+            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
+
+            //lower global reset
+            strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
+            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
         }
+        #endregion
 
+        #region the rest
+
+        //FIXME: turn into a setting getter
         public int FreqDivider
         {
             get
@@ -149,6 +245,7 @@ namespace ECore.DeviceImplementations
             }
         }
 
+        //FIXME: turn into a setting getter
         public int GetTriggerPos()
         {
             fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B1);
@@ -157,18 +254,6 @@ namespace ECore.DeviceImplementations
             msb = msb << 8;
             int lsb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue;
             return msb + lsb + 1;
-        }
-
-        public void SetTriggerHorPos(int value)
-        {
-            value--;
-            if (value < 0) value = 0;
-            if (value > 2047) value = 2047;
-
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue = (byte)((value) >> 8);
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue = (byte)((value));
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
         }
 
         //private nested classes, shielding this from the outside.
@@ -229,62 +314,6 @@ namespace ECore.DeviceImplementations
 
             public float MaxRange { get { return 255f; } }
             public float ScalingFactor { get { return multiplicationFactor.InternalValue / divisionFactor.InternalValue; } }
-        }
-
-        public void UploadToRAM(byte[] inData)
-        {
-            //raise global reset to reset RAM address counter, and to make sure the RAM switching is safe
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
-
-            //save previous ram config
-            fpgaSettingsMemory.ReadSingle(REG.RAM_CONFIGURATION);
-            byte previousRamConfiguration = fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue;
-
-            //set ram config to I2C input
-            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 2; //sets RAM0 to I2C input
-            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
-
-            //lower global reset
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
-
-            //break data up into blocks of 8bytes
-            int blockSize = 8;
-            int fullLength = inData.Length;
-            int blockCounter = 0;
-
-            while (blockCounter * blockSize < fullLength) // as long as not all data has been sent
-            {
-
-                ///////////////////////////////////////////////////////////////////////////
-                //////Start sending data
-                byte[] toSend = new byte[5 + blockSize];
-
-                //prep header
-                int i = 0;
-                toSend[i++] = 123; //message for FPGA
-                toSend[i++] = 10; //I2C send
-                toSend[i++] = (byte)(blockSize + 2); //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
-                toSend[i++] = (byte)(7 << 1); //first I2C byte: FPGA i2c address for RAM writing(7) + '0' as LSB, indicating write operation
-                toSend[i++] = (byte)0; //second I2C byte: dummy!
-
-                //append data to be sent
-                for (int c = 0; c < blockSize; c++)
-                    toSend[i++] = inData[blockCounter * blockSize + c];
-
-                eDevice.HWInterface.WriteControlBytes(toSend);
-
-                blockCounter++;
-            }
-
-            //set ram config to original state
-            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = previousRamConfiguration; //sets RAM0 to I2C input
-            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
-
-            //lower global reset
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
         }
         #endregion
 

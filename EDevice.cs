@@ -133,9 +133,7 @@ namespace ECore
         public bool IsRunning { get { return running; } }
 
 
-        /**************
-         *  Settings  *
-         **************/
+        #region settings
 
         static public String SettingSetterMethodName(Setting s)
         {
@@ -167,6 +165,8 @@ namespace ECore
             }
             m.Invoke(this.deviceImplementation, parameters);
         }
+
+        #endregion
     }
 }
 

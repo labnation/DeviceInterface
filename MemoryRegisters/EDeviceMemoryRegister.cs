@@ -23,8 +23,8 @@ namespace ECore
         abstract public string Name { get; }
         abstract public int Address { get; }
         
-        abstract public EDeviceMemoryRegister set(object value);
-        public byte get() { return InternalValue; }
+        abstract public EDeviceMemoryRegister Set(object value);
+        public byte Get() { return InternalValue; }
         public EDeviceMemory ParentMemory { get { return parentMemory; } }
     }
 }

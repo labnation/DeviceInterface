@@ -35,11 +35,11 @@ namespace ECore.MemoryRegisters
             }
             set
             {
-                this.set(value);
+                this.Set(value);
             }
         }
 
-        public override EDeviceMemoryRegister set(object value)
+        public override EDeviceMemoryRegister Set(object value)
         {
             if (!(value is byte))
                 throw new Exception("Cannot convert " + value.GetType() + " to byte");

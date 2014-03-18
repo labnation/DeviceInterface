@@ -26,7 +26,7 @@ namespace ECore.MemoryRegisters
         public override string Name { get { return name; } }
         public override event RegisterInternalValueChangedHandler OnInternalValueChanged;
 
-        public override EDeviceMemoryRegister set(object value)
+        public override EDeviceMemoryRegister Set(object value)
         {
             if(!(value is byte))
                 throw new Exception("Cannot convert " + value.GetType() + " to byte");
@@ -47,7 +47,7 @@ namespace ECore.MemoryRegisters
             }
             set
             {
-                this.set(value);
+                this.Set(value);
             }
         }
     }
