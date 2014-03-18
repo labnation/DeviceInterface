@@ -35,12 +35,20 @@ namespace ECore.MemoryRegisters
             }
             set
             {
-                this.internalValue = value;
-
-                //fire event, so linked values and GUIs can update
-                if (OnInternalValueChanged != null)
-                    OnInternalValueChanged(this, new EventArgs());
+                this.set(value);
             }
+        }
+
+        public override EDeviceMemoryRegister set(object value)
+        {
+            if (!(value is byte))
+                throw new Exception("Cannot convert " + value.GetType() + " to byte");
+            this.internalValue = (byte)value;
+
+            //fire event, so linked values and GUIs can update
+            if (OnInternalValueChanged != null)
+                OnInternalValueChanged(this, new EventArgs());
+            return this;
         }
     }
 }

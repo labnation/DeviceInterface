@@ -22,7 +22,9 @@ namespace ECore
         abstract public int MaxValue { get; }
         abstract public string Name { get; }
         abstract public int Address { get; }
-
+        
+        abstract public EDeviceMemoryRegister set(object value);
+        public byte get() { return InternalValue; }
         public EDeviceMemory ParentMemory { get { return parentMemory; } }
     }
 }
