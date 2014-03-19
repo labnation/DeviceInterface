@@ -116,7 +116,7 @@ namespace ECore.DeviceImplementations
             if (level > 255) level = 255;
 
             Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + level);
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set(level);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
         ///<summary>
@@ -150,7 +150,7 @@ namespace ECore.DeviceImplementations
                 throw new ValidationException("Trigger hold off must be between 0 and 2047");
             
             fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples) >> 8);
+            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
         }
