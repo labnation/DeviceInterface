@@ -31,5 +31,12 @@ namespace ECore
             }));
             return result;
         }
+
+        static public O[] CastArray<I, O>(I[] input) {
+            O[] output = new O[input.Length];
+            for (int i = 0; i < input.Length; i++)
+                output[i] = (O)((object)(input[i]));
+            return output;
+        }
     }
 }
