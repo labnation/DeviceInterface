@@ -55,11 +55,13 @@ namespace ECore.DeviceMemories
 
             //now data is stored in EP3 of PIC, so read it
             byte[] readBuffer = eDevice.HWInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
-
-            //strip away first 4 bytes (as these are not data) and store inside registers
-            byte[] returnBuffer = new byte[burstSize];
-            for (int j = 0; j < burstSize; j++)
-                registers[startAddress + j].InternalValue = readBuffer[4 + j];
+            if (readBuffer.Length > 0)
+            {
+                //strip away first 4 bytes (as these are not data) and store inside registers
+                byte[] returnBuffer = new byte[burstSize];
+                for (int j = 0; j < burstSize; j++)
+                    registers[startAddress + j].InternalValue = readBuffer[4 + j];
+            }
         }
 
         public override void WriteRange(int startAddress, int burstSize)
