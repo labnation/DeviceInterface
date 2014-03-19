@@ -27,12 +27,14 @@ namespace ECore.EDataNodes
 
         public override void Update(EDataNode sender, EventArgs e)
         {
-            float[] rawValues = eDevice.DeviceImplementation.GetRawData();
-            float[] voltageValues = rawValues;
+            byte[] buffer = eDevice.DeviceImplementation.GetBytes();
+            float[] voltageValues;
 
             //the following option allows the raw data to be passed through, required for calibrating the data
             if (!RawDataPassThrough)
-                voltageValues = eDevice.DeviceImplementation.ConvertRawDataToVoltages(rawValues);
+                voltageValues = eDevice.DeviceImplementation.ConvertBytesToVoltages(buffer);
+            else
+                voltageValues = Utils.CastArray<byte, float>(buffer);
 
             //convert data into an EDataPackage
             lastDataPackage = new EDataPackage(voltageValues);

@@ -31,8 +31,8 @@ namespace ECore
         abstract public void Stop();
         //FIXME: these are too specific for a "Device" -> either call it scope or move them down to the scope
         abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();
-        abstract public float[] GetRawData();
-        abstract public float[] ConvertRawDataToVoltages(float[] rawFloats);
+        abstract public byte[] GetBytes();
+        abstract public float[] ConvertBytesToVoltages(byte[] buffer);
         abstract public void FlashHW();
 
         //////////////////////////////////////////////////////////////////

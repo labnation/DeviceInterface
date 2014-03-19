@@ -147,21 +147,16 @@ constant ROM_FIFO_STATUS	 			: INTEGER := 4;
         {
         }
 
-        public override float[] GetRawData()
+        public override byte[] GetBytes()
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
-            byte[] rawData = eDevice.HWInterface.GetData(bytesToFetch);
-            float[] rawFloats = new float[samplesToFetch];
-            for (int i = 0; i < rawData.Length; i++)
-                rawFloats[i] = (float)rawData[i];
-
-            return rawFloats;
+            return eDevice.HWInterface.GetData(bytesToFetch);
         }
 
-        public override float[] ConvertRawDataToVoltages(float[] rawFloats)
+        public override float[] ConvertBytesToVoltages(byte[] buffer)
         {            
-            return rawFloats;            
+            return Utils.CastArray<byte, float>(buffer);            
         }
 
         //private nested classes, shielding this from the outside.

@@ -166,28 +166,23 @@ namespace ECore.DeviceImplementations
 
         #region data_handlers
 
-        public override float[] GetRawData()
+        public override byte[] GetBytes()
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
-			byte[] rawData = eDevice.HWInterface.GetData(bytesToFetch);
-            float[] rawFloats = new float[samplesToFetch];
-            for (int i = 0; i < rawData.Length; i++)
-                rawFloats[i] = (float)rawData[i];
-
-            return rawFloats;            
+            return eDevice.HWInterface.GetData(bytesToFetch);          
         }
 
-        public override float[] ConvertRawDataToVoltages(float[] rawData)
+        public override float[] ConvertBytesToVoltages(byte[] buffer)
         {
-            float[] voltageValues = new float[rawData.Length];
+            float[] voltageValues = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value
             float yOffFPGA = (float)fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
             float totalOffset = fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
-            for (int i = 0; i < rawData.Length; i++)
+            for (int i = 0; i < buffer.Length; i++)
             {                
-                float gainedVal = rawData[i] * calibrationCoefficients[0];
+                float gainedVal = (float)buffer[i] * calibrationCoefficients[0];
                 voltageValues[i] = gainedVal + totalOffset;
             }
 
