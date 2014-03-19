@@ -44,6 +44,7 @@ namespace ECore
         DECIMATION,
         ENABLE_FREE_RUNNING,
         HOLD_OFF,
+        ENABLE_DC_COUPLING,
         #endregion
 
         #region other

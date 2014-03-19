@@ -41,6 +41,7 @@ namespace ECore.DeviceImplementations
         /// <param name="offset">Vertical offset in Volt</param>
         public void SetYOffset(uint channel, float offset)
         {
+            //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             fpgaSettingsMemory.GetRegister(r).InternalValue = (byte)offset;
             fpgaSettingsMemory.WriteSingle(r);
@@ -87,6 +88,19 @@ namespace ECore.DeviceImplementations
             strobeMemory.WriteSingle(m2);
             strobeMemory.WriteSingle(m3);
             */
+        }
+
+        ///<summary>
+        ///Enable DC coupling
+        ///</summary>
+        ///<param name="channel">0 or 1 (channel A or B)</param>
+        ///<param name="enableDc">true for DC coupling, false for AC coupling</param>
+        public void SetEnableDcCoupling(uint channel, bool enableDc)
+        {
+            validateChannel(channel);            
+            STR dc = (channel == 0) ? STR.CHA_DCCOUPLING: STR.CHB_DCCOUPLING;
+            strobeMemory.GetRegister(dc).Set((byte)(enableDc ? 1 : 0));
+            strobeMemory.WriteSingle(dc);
         }
 
         #endregion

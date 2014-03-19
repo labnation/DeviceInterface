@@ -103,23 +103,20 @@ namespace ECore.DeviceImplementations
             fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
 
             //set feedback loopand to 1V for demo purpose and enable
-            strobeMemory.GetRegister(STR.CHA_DIV1).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.CHA_DIV1);
-
-            strobeMemory.GetRegister(STR.CHB_DIV1).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.CHB_DIV1);
+            this.SetDivider(0, 1);
+            this.SetDivider(1, 1);
 
             fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
             fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
 
+            //FIXME: use this instead of code below
+            //this.SetTriggerLevel(0f);
             fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
 
-            fpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).InternalValue = 100;
-            fpgaSettingsMemory.WriteSingle(REG.CHA_YOFFSET_VOLTAGE);
-
-            fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue = 100;// (byte)yOffset_Midrange0V;
-            fpgaSettingsMemory.WriteSingle(REG.CHB_YOFFSET_VOLTAGE);
+            //FIXME: these are byte values, since the setter helper is not converting volt to byte
+            this.SetYOffset(0, 100f);
+            this.SetYOffset(1, 100f);
 
             //fpgaMemory.RegisterByName(REG.TRIGGERHOLDOFF_B1).InternalValue = 4;
             //fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
@@ -140,15 +137,10 @@ namespace ECore.DeviceImplementations
             adcMemory.GetRegister(MAX19506.FORMAT_PATTERN).InternalValue = 16;
             adcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
 
-            //output counter by default
-            strobeMemory.GetRegister(STR.CHA_DCCOUPLING).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.CHA_DCCOUPLING);
-            strobeMemory.GetRegister(STR.CHB_DCCOUPLING).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.CHB_DCCOUPLING);
+            this.SetEnableDcCoupling(0, true);
+            this.SetEnableDcCoupling(1, true);
 
-            //freerunning as global enable
-            strobeMemory.GetRegister(STR.FREE_RUNNING).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.FREE_RUNNING);
+            this.SetEnableFreeRunning(true);
 
             //lower global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
