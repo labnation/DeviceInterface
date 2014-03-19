@@ -58,9 +58,9 @@ namespace ECore.DeviceImplementations
             STR d1   = (channel == 0) ? STR.CHA_DIV1   : STR.CHB_DIV1;
             STR d10  = (channel == 0) ? STR.CHA_DIV10  : STR.CHB_DIV10;
             STR d100 = (channel == 0) ? STR.CHA_DIV100 : STR.CHB_DIV100;
-            strobeMemory.GetRegister(d1).Set((divider == 1) ? 1 : 0);
-            strobeMemory.GetRegister(d10).Set((divider == 10) ? 1 : 0);
-            strobeMemory.GetRegister(d100).Set((divider == 100) ? 1 : 0);
+            strobeMemory.GetRegister(d1).Set((byte)((divider == 1) ? 1 : 0));
+            strobeMemory.GetRegister(d10).Set((byte)((divider == 10) ? 1 : 0));
+            strobeMemory.GetRegister(d100).Set((byte)((divider == 100) ? 1 : 0));
             strobeMemory.WriteSingle(d1);
             strobeMemory.WriteSingle(d10);
             strobeMemory.WriteSingle(d100);
