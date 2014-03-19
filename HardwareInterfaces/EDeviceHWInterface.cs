@@ -11,7 +11,7 @@ namespace ECore
         abstract public byte[] ReadControlBytes(int length);
         abstract public byte[] GetData(int numberOfBytes);
         abstract public bool Connected { get; }
-        abstract public void StartInterface();
-        abstract public void StopInterface();
+        abstract public void Stop();
+        abstract public void Start();
     }
 }

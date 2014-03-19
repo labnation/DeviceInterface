@@ -322,11 +322,11 @@ namespace ECore.HardwareInterfaces
 			get { return isConnected; }
 		}
 
-		public override void StartInterface()
+		public override void Stop()
 		{            
 		}
 
-		public override void StopInterface()
+		public override void Start()
 		{
 		}
     }
