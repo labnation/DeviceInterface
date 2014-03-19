@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ECore.EFuctionalities;
 using ECore.DeviceMemories;
 
 namespace ECore.DeviceImplementations

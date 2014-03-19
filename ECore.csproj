@@ -96,21 +96,10 @@
     <Compile Include="EDataNodes\EDataNodeFromDevice.cs" />
     <Compile Include="EDataNodes\EDataNode.cs" />
     <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
-    <Compile Include="DeviceImplementations\ScopeV1.cs" />
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
     <Compile Include="EDataPackage.cs" />
-    <Compile Include="EFuctionalities\EFTriggerPosition.cs" />
-    <Compile Include="EFuctionalities\EFOffset.cs" />
-    <Compile Include="EFuctionalities\EFSamplingFrequency.cs" />
-    <Compile Include="EFuctionalities\EFDivisionFactor.cs" />
-    <Compile Include="EFuctionalities\EFMultiplicationFactor.cs" />
-    <Compile Include="EFuctionalities\EFCalibrationVoltage.cs" />
-    <Compile Include="EInterfaces\ITriggerPosition.cs" />
-    <Compile Include="EInterfaces\IScopeChannel.cs" />
-    <Compile Include="EInterfaces\ICalibrationVoltage.cs" />
-    <Compile Include="EFuctionalities\EFunctionality.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="MemoryRegisters\ByteRegister.cs" />
@@ -142,6 +131,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
