@@ -36,6 +36,7 @@ namespace ECore
     public static class Logger
     {
         static private List<LogEntry> logEntries = new List<LogEntry>();
+        //FIXME: NO GUI  IN ECORE!!!
         static private ListBox listBox;
 
         //allows any method anywhere in the project to send log information

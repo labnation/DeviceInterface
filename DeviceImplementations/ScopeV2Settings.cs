@@ -255,66 +255,6 @@ namespace ECore.DeviceImplementations
             int lsb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue;
             return msb + lsb + 1;
         }
-
-        //private nested classes, shielding this from the outside.
-        //only ScopeV2 can instantiate this class!
-        private class ScopeV2CalibrationVoltage : EInterfaces.ICalibrationVoltage
-        {
-            //private EFunctionality calibrationEnabled;
-            private EFunctionality calibrationVoltage;
-
-            //public EFunctionality CalibrationEnabled { get { return calibrationEnabled; } }
-            public EFunctionality CalibrationVoltage { get { return calibrationVoltage; } }
-
-            public ScopeV2CalibrationVoltage(ScopeV2 deviceImplementation)
-            {
-                this.calibrationVoltage = new EFCalibrationVoltage("Calibration voltage", "V", 0, deviceImplementation.fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE), 3.3f);
-                //this.calibrationEnabled = new EFunctionality("Calibration enabled", "", deviceImplementation.strobeMemory, new string[] { STR.CHB_DIV1" }, F2H_CalibEnabled, H2F_CalibEnabled);
-            }
-        }
-
-        private class ScopeV2TriggerPosition : EInterfaces.ITriggerPosition
-        {
-            private EFunctionality triggerPosition;
-            public EFunctionality TriggerPosition { get { return triggerPosition; } }
-
-            public ScopeV2TriggerPosition(ScopeV2 deviceImplementation)
-            {
-                this.triggerPosition = new EFTriggerPosition("Trigger position", "", 140, deviceImplementation.fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL));
-                //this.calibrationEnabled = new EFunctionality("Calibration enabled", "", deviceImplementation.strobeMemory, new string[] { STR.CHB_DIV1" }, F2H_CalibEnabled, H2F_CalibEnabled);
-            }
-        }
-
-        private class ScopeV2ScopeChannelB : EInterfaces.IScopeChannel
-        {
-            private EFunctionality multiplicationFactor;
-            private EFunctionality divisionFactor;
-            private EFunctionality samplingFrequency;
-            private EFOffset channelOffset;
-
-            public EFunctionality MultiplicationFactor { get { return multiplicationFactor; } }
-            public EFunctionality DivisionFactor { get { return divisionFactor; } }
-            public EFunctionality SamplingFrequency { get { return samplingFrequency; } }
-            public EFunctionality ChannelOffset { get { return channelOffset; } }
-
-            public ScopeV2ScopeChannelB(ScopeV2 deviceImplementation)
-            {
-                EDeviceMemoryRegister[] multiplicationStrobes = new EDeviceMemoryRegister[3];
-                multiplicationStrobes[0] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT1);
-                multiplicationStrobes[1] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT2);
-                multiplicationStrobes[2] = deviceImplementation.strobeMemory.GetRegister(STR.CHB_MULT3);
-
-                int[] multiplyingResistors = new int[3] { 0, 1000, 6200 };
-
-                //this.channelOffset = new EFOffset("Channel offset", "V", 0);
-                //this.multiplicationFactor = new EFMultiplicationFactor("Multiplication factor", "", 1, multiplicationStrobes, 1000, multiplyingResistors, 24, channelOffset);
-                //this.divisionFactor = new EFDivisionFactor("Division factor", "", 1);
-                this.samplingFrequency = new EFSamplingFrequency("Sampling Frequency", "Hz", 100000000);
-            }
-
-            public float MaxRange { get { return 255f; } }
-            public float ScalingFactor { get { return multiplicationFactor.InternalValue / divisionFactor.InternalValue; } }
-        }
         #endregion
 
     }

@@ -40,9 +40,7 @@ namespace ECore
 
         public EDevice(Type deviceImplementationType)
         {
-            //creates an instance of the selected cameraImplementation
-            //object[] parameters = {this};
-            //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, parameters); ;
+            //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType);
             this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
             deviceImplementation.InitializeHardwareInterface();
             this.romManager = deviceImplementation.CreateRomManager();

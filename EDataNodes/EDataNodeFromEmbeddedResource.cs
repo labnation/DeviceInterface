@@ -22,7 +22,8 @@ namespace ECore.EDataNodes
             System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++)
             {
-                if (reader == null) //dirty patch! otherwise this loop will crash, as there are some assemblies at the end of the list that don't support the following operations and crash
+                //FIXME: dirty patch! otherwise this loop will crash, as there are some assemblies at the end of the list that don't support the following operations and crash
+                if (reader == null) 
                 {
                     System.Reflection.Assembly assy = assemblies[assyIndex];
                     string[] assetList = assy.GetManifestResourceNames();

@@ -46,6 +46,7 @@ namespace ECore.EDataNodes
 		public EDataNodeFromFile()
         {
             //show select file dialog
+            //FIXME: NO GUI IN ECORE!!!
             OpenFileDialog dialog = new OpenFileDialog { Filter = @"data files (*.mat)|*.mat", Title = @"Select a saved data stream"};
 
             //if strange things happened

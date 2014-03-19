@@ -37,6 +37,7 @@ namespace ECore.DeviceImplementations
         public ScopeV2(EDevice eDevice) : base(eDevice) 
         {
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
+            //FIXME: no clue why this line is here...
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
         }
 
@@ -83,11 +84,7 @@ namespace ECore.DeviceImplementations
         }
 
         public override void InitializeFunctionalities()
-        {
-            functionalities.Add(new ScopeV2CalibrationVoltage(this));
-            functionalities.Add(new ScopeV2ScopeChannelB(this));
-            functionalities.Add(new ScopeV2TriggerPosition(this));
-        }
+        { }
 
         #endregion
 

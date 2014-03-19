@@ -9,11 +9,7 @@ namespace ECore
 
     public abstract class EDataNode
     {
-        public EDataNode()
-        {
-        }
-
-        
+        public EDataNode() { }
 
         abstract public EDataPackage LatestDataPackage { get; }
         abstract public void Update(EDataNode sender, EventArgs e);

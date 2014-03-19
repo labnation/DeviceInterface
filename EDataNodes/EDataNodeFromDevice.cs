@@ -36,16 +36,6 @@ namespace ECore.EDataNodes
 
             //convert data into an EDataPackage
             lastDataPackage = new EDataPackage(voltageValues);
-
-            /*
-            StringBuilder sb = new StringBuilder();
-            foreach (UInt16 ui in data)
-                sb.Append(ui.ToString()+",");
-            */
-            //fire event
-            //Logger.AddEntry(this, LogMessageType.ECoreInfo, "Incoming data: "+sb.ToString());
-            
-            
         }
     }
 }
