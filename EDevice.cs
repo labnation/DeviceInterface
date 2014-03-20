@@ -61,7 +61,7 @@ namespace ECore
 			if (HWInterface.Connected)
                 //load data from a device
                 //FIXME: move datasource initialization to deviceimplementation
-                dataSource = new DataSources.DataSourceScopeV2((ScopeV2)this.deviceImplementation);
+                dataSource = new DataSources.DataSourceScopeWaveAnalog((ScopeV2)this.deviceImplementation);
             else
                 //load data from a stream                
                 dataSource = new DataSources.DataSourceFile();

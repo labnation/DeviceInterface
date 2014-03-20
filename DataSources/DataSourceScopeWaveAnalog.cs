@@ -8,13 +8,13 @@ using ECore.DeviceImplementations;
 
 namespace ECore.DataSources
 {
-    public class DataSourceScopeV2: DataSource
+    public class DataSourceScopeWaveAnalog: DataSource
     {
         private ScopeV2 scope;        
         private DataPackageWaveAnalog lastDataPackage;
         public bool RawDataPassThrough;
 
-        public DataSourceScopeV2(ScopeV2 scope)
+        public DataSourceScopeWaveAnalog(ScopeV2 scope)
         {
             this.scope = scope;
             this.RawDataPassThrough = false;
@@ -22,6 +22,7 @@ namespace ECore.DataSources
         
         public override void Update()
         {
+            //FIXME: shouldn't get bytes here, but deviceimplementation should implement the conversion to voltage floats
             byte[] buffer = scope.GetBytes();
             float[] voltageValues;
 
