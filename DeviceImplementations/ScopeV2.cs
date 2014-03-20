@@ -202,8 +202,8 @@ namespace ECore.DeviceImplementations
             byte[] chB = new byte[buffer.Length / 2];
             for (int i = 0; i < chA.Length; i++)
             {
-                chA[i] = buffer[2 * i];
-                chB[i] = buffer[2 * i + 1];
+                chA[i] = buffer[i];
+                chB[i] = buffer[buffer.Length/2 + i];
             }
 
             //construct data package

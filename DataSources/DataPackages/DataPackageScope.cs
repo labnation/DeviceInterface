@@ -41,10 +41,19 @@ namespace ECore.DataPackages
             dataDigital = new Dictionary<ScopeChannel, bool[]>();
         }
         //FIXME: this constructor shouldn't be necessary, all data should be set using Set()
-        public DataPackageScope(float[] voltages)
+        //It's just here to support "legacy" code
+        public DataPackageScope(float[] buffer)
             : this()
         {
-            dataAnalog.Add(ScopeChannel.ChA, voltages);
+            float[] chA = new float[buffer.Length / 2];
+            float[] chB = new float[buffer.Length / 2];
+            for (int i = 0; i < chA.Length; i++)
+            {
+                chA[i] = buffer[i];
+                chB[i] = buffer[buffer.Length / 2 + i];
+            }
+            dataAnalog.Add(ScopeChannel.ChA, chA);
+            dataAnalog.Add(ScopeChannel.ChB, chB);
         }
         private void CheckChannelDataType(ScopeChannel ch, object data)
         {
