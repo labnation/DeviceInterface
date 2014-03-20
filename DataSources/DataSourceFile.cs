@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.DataPackages;
+using ECore.DeviceImplementations;
 
 #if IPHONE || ANDROID
 #else
@@ -41,7 +42,7 @@ namespace ECore.DataSources
 #else
 		MatlabFileReader fileReader;
 		MatlabFileArrayReader arrayReader;
-
+        //FIXME: add support for multiple channels
 		public DataSourceFile()
         {
             //show select file dialog
@@ -62,7 +63,7 @@ namespace ECore.DataSources
         {
             arrayReader = fileReader.OpenArray("ScopeData");
         }
-        public override bool Update()
+        public override void Update()
         {
             //since this is a source node, it should fire its event at a certain interval.
             //in order to emulate this, thread will be suspended.
@@ -83,8 +84,8 @@ namespace ECore.DataSources
             float[] voltageValues = arrayReader.ReadRowFloat();            
 
             //convert data into an EDataPackage
-            latestDataPackage = new DataPackageWaveAnalog(voltageValues, 0);
-            return true;
+            latestDataPackage = new DataPackageScope(new ScopeData(voltageValues), 0);
+            this.fireDataAvailableEvents();
         }
 #endif
     }

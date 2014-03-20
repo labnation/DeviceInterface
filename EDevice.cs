@@ -23,9 +23,6 @@ namespace ECore
         private Thread dataFetchThread;
         private bool running;
 
-        //events
-		public event NewDataAvailableHandler OnNewDataAvailable;
-
 #if false
 		#if ANDROID
 		public static Android.Content.Context ApplicationContext;
@@ -38,8 +35,9 @@ namespace ECore
 
         public EDevice(Type deviceImplementationType)
         {
-            //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType);
-            this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
+            //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, new object[] {this});
+            //this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
+            this.deviceImplementation = new DeviceImplementations.ScopeDummy(this);
             deviceImplementation.InitializeHardwareInterface();
 
             this.running = false;
@@ -86,14 +84,10 @@ namespace ECore
             //looping until device is stopped
             while (running)
             {
-                //Update each dataSource and fire callback if new data available
+                //Update each dataSource (callback is fired from within)
                 foreach (DataSource d in this.deviceImplementation.DataSources)
                 {
-                    if (d.Update())
-                    {
-                        if (OnNewDataAvailable != null)
-                            OnNewDataAvailable(d.LatestDataPackage, new EventArgs());
-                    }
+                    d.Update();
                 }
             }
         }

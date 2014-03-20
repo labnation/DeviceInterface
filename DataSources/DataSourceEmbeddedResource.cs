@@ -4,17 +4,18 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using ECore.DataPackages;
+using ECore.DeviceImplementations;
 
 namespace ECore.DataSources
 {
     public class DataSourceEmbeddedResource: DataSource
     {
         private int sleepTime = 10;
-        private DataPackageWaveAnalog lastDataPackage;
+        private DataPackageScope lastDataPackage;
         StreamReader reader = null;
         List<float[]> dataList = new List<float[]>();
         int index = 0;
-
+        //FIXME: add support for multiple channels
 		public DataSourceEmbeddedResource()
         {
             Stream inStream;            
@@ -64,7 +65,7 @@ namespace ECore.DataSources
 				}
             }
         }
-        public override bool Update()
+        public override void Update()
         {
 
             //since this is a source node, it should fire its event at a certain interval.
@@ -79,7 +80,7 @@ namespace ECore.DataSources
 
 			if (dataList.Count == 0) {
 				float [] dummy = new float[4096];
-				lastDataPackage = new DataPackageWaveAnalog(dummy, 0);  
+				lastDataPackage = new DataPackageScope(new ScopeData(dummy), 0);  
 			}
 
             if (index++ >= dataList.Count-1)
@@ -87,8 +88,8 @@ namespace ECore.DataSources
             
 
             //convert data into an EDataPackage if valid
-            lastDataPackage = new DataPackageWaveAnalog(dataList[index], 0);
-            return true;
+            lastDataPackage = new DataPackageScope(new ScopeData(dataList[index]), 0);
+            this.fireDataAvailableEvents();
         }
     }
 }

@@ -88,7 +88,8 @@ namespace ECore.DeviceImplementations
 
         public override void InitializeDataSources()
         {
-            dataSources.Add(new DataSources.DataSourceScopeWaveAnalog(this));
+            //FIXME: add one for CHB and for digital channels
+            dataSources.Add(new DataSources.DataSourceScope(this));
         }
 
         #endregion
@@ -178,10 +179,12 @@ namespace ECore.DeviceImplementations
             return eDevice.HWInterface.GetData(bytesToFetch);          
         }
 
-        public override float[] GetVoltages()
+        public override ScopeData GetScopeData()
         {
+            //FIXME: run getBytes in another thread, so that this one just takes the last bytes available and
+            //parses it into the left or right channel (take code from UIHandler.splitandblabla
             if(this.disableVoltageConversion)
-                return Utils.CastArray<byte, float>(this.GetBytes());
+                return new ScopeData(Utils.CastArray<byte, float>(this.GetBytes()));
 
             byte[] buffer = this.GetBytes();
             float[] voltageValues = new float[buffer.Length];
@@ -195,7 +198,7 @@ namespace ECore.DeviceImplementations
                 voltageValues[i] = gainedVal + totalOffset;
             }
 
-            return voltageValues;
+            return new ScopeData(voltageValues);
         }
 
         #endregion

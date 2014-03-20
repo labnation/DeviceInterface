@@ -8,22 +8,20 @@ using ECore.DeviceImplementations;
 
 namespace ECore.DataSources
 {
-    public class DataSourceScopeWaveAnalog: DataSource
+    public class DataSourceScope: DataSource
     {
-        private Scope scope;        
-        private DataPackageWaveAnalog lastDataPackage;
-        public bool RawDataPassThrough;
+        private Scope scope;
+        private DataPackageScope lastDataPackage;
 
-        public DataSourceScopeWaveAnalog(Scope scope)
+        public DataSourceScope(Scope scope)
         {
             this.scope = scope;
-            this.RawDataPassThrough = false;
         }
         
-        public override bool Update()
+        public override void Update()
         {
-            lastDataPackage = new DataPackageWaveAnalog(scope.GetVoltages(), 0);
-            return true;
+            lastDataPackage = new DataPackageScope(scope.GetScopeData(), 0);
+            this.fireDataAvailableEvents();
         }
     }
 }

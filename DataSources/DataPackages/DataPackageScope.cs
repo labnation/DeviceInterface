@@ -2,21 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ECore.DeviceImplementations;
 
 namespace ECore.DataPackages
 {
-    public abstract class DataPackageWave<T>
+    public class DataPackageScope
     {
-        private T[] samples;
+        ScopeData data;
         private uint triggerIndex;
 
-        public DataPackageWave(T[] samples, uint triggerIndex)
+        public DataPackageScope(ScopeData data, uint triggerIndex)
         {
-            this.samples = samples;
+            this.data = data;
             this.triggerIndex = triggerIndex;
         }
 
-        public T[] Samples { get { return this.samples; } }
+        public ScopeData Data { get { return this.data; } }
         public uint TriggerIndex { get { return this.triggerIndex; } }
     }
 }
