@@ -64,7 +64,7 @@ namespace ECore.DataSources
 				}
             }
         }
-        public override void Update()
+        public override bool Update()
         {
 
             //since this is a source node, it should fire its event at a certain interval.
@@ -88,6 +88,7 @@ namespace ECore.DataSources
 
             //convert data into an EDataPackage if valid
             lastDataPackage = new DataPackageWaveAnalog(dataList[index], 0);
+            return true;
         }
     }
 }

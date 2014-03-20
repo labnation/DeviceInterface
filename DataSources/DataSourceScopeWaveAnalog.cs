@@ -20,7 +20,7 @@ namespace ECore.DataSources
             this.RawDataPassThrough = false;
         }
         
-        public override void Update()
+        public override bool Update()
         {
             //FIXME: shouldn't get bytes here, but deviceimplementation should implement the conversion to voltage floats
             byte[] buffer = scope.GetBytes();
@@ -35,6 +35,7 @@ namespace ECore.DataSources
             //convert data into an EDataPackage
             //FIXME: change 0 to triggerIndex
             lastDataPackage = new DataPackageWaveAnalog(voltageValues, 0);
+            return true;
         }
     }
 }

@@ -14,6 +14,6 @@ namespace ECore
         protected DateTime lastUpdate;
         protected DataPackageWaveAnalog latestDataPackage;
         public DataPackageWaveAnalog LatestDataPackage { get { return this.latestDataPackage; } }
-        abstract public void Update();
+        abstract public bool Update();
     }
 }

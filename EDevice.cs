@@ -25,7 +25,7 @@ namespace ECore
         private Thread dataFetchThread;
         private bool running;
         //FIXME: move initialization of datasources to device implementation
-        private DataSource dataSource;
+        private List<DataSource> dataSources;
 
 		//events
 		public event NewDataAvailableHandler OnNewDataAvailable;
@@ -61,10 +61,10 @@ namespace ECore
 			if (HWInterface.Connected)
                 //load data from a device
                 //FIXME: move datasource initialization to deviceimplementation
-                dataSource = new DataSources.DataSourceScopeWaveAnalog((ScopeV2)this.deviceImplementation);
+                dataSources.Add(new DataSources.DataSourceScopeWaveAnalog((ScopeV2)this.deviceImplementation));
             else
                 //load data from a stream                
-                dataSource = new DataSources.DataSourceFile();
+                dataSources.Add(new DataSources.DataSourceFile());
 
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
@@ -79,7 +79,7 @@ namespace ECore
 
             //check whether physical HW device is connected. if not, load data from a stream
             
-            dataSource = new DataSources.DataSourceEmbeddedResource();
+            dataSources.Add(new DataSources.DataSourceEmbeddedResource());
 
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
@@ -101,14 +101,15 @@ namespace ECore
             //looping until device is stopped
             while (running)
             {
-                //update data
-                dataSource.Update();
-
-                //flag that new data has arrived
-                if (OnNewDataAvailable != null)
-                    OnNewDataAvailable(dataSource.LatestDataPackage,  new EventArgs());
-
-                //Stop();
+                //Update each dataSource and fire callback if new data available
+                foreach (DataSource d in this.dataSources)
+                {
+                    if (d.Update())
+                    {
+                        if (OnNewDataAvailable != null)
+                            OnNewDataAvailable(d.LatestDataPackage, new EventArgs());
+                    }
+                }
             }
         }
 
