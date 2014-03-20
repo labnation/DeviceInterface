@@ -50,6 +50,11 @@ namespace ECore
         #region other
         AWG_DATA,
         #endregion
+
+        //FIXME: guard this so it's only in internal builds
+        #region develop
+        DISABLE_VOLTAGE_CONVERSION,
+        #endregion
     };
 
 }

@@ -22,18 +22,7 @@ namespace ECore.DataSources
         
         public override bool Update()
         {
-            float[] voltageValues;
-
-            //the following option allows the raw data to be passed through, required for calibrating the data
-
-            if (!RawDataPassThrough)
-                voltageValues = scope.GetVoltages();
-            else
-                voltageValues = Utils.CastArray<byte, float>(scope.GetBytes());
-
-            //convert data into an EDataPackage
-            //FIXME: change 0 to triggerIndex
-            lastDataPackage = new DataPackageWaveAnalog(voltageValues, 0);
+            lastDataPackage = new DataPackageWaveAnalog(scope.GetVoltages(), 0);
             return true;
         }
     }

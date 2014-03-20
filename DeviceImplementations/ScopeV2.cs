@@ -28,6 +28,7 @@ namespace ECore.DeviceImplementations
         private int yOffset_Midrange0V;
         public float ChannelAYOffsetVoltage { get { return 0; } }
         public float ChannelBYOffsetVoltage { get { return (float)((fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
+        private bool disableVoltageConversion;
 
 		#if ANDROID
 		public Android.Content.Res.AssetManager Assets;
@@ -174,6 +175,9 @@ namespace ECore.DeviceImplementations
 
         public override float[] GetVoltages()
         {
+            if(this.disableVoltageConversion)
+                return Utils.CastArray<byte, float>(this.GetBytes());
+
             byte[] buffer = this.GetBytes();
             float[] voltageValues = new float[buffer.Length];
 

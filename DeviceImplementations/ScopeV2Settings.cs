@@ -270,5 +270,18 @@ namespace ECore.DeviceImplementations
         }
         #endregion
 
+        
+        //FIXME: guard this so it's only in internal builds
+        #region develop
+        /// <summary>
+        /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
+        /// </summary>
+        /// <param name="disable"></param>
+        public void SetDisableVoltageConversion(bool disable)
+        {
+            this.disableVoltageConversion = true;
+        }
+        #endregion
+
     }
 }
