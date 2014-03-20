@@ -172,8 +172,9 @@ namespace ECore.DeviceImplementations
             return eDevice.HWInterface.GetData(bytesToFetch);          
         }
 
-        public float[] ConvertBytesToVoltages(byte[] buffer)
+        public override float[] GetVoltages()
         {
+            byte[] buffer = this.GetBytes();
             float[] voltageValues = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value

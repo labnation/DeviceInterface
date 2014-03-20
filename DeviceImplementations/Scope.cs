@@ -8,5 +8,7 @@ namespace ECore.DeviceImplementations
     public abstract class Scope: EDeviceImplementation
     {
         public Scope(EDevice device) : base(device) { }
+        //FIXME: add channel argument
+        public abstract float[] GetVoltages();
     }
 }
