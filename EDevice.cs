@@ -23,7 +23,7 @@ namespace ECore
         //properties regarding thread management
         private Thread dataFetchThread;
         private bool running;
-        private EDataNode dataGeneratorNode;
+        private DataSource dataGeneratorNode;
 
 		//events
 		public event NewDataAvailableHandler OnNewDataAvailable;
@@ -58,10 +58,10 @@ namespace ECore
             //check whether physical HW device is connected. if not, load data from a stream
 			if (HWInterface.Connected)
                 //load data from a device
-                dataGeneratorNode = new EDataNodes.EDataNodeFromDevice(this);
+                dataGeneratorNode = new EDataNodes.DataSourceDevice(this);
             else
                 //load data from a stream                
-                dataGeneratorNode = new EDataNodes.EDataNodeFromFile();
+                dataGeneratorNode = new EDataNodes.DataSourceFile();
 
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
@@ -76,7 +76,7 @@ namespace ECore
 
             //check whether physical HW device is connected. if not, load data from a stream
             
-            dataGeneratorNode = new EDataNodes.EDataNodeFromEmbeddedResource();
+            dataGeneratorNode = new EDataNodes.DataSourceEmbeddedResource();
 
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);

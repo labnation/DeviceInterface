@@ -7,16 +7,15 @@ using ECore.DataPackages;
 
 namespace ECore.EDataNodes
 {
-    public class EDataNodeFromEmbeddedResource: EDataNode
+    public class DataSourceEmbeddedResource: DataSource
     {
         private int sleepTime = 10;
         private DataPackageWaveAnalog lastDataPackage;
-        DateTime lastUpdate;
         StreamReader reader = null;
         List<float[]> dataList = new List<float[]>();
         int index = 0;
 
-		public EDataNodeFromEmbeddedResource()
+		public DataSourceEmbeddedResource()
         {
             Stream inStream;            
 
@@ -66,10 +65,6 @@ namespace ECore.EDataNodes
             }
         }
         
-        private void OpenArray()
-        {
-        }
-
         public override void Update()
         {
 

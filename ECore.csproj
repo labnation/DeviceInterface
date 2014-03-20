@@ -93,13 +93,13 @@
     <Compile Include="DeviceMemories\ScopePicRegisterMemory.cs" />
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaRom.cs" />
-    <Compile Include="EDataNodes\EDataNodeFromEmbeddedResource.cs" />
-    <Compile Include="EDataNodes\EDataNodeFromDevice.cs" />
-    <Compile Include="EDataNodes\EDataNode.cs" />
+    <Compile Include="DataSources\DataSourceEmbeddedResource.cs" />
+    <Compile Include="DataSources\DataSourceDevice.cs" />
+    <Compile Include="DataSources\DataSource.cs" />
     <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
-    <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
+    <Compile Include="DataSources\DataSourceFile.cs" />
     <Compile Include="DataPackages\DataPackageWave.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="Logger.cs" />

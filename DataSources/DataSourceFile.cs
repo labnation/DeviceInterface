@@ -12,10 +12,9 @@ using MatlabFileIO;
 
 namespace ECore.EDataNodes
 {
-    public class EDataNodeFromFile: EDataNode
+    public class DataSourceFile: DataSource
     {
         private int sleepTime = 10;
-        DateTime lastUpdate;
 
 #if IPHONE || ANDROID
 		public EDataNodeFromFile()
@@ -43,7 +42,7 @@ namespace ECore.EDataNodes
 		MatlabFileReader fileReader;
 		MatlabFileArrayReader arrayReader;
 
-		public EDataNodeFromFile()
+		public DataSourceFile()
         {
             //show select file dialog
             //FIXME: NO GUI IN ECORE!!!

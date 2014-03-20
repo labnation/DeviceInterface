@@ -8,9 +8,10 @@ namespace ECore
 {
     public delegate void NewDataAvailableHandler(DataPackageWaveAnalog dataPackage, EventArgs e);
 
-    public abstract class EDataNode
+    public abstract class DataSource
     {
-        public EDataNode() { }
+        public DataSource() { }
+        protected DateTime lastUpdate;
         protected DataPackageWaveAnalog latestDataPackage;
         public DataPackageWaveAnalog LatestDataPackage { get { return this.latestDataPackage; } }
         abstract public void Update();

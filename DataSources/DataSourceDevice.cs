@@ -7,13 +7,13 @@ using ECore.DataPackages;
 
 namespace ECore.EDataNodes
 {
-    public class EDataNodeFromDevice: EDataNode
+    public class DataSourceDevice: DataSource
     {
         private EDevice eDevice;        
         private DataPackageWaveAnalog lastDataPackage;
         public bool RawDataPassThrough;
 
-        public EDataNodeFromDevice(EDevice eDevice)
+        public DataSourceDevice(EDevice eDevice)
         {
             this.eDevice = eDevice;
             this.RawDataPassThrough = false;
