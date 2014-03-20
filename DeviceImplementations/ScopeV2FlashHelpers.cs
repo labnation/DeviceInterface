@@ -250,7 +250,7 @@ namespace ECore.DeviceImplementations
 
         //#if IPHONE
         //#else
-        public override void FlashHW()
+        public void FlashHW()
         {
             string fileName = "TopEntity_latest.bin";
 

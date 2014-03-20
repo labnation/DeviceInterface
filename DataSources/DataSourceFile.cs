@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using MatlabFileIO;
 #endif
 
-namespace ECore.EDataNodes
+namespace ECore.DataSources
 {
     public class DataSourceFile: DataSource
     {
@@ -62,7 +62,6 @@ namespace ECore.EDataNodes
         {
             arrayReader = fileReader.OpenArray("ScopeData");
         }
-
         public override void Update()
         {
             //since this is a source node, it should fire its event at a certain interval.

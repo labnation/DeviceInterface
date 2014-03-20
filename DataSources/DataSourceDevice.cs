@@ -4,29 +4,30 @@ using System.Linq;
 using System.Text;
 using ECore;
 using ECore.DataPackages;
+using ECore.DeviceImplementations;
 
-namespace ECore.EDataNodes
+namespace ECore.DataSources
 {
-    public class DataSourceDevice: DataSource
+    public class DataSourceScopeV2: DataSource
     {
-        private EDevice eDevice;        
+        private ScopeV2 scope;        
         private DataPackageWaveAnalog lastDataPackage;
         public bool RawDataPassThrough;
 
-        public DataSourceDevice(EDevice eDevice)
+        public DataSourceScopeV2(ScopeV2 scope)
         {
-            this.eDevice = eDevice;
+            this.scope = scope;
             this.RawDataPassThrough = false;
         }
         
         public override void Update()
         {
-            byte[] buffer = eDevice.DeviceImplementation.GetBytes();
+            byte[] buffer = scope.GetBytes();
             float[] voltageValues;
 
             //the following option allows the raw data to be passed through, required for calibrating the data
             if (!RawDataPassThrough)
-                voltageValues = eDevice.DeviceImplementation.ConvertBytesToVoltages(buffer);
+                voltageValues = scope.ConvertBytesToVoltages(buffer);
             else
                 voltageValues = Utils.CastArray<byte, float>(buffer);
 

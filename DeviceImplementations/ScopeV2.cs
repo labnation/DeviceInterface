@@ -14,7 +14,7 @@ namespace ECore.DeviceImplementations
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public partial class ScopeV2:EDeviceImplementation
+    public partial class ScopeV2:Scope
     {
         
 		public static string DemoStatusText = "";
@@ -172,7 +172,7 @@ namespace ECore.DeviceImplementations
             return eDevice.HWInterface.GetData(bytesToFetch);          
         }
 
-        public override float[] ConvertBytesToVoltages(byte[] buffer)
+        public float[] ConvertBytesToVoltages(byte[] buffer)
         {
             float[] voltageValues = new float[buffer.Length];
 

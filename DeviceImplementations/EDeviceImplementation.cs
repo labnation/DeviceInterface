@@ -33,8 +33,6 @@ namespace ECore
         //FIXME: these are too specific for a "Device" -> either call it scope or move them down to the scope
         abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();
         abstract public byte[] GetBytes();
-        abstract public float[] ConvertBytesToVoltages(byte[] buffer);
-        abstract public void FlashHW();
 
         //////////////////////////////////////////////////////////////////
         //base functionality implementation

@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using ECore.DataPackages;
 
-namespace ECore.EDataNodes
+namespace ECore.DataSources
 {
     public class DataSourceEmbeddedResource: DataSource
     {
@@ -64,7 +64,6 @@ namespace ECore.EDataNodes
 				}
             }
         }
-        
         public override void Update()
         {
 

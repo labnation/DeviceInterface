@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Reflection;
+using ECore.DeviceImplementations;
 
 namespace ECore
 {
@@ -23,7 +24,8 @@ namespace ECore
         //properties regarding thread management
         private Thread dataFetchThread;
         private bool running;
-        private DataSource dataGeneratorNode;
+        //FIXME: move initialization of datasources to device implementation
+        private DataSource dataSource;
 
 		//events
 		public event NewDataAvailableHandler OnNewDataAvailable;
@@ -58,10 +60,11 @@ namespace ECore
             //check whether physical HW device is connected. if not, load data from a stream
 			if (HWInterface.Connected)
                 //load data from a device
-                dataGeneratorNode = new EDataNodes.DataSourceDevice(this);
+                //FIXME: move datasource initialization to deviceimplementation
+                dataSource = new DataSources.DataSourceScopeV2((ScopeV2)this.deviceImplementation);
             else
                 //load data from a stream                
-                dataGeneratorNode = new EDataNodes.DataSourceFile();
+                dataSource = new DataSources.DataSourceFile();
 
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
@@ -76,7 +79,7 @@ namespace ECore
 
             //check whether physical HW device is connected. if not, load data from a stream
             
-            dataGeneratorNode = new EDataNodes.DataSourceEmbeddedResource();
+            dataSource = new DataSources.DataSourceEmbeddedResource();
 
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
@@ -99,11 +102,11 @@ namespace ECore
             while (running)
             {
                 //update data
-                dataGeneratorNode.Update();
+                dataSource.Update();
 
                 //flag that new data has arrived
                 if (OnNewDataAvailable != null)
-                    OnNewDataAvailable(dataGeneratorNode.LatestDataPackage,  new EventArgs());
+                    OnNewDataAvailable(dataSource.LatestDataPackage,  new EventArgs());
 
                 //Stop();
             }
