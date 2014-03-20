@@ -99,7 +99,7 @@ namespace ECore
             while (running)
             {
                 //update data
-                dataGeneratorNode.Update(null, null);
+                dataGeneratorNode.Update();
 
                 //flag that new data has arrived
                 if (OnNewDataAvailable != null)

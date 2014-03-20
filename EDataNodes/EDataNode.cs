@@ -13,6 +13,6 @@ namespace ECore
         public EDataNode() { }
         protected DataPackageWaveAnalog latestDataPackage;
         public DataPackageWaveAnalog LatestDataPackage { get { return this.latestDataPackage; } }
-        abstract public void Update(EDataNode sender, EventArgs e);
+        abstract public void Update();
     }
 }

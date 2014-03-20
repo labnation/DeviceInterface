@@ -19,7 +19,7 @@ namespace ECore.EDataNodes
             this.RawDataPassThrough = false;
         }
         
-        public override void Update(EDataNode sender, EventArgs e)
+        public override void Update()
         {
             byte[] buffer = eDevice.DeviceImplementation.GetBytes();
             float[] voltageValues;

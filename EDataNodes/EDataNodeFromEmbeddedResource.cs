@@ -70,7 +70,7 @@ namespace ECore.EDataNodes
         {
         }
 
-        public override void Update(EDataNode sender, EventArgs e)
+        public override void Update()
         {
 
             //since this is a source node, it should fire its event at a certain interval.

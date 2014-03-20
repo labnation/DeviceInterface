@@ -64,7 +64,7 @@ namespace ECore.EDataNodes
             arrayReader = fileReader.OpenArray("ScopeData");
         }
 
-        public override void Update(EDataNode sender, EventArgs e)
+        public override void Update()
         {
             //since this is a source node, it should fire its event at a certain interval.
             //in order to emulate this, thread will be suspended.
