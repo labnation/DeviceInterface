@@ -75,11 +75,11 @@ namespace ECore.DeviceImplementations
             adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaSettingsMemory, strobeMemory, fpgaRom);
             //Add them in order we'd like them in the GUI
             
-            memories.Add(fpgaRom);
-            memories.Add(fpgaSettingsMemory);
-            memories.Add(adcMemory);
-            memories.Add(picMemory);
-            memories.Add(strobeMemory);
+            byteMemories.Add(fpgaRom);
+            byteMemories.Add(fpgaSettingsMemory);
+            byteMemories.Add(adcMemory);
+            byteMemories.Add(picMemory);
+            byteMemories.Add(strobeMemory);
         }
 
         public override void InitializeFunctionalities()

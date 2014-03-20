@@ -7,7 +7,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeStrobeMemory: EDeviceMemory
+    public class ScopeStrobeMemory : DeviceMemory<MemoryRegister<byte>>
     {
         private ScopeFpgaSettingsMemory accessorMemory;
 
@@ -16,11 +16,11 @@ namespace ECore.DeviceMemories
         {
             this.eDevice = eDevice;
             this.accessorMemory = accessorMemory;
-                        
-            registers = new List<EDeviceMemoryRegister>();
+
+            registers = new List<MemoryRegister<byte>>();
             foreach (STR str in Enum.GetValues(typeof(STR)))
             {
-                registers.Add(new MemoryRegisters.ByteRegister((int)str, Enum.GetName(typeof(STR), str), this));
+                registers.Add(new MemoryRegister<byte>((int)str, Enum.GetName(typeof(STR), str)));
             }
 
         }
@@ -38,7 +38,7 @@ namespace ECore.DeviceMemories
             for (int i = 0; i < burstSize; i++)
             {
                 int strobeAddress = startAddress+i;
-                EDeviceMemoryRegister reg = Registers[strobeAddress];
+                MemoryRegister<byte> reg = Registers[strobeAddress];
 
                 //range check
                 if (reg.InternalValue < 0)
@@ -79,7 +79,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public EDeviceMemoryRegister GetRegister(STR r)
+        public MemoryRegister<byte> GetRegister(STR r)
         {
             return Registers[(int)r];
         }

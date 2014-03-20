@@ -19,7 +19,7 @@ namespace ECore.DeviceMemories
     }
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class MAX19506Memory: EDeviceMemory
+    public class MAX19506Memory : DeviceMemory<MemoryRegister<byte>>
     {
         private ScopeFpgaSettingsMemory fpgaSettings;
         private ScopeStrobeMemory strobeMemory;
@@ -35,10 +35,10 @@ namespace ECore.DeviceMemories
             this.fpgaRom = fpgaRom;
 
             //look up how many registers are required
-            registers = new List<EDeviceMemoryRegister>();
+            registers = new List<MemoryRegister<byte>>();
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
             {
-                registers.Add(new MemoryRegisters.ByteRegister((int)reg, Enum.GetName(typeof(MAX19506), reg), this));
+                registers.Add(new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(MAX19506), reg)));
             }
 
         }
@@ -95,7 +95,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public EDeviceMemoryRegister GetRegister(MAX19506 r)
+        public MemoryRegister<byte> GetRegister(MAX19506 r)
         {
             return Registers[(int)r];
         }

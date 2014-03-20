@@ -103,12 +103,10 @@
     <Compile Include="DataPackages\DataPackageWave.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="Logger.cs" />
-    <Compile Include="MemoryRegisters\ByteRegister.cs" />
-    <Compile Include="MemoryRegisters\BoolRegister.cs" />
-    <Compile Include="MemoryRegisters\EDeviceMemoryRegister.cs" />
+    <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />
     <Compile Include="EDevice.cs" />
     <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
-    <Compile Include="DeviceMemories\EDeviceMemory.cs" />
+    <Compile Include="DeviceMemories\DeviceMemory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>

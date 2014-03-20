@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 //using System.Windows.Forms;
 
-namespace ECore
+namespace ECore.DeviceMemories
 {
     //abstract class, representing a physical memory on the PCB.
     //examples: ROM, FPGA, FX2, ADC register banks, ...
-    abstract public class EDeviceMemory
+    abstract public class DeviceMemory<RegisterType>
     {
-        protected List<EDeviceMemoryRegister> registers;
+        protected List<RegisterType> registers;
         protected EDevice eDevice;
 
         abstract public void WriteRange(int startAddress, int burstSize);
@@ -26,9 +26,8 @@ namespace ECore
             ReadRange(registerAddress, 1);
         }
 
-        public int MaxValue { get { return registers[0].MaxValue; } }
+        //public int MaxValue { get { return registers[0].MaxValue; } }
         public int NumberOfRegisters { get { return registers.Count; } }
-        public List<EDeviceMemoryRegister> Registers { get { return registers; } }
-
+        public List<RegisterType> Registers { get { return registers; } }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ECore.DeviceMemories;
 
 namespace ECore
 {
@@ -19,7 +20,7 @@ namespace ECore
         protected EDevice eDevice;
         //FIXME: make me protected
         public EDeviceHWInterface hardwareInterface;
-        protected List<EDeviceMemory> memories;
+        protected List<DeviceMemory<MemoryRegister<byte>>> byteMemories;
         protected List<object> functionalities;
 
         //////////////////////////////////////////////////////////////////
@@ -42,14 +43,14 @@ namespace ECore
             this.eDevice = eDevice;
 
             //automatically calls the methods which need to be executed during initialization
-            memories = new List<EDeviceMemory>();
+            byteMemories = new List<DeviceMemory<MemoryRegister<byte>>>();
             InitializeMemories();
             functionalities = new List<object>();
             InitializeFunctionalities();
         }
 
         //getters
-        virtual public List<EDeviceMemory> Memories { get { return memories; } }
+        virtual public List<DeviceMemory<MemoryRegister<byte>>> Memories { get { return byteMemories; } }
         virtual public List<object> Functionalities { get { return functionalities; } }
 
         public virtual List<object> GetInterfaces(Type interfaceType)

@@ -7,7 +7,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaSettingsMemory: EDeviceMemory
+    public class ScopeFpgaSettingsMemory: DeviceMemory<MemoryRegister<byte>>
     {       
         //this method defines which type of registers are stored in the memory
         public ScopeFpgaSettingsMemory(EDevice eDevice)
@@ -15,10 +15,10 @@ namespace ECore.DeviceMemories
             this.eDevice = eDevice;
 
             //instantiate registerList
-            registers = new List<EDeviceMemoryRegister>();
+            registers = new List<MemoryRegister<byte>>();
             foreach(REG reg in Enum.GetValues(typeof(REG)))
             {
-                registers.Add(new MemoryRegisters.ByteRegister((int)reg, Enum.GetName(typeof(REG), reg), this));
+                registers.Add(new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(REG), reg)));
             }
 
         }
@@ -90,7 +90,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public EDeviceMemoryRegister GetRegister(REG r)
+        public MemoryRegister<byte> GetRegister(REG r)
         {
             return Registers[(int)r];
         }

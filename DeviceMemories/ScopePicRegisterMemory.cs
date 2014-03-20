@@ -12,7 +12,7 @@ namespace ECore.DeviceMemories
         FORCE_STREAMING = 0,
     }
 
-    public class ScopePicRegisterMemory: EDeviceMemory
+    public class ScopePicRegisterMemory : DeviceMemory<MemoryRegister<byte>>
     {       
         //this method defines which type of registers are stored in the memory
         public ScopePicRegisterMemory(EDevice eDevice)
@@ -20,10 +20,10 @@ namespace ECore.DeviceMemories
             this.eDevice = eDevice;
                         
             //instantiate registerList
-            registers = new List<EDeviceMemoryRegister>();
+            registers = new List<MemoryRegister<byte>>();
             foreach (PIC reg in Enum.GetValues(typeof(PIC)))
             {
-                registers.Add(new MemoryRegisters.ByteRegister((int) reg, Enum.GetName(typeof(PIC), reg), this));
+                registers.Add(new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(PIC), reg)));
             }
 
         }
@@ -77,7 +77,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public EDeviceMemoryRegister GetRegister(PIC r)
+        public MemoryRegister<byte> GetRegister(PIC r)
         {
             return Registers[(int)r];
         }
