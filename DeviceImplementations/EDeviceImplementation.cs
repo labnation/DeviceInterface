@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.DeviceMemories;
+using ECore.DataSources;
 
 namespace ECore
 {
@@ -13,7 +14,7 @@ namespace ECore
     {
         //////////////////////////////////////////////////////////////////
         //private properties        
-        private Dictionary<Type, List<object>> sortedInterfaceDictionary;
+        //private Dictionary<Type, List<object>> sortedInterfaceDictionary;
 
         //////////////////////////////////////////////////////////////////
         //shared properties        
@@ -21,18 +22,18 @@ namespace ECore
         //FIXME: make me protected
         public EDeviceHWInterface hardwareInterface;
         protected List<DeviceMemory<MemoryRegister<byte>>> byteMemories;
-        protected List<object> functionalities;
+        protected List<DataSource> dataSources;
+        public List<DataSource> DataSources { get { return this.dataSources; } }
 
         //////////////////////////////////////////////////////////////////
         //contract for inheriters
         abstract public void InitializeMemories();
-        abstract public void InitializeFunctionalities();
         abstract public void InitializeHardwareInterface();
+        abstract public void InitializeDataSources();
         abstract public void Start();
         abstract public void Stop();
         //FIXME: these are too specific for a "Device" -> either call it scope or move them down to the scope
-        abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();
-        abstract public byte[] GetBytes();
+        //abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();
 
         //////////////////////////////////////////////////////////////////
         //base functionality implementation
@@ -43,14 +44,12 @@ namespace ECore
             //automatically calls the methods which need to be executed during initialization
             byteMemories = new List<DeviceMemory<MemoryRegister<byte>>>();
             InitializeMemories();
-            functionalities = new List<object>();
-            InitializeFunctionalities();
+            dataSources = new List<DataSource>();
         }
 
         //getters
         virtual public List<DeviceMemory<MemoryRegister<byte>>> Memories { get { return byteMemories; } }
-        virtual public List<object> Functionalities { get { return functionalities; } }
-
+        /*
         public virtual List<object> GetInterfaces(Type interfaceType)
         {
             //if this method is called the first time: init list
@@ -62,8 +61,8 @@ namespace ECore
                 return sortedInterfaceDictionary[interfaceType];
             else
                 return null;
-        }
-
+        }*/
+        /*
         private void InitSortedInterfaceDictionary()
         {
             this.sortedInterfaceDictionary = new Dictionary<Type, List<object>>();
@@ -82,7 +81,7 @@ namespace ECore
                 //now add this functionality to the correct list
                 sortedInterfaceDictionary[currentInterface].Add(functionality);//if dictionary does not contain a list for this type of funcs: create
             }
-        }
+        }*/
 
         private bool MyInterfaceFilter(Type typeObj, Object criteriaObj)
         {

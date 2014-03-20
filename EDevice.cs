@@ -18,16 +18,12 @@ namespace ECore
     {
         //properties regarding camera
         private EDeviceImplementation deviceImplementation;
-        //FIXME: what the hell is this romManager doing here?
-        private DeviceImplementations.ScopeV2.ScopeV2RomManager romManager;
         
         //properties regarding thread management
         private Thread dataFetchThread;
         private bool running;
-        //FIXME: move initialization of datasources to device implementation
-        private List<DataSource> dataSources;
 
-		//events
+        //events
 		public event NewDataAvailableHandler OnNewDataAvailable;
 
 #if false
@@ -45,7 +41,6 @@ namespace ECore
             //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType);
             this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
             deviceImplementation.InitializeHardwareInterface();
-            this.romManager = deviceImplementation.CreateRomManager();
 
             this.running = false;
 
@@ -56,16 +51,6 @@ namespace ECore
         public void Start()
         {
             running = true;            
-
-            //check whether physical HW device is connected. if not, load data from a stream
-			if (HWInterface.Connected)
-                //load data from a device
-                //FIXME: move datasource initialization to deviceimplementation
-                dataSources.Add(new DataSources.DataSourceScopeWaveAnalog((ScopeV2)this.deviceImplementation));
-            else
-                //load data from a stream                
-                dataSources.Add(new DataSources.DataSourceFile());
-
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
             dataFetchThread.Name = "DataFetchFromDeviceThread";
@@ -73,7 +58,7 @@ namespace ECore
             dataFetchThread.Start();
         }
 
-        public void StartFromEmbedded()
+        /*public void StartFromEmbedded()
         {
             running = true;
 
@@ -86,7 +71,7 @@ namespace ECore
             dataFetchThread.Name = "DataFetchFromDeviceThread";
             dataFetchThread.Priority = ThreadPriority.AboveNormal;
             dataFetchThread.Start();
-        }
+        }*/
 
         public void RunThreadDataGenerator()
         {           
@@ -102,7 +87,7 @@ namespace ECore
             while (running)
             {
                 //Update each dataSource and fire callback if new data available
-                foreach (DataSource d in this.dataSources)
+                foreach (DataSource d in this.deviceImplementation.DataSources)
                 {
                     if (d.Update())
                     {
@@ -128,10 +113,9 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped now");
         }
 
-//FIXME: make the following 4 fields private when in RELEASE
+        //FIXME: make the following 4 fields private when in RELEASE
         public EDeviceHWInterface HWInterface { get { return this.deviceImplementation.hardwareInterface; } }
         public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
-        public DeviceImplementations.ScopeV2.ScopeV2RomManager RomManager { get { return this.romManager; } }
         public bool IsRunning { get { return running; } }
 
 

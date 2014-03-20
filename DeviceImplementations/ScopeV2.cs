@@ -23,6 +23,7 @@ namespace ECore.DeviceImplementations
         private DeviceMemories.ScopeStrobeMemory        strobeMemory;
         private DeviceMemories.MAX19506Memory           adcMemory;
         private DeviceMemories.ScopePicRegisterMemory   picMemory;
+        private ScopeV2RomManager                       romManager;
         
         private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
         private int yOffset_Midrange0V;
@@ -60,7 +61,7 @@ namespace ECore.DeviceImplementations
 			#endif
         }
 
-        public override ScopeV2RomManager CreateRomManager()
+        public ScopeV2RomManager CreateRomManager()
         {
             return new ScopeV2RomManager(eDevice);
         }
@@ -81,10 +82,14 @@ namespace ECore.DeviceImplementations
             byteMemories.Add(adcMemory);
             byteMemories.Add(picMemory);
             byteMemories.Add(strobeMemory);
+
+            this.romManager = CreateRomManager();
         }
 
-        public override void InitializeFunctionalities()
-        { }
+        public override void InitializeDataSources()
+        {
+            dataSources.Add(new DataSources.DataSourceScopeWaveAnalog(this));
+        }
 
         #endregion
 
@@ -166,7 +171,7 @@ namespace ECore.DeviceImplementations
 
         #region data_handlers
 
-        public override byte[] GetBytes()
+        public byte[] GetBytes()
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
