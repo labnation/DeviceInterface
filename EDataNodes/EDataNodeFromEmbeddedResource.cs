@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using ECore.DataPackages;
 
 namespace ECore.EDataNodes
 {
     public class EDataNodeFromEmbeddedResource: EDataNode
     {
         private int sleepTime = 10;
-        private EDataPackage lastDataPackage;
+        private DataPackageWaveAnalog lastDataPackage;
         DateTime lastUpdate;
         StreamReader reader = null;
         List<float[]> dataList = new List<float[]>();
@@ -65,11 +66,6 @@ namespace ECore.EDataNodes
             }
         }
         
-        public override EDataPackage LatestDataPackage
-        {
-            get { return lastDataPackage; }
-        }
-
         private void OpenArray()
         {
         }
@@ -89,7 +85,7 @@ namespace ECore.EDataNodes
 
 			if (dataList.Count == 0) {
 				float [] dummy = new float[4096];
-				lastDataPackage = new EDataPackage(dummy);  
+				lastDataPackage = new DataPackageWaveAnalog(dummy, 0);  
 			}
 
             if (index++ >= dataList.Count-1)
@@ -97,7 +93,7 @@ namespace ECore.EDataNodes
             
 
             //convert data into an EDataPackage if valid
-            lastDataPackage = new EDataPackage(dataList[index]);        
+            lastDataPackage = new DataPackageWaveAnalog(dataList[index], 0);
         }
     }
 }

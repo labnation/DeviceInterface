@@ -77,6 +77,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataPackages\DataPackageWaveAnalog.cs" />
     <Compile Include="DeviceImplementations\ScopeV2Sandbox.cs" />
     <Compile Include="DeviceImplementations\ScopeV2FlashHelpers.cs" />
     <Compile Include="DeviceImplementations\ScopeV2Settings.cs" />
@@ -99,7 +100,7 @@
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
-    <Compile Include="EDataPackage.cs" />
+    <Compile Include="DataPackages\DataPackageWave.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="MemoryRegisters\ByteRegister.cs" />

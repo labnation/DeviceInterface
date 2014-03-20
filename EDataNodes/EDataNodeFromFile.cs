@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ECore.DataPackages;
 
 #if IPHONE || ANDROID
 #else
@@ -14,7 +15,6 @@ namespace ECore.EDataNodes
     public class EDataNodeFromFile: EDataNode
     {
         private int sleepTime = 10;
-        private EDataPackage lastDataPackage;
         DateTime lastUpdate;
 
 #if IPHONE || ANDROID
@@ -59,11 +59,6 @@ namespace ECore.EDataNodes
             lastUpdate = DateTime.Now;
         }
         
-        public override EDataPackage LatestDataPackage
-        {
-            get { return lastDataPackage; }
-        }
-
         private void OpenArray()
         {
             arrayReader = fileReader.OpenArray("ScopeData");
@@ -90,7 +85,7 @@ namespace ECore.EDataNodes
             float[] voltageValues = arrayReader.ReadRowFloat();            
 
             //convert data into an EDataPackage
-            lastDataPackage = new EDataPackage(voltageValues);        
+            latestDataPackage = new DataPackageWaveAnalog(voltageValues, 0);        
         }
 #endif
     }

@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ECore;
+using ECore.DataPackages;
 
 namespace ECore.EDataNodes
 {
     public class EDataNodeFromDevice: EDataNode
     {
         private EDevice eDevice;        
-        private EDataPackage lastDataPackage;
+        private DataPackageWaveAnalog lastDataPackage;
         public bool RawDataPassThrough;
 
         public EDataNodeFromDevice(EDevice eDevice)
@@ -17,14 +19,6 @@ namespace ECore.EDataNodes
             this.RawDataPassThrough = false;
         }
         
-        public override EDataPackage LatestDataPackage
-        {
-            get
-            {
-                return lastDataPackage;
-            }
-        }
-
         public override void Update(EDataNode sender, EventArgs e)
         {
             byte[] buffer = eDevice.DeviceImplementation.GetBytes();
@@ -37,7 +31,8 @@ namespace ECore.EDataNodes
                 voltageValues = Utils.CastArray<byte, float>(buffer);
 
             //convert data into an EDataPackage
-            lastDataPackage = new EDataPackage(voltageValues);
+            //FIXME: change 0 to triggerIndex
+            lastDataPackage = new DataPackageWaveAnalog(voltageValues, 0);
         }
     }
 }
