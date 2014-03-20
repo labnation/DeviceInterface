@@ -103,7 +103,7 @@ namespace ECore
 
                 //flag that new data has arrived
                 if (OnNewDataAvailable != null)
-                    OnNewDataAvailable(dataGeneratorNode,  new EventArgs());
+                    OnNewDataAvailable(dataGeneratorNode.LatestDataPackage,  new EventArgs());
 
                 //Stop();
             }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore
 {
-    public delegate void NewDataAvailableHandler(EDataNode sender, EventArgs e);
+    public delegate void NewDataAvailableHandler(EDataPackage dataPackage, EventArgs e);
 
     public abstract class EDataNode
     {
