@@ -49,6 +49,7 @@ namespace ECore
 
         #region other
         AWG_DATA,
+        ENABLE_LOGIC_ANALYSER,
         #endregion
 
         //FIXME: guard this so it's only in internal builds

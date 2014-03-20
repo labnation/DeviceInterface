@@ -84,7 +84,7 @@ namespace ECore.DataSources
             float[] voltageValues = arrayReader.ReadRowFloat();            
 
             //convert data into an EDataPackage
-            latestDataPackage = new DataPackageScope(new ScopeData(voltageValues), 0);
+            latestDataPackage = new DataPackageScope(voltageValues);
             this.fireDataAvailableEvents();
         }
 #endif

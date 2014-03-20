@@ -180,7 +180,7 @@ namespace ECore.DeviceImplementations
 
         #endregion
 
-        #region AWG
+        #region AWG/LA
         /// <summary>
         /// Set the data with which the AWG runs
         /// </summary>
@@ -242,6 +242,12 @@ namespace ECore.DeviceImplementations
             //lower global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
             strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+        }
+
+        public bool GetEnableLogicAnalyser()
+        {
+            //FIXME: implement this
+            return false;
         }
         #endregion
 

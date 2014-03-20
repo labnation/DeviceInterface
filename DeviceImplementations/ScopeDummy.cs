@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ECore.DataPackages;
 
 namespace ECore.DeviceImplementations
 {
@@ -29,7 +30,7 @@ namespace ECore.DeviceImplementations
         {
             throw new NotImplementedException();
         }
-        public override ScopeData GetScopeData()
+        public override DataPackageScope GetScopeData()
         {
             throw new NotImplementedException();
         }

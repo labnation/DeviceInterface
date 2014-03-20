@@ -96,7 +96,7 @@
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaRom.cs" />
     <Compile Include="DataSources\DataSourceEmbeddedResource.cs" />
-    <Compile Include="DataSources\DataSourceScopeWaveAnalog.cs" />
+    <Compile Include="DataSources\DataSourceScope.cs" />
     <Compile Include="DataSources\DataSource.cs" />
     <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />

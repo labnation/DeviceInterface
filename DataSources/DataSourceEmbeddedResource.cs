@@ -80,7 +80,7 @@ namespace ECore.DataSources
 
 			if (dataList.Count == 0) {
 				float [] dummy = new float[4096];
-				lastDataPackage = new DataPackageScope(new ScopeData(dummy), 0);  
+				lastDataPackage = new DataPackageScope(dummy);  
 			}
 
             if (index++ >= dataList.Count-1)
@@ -88,7 +88,7 @@ namespace ECore.DataSources
             
 
             //convert data into an EDataPackage if valid
-            lastDataPackage = new DataPackageScope(new ScopeData(dataList[index]), 0);
+            lastDataPackage = new DataPackageScope(dataList[index]);
             this.fireDataAvailableEvents();
         }
     }

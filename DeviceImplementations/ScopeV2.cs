@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.DeviceMemories;
+using ECore.DataPackages;
 using System.IO;
 #if IPHONE || ANDROID
 #else
@@ -88,7 +89,6 @@ namespace ECore.DeviceImplementations
 
         public override void InitializeDataSources()
         {
-            //FIXME: add one for CHB and for digital channels
             dataSources.Add(new DataSources.DataSourceScope(this));
         }
 
@@ -179,26 +179,82 @@ namespace ECore.DeviceImplementations
             return eDevice.HWInterface.GetData(bytesToFetch);          
         }
 
-        public override ScopeData GetScopeData()
+        private float[] ConvertByteToVoltage(byte[] buffer, byte yOffset)
         {
-            //FIXME: run getBytes in another thread, so that this one just takes the last bytes available and
-            //parses it into the left or right channel (take code from UIHandler.splitandblabla
-            if(this.disableVoltageConversion)
-                return new ScopeData(Utils.CastArray<byte, float>(this.GetBytes()));
-
-            byte[] buffer = this.GetBytes();
-            float[] voltageValues = new float[buffer.Length];
+            float[] voltage = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value
-            float yOffFPGA = (float)fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue;
-            float totalOffset = fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] + calibrationCoefficients[2];
+            float totalOffset = (float)yOffset * calibrationCoefficients[1] + calibrationCoefficients[2];
             for (int i = 0; i < buffer.Length; i++)
-            {                
+            {
                 float gainedVal = (float)buffer[i] * calibrationCoefficients[0];
-                voltageValues[i] = gainedVal + totalOffset;
+                voltage[i] = gainedVal + totalOffset;
+            }
+            return voltage;
+        }
+
+        public override DataPackageScope GetScopeData()
+        {
+            byte[] buffer = this.GetBytes();
+            
+            //Split in 2 channels
+            byte[] chA = new byte[buffer.Length / 2];
+            byte[] chB = new byte[buffer.Length / 2];
+            for (int i = 0; i < chA.Length; i++)
+            {
+                chA[i] = buffer[2 * i];
+                chB[i] = buffer[2 * i + 1];
             }
 
-            return new ScopeData(voltageValues);
+            //construct data package
+            DataPackageScope data = new DataPackageScope();
+            //FIXME: parse package header and set DataPackageScope's trigger index
+            //FIXME: Get bytes, split into analog/digital channels and add to scope data
+            if (this.disableVoltageConversion)
+            {
+                data.SetDataAnalog(ScopeChannel.ChA, Utils.CastArray<byte, float>(chA));
+                data.SetDataAnalog(ScopeChannel.ChB, Utils.CastArray<byte, float>(chB));
+            }
+            else
+            {
+                //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
+                data.SetDataAnalog(ScopeChannel.ChA, 
+                    ConvertByteToVoltage(chA, fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
+
+                //Check if we're in LA mode and fill either analog channel B or digital channels
+                if (!this.GetEnableLogicAnalyser())
+                {
+                    data.SetDataAnalog(ScopeChannel.ChB,
+                        ConvertByteToVoltage(chB, fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
+                }
+                else
+                {
+                    //Lot's of shitty code cos I don't know how to write like you do with macros in C...
+                    bool[][] digitalSamples = new bool[8][];
+                    for(int i = 0; i < 8; i++) digitalSamples[i] = new bool[chB.Length];
+
+                    for (int i = 0; i < chB.Length; i++)
+                    {
+                        digitalSamples[0][i] = ((chB[i] & (1 << 0)) != 0) ? true : false;
+                        digitalSamples[1][i] = ((chB[i] & (1 << 1)) != 0) ? true : false;
+                        digitalSamples[2][i] = ((chB[i] & (1 << 2)) != 0) ? true : false;
+                        digitalSamples[3][i] = ((chB[i] & (1 << 3)) != 0) ? true : false;
+                        digitalSamples[4][i] = ((chB[i] & (1 << 4)) != 0) ? true : false;
+                        digitalSamples[5][i] = ((chB[i] & (1 << 5)) != 0) ? true : false;
+                        digitalSamples[6][i] = ((chB[i] & (1 << 6)) != 0) ? true : false;
+                        digitalSamples[7][i] = ((chB[i] & (1 << 7)) != 0) ? true : false;
+                    }
+                    data.SetDataDigital(ScopeChannel.Digi0, digitalSamples[0]);
+                    data.SetDataDigital(ScopeChannel.Digi1, digitalSamples[1]);
+                    data.SetDataDigital(ScopeChannel.Digi2, digitalSamples[2]);
+                    data.SetDataDigital(ScopeChannel.Digi3, digitalSamples[3]);
+                    data.SetDataDigital(ScopeChannel.Digi4, digitalSamples[4]);
+                    data.SetDataDigital(ScopeChannel.Digi5, digitalSamples[5]);
+                    data.SetDataDigital(ScopeChannel.Digi6, digitalSamples[6]);
+                    data.SetDataDigital(ScopeChannel.Digi7, digitalSamples[7]);
+                }
+            }
+            return data;
         }
 
         #endregion
