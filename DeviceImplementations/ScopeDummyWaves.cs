@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.DeviceImplementations
 {
-    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE, TRIANGLE_SINE };
+    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE };
 
     partial class ScopeDummy
     {
@@ -25,7 +25,7 @@ namespace ECore.DeviceImplementations
                 case WaveForm.TRIANGLE:
                     wave = ScopeDummy.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
-                case WaveForm.TRIANGLE_SINE:
+                case WaveForm.SAWTOOTH_SINE:
                     wave = ScopeDummy.WaveTriangleSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 default:
