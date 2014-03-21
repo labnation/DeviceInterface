@@ -131,8 +131,8 @@ namespace ECore.DeviceImplementations
             private void Write16BytesToROM(int addressOffset, byte[] byteArr)
             {
                 //unlock
-                byte[] sendBytesForUnlock = new byte[] { 123, 5 };                       
-                eDevice.HWInterface.WriteControlBytes(sendBytesForUnlock);
+                byte[] sendBytesForUnlock = new byte[] { 123, 5 };
+                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForUnlock);
                 
                 //prepare packages
                 byte[] writePackage1 = new byte[14];
@@ -170,9 +170,9 @@ namespace ECore.DeviceImplementations
                         writePackage2[6 + i] = 0xFF;
 
                 //send first packet
-                eDevice.HWInterface.WriteControlBytes(writePackage1);
+                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(writePackage1);
                 //send second packet, including the 16th byte, after which the write actually happens
-                eDevice.HWInterface.WriteControlBytes(writePackage2);
+                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(writePackage2);
             }
 
             private byte[] ReadBytesFromROM(int addressOffset, int numberOfBytes)
@@ -187,8 +187,8 @@ namespace ECore.DeviceImplementations
 
                     //read bytes at address                    
                     byte[] sendBytesForRead = new byte[] { 123, 7, (byte)(addressPointer >> 8), (byte)addressOffset, (byte)numberOfBytesToBeFetched };
-                    eDevice.HWInterface.WriteControlBytes(sendBytesForRead);
-                    byte[] readBytes = eDevice.HWInterface.ReadControlBytes(16);
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForRead);
+                    byte[] readBytes = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
 
                     //append to list
                     for (int i = 0; i < numberOfBytesToBeFetched; i++)
@@ -206,7 +206,7 @@ namespace ECore.DeviceImplementations
             private void EraseROM()
             {
                 byte[] sendBytesForUnlock = new byte[] { 123, 5 };
-                eDevice.HWInterface.WriteControlBytes(sendBytesForUnlock);
+                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForUnlock);
 
                 //full erase of upper block, done in blocks of 64B at once
                 for (int i = 0x3A00; i < 0x3FFF; i = i + 64)
@@ -214,7 +214,7 @@ namespace ECore.DeviceImplementations
                     byte addressMSB = (byte)(i >> 8);
                     byte addressLSB = (byte)i;
                     byte[] sendBytesForBlockErase = new byte[] { 123, 9, addressMSB, addressLSB };
-                    eDevice.HWInterface.WriteControlBytes(sendBytesForBlockErase);
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForBlockErase);
                 }
                 
                 Console.WriteLine("ROM memory area erased successfuly");

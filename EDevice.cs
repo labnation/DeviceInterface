@@ -78,7 +78,7 @@ namespace ECore
 
             //start HW
             //FIXME: make this line part of StartDevice
-            HWInterface.Stop();
+            deviceImplementation.hardwareInterface.Stop();
             deviceImplementation.Start();
 
             //looping until device is stopped
@@ -107,8 +107,7 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped now");
         }
 
-        //FIXME: make the following 4 fields private when in RELEASE
-        public EDeviceHWInterface HWInterface { get { return this.deviceImplementation.hardwareInterface; } }
+        //FIXME: since EDevice is so thin now, might just as well merge with deviceImplementation
         public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
         public bool IsRunning { get { return running; } }
 

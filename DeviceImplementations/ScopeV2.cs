@@ -176,7 +176,7 @@ namespace ECore.DeviceImplementations
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
-            return eDevice.HWInterface.GetData(bytesToFetch);          
+            return hardwareInterface.GetData(bytesToFetch);          
         }
 
         private float[] ConvertByteToVoltage(byte[] buffer, byte yOffset)

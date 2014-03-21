@@ -37,7 +37,7 @@ namespace ECore.DeviceMemories
             toSend1[i++] = (byte)startAddress; //second I2C byte: address of the register inside the FPGA
 
             //send this over, so FPGA register pointer is set to correct register
-            eDevice.HWInterface.WriteControlBytes(toSend1);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend1);
 
             ////////////////////////////////////////////////////////
             //now initiate I2C read operation
@@ -51,10 +51,10 @@ namespace ECore.DeviceMemories
             toSend2[i++] = (byte)burstSize;
 
             //send over to HW, to perform read operation
-            eDevice.HWInterface.WriteControlBytes(toSend2);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend2);
 
             //now data is stored in EP3 of PIC, so read it
-            byte[] readBuffer = eDevice.HWInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
+            byte[] readBuffer = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
             if (readBuffer.Length > 0)
             {
                 //strip away first 4 bytes (as these are not data) and store inside registers
@@ -80,7 +80,7 @@ namespace ECore.DeviceMemories
             for (int j = 0; j < burstSize; j++)
                 toSend[i++] = this.registers[startAddress + j].InternalValue;
 
-            eDevice.HWInterface.WriteControlBytes(toSend);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend);
         }
         public void WriteSingle(REG r)
         {

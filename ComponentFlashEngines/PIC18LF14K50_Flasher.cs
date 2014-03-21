@@ -66,9 +66,9 @@ namespace ECore
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //Fetch and print FW version
             byte[] sendBytesForFwVersion = new byte[] { 123, 1 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForFwVersion);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForFwVersion);
             //System.Threading.Thread.Sleep(100);
-            byte[] readFwVersion1 = eDevice.HWInterface.ReadControlBytes(16);
+            byte[] readFwVersion1 = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
             Console.Write("Active FW version: ");
             for (int i = 2; i < 5; i++)
                 Console.Write(readFwVersion1[i].ToString() + ";");
@@ -89,10 +89,10 @@ namespace ECore
             sendBytesForRead[i++] = 8;      //read 8 bytes
 
             //send over to HW, to perform read operation
-            eDevice.HWInterface.WriteControlBytes(sendBytesForRead);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForRead);
 
             //now data is stored in EP3 of PIC, so read it
-            byte[] readBuffer = eDevice.HWInterface.ReadControlBytes(16);
+            byte[] readBuffer = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
             if (readBuffer.Length != 16) return PicFlashResult.ReadFromRomFailure;
             Console.WriteLine("Trial read successful");
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,15 +105,15 @@ namespace ECore
             //Try unlock-erase-write-read on dummy location
             //unlock 
             byte[] sendBytesForUnlock = new byte[] { 123, 5 };                       
-            eDevice.HWInterface.WriteControlBytes(sendBytesForUnlock);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForUnlock);
             //erase            
             byte[] sendBytesForErase = new byte[] { 123, 9, 31, 192 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForErase);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForErase);
             //write
             byte[] sendBytesForWrite1 = new byte[] { 123, 8, 31, 192, 8, 1, 0, 1, 2, 3, 4, 5, 6, 7 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForWrite1);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForWrite1);
             byte[] sendBytesForWrite2 = new byte[] { 123, 8, 31, 192, 8, 0, 8, 9, 10, 11, 12, 13, 14, 15 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForWrite2);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForWrite2);
             //readback
             byte[] sendBytesForRead = new byte[5];
             int i = 0;
@@ -122,14 +122,14 @@ namespace ECore
             sendBytesForRead[i++] = 31;     //progRom address MSB
             sendBytesForRead[i++] = 192;    //progRom address LSB
             sendBytesForRead[i++] = 8;      //read 8 bytes
-            eDevice.HWInterface.WriteControlBytes(sendBytesForRead);
-            byte[] readBuffer1 = eDevice.HWInterface.ReadControlBytes(16);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForRead);
+            byte[] readBuffer1 = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
             byte[] sendBytesForRead2 = new byte[] { 123, 7, 31, 200, 8 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForRead2);
-            byte[] readBuffer2 = eDevice.HWInterface.ReadControlBytes(16);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForRead2);
+            byte[] readBuffer2 = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
             //lock again, in case check crashes
             byte[] sendBytesForLock = new byte[] { 123, 6 };
-            //eDevice.HWInterface.WriteControlBytes(sendBytesForLock);
+            //eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForLock);
 
             //check
             for (i = 0; i < 8; i++)
@@ -149,7 +149,7 @@ namespace ECore
             //Full upper memory erase
             //unlock
             byte[] sendBytesForUnlock = new byte[] { 123, 5 };                       
-            eDevice.HWInterface.WriteControlBytes(sendBytesForUnlock);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForUnlock);
 
             //full erase of upper block, done in blocks of 64B at once
             for (int i = 0x2000; i < 0x39FF; i = i + 64)
@@ -157,14 +157,14 @@ namespace ECore
                 byte addressMSB = (byte)(i >> 8);
                 byte addressLSB = (byte)i;
                 byte[] sendBytesForBlockErase = new byte[] { 123, 9, addressMSB, addressLSB };
-                eDevice.HWInterface.WriteControlBytes(sendBytesForBlockErase);
+                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForBlockErase);
                 //Console.WriteLine("Erased memblock 0x" + i.ToString("X"));
             }
 
             //simple check: read data at 0x2000 -- without erase this is never FF
             byte[] sendBytesForRead3 = new byte[] { 123, 7, 0x20, 0, 8 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForRead3);
-            byte[] readBuffer3 = eDevice.HWInterface.ReadControlBytes(16);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForRead3);
+            byte[] readBuffer3 = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
             for (int i = 0; i < 8; i++)
                 if (readBuffer3[5 + i] != 0xFF)
                     return PicFlashResult.TrialFailedWrongDataReceived;
@@ -177,7 +177,7 @@ namespace ECore
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //Write full memory area with content read from file
             byte[] sendBytesForUnlock = new byte[] { 123, 5 };                       
-            eDevice.HWInterface.WriteControlBytes(sendBytesForUnlock);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForUnlock);
             //prepare packages
             byte[] writePackage1 = new byte[14];
             byte[] writePackage2 = new byte[14];
@@ -219,14 +219,14 @@ namespace ECore
                             writePackage2[6 + i] = 0xFF;
 
                     //send first packet
-                    eDevice.HWInterface.WriteControlBytes(writePackage1);
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(writePackage1);
                     //send second packet, including the 16th byte, after which the write actually happens
-                    eDevice.HWInterface.WriteControlBytes(writePackage2);
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(writePackage2);
                 }
             }
 
             //don't lock here! need to verify memory first.
-            //eDevice.HWInterface.WriteControlBytes(sendBytesForLock);
+            //eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForLock);
 
             Console.WriteLine("Writing of upper memory area finished");
             return PicFlashResult.Success;
@@ -245,13 +245,13 @@ namespace ECore
 
                     //read 2 bytes at address
                     byte[] sendBytesForVerificationRead1 = new byte[] { 123, 7, (byte)(kvp.Key >> 8), (byte)kvp.Key, 8 };
-                    eDevice.HWInterface.WriteControlBytes(sendBytesForVerificationRead1);
-                    byte[] readVerificationBytes1 = eDevice.HWInterface.ReadControlBytes(16);
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForVerificationRead1);
+                    byte[] readVerificationBytes1 = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
 
                     uint addr = kvp.Key + 8; //need to do this, as there's a possiblity of overflowing
                     byte[] sendBytesForVerificationRead2 = new byte[] { 123, 7, (byte)(addr >> 8), (byte)addr, 8 };
-                    eDevice.HWInterface.WriteControlBytes(sendBytesForVerificationRead2);
-                    byte[] readVerificationBytes2 = eDevice.HWInterface.ReadControlBytes(16);
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForVerificationRead2);
+                    byte[] readVerificationBytes2 = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16);
 
                     //compare
                     for (int i = 0; i < 8; i++)
@@ -268,7 +268,7 @@ namespace ECore
 
             //Lock again!
             byte[] sendBytesForLock = new byte[] { 123, 6 };
-            eDevice.HWInterface.WriteControlBytes(sendBytesForLock);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(sendBytesForLock);
 
             return PicFlashResult.Success;
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////

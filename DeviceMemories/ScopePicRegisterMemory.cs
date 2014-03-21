@@ -41,10 +41,10 @@ namespace ECore.DeviceMemories
             toSend1[i++] = (byte)(burstSize); 
 
             //send this over, so FPGA register pointer is set to correct register
-            eDevice.HWInterface.WriteControlBytes(toSend1);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend1);
 
             //now data is stored in EP3 of PIC, so read it
-            byte[] readBuffer = eDevice.HWInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
+            byte[] readBuffer = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
 
             //strip away first 4 bytes (as these are not data) and store inside registers
             byte[] returnBuffer = new byte[burstSize];
@@ -67,7 +67,7 @@ namespace ECore.DeviceMemories
             for (int j = 0; j < burstSize; j++)
                 toSend[i++] = this.registers[startAddress + j].InternalValue;
 
-            eDevice.HWInterface.WriteControlBytes(toSend);
+            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend);
         }
         public void WriteSingle(PIC r)
         {

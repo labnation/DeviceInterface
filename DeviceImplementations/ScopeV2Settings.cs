@@ -230,7 +230,7 @@ namespace ECore.DeviceImplementations
                 for (int c = 0; c < blockSize; c++)
                     toSend[i++] = data[blockCounter * blockSize + c];
 
-                eDevice.HWInterface.WriteControlBytes(toSend);
+                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend);
 
                 blockCounter++;
             }
