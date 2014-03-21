@@ -15,5 +15,6 @@ namespace ECore.DeviceImplementations
         public abstract void SetTriggerHoldOff(int samples);
         public abstract void SetTriggerLevel(float voltage);
         public abstract void SetYOffset(uint channel, float offset);
+        public abstract void SetTriggerChannel(uint channel);
     }
 }

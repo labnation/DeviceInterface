@@ -119,6 +119,15 @@ namespace ECore.DeviceImplementations
             fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
+        /// <summary>
+        /// Choose channel upon which to trigger
+        /// </summary>
+        /// <param name="channel"></param>
+        public override void SetTriggerChannel(uint channel)
+        {
+            validateChannel(channel);
+            throw new NotImplementedException();
+        }
         ///<summary>
         ///Set scope sample decimation
         ///</summary>

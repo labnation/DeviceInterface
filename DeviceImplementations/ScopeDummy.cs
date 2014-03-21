@@ -26,7 +26,9 @@ namespace ECore.DeviceImplementations
         private float[] yOffset = new float[channels];
         private float triggerLevel = 0;
         private int triggerHoldoff = 0;
+        private uint triggerChannel = 0;
 
+        #region constructor / initializer 
 
         public ScopeDummy(EDevice d) : base(d) { }
 
@@ -45,7 +47,15 @@ namespace ECore.DeviceImplementations
         public override void Start() { timeOrigin = DateTime.Now; }
         public override void Stop() { }
 
+        #endregion
+
         #region real scope settings
+
+        private void validateChannel(uint ch)
+        {
+            if (ch >= channels)
+                throw new ValidationException("Channel must be between 0 and " + (channels - 1));
+        }
 
         public override int GetTriggerHoldoff()
         {
@@ -63,9 +73,13 @@ namespace ECore.DeviceImplementations
         }
         public override void SetYOffset(uint channel, float offset)
         {
-            if (channel >= channels)
-                throw new ValidationException("Can't set YOffset of channel " + channel + " since there are only " + channels + " channels");
+            validateChannel(channel);
             this.yOffset[channel] = offset;
+        }
+        public override void SetTriggerChannel(uint channel)
+        {
+            validateChannel(channel);
+            this.triggerChannel = channel;
         }
 
         #endregion
