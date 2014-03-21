@@ -6,7 +6,7 @@ using ECore.DeviceImplementations;
 
 namespace ECore.DataPackages
 {
-    public enum ScopeChannel { ChA, ChB, Digi0, Digi1, Digi2, Digi3, Digi4, Digi5, Digi6, Digi7, Math, FftA, FftB, I2CDecoder };
+    public enum ScopeChannel { ChA, ChB, Digi0, Digi1, Digi2, Digi3, Digi4, Digi5, Digi6, Digi7, Math, FftA, FftB, I2CDecoder, Undefined };
 
     public class DataPackageScope
     {
