@@ -23,16 +23,33 @@ namespace ECore.DeviceImplementations
             return wave;
         }
 
-        private static int Trigger(float[] wave, uint acquisitionLength, uint holdoff, float level)
+        private static bool Trigger(float[] wave, int holdoff, float level, out int triggerIndex)
         {
-            for (int i = 0; i < wave.Length - acquisitionLength - 1; i++)
+            //Hold off:
+            // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
+            // - if negative, start looking at index 0, but add abs(holdoff) to returned index
+            triggerIndex = 0;
+            for (int i = Math.Max(0, holdoff); i < wave.Length - 1; i++)
             {
                 if (wave[i] <= level && wave[i + 1] > level)
                 {
-                    return i;
+                    triggerIndex = i;
+                    return true;
                 }
             }
-            return -1;
+            return false;
+        }
+        private static float[] Something(uint outputLength, float[] sourceWave, int triggerIndex, int holdoff)
+        {
+            float[] output = new float[outputLength];
+            try
+            {
+                Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
+                return output;
+            } catch (ArgumentException e) {
+                Logger.AddEntry(null, LogMessageType.ECoreInfo, "trigger too close to source wave edge to return wave [" + e.Message + "]");
+                return null;
+            }
         }
 
 

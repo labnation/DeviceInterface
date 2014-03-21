@@ -10,5 +10,9 @@ namespace ECore.DeviceImplementations
     {
         public Scope(EDevice device) : base(device) { }
         public abstract DataPackageScope GetScopeData();
+
+        public abstract int GetTriggerHoldoff();
+        public abstract void SetTriggerHoldOff(int samples);
+        public abstract void SetTriggerLevel(float voltage);
     }
 }

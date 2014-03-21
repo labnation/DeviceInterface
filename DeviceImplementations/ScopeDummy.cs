@@ -15,7 +15,7 @@ namespace ECore.DeviceImplementations
         private const uint waveLength = 10 * outputWaveLength;
         private double samplePeriod = 20e-9; //ns --> sampleFreq of 50MHz by default
         private float triggerLevel = 0;
-        private uint triggerHoldoff = 0;
+        private int triggerHoldoff = 0;
 
         public ScopeDummy(EDevice d) : base(d) { }
 
@@ -34,14 +34,31 @@ namespace ECore.DeviceImplementations
         public override void Start() { timeOrigin = DateTime.Now; }
         public override void Stop() { }
 
+        public override int GetTriggerHoldoff()
+        {
+            return this.triggerHoldoff;
+        }
+        public override void SetTriggerHoldOff(int samples)
+        {
+            this.triggerHoldoff = samples;
+        }
+        public override void SetTriggerLevel(float voltage)
+        {
+            this.triggerLevel = voltage;
+        }
 
         public override DataPackageScope GetScopeData()
         {
-            TimeSpan offset = DateTime.Now - timeOrigin;
-            float[] wave = ScopeDummy.GenerateWave(this.waveForm, waveLength, this.samplePeriod, offset.TotalSeconds, 5e6, 1, 0);
-            int triggerIndex = ScopeDummy.Trigger(wave, outputWaveLength, triggerHoldoff, triggerLevel);
-            float[] output = new float[outputWaveLength];
-            Array.Copy(wave, triggerIndex, output, 0, output.Length);
+            int triggerIndex = -1;
+            float[] wave = null;
+            float[] output = null;
+            while (output == null)
+            {
+                TimeSpan offset = DateTime.Now - timeOrigin;
+                wave = ScopeDummy.GenerateWave(this.waveForm, waveLength, this.samplePeriod, offset.TotalSeconds, 5e6, 1, 0);
+                if(ScopeDummy.Trigger(wave, triggerHoldoff, triggerLevel, out triggerIndex))
+                    output = ScopeDummy.Something(outputWaveLength, wave, triggerIndex, triggerHoldoff);
+            }
             DataPackageScope p = new DataPackageScope();
             p.SetDataAnalog(ScopeChannel.ChA, output);
             p.SetDataAnalog(ScopeChannel.ChB, output);
