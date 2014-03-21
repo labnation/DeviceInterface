@@ -9,7 +9,7 @@ namespace ECore.DeviceImplementations
     public partial class ScopeDummy : Scope
     {
         private DateTime timeOrigin;
-        private WaveForm waveForm = WaveForm.SINE;
+        private WaveForm waveForm = WaveForm.TRIANGLE;
         private int usbLatency = 5; //milliseconds of latency to simulate USB request delay
         private const uint outputWaveLength = 2048;
         //waveLength = samples generated before trying to find trigger
@@ -59,6 +59,10 @@ namespace ECore.DeviceImplementations
         {
             this.frequency = frequency;
         }
+        public void SetDummyWaveForm(WaveForm w)
+        {
+            this.waveForm = w;
+        }
         public override DataPackageScope GetScopeData()
         {
             if (!eDevice.IsRunning) 
@@ -80,7 +84,7 @@ namespace ECore.DeviceImplementations
                 wave = ScopeDummy.GenerateWave(this.waveForm, waveLength, this.samplePeriod, offset.TotalSeconds, this.frequency, this.amplitude, 0);
                 if (ScopeDummy.Trigger(wave, triggerHoldoff, triggerLevel, out triggerIndex))
                 {
-                    output = ScopeDummy.Something(outputWaveLength, wave, triggerIndex, triggerHoldoff);
+                    output = ScopeDummy.CropWave(outputWaveLength, wave, triggerIndex, triggerHoldoff);
                     break;
                 }
                 //If no trigger found, do it again with half the time window further

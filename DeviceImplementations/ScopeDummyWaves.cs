@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.DeviceImplementations
 {
-    public enum WaveForm { SINE, BLOCK, TRIANGLE };
+    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE };
 
     partial class ScopeDummy
     {
@@ -14,8 +14,16 @@ namespace ECore.DeviceImplementations
             float[] wave = new float[waveLength];
             switch(waveForm) {
                 case WaveForm.SINE:
-                    //FIXME: use timeOffset based on dateTime
                     wave = ScopeDummy.WaveSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    break;
+                case WaveForm.SQUARE:
+                    wave = ScopeDummy.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    break;
+                case WaveForm.SAWTOOTH:
+                    wave = ScopeDummy.WaveSawTooth(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    break;
+                case WaveForm.TRIANGLE:
+                    wave = ScopeDummy.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -39,7 +47,7 @@ namespace ECore.DeviceImplementations
             }
             return false;
         }
-        private static float[] Something(uint outputLength, float[] sourceWave, int triggerIndex, int holdoff)
+        private static float[] CropWave(uint outputLength, float[] sourceWave, int triggerIndex, int holdoff)
         {
             float[] output = new float[outputLength];
             try
@@ -59,6 +67,33 @@ namespace ECore.DeviceImplementations
             float[] wave = new float[nSamples];
             for (int i = 0; i < wave.Length; i++)
                 wave[i] = (float)(amplitude * Math.Sin(2.0 * Math.PI * frequency * ((double)i * samplePeriod + timeOffset) + phase));
+            return wave;
+        }
+
+        private static float[] WaveSquare(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        {
+            float[] wave = new float[nSamples];
+            for (int i = 0; i < wave.Length; i++)
+                wave[i] = (((double)i * samplePeriod + timeOffset) % (1.0/frequency)) * frequency > 0.5 ? (float)amplitude : -1f*(float)amplitude;
+            return wave;
+        }
+        private static float[] WaveSawTooth(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        {
+            float[] wave = new float[nSamples];
+            for (int i = 0; i < wave.Length; i++)
+                wave[i] = (float)((((double)i * samplePeriod + timeOffset) % (1.0 / frequency)) * frequency * amplitude);
+            return wave;
+        }
+        private static float[] WaveTriangle(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        {
+            float[] wave = new float[nSamples];
+            for (int i = 0; i < wave.Length; i++)
+            {
+                //Number between 0 and 1 indicating which part of the period we're in
+                double periodSection = (((double)i * samplePeriod + timeOffset) % (1.0 / frequency)) * frequency;
+                double scaler = periodSection < 1f/2 ? (periodSection - 1f/4) * 4 : (periodSection - 3f/4) * -4;
+                wave[i] = (float)(scaler * amplitude);
+            }
             return wave;
         }
     }
