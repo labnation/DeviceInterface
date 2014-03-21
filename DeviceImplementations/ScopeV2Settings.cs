@@ -38,7 +38,7 @@ namespace ECore.DeviceImplementations
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
-        public void SetYOffset(uint channel, float offset)
+        public override void SetYOffset(uint channel, float offset)
         {
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
