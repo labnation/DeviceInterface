@@ -84,7 +84,7 @@ namespace ECore.DeviceImplementations
 
         #endregion
 
-        #region dummy wave settings
+        #region dummy scope settings
         public void SetDummyWaveAmplitude(double amplitude)
         {
             this.amplitude = amplitude;
