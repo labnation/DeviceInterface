@@ -14,5 +14,6 @@ namespace ECore.DeviceImplementations
         public abstract int GetTriggerHoldoff();
         public abstract void SetTriggerHoldOff(int samples);
         public abstract void SetTriggerLevel(float voltage);
+        public abstract float GetTriggerLevel();
     }
 }

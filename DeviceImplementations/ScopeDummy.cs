@@ -51,6 +51,10 @@ namespace ECore.DeviceImplementations
             if(Math.Abs(this.triggerLevel) > Math.Abs(this.amplitude))
                 Logger.AddEntry(this, LogMessageType.ECoreInfo, "Not gonna generate dummy waves since trigger level is larger than amplitude");
         }
+        public override float GetTriggerLevel()
+        {
+            return 1.0f;
+        }
         public void SetDummyWaveAmplitude(double amplitude)
         {
             this.amplitude = amplitude;

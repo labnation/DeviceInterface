@@ -43,6 +43,11 @@ namespace ECore.DeviceImplementations
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
         }
 
+        public override float GetTriggerLevel()
+        {
+            return 1.0f;
+        }
+
         #region initializers
 
         public override void InitializeHardwareInterface()
