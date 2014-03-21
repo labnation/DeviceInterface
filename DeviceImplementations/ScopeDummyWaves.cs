@@ -104,10 +104,10 @@ namespace ECore.DeviceImplementations
 
         private static float[] WaveTriangleSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
-            Func<float, float, float> multiplyFloat = (x, y) => (x + x * y);
-            float[] wave1 = WaveTriangle(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase);
-            float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency*10.0, 0.1, phase);
-            float[] wave = Utils.CombineArrays(wave1, wave2, ref multiplyFloat);
+            Func<float, float, float> sumFloat = (x, y) => (x + y);
+            float[] wave1 = WaveSawTooth(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase);
+            float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency * 20.0, amplitude * 0.1, phase);
+            float[] wave = Utils.CombineArrays(wave1, wave2, ref sumFloat);
             return wave;
         }
 

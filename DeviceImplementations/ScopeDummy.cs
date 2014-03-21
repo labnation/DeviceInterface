@@ -16,7 +16,7 @@ namespace ECore.DeviceImplementations
         private const uint waveLength = 10 * outputWaveLength;
         private double samplePeriod = 20e-9; //ns --> sampleFreq of 50MHz by default
         private double amplitude = 1.5;
-        private double frequency = 120e3;
+        private double frequency = 50e3;
         private double noiseAmplitude = 0.15; //Noise mean voltage
         private int usbLatency = 5; //milliseconds of latency to simulate USB request delay
 
