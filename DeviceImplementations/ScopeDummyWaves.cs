@@ -15,7 +15,7 @@ namespace ECore.DeviceImplementations
             switch(waveForm) {
                 case WaveForm.SINE:
                     //FIXME: use timeOffset based on dateTime
-                    wave = ScopeDummy.WaveSine(waveLength, samplePeriod, timeOffset, 100e3, 1.0, 0.0);
+                    wave = ScopeDummy.WaveSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 default:
                     throw new NotImplementedException();
