@@ -96,7 +96,7 @@ namespace ECore
             running = false;
 
             //stop HW
-            //dataFetchThread.Join(); --> We should do this here but it causes deadlock cos of logging not being asynchronous!!!
+            dataFetchThread.Join(); //--> We should do this here but it causes deadlock cos of logging not being asynchronous!!!
             deviceImplementation.Stop();
 
             //add entry to log

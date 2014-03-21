@@ -49,6 +49,8 @@ namespace ECore.DeviceImplementations
 
         public override DataPackageScope GetScopeData()
         {
+            if (!eDevice.IsRunning) 
+                return null;
             int triggerIndex = -1;
             float[] wave = null;
             float[] output = null;
