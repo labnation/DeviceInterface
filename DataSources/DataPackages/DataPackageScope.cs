@@ -10,7 +10,8 @@ namespace ECore.DataPackages
 
     public class DataPackageScope
     {
-        private uint triggerIndex;
+        private int triggerIndex;
+        private double samplePeriod;
         private Dictionary<ScopeChannel, float[]> dataAnalog;
         private Dictionary<ScopeChannel, bool[]> dataDigital;
 
@@ -35,15 +36,17 @@ namespace ECore.DataPackages
             }
         }
 
-        public DataPackageScope()
+        public DataPackageScope(double samplePeriod, int triggerIndex)
         {
+            this.triggerIndex = triggerIndex;
+            this.samplePeriod = samplePeriod;
             dataAnalog = new Dictionary<ScopeChannel, float[]>();
             dataDigital = new Dictionary<ScopeChannel, bool[]>();
         }
         //FIXME: this constructor shouldn't be necessary, all data should be set using Set()
         //It's just here to support "legacy" code
         public DataPackageScope(float[] buffer)
-            : this()
+            : this(20e-9, 0)
         {
             float[] chA = new float[buffer.Length / 2];
             float[] chB = new float[buffer.Length / 2];
@@ -55,19 +58,19 @@ namespace ECore.DataPackages
             dataAnalog.Add(ScopeChannel.ChA, chA);
             dataAnalog.Add(ScopeChannel.ChB, chB);
         }
-        private void CheckChannelDataType(ScopeChannel ch, object data)
+        private void ValidateChannelDataType(ScopeChannel ch, object data)
         {
             if(!ScopeChannelType(ch).Equals(data.GetType()))
                 throw new Exception("data type mismatch while setting scope channel data");
         }
         public void SetDataAnalog(ScopeChannel ch, float[] data)
         {
-            CheckChannelDataType(ch, data[0]);
+            ValidateChannelDataType(ch, data[0]);
             dataAnalog.Add(ch, data);
         }
         public void SetDataDigital(ScopeChannel ch, bool[] data)
         {
-            CheckChannelDataType(ch, data[0]);
+            ValidateChannelDataType(ch, data[0]);
             dataDigital.Add(ch, data);
         }
         public float[] GetDataAnalog(ScopeChannel ch)
@@ -82,5 +85,14 @@ namespace ECore.DataPackages
             dataDigital.TryGetValue(ch, out data);
             return data;
         }
+        /// <summary>
+        /// Index at which the data was triggered. WARN: This index is not necessarily within the 
+        /// data array's bounds, depending on what trigger holdoff was used
+        /// </remarks>
+        public int TriggerIndex { get { return this.triggerIndex; } }
+        /// <summary>
+        /// Time between 2 consecutive data array elements. In seconds.
+        /// </summary>
+        public double SamplePeriod { get { return this.samplePeriod; } }
     }
 }

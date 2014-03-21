@@ -200,6 +200,10 @@ namespace ECore.DeviceImplementations
         {
             byte[] buffer = this.GetBytes();
             
+            //FIXME: Get these scope settings from header
+            double samplePeriod = 20e-9; //20ns -> 50MHz for now
+            int triggerIndex = 0;
+
             //Split in 2 channels
             byte[] chA = new byte[buffer.Length / 2];
             byte[] chB = new byte[buffer.Length / 2];
@@ -210,7 +214,7 @@ namespace ECore.DeviceImplementations
             }
 
             //construct data package
-            DataPackageScope data = new DataPackageScope();
+            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex);
             //FIXME: parse package header and set DataPackageScope's trigger index
             //FIXME: Get bytes, split into analog/digital channels and add to scope data
             if (this.disableVoltageConversion)

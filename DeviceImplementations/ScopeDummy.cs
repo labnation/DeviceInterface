@@ -51,17 +51,28 @@ namespace ECore.DeviceImplementations
         {
             if (!eDevice.IsRunning) 
                 return null;
-            int triggerIndex = -1;
+            int triggerIndex = 0;
             float[] wave = null;
             float[] output = null;
-            while (output == null)
+
+            //output will remain null as long as a trigger with the current time offset is not found
+            //We might get stuck here for a while if the trigger level is beyond the wave amplitude
+            TimeSpan offset = DateTime.Now - timeOrigin;
+            for(int tries = 0; tries < 10; tries++)
             {
-                TimeSpan offset = DateTime.Now - timeOrigin;
                 wave = ScopeDummy.GenerateWave(this.waveForm, waveLength, this.samplePeriod, offset.TotalSeconds, 5e6, 1, 0);
-                if(ScopeDummy.Trigger(wave, triggerHoldoff, triggerLevel, out triggerIndex))
+                if (ScopeDummy.Trigger(wave, triggerHoldoff, triggerLevel, out triggerIndex))
+                {
                     output = ScopeDummy.Something(outputWaveLength, wave, triggerIndex, triggerHoldoff);
+                    break;
+                }
+                //If no trigger found, do it again with half the time window further
+                offset.Add(new TimeSpan((long)(10e7 * (double)waveLength / 2.0 * samplePeriod)));
             }
-            DataPackageScope p = new DataPackageScope();
+            if (output == null)
+                return null;
+
+            DataPackageScope p = new DataPackageScope(samplePeriod, triggerIndex);
             p.SetDataAnalog(ScopeChannel.ChA, output);
             p.SetDataAnalog(ScopeChannel.ChB, output);
             return p;
