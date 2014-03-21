@@ -11,7 +11,6 @@ namespace ECore.DataSources
     public class DataSourceScope: DataSource
     {
         private Scope scope;
-        private DataPackageScope lastDataPackage;
 
         public DataSourceScope(Scope scope)
         {
@@ -20,7 +19,7 @@ namespace ECore.DataSources
         
         public override void Update()
         {
-            lastDataPackage = scope.GetScopeData();
+            latestDataPackage = scope.GetScopeData();
             this.fireDataAvailableEvents();
         }
     }

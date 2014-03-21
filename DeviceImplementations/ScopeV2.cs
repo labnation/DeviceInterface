@@ -98,6 +98,8 @@ namespace ECore.DeviceImplementations
 
         override public void Start()
         {
+            hardwareInterface.Stop();
+
             //raise global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 1;
             strobeMemory.WriteSingle(STR.GLOBAL_RESET);
@@ -166,6 +168,7 @@ namespace ECore.DeviceImplementations
 
         override public void Stop()
         {
+            hardwareInterface.Start();
         }
 
         #endregion

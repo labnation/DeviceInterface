@@ -80,6 +80,7 @@
     <Compile Include="DataSources\DataPackages\DataPackageScope.cs" />
     <Compile Include="DeviceImplementations\Scope.cs" />
     <Compile Include="DeviceImplementations\ScopeDummy.cs" />
+    <Compile Include="DeviceImplementations\ScopeDummyWaves.cs" />
     <Compile Include="DeviceImplementations\ScopeV2Sandbox.cs" />
     <Compile Include="DeviceImplementations\ScopeV2FlashHelpers.cs" />
     <Compile Include="DeviceImplementations\ScopeV2Settings.cs" />

@@ -77,14 +77,12 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread spawn");
 
             //start HW
-            //FIXME: make this line part of StartDevice
-            deviceImplementation.hardwareInterface.Stop();
             deviceImplementation.Start();
 
             //looping until device is stopped
             while (running)
             {
-                //Update each dataSource (callback is fired from within)
+                //Update each dataSource (OnDataAvailable callback is fired from within)
                 foreach (DataSource d in this.deviceImplementation.DataSources)
                 {
                     d.Update();
@@ -100,8 +98,6 @@ namespace ECore
             //stop HW
             //dataFetchThread.Join(); --> We should do this here but it causes deadlock cos of logging not being asynchronous!!!
             deviceImplementation.Stop();
-            //FIXME: make this line part of StopDevice
-            deviceImplementation.hardwareInterface.Start();
 
             //add entry to log
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped now");

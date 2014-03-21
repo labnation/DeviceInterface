@@ -45,6 +45,7 @@ namespace ECore
             byteMemories = new List<DeviceMemory<MemoryRegister<byte>>>();
             InitializeMemories();
             dataSources = new List<DataSource>();
+            InitializeDataSources();
         }
 
         //getters
