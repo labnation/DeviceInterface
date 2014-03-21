@@ -9,7 +9,7 @@ namespace ECore.DeviceImplementations
     public partial class ScopeDummy : Scope
     {
         private DateTime timeOrigin;
-        private WaveForm waveForm = WaveForm.TRIANGLE;
+        private WaveForm waveForm = WaveForm.SINE;
         private int usbLatency = 5; //milliseconds of latency to simulate USB request delay
         private const uint outputWaveLength = 2048;
         //waveLength = samples generated before trying to find trigger
@@ -19,6 +19,7 @@ namespace ECore.DeviceImplementations
         private double frequency = 24.4e3;
         private float triggerLevel = 0;
         private int triggerHoldoff = 0;
+        private double noiseAmplitude = 0.15; //Noise mean voltage
 
         public ScopeDummy(EDevice d) : base(d) { }
 
@@ -63,6 +64,11 @@ namespace ECore.DeviceImplementations
         {
             this.waveForm = w;
         }
+        public void SetNoiseAmplitude(double noiseAmplitude)
+        {
+            this.noiseAmplitude = noiseAmplitude;
+        }
+
         public override DataPackageScope GetScopeData()
         {
             if (!eDevice.IsRunning) 
@@ -92,6 +98,8 @@ namespace ECore.DeviceImplementations
             }
             if (output == null)
                 return null;
+
+            ScopeDummy.AddNoise(output, this.noiseAmplitude);
 
             DataPackageScope p = new DataPackageScope(samplePeriod, triggerIndex);
             p.SetDataAnalog(ScopeChannel.ChA, output);

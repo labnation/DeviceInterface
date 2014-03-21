@@ -96,5 +96,15 @@ namespace ECore.DeviceImplementations
             }
             return wave;
         }
+
+        private static void AddNoise(float[] output, double noiseAmplitude)
+        {
+            Random r = new Random();
+            for (int i = 0; i < output.Length; i++)
+            {
+                output[i] = (float)(output[i] + r.NextDouble() * noiseAmplitude);
+            }
+
+        }
     }
 }
