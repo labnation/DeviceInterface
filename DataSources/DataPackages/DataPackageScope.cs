@@ -12,7 +12,6 @@ namespace ECore.DataPackages
     {
         private int triggerIndex;
         private double samplePeriod;
-        private bool processed = false;
         private Dictionary<ScopeChannel, float[]> dataAnalog;
         private Dictionary<ScopeChannel, bool[]> dataDigital;
 
@@ -78,13 +77,13 @@ namespace ECore.DataPackages
         }
         public float[] GetDataAnalog(ScopeChannel ch)
         {
-            float[] data = null;
+            float[] data;
             dataAnalog.TryGetValue(ch, out data);
             return data;
         }
         public bool[] GetDataDigital(ScopeChannel ch)
         {
-            bool[] data = null;
+            bool[] data;
             dataDigital.TryGetValue(ch, out data);
             return data;
         }
@@ -97,9 +96,5 @@ namespace ECore.DataPackages
         /// Time between 2 consecutive data array elements. In seconds.
         /// </summary>
         public double SamplePeriod { get { return this.samplePeriod; } }
-        /// <summary>
-        /// Used to indicate wheter this packacke has been processed yet by the processing engine
-        /// </summary>
-        public bool Processed { get { return this.processed; } set { processed = value; } }
     }
 }
