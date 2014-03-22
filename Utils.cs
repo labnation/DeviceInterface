@@ -59,16 +59,16 @@ namespace ECore
         /// <summary>
         /// Combines 2 arrays into a new one by applying lamba on each element
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="I"></typeparam>
         /// <param name="input1">Array with first argument of lambda</param>
         /// <param name="input2">Array with second argument of lambda</param>
         /// <param name="op">Lambda, i.e. to sum 2 arrays: Func&lt;T,T,T&gt; sum = (x, y) => x + y"/></param>
-        public static T[] CombineArrays<T>(T[] input1, T[] input2, ref Func<T, T, T> op)
+        public static O[] CombineArrays<I,O>(I[] input1, I[] input2, ref Func<I, I, O> op)
         {
             if (input1 == null || input2 == null) return null;
             if (input1.Length != input2.Length)
                 throw new Exception("Cannot combine arrays of different length");
-            T[] output = new T[input1.Length];
+            O[] output = new O[input1.Length];
             for (int i = 0; i < input1.Length; i++)
             {
                 output[i] = op(input1[i], input2[i]);
