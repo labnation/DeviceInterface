@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using AForge.Math;
 
 namespace ECore
 {
@@ -42,12 +43,13 @@ namespace ECore
         /// <summary>
         /// Applies operator on each element of an array
         /// </summary>
-        /// <typeparam name="T">Type of array element</typeparam>
+        /// <typeparam name="I">Type of array element</typeparam>
         /// <param name="input">Array to transform</param>
         /// <param name="op">Operator lambda expression</param>
-        public static T[] TransformArray<T>(T[] input, Func<T, T> op)
+        public static O[] TransformArray<I, O>(I[] input, Func<I, O> op)
         {
-            T[] output = new T[input.Length];
+            if (input == null) return null;
+            O[] output = new O[input.Length];
             for (int i = 0; i < input.Length; i++)
             {
                 output[i] = op(input[i]);
@@ -63,6 +65,7 @@ namespace ECore
         /// <param name="op">Lambda, i.e. to sum 2 arrays: Func&lt;T,T,T&gt; sum = (x, y) => x + y"/></param>
         public static T[] CombineArrays<T>(T[] input1, T[] input2, ref Func<T, T, T> op)
         {
+            if (input1 == null || input2 == null) return null;
             if (input1.Length != input2.Length)
                 throw new Exception("Cannot combine arrays of different length");
             T[] output = new T[input1.Length];

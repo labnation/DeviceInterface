@@ -6,6 +6,7 @@ using ECore.DataPackages;
 
 namespace ECore.DeviceImplementations
 {
+    //FIXME: make me an interface
     public abstract class Scope: EDeviceImplementation
     {
         public Scope(EDevice device) : base(device) { }
