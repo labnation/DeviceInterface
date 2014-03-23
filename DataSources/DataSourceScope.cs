@@ -10,9 +10,9 @@ namespace ECore.DataSources
 {
     public class DataSourceScope: DataSource
     {
-        private Scope scope;
+        private IScope scope;
 
-        public DataSourceScope(Scope scope)
+        public DataSourceScope(IScope scope)
         {
             this.scope = scope;
         }

@@ -38,7 +38,7 @@ namespace ECore.DeviceImplementations
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
-        public override void SetYOffset(uint channel, float offset)
+        public void SetYOffset(uint channel, float offset)
         {
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
@@ -109,7 +109,7 @@ namespace ECore.DeviceImplementations
         ///Set scope trigger level
         ///</summary>
         ///<param name="level">Trigger level in volt</param>
-        public override void SetTriggerLevel(float voltage)
+        public void SetTriggerLevel(float voltage)
         {
             float level = (voltage - fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
             if (level < 0) level = 0;
@@ -123,7 +123,7 @@ namespace ECore.DeviceImplementations
         /// Choose channel upon which to trigger
         /// </summary>
         /// <param name="channel"></param>
-        public override void SetTriggerChannel(uint channel)
+        public void SetTriggerChannel(uint channel)
         {
             validateChannel(channel);
             throw new NotImplementedException();
@@ -153,7 +153,7 @@ namespace ECore.DeviceImplementations
         ///Scope hold off
         ///</summary>
         ///<param name="samples">Store [samples] before trigger</param>
-        public override void SetTriggerHoldOff(int samples)
+        public void SetTriggerHoldOff(int samples)
         {
             if (samples < 0 || samples > 2047)
                 throw new ValidationException("Trigger hold off must be between 0 and 2047");
@@ -274,7 +274,7 @@ namespace ECore.DeviceImplementations
         }
 
         //FIXME: turn into a setting getter
-        public override int GetTriggerHoldoff()
+        public int GetTriggerHoldoff()
         {
             fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B1);
             fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B0);

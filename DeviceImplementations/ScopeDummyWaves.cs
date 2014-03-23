@@ -65,8 +65,6 @@ namespace ECore.DeviceImplementations
             }
         }
 
-
-
         private static float[] WaveSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[nSamples];

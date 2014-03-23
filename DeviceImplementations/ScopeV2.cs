@@ -15,7 +15,7 @@ namespace ECore.DeviceImplementations
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public partial class ScopeV2:Scope
+    public partial class ScopeV2: EDeviceImplementation, IScope
     {
         
 		public static string DemoStatusText = "";
@@ -196,7 +196,7 @@ namespace ECore.DeviceImplementations
             return voltage;
         }
 
-        public override DataPackageScope GetScopeData()
+        public DataPackageScope GetScopeData()
         {
             byte[] buffer = this.GetBytes();
             

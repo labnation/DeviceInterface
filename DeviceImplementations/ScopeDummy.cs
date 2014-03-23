@@ -6,19 +6,19 @@ using ECore.DataPackages;
 
 namespace ECore.DeviceImplementations
 {
-    public partial class ScopeDummy : Scope
+    public partial class ScopeDummy : EDeviceImplementation, IScope
     {
         private DateTime timeOrigin;
         
         //Dummy wave settings
-        private WaveForm[] waveForm = { WaveForm.SAWTOOTH_SINE, WaveForm.SAWTOOTH };
+        private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH };
         //waveLength = number of samples generated before trying to find trigger
         private const uint waveLength = 10 * outputWaveLength;
         private double samplePeriod = 20e-9; //ns --> sampleFreq of 50MHz by default
-        private double amplitude = 1.5;
-        private double frequency = 50e3;
-        private double noiseAmplitude = 0.15; //Noise mean voltage
-        private int usbLatency = 5; //milliseconds of latency to simulate USB request delay
+        private double amplitude = 1.7;
+        private double frequency = 22e3;
+        private double noiseAmplitude = 0.0;//15; //Noise mean voltage
+        private int usbLatency = 1; //milliseconds of latency to simulate USB request delay
 
         //Scope variables
         private const uint outputWaveLength = 2048;
@@ -57,26 +57,26 @@ namespace ECore.DeviceImplementations
                 throw new ValidationException("Channel must be between 0 and " + (channels - 1));
         }
 
-        public override int GetTriggerHoldoff()
+        public int GetTriggerHoldoff()
         {
             return this.triggerHoldoff;
         }
-        public override void SetTriggerHoldOff(int samples)
+        public void SetTriggerHoldOff(int samples)
         {
             this.triggerHoldoff = samples;
         }
-        public override void SetTriggerLevel(float voltage)
+        public void SetTriggerLevel(float voltage)
         {
             this.triggerLevel = voltage;
             if(Math.Abs(this.triggerLevel) > Math.Abs(this.amplitude))
                 Logger.AddEntry(this, LogMessageType.ECoreInfo, "Not gonna generate dummy waves since trigger level is larger than amplitude");
         }
-        public override void SetYOffset(uint channel, float offset)
+        public void SetYOffset(uint channel, float offset)
         {
             validateChannel(channel);
             this.yOffset[channel] = offset;
         }
-        public override void SetTriggerChannel(uint channel)
+        public void SetTriggerChannel(uint channel)
         {
             validateChannel(channel);
             this.triggerChannel = channel;
@@ -104,7 +104,7 @@ namespace ECore.DeviceImplementations
         }
         #endregion
 
-        public override DataPackageScope GetScopeData()
+        public DataPackageScope GetScopeData()
         {
             //FIXME: support trigger channel selection
             if (!eDevice.IsRunning) 
