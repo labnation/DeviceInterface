@@ -145,8 +145,8 @@ namespace ECore.DeviceImplementations
                 return null;
 
             DataPackageScope p = new DataPackageScope(samplePeriod, triggerIndex);
-            p.SetDataAnalog(ScopeChannel.ChA, output[0]);
-            p.SetDataAnalog(ScopeChannel.ChB, output[1]);
+            p.SetData(ScopeChannel.ChA, output[0]);
+            p.SetData(ScopeChannel.ChB, output[1]);
             return p;
         }
 
