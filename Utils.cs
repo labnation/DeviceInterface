@@ -36,7 +36,7 @@ namespace ECore
         static public O[] CastArray<I, O>(I[] input) {
             O[] output = new O[input.Length];
             for (int i = 0; i < input.Length; i++)
-                output[i] = (O)((object)(input[i]));
+                output[i] = (O)Convert.ChangeType(input[i], typeof(O));
             return output;
         }
 
@@ -63,7 +63,7 @@ namespace ECore
         /// <param name="input1">Array with first argument of lambda</param>
         /// <param name="input2">Array with second argument of lambda</param>
         /// <param name="op">Lambda, i.e. to sum 2 arrays: Func&lt;T,T,T&gt; sum = (x, y) => x + y"/></param>
-        public static O[] CombineArrays<I,O>(I[] input1, I[] input2, ref Func<I, I, O> op)
+        public static O[] CombineArrays<I1, I2, O>(I1[] input1, I2[] input2, ref Func<I1, I2, O> op)
         {
             if (input1 == null || input2 == null) return null;
             if (input1.Length != input2.Length)
