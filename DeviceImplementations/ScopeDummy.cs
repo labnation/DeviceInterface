@@ -15,10 +15,10 @@ namespace ECore.DeviceImplementations
         //waveLength = number of samples generated before trying to find trigger
         private const uint waveLength = 10 * outputWaveLength;
         private double samplePeriod = 20e-9; //ns --> sampleFreq of 50MHz by default
-        private double amplitude = 1.7;
+        private double amplitude = 10;
         private double frequency = 22e3;
-        private double noiseAmplitude = 0.0;//15; //Noise mean voltage
-        private int usbLatency = 10; //milliseconds of latency to simulate USB request delay
+        private double noiseAmplitude = 0.5; //Noise mean voltage
+        private int usbLatency = 20; //milliseconds of latency to simulate USB request delay
 
         //Scope variables
         private const uint outputWaveLength = 2048;
@@ -27,6 +27,7 @@ namespace ECore.DeviceImplementations
         private float triggerLevel = 0;
         private int triggerHoldoff = 0;
         private uint triggerChannel = 0;
+        private static uint triggerWidth = 4;
 
         #region constructor / initializer 
 
@@ -144,7 +145,7 @@ namespace ECore.DeviceImplementations
             if (output == null)
                 return null;
 
-            DataPackageScope p = new DataPackageScope(samplePeriod, triggerIndex);
+            DataPackageScope p = new DataPackageScope(samplePeriod, triggerIndex, triggerHoldoff);
             p.SetData(ScopeChannel.ChA, output[0]);
             p.SetData(ScopeChannel.ChB, output[1]);
             return p;

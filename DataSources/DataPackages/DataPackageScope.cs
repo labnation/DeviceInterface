@@ -12,6 +12,7 @@ namespace ECore.DataPackages
     public class DataPackageScope
     {
         private int triggerIndex;
+        private int triggerHoldoff;
         private double samplePeriod;
         private Dictionary<ScopeChannel, float[]> dataAnalog;
         private Dictionary<ScopeChannel, bool[]> dataDigital;
@@ -38,9 +39,10 @@ namespace ECore.DataPackages
             }
         }
 
-        public DataPackageScope(double samplePeriod, int triggerIndex)
+        public DataPackageScope(double samplePeriod, int triggerIndex, int triggerHoldoff)
         {
             this.triggerIndex = triggerIndex;
+            this.triggerHoldoff = triggerHoldoff;
             this.samplePeriod = samplePeriod;
             dataAnalog = new Dictionary<ScopeChannel, float[]>();
             dataDigital = new Dictionary<ScopeChannel, bool[]>();
@@ -48,7 +50,7 @@ namespace ECore.DataPackages
         //FIXME: this constructor shouldn't be necessary, all data should be set using Set()
         //It's just here to support "legacy" code
         public DataPackageScope(float[] buffer)
-            : this(20e-9, 0)
+            : this(20e-9, 0, 0)
         {
             float[] chA = new float[buffer.Length / 2];
             float[] chB = new float[buffer.Length / 2];
@@ -77,6 +79,7 @@ namespace ECore.DataPackages
                 dataDigital.Add(ch, data as bool[]);
             }
         }
+        //FIXME: should we perhaps return a copy of the array?
         public T[] GetData<T>(ScopeChannel ch)
         {
             T[] data = null;
@@ -97,6 +100,10 @@ namespace ECore.DataPackages
         /// data array's bounds, depending on what trigger holdoff was used
         /// </remarks>
         public int TriggerIndex { get { return this.triggerIndex; } }
+        /// <summary>
+        /// Trigger holdoff, the amount of data captured before or after the trigger
+        /// </remarks>
+        public int TriggerHoldoff { get { return this.triggerHoldoff; } }
         /// <summary>
         /// Time between 2 consecutive data array elements. In seconds.
         /// </summary>

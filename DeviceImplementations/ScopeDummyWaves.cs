@@ -42,11 +42,10 @@ namespace ECore.DeviceImplementations
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
             // - if negative, start looking at index 0, but add abs(holdoff) to returned index
             triggerIndex = 0;
-            for (int i = Math.Max(0, holdoff); i < wave.Length - 1; i++)
+            for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth; i++)
             {
-                if (wave[i] <= level && wave[i + 1] > level)
-                {
-                    triggerIndex = i;
+                if (wave[i] < level && wave[i + triggerWidth] > level) {
+                    triggerIndex = (int)(i + triggerWidth / 2);
                     return true;
                 }
             }
