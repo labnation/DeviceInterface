@@ -18,7 +18,7 @@ namespace ECore.DeviceImplementations
         private double amplitude = 1.7;
         private double frequency = 22e3;
         private double noiseAmplitude = 0.0;//15; //Noise mean voltage
-        private int usbLatency = 1; //milliseconds of latency to simulate USB request delay
+        private int usbLatency = 10; //milliseconds of latency to simulate USB request delay
 
         //Scope variables
         private const uint outputWaveLength = 2048;
