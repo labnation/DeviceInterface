@@ -9,7 +9,7 @@ namespace ECore.DeviceImplementations
 
     partial class ScopeDummy
     {
-        private static float[] GenerateWave(WaveForm waveForm, uint waveLength, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase, float yOffset)
+        private static float[] GenerateWave(WaveForm waveForm, uint waveLength, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[waveLength];
             switch(waveForm) {
@@ -31,20 +31,19 @@ namespace ECore.DeviceImplementations
                 default:
                     throw new NotImplementedException();
             }
-            Func<float, float> offsetAdder = x => x + yOffset;
-            wave = Utils.TransformArray(wave, offsetAdder);
             return wave;
         }
 
-        private static bool Trigger(float[] wave, int holdoff, float level, out int triggerIndex)
+        private static bool Trigger(float[] wave, int holdoff, float level, float yOffset, out int triggerIndex)
         {
             //Hold off:
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
             // - if negative, start looking at index 0, but add abs(holdoff) to returned index
             triggerIndex = 0;
+            float levelShifted = level - yOffset;
             for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth; i++)
             {
-                if (wave[i] < level && wave[i + triggerWidth] > level) {
+                if (wave[i] < levelShifted && wave[i + triggerWidth] > levelShifted) {
                     triggerIndex = (int)(i + triggerWidth / 2);
                     return true;
                 }
@@ -113,7 +112,7 @@ namespace ECore.DeviceImplementations
             Random r = new Random();
             for (int i = 0; i < output.Length; i++)
             {
-                output[i] = (float)(output[i] + r.NextDouble() * noiseAmplitude);
+                output[i] = (float)(output[i] + (r.NextDouble() - 0.5) * noiseAmplitude);
             }
 
         }

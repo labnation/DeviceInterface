@@ -15,9 +15,9 @@ namespace ECore.DeviceImplementations
         //waveLength = number of samples generated before trying to find trigger
         private const uint waveLength = 10 * outputWaveLength;
         private double samplePeriod = 20e-9; //ns --> sampleFreq of 50MHz by default
-        private double amplitude = 10;
+        private double amplitude = 2.5;
         private double frequency = 22e3;
-        private double noiseAmplitude = 0.5; //Noise mean voltage
+        private double noiseAmplitude = 0.15; //Noise mean voltage
         private int usbLatency = 20; //milliseconds of latency to simulate USB request delay
 
         //Scope variables
@@ -113,7 +113,7 @@ namespace ECore.DeviceImplementations
             float[][] output = null;
 
             //Don't bother generating a wave if the trigger is larger than the amplitude
-            if (Math.Abs(this.triggerLevel) > this.amplitude)
+            if (Math.Abs(this.triggerLevel - this.yOffset[this.triggerChannel]) > this.amplitude + this.noiseAmplitude)
                 return null;
             
             TimeSpan offset = DateTime.Now - timeOrigin;
@@ -123,13 +123,9 @@ namespace ECore.DeviceImplementations
                                 this.samplePeriod,
                                 offset.TotalSeconds,
                                 this.frequency,
-                                this.amplitude, 0,
-                                this.yOffset[i]);
+                                this.amplitude, 0);
             }
-            //output will remain null as long as a trigger with the current time offset is not found
-            //We might get stuck here for a while if the trigger level is beyond the wave amplitude
-            
-            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoff, triggerLevel, out triggerIndex))
+            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoff, triggerLevel, this.yOffset[this.triggerChannel], out triggerIndex))
             {
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)
