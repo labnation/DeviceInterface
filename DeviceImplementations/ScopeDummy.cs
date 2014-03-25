@@ -14,9 +14,9 @@ namespace ECore.DeviceImplementations
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH };
         //waveLength = number of samples generated before trying to find trigger
         private const uint waveLength = 10 * outputWaveLength;
-        private double samplePeriod = 20e-9; //ns --> sampleFreq of 50MHz by default
+        private double samplePeriod = 10e-9; //ns --> sampleFreq of 100MHz by default
         private double amplitude = 2.5;
-        private double frequency = 22e3;
+        private double frequency = 1e6;
         private double noiseAmplitude = 0.15; //Noise mean voltage
         private int usbLatency = 20; //milliseconds of latency to simulate USB request delay
 
@@ -25,7 +25,7 @@ namespace ECore.DeviceImplementations
         public const uint channels = 2;
         private float[] yOffset = new float[channels];
         private float triggerLevel = 0;
-        private int triggerHoldoff = 0;
+        private double triggerHoldoff = 0;
         private uint triggerChannel = 0;
         private static uint triggerWidth = 4;
 
@@ -58,9 +58,9 @@ namespace ECore.DeviceImplementations
                 throw new ValidationException("Channel must be between 0 and " + (channels - 1));
         }
 
-        public void SetTriggerHoldOff(int samples)
+        public void SetTriggerHoldOff(double holdoff)
         {
-            this.triggerHoldoff = samples;
+            this.triggerHoldoff = holdoff;
         }
         public void SetTriggerLevel(float voltage)
         {
@@ -125,19 +125,20 @@ namespace ECore.DeviceImplementations
                                 this.frequency,
                                 this.amplitude, 0);
             }
-            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoff, triggerLevel, this.yOffset[this.triggerChannel], out triggerIndex))
+            int triggerHoldoffInSamples = (int)(this.triggerHoldoff / this.samplePeriod);
+            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoffInSamples, triggerLevel, this.yOffset[this.triggerChannel], out triggerIndex))
             {
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)
                 {
-                    output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoff);
+                    output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);
                     ScopeDummy.AddNoise(output[i], this.noiseAmplitude);
                 }
             }
             if (output == null)
                 return null;
 
-            DataPackageScope p = new DataPackageScope(samplePeriod, triggerHoldoff);
+            DataPackageScope p = new DataPackageScope(samplePeriod, triggerHoldoffInSamples);
             p.SetData(ScopeChannel.ChA, output[0]);
             p.SetData(ScopeChannel.ChB, output[1]);
             return p;

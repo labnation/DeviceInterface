@@ -153,8 +153,10 @@ namespace ECore.DeviceImplementations
         ///Scope hold off
         ///</summary>
         ///<param name="samples">Store [samples] before trigger</param>
-        public void SetTriggerHoldOff(int samples)
+        public void SetTriggerHoldOff(double time)
         {
+            throw new NotImplementedException();
+            /*
             if (samples < 0 || samples > 2047)
                 throw new ValidationException("Trigger hold off must be between 0 and 2047");
             
@@ -162,6 +164,7 @@ namespace ECore.DeviceImplementations
             fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
             fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
+             */
         }
 
         #endregion

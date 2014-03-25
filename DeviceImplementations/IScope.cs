@@ -11,7 +11,7 @@ namespace ECore.DeviceImplementations
     {
         DataPackageScope GetScopeData();
 
-        void SetTriggerHoldOff(int samples);
+        void SetTriggerHoldOff(double time);
         void SetTriggerLevel(float voltage);
         void SetYOffset(uint channel, float offset);
         void SetTriggerChannel(uint channel);
