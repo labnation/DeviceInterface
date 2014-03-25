@@ -75,6 +75,26 @@ namespace ECore
             }
             return output;
         }
+        /// <summary>
+        /// Shift the elements of an array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="input"></param>
+        /// <param name="shift">Positive shift to the right, negative to the left</param>
+        /// <returns></returns>
+        public static T[] ShiftArray<T>(T[] input, int shift)
+        {
+            if (shift == 0) return input;
+
+            T[] output = new T[input.Length];
+            if (Math.Abs(shift) >= input.Length) return output;
+
+            for (int i = Math.Max(0, shift); i < Math.Min(input.Length, input.Length + shift); i++)
+            {
+                output[i] = input[i - shift];
+            }
+            return output;
+        }
 
     }
 }
