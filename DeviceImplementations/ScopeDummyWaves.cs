@@ -5,11 +5,11 @@ using System.Text;
 
 namespace ECore.DeviceImplementations
 {
-    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE };
+    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE };
 
     partial class ScopeDummy
     {
-        private static float[] GenerateWave(WaveForm waveForm, uint waveLength, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        private static float[] GenerateWave(WaveForm waveForm, uint waveLength, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase, float yOffset)
         {
             float[] wave = new float[waveLength];
             switch(waveForm) {
@@ -25,9 +25,14 @@ namespace ECore.DeviceImplementations
                 case WaveForm.TRIANGLE:
                     wave = ScopeDummy.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
+                case WaveForm.SAWTOOTH_SINE:
+                    wave = ScopeDummy.WaveTriangleSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    break;
                 default:
                     throw new NotImplementedException();
             }
+            Func<float, float> offsetAdder = x => x + yOffset;
+            wave = Utils.TransformArray(wave, offsetAdder);
             return wave;
         }
 
@@ -59,8 +64,6 @@ namespace ECore.DeviceImplementations
                 return null;
             }
         }
-
-
 
         private static float[] WaveSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
@@ -96,5 +99,25 @@ namespace ECore.DeviceImplementations
             }
             return wave;
         }
+
+        private static float[] WaveTriangleSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        {
+            Func<float, float, float> sumFloat = (x, y) => (x + y);
+            float[] wave1 = WaveSawTooth(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase);
+            float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency * 20.0, amplitude * 0.1, phase);
+            float[] wave = Utils.CombineArrays(wave1, wave2, ref sumFloat);
+            return wave;
+        }
+
+        private static void AddNoise(float[] output, double noiseAmplitude)
+        {
+            Random r = new Random();
+            for (int i = 0; i < output.Length; i++)
+            {
+                output[i] = (float)(output[i] + r.NextDouble() * noiseAmplitude);
+            }
+
+        }
+        
     }
 }

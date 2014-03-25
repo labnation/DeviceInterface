@@ -17,6 +17,8 @@ namespace ECore
         public string message;  
     }
 
+    public delegate void QueueChangedDelegate();
+
     public enum LogMessageType { GUIError, GUIInfo, ECoreError, ECoreWarning, CommandToDevice, ReplyFromDevice, ECoreInfo, Persistent};
 
 	#if IPHONE || ANDROID
@@ -35,10 +37,8 @@ namespace ECore
     //purpose: singleton keeping track of all logging information sent from anywhere in the project
     public static class Logger
     {
-        static private List<LogEntry> logEntries = new List<LogEntry>();
-        //FIXME: NO GUI  IN ECORE!!!
-        static private ListBox listBox;
-
+        static private Dictionary<Queue<LogEntry>, QueueChangedDelegate> logQueues = new Dictionary<Queue<LogEntry>, QueueChangedDelegate>();
+        
         //allows any method anywhere in the project to send log information
         static public void AddEntry(object sender, LogMessageType debugLevel, string message)
         {
@@ -48,36 +48,20 @@ namespace ECore
             newEntry.debugLevel = debugLevel;
             newEntry.message = message;
 
-            logEntries.Add(newEntry);
-
-            //if a linkbox is attached: add line and scroll down
-            if (listBox != null)
+            foreach (KeyValuePair<Queue<LogEntry>, QueueChangedDelegate> kvp in logQueues)
             {
-                //check whether or not we're on the same thread as the listbox -- otherwise its methods need to be invoked
-                if (listBox.InvokeRequired)
-                {
-                    listBox.Invoke((MethodInvoker)delegate { AddEntryToDisplay(newEntry); });
-                }
-                else
-                {
-                    AddEntryToDisplay(newEntry);
-                }
+                kvp.Key.Enqueue(newEntry);
+                if (kvp.Value != null)
+                    kvp.Value();
             }
         }
-
-        static public void AddEntryToDisplay(LogEntry newEntry)
+        static public void AddQueue(Queue<LogEntry> q, QueueChangedDelegate del)
         {
-            lock(listBox)
-            {
-            listBox.Items.Add(newEntry.timestamp.ToString().PadRight(22) + newEntry.debugLevel.ToString().PadRight(15) + newEntry.message);
-            listBox.SelectedIndex = listBox.Items.Count - 1;
-            listBox.SetSelected(listBox.Items.Count - 1, false);
-            }
+            logQueues.Add(q, del);
         }
-
-        static public void AttachListbox(ListBox listbox)
+        static public void AddQueue(Queue<LogEntry> q)
         {
-            listBox = listbox;
+            AddQueue(q, null);
         }
     }
 #endif

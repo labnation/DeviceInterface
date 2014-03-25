@@ -1,6 +1,8 @@
-/bin/
-/obj/
+bin/
+obj/
+Release/
 *.suo
 /*.userprefs
 *_GEN.cs
 Resource.designer.cs
+*csproj.user

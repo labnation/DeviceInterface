@@ -6,7 +6,8 @@ using ECore.DeviceImplementations;
 
 namespace ECore.DataPackages
 {
-    public enum ScopeChannel { ChA, ChB, Digi0, Digi1, Digi2, Digi3, Digi4, Digi5, Digi6, Digi7, Math, FftA, FftB, I2CDecoder };
+    //FIXME: this might not be the best place to define all possible channels -> differ between actual and computed channels?
+    public enum ScopeChannel { ChA, ChB, Digi0, Digi1, Digi2, Digi3, Digi4, Digi5, Digi6, Digi7, Math, FftA, FftB, I2CDecoder, Undefined };
 
     public class DataPackageScope
     {
@@ -21,6 +22,7 @@ namespace ECore.DataPackages
             {
                 case ScopeChannel.ChA:
                 case ScopeChannel.ChB:
+                case ScopeChannel.Math:
                     return typeof(float);
                 case ScopeChannel.Digi0:
                 case ScopeChannel.Digi1:
@@ -63,26 +65,31 @@ namespace ECore.DataPackages
             if(!ScopeChannelType(ch).Equals(data.GetType()))
                 throw new Exception("data type mismatch while setting scope channel data");
         }
-        public void SetDataAnalog(ScopeChannel ch, float[] data)
+        public void SetData<T>(ScopeChannel ch, T[] data)
         {
             ValidateChannelDataType(ch, data[0]);
-            dataAnalog.Add(ch, data);
+            if(data[0].GetType().Equals(typeof(float))) {
+                dataAnalog.Remove(ch);
+                dataAnalog.Add(ch, data as float[]);
+            } 
+            else if(data[0].GetType().Equals(typeof(bool))) {
+                dataDigital.Remove(ch);
+                dataDigital.Add(ch, data as bool[]);
+            }
         }
-        public void SetDataDigital(ScopeChannel ch, bool[] data)
+        public T[] GetData<T>(ScopeChannel ch)
         {
-            ValidateChannelDataType(ch, data[0]);
-            dataDigital.Add(ch, data);
-        }
-        public float[] GetDataAnalog(ScopeChannel ch)
-        {
-            float[] data = null;
-            dataAnalog.TryGetValue(ch, out data);
-            return data;
-        }
-        public bool[] GetDataDigital(ScopeChannel ch)
-        {
-            bool[] data = null;
-            dataDigital.TryGetValue(ch, out data);
+            T[] data = null;
+            if(typeof(T).Equals(typeof(float))) {
+                float[] d;
+                dataAnalog.TryGetValue(ch, out d);
+                data = d as T[];
+            }
+            else if(typeof(T).Equals(typeof(bool))) {
+                bool[] d;
+                dataDigital.TryGetValue(ch, out d);
+                data = d as T[];
+            }
             return data;
         }
         /// <summary>

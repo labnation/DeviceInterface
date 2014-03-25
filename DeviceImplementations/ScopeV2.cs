@@ -15,7 +15,7 @@ namespace ECore.DeviceImplementations
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public partial class ScopeV2:Scope
+    public partial class ScopeV2: EDeviceImplementation, IScope
     {
         
 		public static string DemoStatusText = "";
@@ -41,11 +41,6 @@ namespace ECore.DeviceImplementations
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             //FIXME: no clue why this line is here...
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
-        }
-
-        public override float GetTriggerLevel()
-        {
-            return 1.0f;
         }
 
         #region initializers
@@ -201,7 +196,7 @@ namespace ECore.DeviceImplementations
             return voltage;
         }
 
-        public override DataPackageScope GetScopeData()
+        public DataPackageScope GetScopeData()
         {
             byte[] buffer = this.GetBytes();
             
@@ -224,19 +219,19 @@ namespace ECore.DeviceImplementations
             //FIXME: Get bytes, split into analog/digital channels and add to scope data
             if (this.disableVoltageConversion)
             {
-                data.SetDataAnalog(ScopeChannel.ChA, Utils.CastArray<byte, float>(chA));
-                data.SetDataAnalog(ScopeChannel.ChB, Utils.CastArray<byte, float>(chB));
+                data.SetData(ScopeChannel.ChA, Utils.CastArray<byte, float>(chA));
+                data.SetData(ScopeChannel.ChB, Utils.CastArray<byte, float>(chB));
             }
             else
             {
                 //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
-                data.SetDataAnalog(ScopeChannel.ChA, 
+                data.SetData(ScopeChannel.ChA, 
                     ConvertByteToVoltage(chA, fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!this.GetEnableLogicAnalyser())
                 {
-                    data.SetDataAnalog(ScopeChannel.ChB,
+                    data.SetData(ScopeChannel.ChB,
                         ConvertByteToVoltage(chB, fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
                 }
                 else
@@ -256,14 +251,14 @@ namespace ECore.DeviceImplementations
                         digitalSamples[6][i] = ((chB[i] & (1 << 6)) != 0) ? true : false;
                         digitalSamples[7][i] = ((chB[i] & (1 << 7)) != 0) ? true : false;
                     }
-                    data.SetDataDigital(ScopeChannel.Digi0, digitalSamples[0]);
-                    data.SetDataDigital(ScopeChannel.Digi1, digitalSamples[1]);
-                    data.SetDataDigital(ScopeChannel.Digi2, digitalSamples[2]);
-                    data.SetDataDigital(ScopeChannel.Digi3, digitalSamples[3]);
-                    data.SetDataDigital(ScopeChannel.Digi4, digitalSamples[4]);
-                    data.SetDataDigital(ScopeChannel.Digi5, digitalSamples[5]);
-                    data.SetDataDigital(ScopeChannel.Digi6, digitalSamples[6]);
-                    data.SetDataDigital(ScopeChannel.Digi7, digitalSamples[7]);
+                    data.SetData(ScopeChannel.Digi0, digitalSamples[0]);
+                    data.SetData(ScopeChannel.Digi1, digitalSamples[1]);
+                    data.SetData(ScopeChannel.Digi2, digitalSamples[2]);
+                    data.SetData(ScopeChannel.Digi3, digitalSamples[3]);
+                    data.SetData(ScopeChannel.Digi4, digitalSamples[4]);
+                    data.SetData(ScopeChannel.Digi5, digitalSamples[5]);
+                    data.SetData(ScopeChannel.Digi6, digitalSamples[6]);
+                    data.SetData(ScopeChannel.Digi7, digitalSamples[7]);
                 }
             }
             return data;
