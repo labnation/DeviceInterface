@@ -203,7 +203,6 @@ namespace ECore.DeviceImplementations
             //FIXME: Get these scope settings from header
             double samplePeriod = 20e-9; //20ns -> 50MHz for now
             int triggerIndex = 0;
-            int triggerHoldoff = 0;
 
             //Split in 2 channels
             byte[] chA = new byte[buffer.Length / 2];

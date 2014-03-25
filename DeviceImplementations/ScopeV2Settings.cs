@@ -274,6 +274,7 @@ namespace ECore.DeviceImplementations
         }
 
         //FIXME: turn into a setting getter
+        /*
         public int GetTriggerHoldoff()
         {
             fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B1);
@@ -283,6 +284,7 @@ namespace ECore.DeviceImplementations
             int lsb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue;
             return msb + lsb + 1;
         }
+         * */
         #endregion
 
         

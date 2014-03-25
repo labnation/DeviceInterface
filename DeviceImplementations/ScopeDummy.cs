@@ -58,10 +58,6 @@ namespace ECore.DeviceImplementations
                 throw new ValidationException("Channel must be between 0 and " + (channels - 1));
         }
 
-        public int GetTriggerHoldoff()
-        {
-            return this.triggerHoldoff;
-        }
         public void SetTriggerHoldOff(int samples)
         {
             this.triggerHoldoff = samples;
