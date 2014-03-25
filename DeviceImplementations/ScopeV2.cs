@@ -215,7 +215,7 @@ namespace ECore.DeviceImplementations
             }
 
             //construct data package
-            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, triggerHoldoff);
+            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex);
             //FIXME: parse package header and set DataPackageScope's trigger index
             //FIXME: Get bytes, split into analog/digital channels and add to scope data
             if (this.disableVoltageConversion)

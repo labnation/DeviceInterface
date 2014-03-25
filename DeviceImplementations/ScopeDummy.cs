@@ -145,7 +145,7 @@ namespace ECore.DeviceImplementations
             if (output == null)
                 return null;
 
-            DataPackageScope p = new DataPackageScope(samplePeriod, triggerIndex, triggerHoldoff);
+            DataPackageScope p = new DataPackageScope(samplePeriod, triggerHoldoff);
             p.SetData(ScopeChannel.ChA, output[0]);
             p.SetData(ScopeChannel.ChB, output[1]);
             return p;
