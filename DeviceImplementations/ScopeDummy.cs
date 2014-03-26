@@ -130,7 +130,7 @@ namespace ECore.DeviceImplementations
                 ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
             }
             int triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
-            if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, out triggerIndex))
+            if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
             {
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)

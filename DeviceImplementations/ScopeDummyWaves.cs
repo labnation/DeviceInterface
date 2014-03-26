@@ -36,13 +36,13 @@ namespace ECore.DeviceImplementations
             return wave;
         }
 
-        private static bool Trigger(float[] wave, int holdoff, float level, out int triggerIndex)
+        private static bool Trigger(float[] wave, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
         {
             //Hold off:
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
             // - if negative, start looking at index 0, but add abs(holdoff) to returned index
             triggerIndex = 0;
-            for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth; i++)
+            for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++)
             {
                 if (wave[i] < level && wave[i + triggerWidth] > level) {
                     triggerIndex = (int)(i + triggerWidth / 2);
