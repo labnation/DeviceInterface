@@ -9,22 +9,21 @@ namespace ECore.DeviceImplementations
     public partial class ScopeDummy : EDeviceImplementation, IScope
     {
         private DateTime timeOrigin;
-        
-        //Dummy wave settings
+
+        //Wave settings
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH };
-        //waveLength = number of samples generated before trying to find trigger
-        private const uint waveLength = 10 * outputWaveLength;
-        private double samplePeriod = 10e-9; //ns --> sampleFreq of 100MHz by default
-        private double amplitude = 1.0;
-        private double frequency = 400e3;
-        private double noiseAmplitude = 0.05; //Noise mean voltage
-        private int usbLatency = 20; //milliseconds of latency to simulate USB request delay
+        private double[] amplitude = new double[] {1.3, 1.8};
+        private double[] dcOffset = new double[] { 0.9f, 0f };
+        private double[] frequency = new double[] {400e3, 122e3};
+        private double[] noiseAmplitude = new double[] { 0.05, 0.1 }; //Noise mean voltage
+        private int usbLatency = 30; //milliseconds of latency to simulate USB request delay
+        private float[] yOffset = new float[] { 0, 0 };
 
         //Scope variables
-        private const uint outputWaveLength = 2048;
+        private const uint waveLength = 2 * outputWaveLength;
+        private double samplePeriod = 10e-9; //ns --> sampleFreq of 100MHz by default
         public const uint channels = 2;
-        private float[] yOffset = new float[] {0, 0};
-        private double[] dcOffset = new double[] { 2f, 0f};
+        private const uint outputWaveLength = 2048;
         private float triggerLevel = 0;
         private double triggerHoldoff = 0;
         private uint triggerChannel = 0;
@@ -66,13 +65,13 @@ namespace ECore.DeviceImplementations
         public void SetTriggerLevel(float voltage)
         {
             this.triggerLevel = voltage;
-            if(Math.Abs(this.triggerLevel) > Math.Abs(this.amplitude))
+            if (Math.Abs(triggerLevel) > Math.Abs(amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel]))
                 Logger.AddEntry(this, LogMessageType.ECoreInfo, "Not gonna generate dummy waves since trigger level is larger than amplitude");
         }
-        public void SetYOffset(uint channel, float offset)
+        public void SetYOffset(uint channel, float yOffset)
         {
             validateChannel(channel);
-            this.yOffset[channel] = offset;
+            this.yOffset[channel] = yOffset;
         }
         public void SetTriggerChannel(uint channel)
         {
@@ -83,22 +82,25 @@ namespace ECore.DeviceImplementations
         #endregion
 
         #region dummy scope settings
-        public void SetDummyWaveAmplitude(double amplitude)
+        public void SetDummyWaveAmplitude(uint channel, double amplitude)
         {
-            this.amplitude = amplitude;
+            validateChannel(channel);
+            this.amplitude[channel] = amplitude;
         }
-        public void SetDummyWaveFrequency(double frequency)
+        public void SetDummyWaveFrequency(uint channel, double frequency)
         {
-            this.frequency = frequency;
+            validateChannel(channel);
+            this.frequency[channel] = frequency;
         }
         public void SetDummyWaveForm(uint channel, WaveForm w)
         {
             validateChannel(channel);
             this.waveForm[channel] = w;
         }
-        public void SetNoiseAmplitude(double noiseAmplitude)
+        public void SetNoiseAmplitude(uint channel, double noiseAmplitude)
         {
-            this.noiseAmplitude = noiseAmplitude;
+            validateChannel(channel);
+            this.noiseAmplitude[channel] = noiseAmplitude;
         }
         #endregion
 
@@ -114,26 +116,26 @@ namespace ECore.DeviceImplementations
             float[][] output = null;
 
             //Don't bother generating a wave if the trigger is larger than the amplitude
-            //if (Math.Abs(this.triggerLevel) > this.amplitude + this.dcOffset[this.triggerChannel] + this.noiseAmplitude)
-            //    return null;
+            if (Math.Abs(triggerLevel) > amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel])
+                return null;
             
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
             for (int i = 0; i < channels; i++)
             {
-                wave[i] = ScopeDummy.GenerateWave(this.waveForm[i], waveLength,
-                                this.samplePeriod,
+                wave[i] = ScopeDummy.GenerateWave(waveForm[i], waveLength,
+                                samplePeriod,
                                 timeOffset.TotalSeconds,
-                                this.frequency,
-                                this.amplitude, 0, this.dcOffset[i]);
+                                frequency[i],
+                                amplitude[i], 0, dcOffset[i]);
             }
-            int triggerHoldoffInSamples = (int)(this.triggerHoldoff / this.samplePeriod);
-            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoffInSamples, triggerLevel, out triggerIndex))
+            int triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
+            if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, out triggerIndex))
             {
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)
                 {
                     output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);
-                    ScopeDummy.AddNoise(output[i], this.noiseAmplitude);
+                    ScopeDummy.AddNoise(output[i], noiseAmplitude[i]);
                 }
             }
             if (output == null)
