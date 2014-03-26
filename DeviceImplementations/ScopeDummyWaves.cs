@@ -26,7 +26,7 @@ namespace ECore.DeviceImplementations
                     wave = ScopeDummy.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.SAWTOOTH_SINE:
-                    wave = ScopeDummy.WaveTriangleSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = ScopeDummy.WaveSawtoothSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -99,11 +99,11 @@ namespace ECore.DeviceImplementations
             return wave;
         }
 
-        private static float[] WaveTriangleSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        private static float[] WaveSawtoothSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             Func<float, float, float> sumFloat = (x, y) => (x + y);
             float[] wave1 = WaveSawTooth(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase);
-            float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency * 20.0, amplitude * 0.1, phase);
+            float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency * 7.0, amplitude * 0.1, phase);
             float[] wave = Utils.CombineArrays(wave1, wave2, ref sumFloat);
             return wave;
         }

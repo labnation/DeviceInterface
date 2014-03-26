@@ -11,11 +11,11 @@ namespace ECore.DeviceImplementations
         private DateTime timeOrigin;
 
         //Wave settings
-        private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH };
+        private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
-        private double[] dcOffset = new double[] { 0.9f, 0f };
-        private double[] frequency = new double[] {400e3, 100e3};
-        private double[] noiseAmplitude = new double[] { 0.05, 0.1 }; //Noise mean voltage
+        private double[] dcOffset = new double[] { 0.0f, -0.9f };
+        private double[] frequency = new double[] { 200e3, 600e3 };
+        private double[] noiseAmplitude = new double[] { 0.0, 0.0 }; //Noise mean voltage
         private int usbLatency = 23; //milliseconds of latency to simulate USB request delay
         private float[] yOffset = new float[] { 0, 0 };
 
