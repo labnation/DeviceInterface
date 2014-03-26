@@ -14,9 +14,9 @@ namespace ECore.DeviceImplementations
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH };
         private double[] amplitude = new double[] {1.3, 1.8};
         private double[] dcOffset = new double[] { 0.9f, 0f };
-        private double[] frequency = new double[] {400e3, 122e3};
+        private double[] frequency = new double[] {400e3, 100e3};
         private double[] noiseAmplitude = new double[] { 0.05, 0.1 }; //Noise mean voltage
-        private int usbLatency = 30; //milliseconds of latency to simulate USB request delay
+        private int usbLatency = 23; //milliseconds of latency to simulate USB request delay
         private float[] yOffset = new float[] { 0, 0 };
 
         //Scope variables
@@ -127,6 +127,7 @@ namespace ECore.DeviceImplementations
                                 timeOffset.TotalSeconds,
                                 frequency[i],
                                 amplitude[i], 0, dcOffset[i]);
+                ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
             }
             int triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
             if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, out triggerIndex))
@@ -134,8 +135,7 @@ namespace ECore.DeviceImplementations
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)
                 {
-                    output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);
-                    ScopeDummy.AddNoise(output[i], noiseAmplitude[i]);
+                    output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);     
                 }
             }
             if (output == null)
