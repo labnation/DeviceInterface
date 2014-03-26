@@ -15,15 +15,16 @@ namespace ECore.DeviceImplementations
         //waveLength = number of samples generated before trying to find trigger
         private const uint waveLength = 10 * outputWaveLength;
         private double samplePeriod = 10e-9; //ns --> sampleFreq of 100MHz by default
-        private double amplitude = 2.5;
-        private double frequency = 1e6;
-        private double noiseAmplitude = 0.15; //Noise mean voltage
+        private double amplitude = 1.0;
+        private double frequency = 400e3;
+        private double noiseAmplitude = 0.05; //Noise mean voltage
         private int usbLatency = 20; //milliseconds of latency to simulate USB request delay
 
         //Scope variables
         private const uint outputWaveLength = 2048;
         public const uint channels = 2;
-        private float[] yOffset = new float[channels];
+        private float[] yOffset = new float[] {0, 0};
+        private double[] dcOffset = new double[] { 2f, 0f};
         private float triggerLevel = 0;
         private double triggerHoldoff = 0;
         private uint triggerChannel = 0;
@@ -113,20 +114,20 @@ namespace ECore.DeviceImplementations
             float[][] output = null;
 
             //Don't bother generating a wave if the trigger is larger than the amplitude
-            if (Math.Abs(this.triggerLevel - this.yOffset[this.triggerChannel]) > this.amplitude + this.noiseAmplitude)
-                return null;
+            //if (Math.Abs(this.triggerLevel) > this.amplitude + this.dcOffset[this.triggerChannel] + this.noiseAmplitude)
+            //    return null;
             
-            TimeSpan offset = DateTime.Now - timeOrigin;
+            TimeSpan timeOffset = DateTime.Now - timeOrigin;
             for (int i = 0; i < channels; i++)
             {
                 wave[i] = ScopeDummy.GenerateWave(this.waveForm[i], waveLength,
                                 this.samplePeriod,
-                                offset.TotalSeconds,
+                                timeOffset.TotalSeconds,
                                 this.frequency,
-                                this.amplitude, 0);
+                                this.amplitude, 0, this.dcOffset[i]);
             }
             int triggerHoldoffInSamples = (int)(this.triggerHoldoff / this.samplePeriod);
-            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoffInSamples, triggerLevel, this.yOffset[this.triggerChannel], out triggerIndex))
+            if (ScopeDummy.Trigger(wave[this.triggerChannel], triggerHoldoffInSamples, triggerLevel, out triggerIndex))
             {
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)
@@ -141,6 +142,8 @@ namespace ECore.DeviceImplementations
             DataPackageScope p = new DataPackageScope(samplePeriod, triggerHoldoffInSamples);
             p.SetData(ScopeChannel.ChA, output[0]);
             p.SetData(ScopeChannel.ChB, output[1]);
+            p.SetOffset(ScopeChannel.ChA, yOffset[0]);
+            p.SetOffset(ScopeChannel.ChB, yOffset[1]);
             return p;
         }
 

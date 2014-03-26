@@ -15,6 +15,7 @@ namespace ECore.DataPackages
         private double samplePeriod;
         private Dictionary<ScopeChannel, float[]> dataAnalog;
         private Dictionary<ScopeChannel, bool[]> dataDigital;
+        private Dictionary<ScopeChannel, float> yOffset;
 
         private static Type ScopeChannelType(ScopeChannel ch)
         {
@@ -44,6 +45,7 @@ namespace ECore.DataPackages
             this.samplePeriod = samplePeriod;
             dataAnalog = new Dictionary<ScopeChannel, float[]>();
             dataDigital = new Dictionary<ScopeChannel, bool[]>();
+            yOffset = new Dictionary<ScopeChannel,float>();
         }
         //FIXME: this constructor shouldn't be necessary, all data should be set using Set()
         //It's just here to support "legacy" code
@@ -76,6 +78,16 @@ namespace ECore.DataPackages
                 dataDigital.Remove(ch);
                 dataDigital.Add(ch, data as bool[]);
             }
+        }
+        public void SetOffset(ScopeChannel ch, float offset)
+        {
+            this.yOffset.Add(ch, offset);
+        }
+        public float GetOffset(ScopeChannel ch)
+        {
+            float offset = 0f;
+            this.yOffset.TryGetValue(ch, out offset);
+            return offset;
         }
         //FIXME: should we perhaps return a copy of the array?
         public T[] GetData<T>(ScopeChannel ch)

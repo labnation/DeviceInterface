@@ -9,7 +9,7 @@ namespace ECore.DeviceImplementations
 
     partial class ScopeDummy
     {
-        private static float[] GenerateWave(WaveForm waveForm, uint waveLength, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        private static float[] GenerateWave(WaveForm waveForm, uint waveLength, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase, double dcOffset)
         {
             float[] wave = new float[waveLength];
             switch(waveForm) {
@@ -31,19 +31,20 @@ namespace ECore.DeviceImplementations
                 default:
                     throw new NotImplementedException();
             }
+            Func<float, float> offsetAdder = x => (float)(x + dcOffset);
+            wave = Utils.TransformArray(wave, offsetAdder);
             return wave;
         }
 
-        private static bool Trigger(float[] wave, int holdoff, float level, float yOffset, out int triggerIndex)
+        private static bool Trigger(float[] wave, int holdoff, float level, out int triggerIndex)
         {
             //Hold off:
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
             // - if negative, start looking at index 0, but add abs(holdoff) to returned index
             triggerIndex = 0;
-            float levelShifted = level - yOffset;
             for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth; i++)
             {
-                if (wave[i] < levelShifted && wave[i + triggerWidth] > levelShifted) {
+                if (wave[i] < level && wave[i + triggerWidth] > level) {
                     triggerIndex = (int)(i + triggerWidth / 2);
                     return true;
                 }
