@@ -96,5 +96,24 @@ namespace ECore
             return output;
         }
 
+        public static string ApplicationDataPath
+        {
+            get
+            {
+                string path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
+                path += "//LabNation//";
+                System.IO.Directory.CreateDirectory(path);
+                return path;
+            }
+        }
+        public static bool Schmitt(float value, bool previousValue, float thresholdHigh, float thresholdLow)
+        {
+            if (value >= thresholdHigh)
+                return true;
+            else if (value <= thresholdLow)
+                return false;
+            else
+                return previousValue;
+        }
     }
 }

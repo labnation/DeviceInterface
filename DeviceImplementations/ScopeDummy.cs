@@ -6,16 +6,19 @@ using ECore.DataPackages;
 
 namespace ECore.DeviceImplementations
 {
+    public enum WaveSource { FILE, GENERATOR }
+
     public partial class ScopeDummy : EDeviceImplementation, IScope
     {
         private DateTime timeOrigin;
 
         //Wave settings
+        private WaveSource waveSource = WaveSource.FILE;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
         private double[] dcOffset = new double[] { 0.0f, -0.9f };
         private double[] frequency = new double[] { 200e3, 600e3 };
-        private double[] noiseAmplitude = new double[] { 0.0, 0.0 }; //Noise mean voltage
+        private double[] noiseAmplitude = new double[] { 0.1, 0.1 }; //Noise mean voltage
         private int usbLatency = 23; //milliseconds of latency to simulate USB request delay
         private float[] yOffset = new float[] { 0, 0 };
 
@@ -104,6 +107,23 @@ namespace ECore.DeviceImplementations
         }
         #endregion
 
+        private static bool Trigger(float[] wave, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
+        {
+            //Hold off:
+            // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
+            // - if negative, start looking at index 0, but add abs(holdoff) to returned index
+            triggerIndex = 0;
+            for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++)
+            {
+                if (wave[i] < level && wave[i + triggerWidth] > level)
+                {
+                    triggerIndex = (int)(i + triggerWidth / 2);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public DataPackageScope GetScopeData()
         {
             //FIXME: support trigger channel selection
@@ -111,35 +131,46 @@ namespace ECore.DeviceImplementations
                 return null;
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
-            int triggerIndex = 0;
-            float[][] wave = new float[channels][];
             float[][] output = null;
+            int triggerIndex = 0;
+            int triggerHoldoffInSamples = 0;
 
-            //Don't bother generating a wave if the trigger is larger than the amplitude
-            if (Math.Abs(triggerLevel) > amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel])
-                return null;
+            if(waveSource == WaveSource.GENERATOR)
+            {
+                float[][] wave = new float[channels][];
+                //Don't bother generating a wave if the trigger is larger than the amplitude
+                //if (Math.Abs(triggerLevel) > amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel])
+                //    return null;
             
-            TimeSpan timeOffset = DateTime.Now - timeOrigin;
-            for (int i = 0; i < channels; i++)
-            {
-                wave[i] = ScopeDummy.GenerateWave(waveForm[i], waveLength,
-                                samplePeriod,
-                                timeOffset.TotalSeconds,
-                                frequency[i],
-                                amplitude[i], 0, dcOffset[i]);
-                ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
-            }
-            int triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
-            if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
-            {
-                output = new float[channels][];
+                TimeSpan timeOffset = DateTime.Now - timeOrigin;
                 for (int i = 0; i < channels; i++)
                 {
-                    output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);     
+                    wave[i] = ScopeDummy.GenerateWave(waveForm[i], waveLength,
+                                    samplePeriod,
+                                    timeOffset.TotalSeconds,
+                                    frequency[i],
+                                    amplitude[i], 0, dcOffset[i]);
+                    ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
                 }
+                triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
+                if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
+                {
+                    output = new float[channels][];
+                    for (int i = 0; i < channels; i++)
+                    {
+                        output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);     
+                    }
+                }
+                if (output == null)
+                    return null;
             }
-            if (output == null)
-                return null;
+            else if (waveSource == WaveSource.FILE)
+            {
+                if (!GetWaveFromFile(ref output, ref samplePeriod, triggerHoldoff)) return null;
+                for(int i = 0; i < channels; i++)
+                    ScopeDummy.AddNoise(output[i], noiseAmplitude[i]);
+                triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
+            }
 
             DataPackageScope p = new DataPackageScope(samplePeriod, triggerHoldoffInSamples);
             p.SetData(ScopeChannel.ChA, output[0]);
