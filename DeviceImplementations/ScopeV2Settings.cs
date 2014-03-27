@@ -128,6 +128,16 @@ namespace ECore.DeviceImplementations
             validateChannel(channel);
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Choose between rising or falling trigger
+        /// </summary>
+        /// <param name="direction"></param>
+        public void SetTriggerDirection(TriggerDirection direction)
+        {
+            throw new NotImplementedException();
+        }
+
         ///<summary>
         ///Set scope sample decimation
         ///</summary>

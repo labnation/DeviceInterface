@@ -31,6 +31,7 @@ namespace ECore.DeviceImplementations
         private double triggerHoldoff = 0;
         private uint triggerChannel = 0;
         private static uint triggerWidth = 4;
+        private TriggerDirection triggerDirection = TriggerDirection.FALLING;
 
         #region constructor / initializer 
 
@@ -81,6 +82,10 @@ namespace ECore.DeviceImplementations
             validateChannel(channel);
             this.triggerChannel = channel;
         }
+        public void SetTriggerDirection(TriggerDirection direction)
+        {
+            this.triggerDirection = direction;
+        }
 
         #endregion
 
@@ -107,7 +112,7 @@ namespace ECore.DeviceImplementations
         }
         #endregion
 
-        private static bool Trigger(float[] wave, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
+        private static bool Trigger(float[] wave, TriggerDirection direction, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
         {
             //Hold off:
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
@@ -115,7 +120,8 @@ namespace ECore.DeviceImplementations
             triggerIndex = 0;
             for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++)
             {
-                if (wave[i] < level && wave[i + triggerWidth] > level)
+                float invertor = (direction == TriggerDirection.RISING) ? 1f : -1f;
+                if (invertor * wave[i] < invertor * level && invertor * wave[i + triggerWidth] > invertor * level)
                 {
                     triggerIndex = (int)(i + triggerWidth / 2);
                     return true;
@@ -153,7 +159,7 @@ namespace ECore.DeviceImplementations
                     ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
                 }
                 triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
-                if (ScopeDummy.Trigger(wave[triggerChannel], triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
+                if (ScopeDummy.Trigger(wave[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
                 {
                     output = new float[channels][];
                     for (int i = 0; i < channels; i++)

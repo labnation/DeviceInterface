@@ -6,7 +6,8 @@ using ECore.DataPackages;
 
 namespace ECore.DeviceImplementations
 {
-    //FIXME: make me an interface
+    public enum TriggerDirection { RISING, FALLING };
+
     public interface IScope
     {
         DataPackageScope GetScopeData();
@@ -15,5 +16,6 @@ namespace ECore.DeviceImplementations
         void SetTriggerLevel(float voltage);
         void SetYOffset(uint channel, float offset);
         void SetTriggerChannel(uint channel);
+        void SetTriggerDirection(TriggerDirection direction);
     }
 }
