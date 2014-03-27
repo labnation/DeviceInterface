@@ -96,6 +96,21 @@ namespace ECore
             return output;
         }
 
+        /// <summary>
+        /// Returns new array of size input.Length/decimation containing every [decimation]-th sample of input
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="input"></param>
+        /// <param name="decimation"></param>
+        /// <returns></returns>
+        public static T[] DecimateArray<T>(T[] input, uint decimation)
+        {
+            T[] output = new T[input.Length / decimation];
+            for (int i = 0; i < output.Length; i++)
+                output[i] = input[decimation * i];
+            return output;
+        }
+
         public static string ApplicationDataPath
         {
             get

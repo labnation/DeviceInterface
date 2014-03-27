@@ -138,6 +138,15 @@ namespace ECore.DeviceImplementations
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Only store every [decimation]-th sample
+        /// </summary>
+        /// <param name="decimation"></param>
+        public void SetDecimation(uint decimation)
+        {
+            throw new NotImplementedException();
+        }
+
         ///<summary>
         ///Set scope sample decimation
         ///</summary>

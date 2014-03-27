@@ -24,13 +24,15 @@ namespace ECore.DeviceImplementations
 
         //Scope variables
         private const uint waveLength = 2 * outputWaveLength;
-        private double samplePeriod = 10e-9; //ns --> sampleFreq of 100MHz by default
+        private double samplePeriodMinimum = 10e-9; //ns --> sampleFreq of 100MHz by default
+        private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
         public const uint channels = 2;
         private const uint outputWaveLength = 2048;
         private float triggerLevel = 0;
         private double triggerHoldoff = 0;
         private uint triggerChannel = 0;
         private static uint triggerWidth = 4;
+        private uint decimation = 1;
         private TriggerDirection triggerDirection = TriggerDirection.FALLING;
 
         #region constructor / initializer 
@@ -61,6 +63,11 @@ namespace ECore.DeviceImplementations
             if (ch >= channels)
                 throw new ValidationException("Channel must be between 0 and " + (channels - 1));
         }
+        private void validateDecimation(uint decimation)
+        {
+            if (decimation < 1)
+                throw new ValidationException("Decimation must be larger than 0");
+        }
 
         public void SetTriggerHoldOff(double holdoff)
         {
@@ -85,6 +92,11 @@ namespace ECore.DeviceImplementations
         public void SetTriggerDirection(TriggerDirection direction)
         {
             this.triggerDirection = direction;
+        }
+        public void SetDecimation(uint decimation)
+        {
+            validateDecimation(decimation);
+            this.decimation = decimation;
         }
 
         #endregion
@@ -152,13 +164,13 @@ namespace ECore.DeviceImplementations
                 for (int i = 0; i < channels; i++)
                 {
                     wave[i] = ScopeDummy.GenerateWave(waveForm[i], waveLength,
-                                    samplePeriod,
+                                    SamplePeriod,
                                     timeOffset.TotalSeconds,
                                     frequency[i],
                                     amplitude[i], 0, dcOffset[i]);
                     ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
                 }
-                triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
+                triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
                 if (ScopeDummy.Trigger(wave[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
                 {
                     output = new float[channels][];
@@ -172,13 +184,14 @@ namespace ECore.DeviceImplementations
             }
             else if (waveSource == WaveSource.FILE)
             {
-                if (!GetWaveFromFile(ref output, ref samplePeriod, triggerHoldoff)) return null;
+
+                if (!GetWaveFromFile(triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref output)) return null;
                 for(int i = 0; i < channels; i++)
                     ScopeDummy.AddNoise(output[i], noiseAmplitude[i]);
-                triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
+                triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
             }
 
-            DataPackageScope p = new DataPackageScope(samplePeriod, triggerHoldoffInSamples);
+            DataPackageScope p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples);
             p.SetData(ScopeChannel.ChA, output[0]);
             p.SetData(ScopeChannel.ChB, output[1]);
             p.SetOffset(ScopeChannel.ChA, yOffset[0]);

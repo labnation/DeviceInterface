@@ -17,5 +17,6 @@ namespace ECore.DeviceImplementations
         void SetYOffset(uint channel, float offset);
         void SetTriggerChannel(uint channel);
         void SetTriggerDirection(TriggerDirection direction);
+        void SetDecimation(uint decimation);
     }
 }

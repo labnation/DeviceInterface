@@ -8,9 +8,9 @@ namespace ECore.DeviceImplementations
 {
     partial class ScopeDummy
     {
-        private string sequenceFilename = "i2c_sequence.mat";
+        private static string sequenceFilename = "i2c_sequence.mat";
 
-        public bool GetWaveFromFile(ref float[][] output, ref double samplePeriod, double triggerHoldoff)
+        public static bool GetWaveFromFile(double triggerHoldoff, uint triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
             string filename = Utils.ApplicationDataPath + sequenceFilename;
             MatlabFileReader matfileReader = new MatlabFileIO.MatlabFileReader(filename);
@@ -19,18 +19,21 @@ namespace ECore.DeviceImplementations
             float[][] waves = new float[2][];
 
             arrayReader = matfileReader.OpenArray("chA");
-            waves[0] = Utils.CastArray<double, float>(arrayReader.ReadRowDouble());
+            waves[0] = Utils.DecimateArray(Utils.CastArray<double, float>(arrayReader.ReadRowDouble()), decimation);
 
             arrayReader = matfileReader.OpenArray("chB");
-            waves[1] = Utils.CastArray<double, float>(arrayReader.ReadRowDouble());
+            waves[1] = Utils.DecimateArray(Utils.CastArray<double, float>(arrayReader.ReadRowDouble()), decimation);
             
             arrayReader = matfileReader.OpenArray("time");
             double[] time = arrayReader.ReadRowDouble();
 
             matfileReader.Close();
 
-            samplePeriod = time[1] - time[0];
-            int triggerHoldoffInSamples = (int)(triggerHoldoff / samplePeriod);
+            double samplePeriodMeasured = time[decimation] - time[0];
+            if (samplePeriodMeasured != samplePeriod)
+                throw new Exception("Data from file doesn't suit the dummy scope sampling frequency");
+
+            int triggerHoldoffInSamples = (int)Math.Min(triggerHoldoff / samplePeriod, int.MaxValue);
             int triggerIndex;
             if (ScopeDummy.Trigger(waves[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
             {
