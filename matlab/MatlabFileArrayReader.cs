@@ -70,6 +70,9 @@ namespace MatlabFileIO
                 case 4:
                     contentType = TypeCode.Char;
                     break;
+                case 6:
+                    contentType = TypeCode.Double;
+                    break;
                 case 7:
                     contentType = TypeCode.Single;
                     break;
@@ -95,12 +98,12 @@ namespace MatlabFileIO
             secondDimension = streamReader.ReadInt32();
 
             //variable name: type of chars
-            int typeOfChars = streamReader.ReadInt32();
+            int typeOfChars = streamReader.ReadInt16();
             if (typeOfChars != 1)
                 throw new Exception("Unsupported type of name detected");
 
             //variable name: length of name
-            int nameLength = streamReader.ReadInt32();
+            int nameLength = streamReader.ReadInt16();
             string variableName = "";
             for (int i = 0; i < nameLength; i++)
                 variableName += streamReader.ReadChar();
@@ -111,11 +114,11 @@ namespace MatlabFileIO
             streamReader.BaseStream.Seek(toSkip, SeekOrigin.Current);
 
             //array contents: type. but we don't really care about this, as it was defined by the array type
-            int contentTypeDummy = streamReader.ReadInt32();
+            int contentTypeDummy = streamReader.ReadInt16();
 
             //we don't care about the total length of the array content, as we know the dimensions.
             //could add a check here as code improvement
-            int contentSize = streamReader.ReadInt32();                       
+            int contentSize = streamReader.ReadInt16();                       
 
             //if this is the variable we were looking for: just keep open and return true
             if (variableName == requestedVariableName)
@@ -172,6 +175,31 @@ namespace MatlabFileIO
 
             //convert to correct type
             float[] convertedData = new float[byteArray.Length / 4];
+            Buffer.BlockCopy(byteArray, 0, convertedData, 0, byteArray.Length);
+
+            //and return
+            return convertedData;
+        }
+
+        public double[] ReadRowDouble()
+        {
+            //check if type is correct
+            if (this.contentType != TypeCode.Double)
+                throw new Exception("This array does not contain Float data");
+
+            //check if there is still data inside array
+            if (currentRow >= secondDimension)
+                throw new Exception("New row requested to be read from array, but array already fully read");
+
+            //increment row counter
+            currentRow++;
+
+            //read correct number of bytes
+            int bytesToRead = firstDimension * MatlabFileHelper.MatlabBytesPerType<double>();
+            byte[] byteArray = streamReader.ReadBytes(bytesToRead);
+
+            //convert to correct type
+            double[] convertedData = new double[byteArray.Length / MatlabFileHelper.MatlabBytesPerType<double>()];
             Buffer.BlockCopy(byteArray, 0, convertedData, 0, byteArray.Length);
 
             //and return
