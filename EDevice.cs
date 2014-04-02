@@ -36,8 +36,8 @@ namespace ECore
         public EDevice(Type deviceImplementationType)
         {
             //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, new object[] {this});
-            //this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
-            this.deviceImplementation = new DeviceImplementations.ScopeDummy(this);
+            this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
+            //this.deviceImplementation = new DeviceImplementations.ScopeDummy(this);
             deviceImplementation.InitializeHardwareInterface();
 
             this.running = false;

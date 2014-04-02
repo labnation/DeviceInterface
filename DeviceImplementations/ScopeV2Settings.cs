@@ -126,7 +126,7 @@ namespace ECore.DeviceImplementations
         public void SetTriggerChannel(uint channel)
         {
             validateChannel(channel);
-            throw new NotImplementedException();
+            //FIXME: throw new NotImplementedException();
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace ECore.DeviceImplementations
         /// <param name="decimation"></param>
         public void SetDecimation(uint decimation)
         {
-            throw new NotImplementedException();
+            //FIXME: throw new NotImplementedException();
         }
 
         ///<summary>
@@ -174,7 +174,7 @@ namespace ECore.DeviceImplementations
         ///<param name="samples">Store [samples] before trigger</param>
         public void SetTriggerHoldOff(double time)
         {
-            throw new NotImplementedException();
+            //FIXME: throw new NotImplementedException();
             /*
             if (samples < 0 || samples > 2047)
                 throw new ValidationException("Trigger hold off must be between 0 and 2047");
