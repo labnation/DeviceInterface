@@ -96,10 +96,11 @@ namespace ECore.DeviceImplementations
 
         #region start_stop
 
-        override public void Start()
+        override public bool Start()
         {
-            hardwareInterface.Stop();
-
+            if (!hardwareInterface.Start())
+                return false;
+            
             //raise global reset
             strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 1;
             strobeMemory.WriteSingle(STR.GLOBAL_RESET);
@@ -164,11 +165,12 @@ namespace ECore.DeviceImplementations
             //romMemory.ReadSingle(ROM.FPGA_STATUS);
             //if (romMemory.RegisterByName(ROM.FPGA_STATUS).InternalValue != 3)
             //Logger.AddEntry(this, LogMessageType.ECoreError, "!!! DCMs not locked !!!");
+            return true;
         }
 
         override public void Stop()
         {
-            hardwareInterface.Start();
+            hardwareInterface.Stop();
         }
 
         #endregion
@@ -199,7 +201,7 @@ namespace ECore.DeviceImplementations
         public DataPackageScope GetScopeData()
         {
             byte[] buffer = this.GetBytes();
-            
+            if(buffer == null) return null;
             //FIXME: Get these scope settings from header
             double samplePeriod = 20e-9; //20ns -> 50MHz for now
             int triggerIndex = 0;

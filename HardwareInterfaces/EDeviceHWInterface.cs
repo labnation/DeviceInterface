@@ -12,6 +12,6 @@ namespace ECore
         abstract public byte[] GetData(int numberOfBytes);
         abstract public bool Connected { get; }
         abstract public void Stop();
-        abstract public void Start();
+        abstract public bool Start();
     }
 }

@@ -77,7 +77,9 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread spawn");
 
             //start HW
-            deviceImplementation.Start();
+            running = deviceImplementation.Start();
+            if (!running)
+                Logger.AddEntry(this, LogMessageType.ECoreError, "Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
             while (running)

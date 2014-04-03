@@ -20,7 +20,8 @@ namespace ECore.DataSources
         public override void Update()
         {
             latestDataPackage = scope.GetScopeData();
-            this.fireDataAvailableEvents();
+            if (latestDataPackage != null)
+                this.fireDataAvailableEvents();
         }
     }
 }

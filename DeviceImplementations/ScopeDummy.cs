@@ -51,8 +51,8 @@ namespace ECore.DeviceImplementations
         {
             //Dummy has not memory. Yep, it's *that* dumb.
         }
-        public override void Start() { timeOrigin = DateTime.Now; }
-        public override void Stop() { }
+        public override bool Start() { timeOrigin = DateTime.Now; return true; }
+		public override void Stop() { }
 
         #endregion
 

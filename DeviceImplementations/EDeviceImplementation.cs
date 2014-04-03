@@ -30,7 +30,7 @@ namespace ECore
         abstract public void InitializeMemories();
         abstract public void InitializeHardwareInterface();
         abstract public void InitializeDataSources();
-        abstract public void Start();
+        abstract public bool Start();
         abstract public void Stop();
         //FIXME: these are too specific for a "Device" -> either call it scope or move them down to the scope
         //abstract public DeviceImplementations.ScopeV2.ScopeV2RomManager CreateRomManager();

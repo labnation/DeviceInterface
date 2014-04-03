@@ -203,7 +203,7 @@ namespace ECore.HardwareInterfaces
             if (dataEndpoint == null)
             {
                 Logger.AddEntry(this, LogMessageType.ECoreWarning, "Trying to stream data from device, but dataEndpoint==null");
-                return new byte[0];
+                return null;
             }
 
             //try to read data
@@ -326,8 +326,9 @@ namespace ECore.HardwareInterfaces
 		{            
 		}
 
-		public override void Start()
+		public override bool Start()
 		{
+            return this.Connected;
 		}
     }
 }
