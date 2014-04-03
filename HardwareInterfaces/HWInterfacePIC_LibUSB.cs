@@ -15,7 +15,7 @@ namespace ECore.HardwareInterfaces
     //class that provides raw HW access to the device
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface
     {
-        private const int USB_TIMEOUT = 1000;
+        private const int USB_TIMEOUT = 100;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
@@ -226,7 +226,7 @@ namespace ECore.HardwareInterfaces
                 errorCode = dataReadTransfer.Wait(out bytesRead);
                 dataReadTransfer.Dispose();
                 */
-
+                if (bytesRead == 0) return null;
 				if (tempFrameCounter++ < 10)
 				{
 					string dataString = "";
