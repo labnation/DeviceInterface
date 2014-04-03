@@ -15,6 +15,7 @@ namespace ECore.HardwareInterfaces
     //class that provides raw HW access to the device
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface
     {
+        private const int USB_TIMEOUT = 1000;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
@@ -142,7 +143,7 @@ namespace ECore.HardwareInterfaces
             try
             {
                 int bytesWritten;
-                errorCode = commandWriteEndpoint.Write(message, 5000, out bytesWritten);                
+                errorCode = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);                
             }
             catch (Exception ex)
             {
@@ -169,7 +170,7 @@ namespace ECore.HardwareInterfaces
                 //send read command
                 byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
                 int bytesRead;
-                errorCode = commandReadEndpoint.Read(readBuffer, 5000, out bytesRead);
+                errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
 
                 //log
                 string logString = "";
@@ -213,7 +214,7 @@ namespace ECore.HardwareInterfaces
                 //send read command
                 byte[] readBuffer = new byte[numberOfBytes];
                 int bytesRead;
-                errorCode = dataEndpoint.Read(readBuffer, 10000, out bytesRead);
+                errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
 
                 // Asynchronously check for data
                 /*
