@@ -45,6 +45,11 @@ namespace ECore.DeviceMemories
                 OnInternalValueChanged(this, new EventArgs());
             return this;
         }
-        public static int MaxValue { get { return (int)typeof(T).GetField("MaxValue").GetValue(null); } }
+        public static int MaxValue { get { 
+            //FIXME: make generic
+            if (typeof(T) == typeof(byte)) return 255;
+            else if (typeof(T) == typeof(bool)) return 1;
+            else return -1;
+        } }
     }
 }
