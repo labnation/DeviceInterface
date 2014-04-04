@@ -42,8 +42,8 @@ namespace ECore.DeviceImplementations
         {
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
-            fpgaSettingsMemory.GetRegister(r).InternalValue = (byte)offset;
-            fpgaSettingsMemory.WriteSingle(r);
+            FpgaSettingsMemory.GetRegister(r).InternalValue = (byte)offset;
+            FpgaSettingsMemory.WriteSingle(r);
         }
 
         /// <summary>
@@ -58,12 +58,12 @@ namespace ECore.DeviceImplementations
             STR d1   = (channel == 0) ? STR.CHA_DIV1   : STR.CHB_DIV1;
             STR d10  = (channel == 0) ? STR.CHA_DIV10  : STR.CHB_DIV10;
             STR d100 = (channel == 0) ? STR.CHA_DIV100 : STR.CHB_DIV100;
-            strobeMemory.GetRegister(d1).Set((byte)((divider == 1) ? 1 : 0));
-            strobeMemory.GetRegister(d10).Set((byte)((divider == 10) ? 1 : 0));
-            strobeMemory.GetRegister(d100).Set((byte)((divider == 100) ? 1 : 0));
-            strobeMemory.WriteSingle(d1);
-            strobeMemory.WriteSingle(d10);
-            strobeMemory.WriteSingle(d100);
+            StrobeMemory.GetRegister(d1).Set((byte)((divider == 1) ? 1 : 0));
+            StrobeMemory.GetRegister(d10).Set((byte)((divider == 10) ? 1 : 0));
+            StrobeMemory.GetRegister(d100).Set((byte)((divider == 100) ? 1 : 0));
+            StrobeMemory.WriteSingle(d1);
+            StrobeMemory.WriteSingle(d10);
+            StrobeMemory.WriteSingle(d100);
         }
 
         ///<summary>
@@ -98,8 +98,8 @@ namespace ECore.DeviceImplementations
         {
             validateChannel(channel);            
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING: STR.CHB_DCCOUPLING;
-            strobeMemory.GetRegister(dc).Set((byte)(enableDc ? 1 : 0));
-            strobeMemory.WriteSingle(dc);
+            StrobeMemory.GetRegister(dc).Set((byte)(enableDc ? 1 : 0));
+            StrobeMemory.WriteSingle(dc);
         }
 
         #endregion
@@ -111,13 +111,13 @@ namespace ECore.DeviceImplementations
         ///<param name="level">Trigger level in volt</param>
         public void SetTriggerLevel(float voltage)
         {
-            float level = (voltage - fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
+            float level = (voltage - FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
             Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + level);
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
+            FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
         }
         /// <summary>
         /// Choose channel upon which to trigger
@@ -154,10 +154,10 @@ namespace ECore.DeviceImplementations
         public void SetDecimation(UInt16 decimation)
         {
             //FIXME: validate
-            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).Set((byte)(decimation & 0xFF));
-            fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).Set((byte)((decimation >> 8) & 0xFF));
-            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B0);
-            fpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
+            FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).Set((byte)(decimation & 0xFF));
+            FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).Set((byte)((decimation >> 8) & 0xFF));
+            FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B0);
+            FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
         }
         ///<summary>
         ///Enable free running (don't wait for trigger)
@@ -165,8 +165,8 @@ namespace ECore.DeviceImplementations
         ///<param name="freerunning">Whether to enable free running mode</param>
         public void SetEnableFreeRunning(bool freerunning)
         {
-            strobeMemory.GetRegister(STR.FREE_RUNNING).Set((byte)(freerunning ? 1 : 0));
-            strobeMemory.WriteSingle(STR.FREE_RUNNING);
+            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set((byte)(freerunning ? 1 : 0));
+            StrobeMemory.WriteSingle(STR.FREE_RUNNING);
         }
         ///<summary>
         ///Scope hold off
@@ -195,8 +195,8 @@ namespace ECore.DeviceImplementations
         /// <param name="enableCalibration"></param>
         public void SetEnableCalib(bool enableCalibration)
         {
-            strobeMemory.GetRegister(STR.CHB_ENABLECALIB).Set((byte)(enableCalibration ? 1 : 0));
-            strobeMemory.WriteSingle(STR.CHB_ENABLECALIB);
+            StrobeMemory.GetRegister(STR.CHB_ENABLECALIB).Set((byte)(enableCalibration ? 1 : 0));
+            StrobeMemory.WriteSingle(STR.CHB_ENABLECALIB);
         }
 
         /// <summary>
@@ -205,8 +205,8 @@ namespace ECore.DeviceImplementations
         /// <param name="voltage">The desired voltage</param>
         public void SetCalibrationVoltage(float voltage)
         {
-            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).Set(voltToByte(voltage));
-            fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
+            FpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).Set(voltToByte(voltage));
+            FpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
         }
 
         #endregion
@@ -222,20 +222,20 @@ namespace ECore.DeviceImplementations
                 throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
 
             //raise global reset to reset RAM address counter, and to make sure the RAM switching is safe
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)1);
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)1);
+            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //save previous ram config
-            fpgaSettingsMemory.ReadSingle(REG.RAM_CONFIGURATION);
-            byte previousRamConfiguration = fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Get();
+            FpgaSettingsMemory.ReadSingle(REG.RAM_CONFIGURATION);
+            byte previousRamConfiguration = FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Get();
 
             //set ram config to I2C input
-            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set((byte)2); //sets RAM0 to I2C input
-            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
+            FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set((byte)2); //sets RAM0 to I2C input
+            FpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
 
             //lower global reset
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
+            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //break data up into blocks of 8bytes
             int blockSize = 8;
@@ -267,12 +267,12 @@ namespace ECore.DeviceImplementations
             }
 
             //set ram config to original state
-            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set(previousRamConfiguration); //sets RAM0 to I2C input
-            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
+            FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set(previousRamConfiguration); //sets RAM0 to I2C input
+            FpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
 
             //lower global reset
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
+            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
         }
 
         public bool GetEnableLogicAnalyser()
@@ -289,9 +289,9 @@ namespace ECore.DeviceImplementations
         {
             get
             {
-                fpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B1);
-                fpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B0);
-                return fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue << 8 + fpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).InternalValue + 1;
+                FpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B1);
+                FpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B0);
+                return FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue << 8 + FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).InternalValue + 1;
             }
         }
 

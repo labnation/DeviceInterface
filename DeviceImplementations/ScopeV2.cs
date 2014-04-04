@@ -19,17 +19,17 @@ namespace ECore.DeviceImplementations
     {
         
 		public static string DemoStatusText = "";
-        private DeviceMemories.ScopeFpgaSettingsMemory  fpgaSettingsMemory;
-        private DeviceMemories.ScopeFpgaRom             fpgaRom;
-        private DeviceMemories.ScopeStrobeMemory        strobeMemory;
-        private DeviceMemories.MAX19506Memory           adcMemory;
-        private DeviceMemories.ScopePicRegisterMemory   picMemory;
-        private ScopeV2RomManager                       romManager;
+        public DeviceMemories.ScopeFpgaSettingsMemory  FpgaSettingsMemory { get; private set; }
+        public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
+        public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
+        public DeviceMemories.MAX19506Memory AdcMemory { get; private set; }
+        public DeviceMemories.ScopePicRegisterMemory PicMemory { get; private set; }
+        private ScopeV2RomManager romManager;
         
         private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
         private int yOffset_Midrange0V;
         public float ChannelAYOffsetVoltage { get { return 0; } }
-        public float ChannelBYOffsetVoltage { get { return (float)((fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
+        public float ChannelBYOffsetVoltage { get { return (float)((FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
         private bool disableVoltageConversion;
 
 		#if ANDROID
@@ -71,18 +71,18 @@ namespace ECore.DeviceImplementations
         public override void InitializeMemories()
         {
             //Create memories
-            picMemory = new DeviceMemories.ScopePicRegisterMemory(eDevice);
-            fpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
-            fpgaRom = new DeviceMemories.ScopeFpgaRom(eDevice);
-            strobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, fpgaSettingsMemory);
-            adcMemory = new DeviceMemories.MAX19506Memory(eDevice, fpgaSettingsMemory, strobeMemory, fpgaRom);
+            PicMemory = new DeviceMemories.ScopePicRegisterMemory(eDevice);
+            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
+            FpgaRom = new DeviceMemories.ScopeFpgaRom(eDevice);
+            StrobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, FpgaSettingsMemory);
+            AdcMemory = new DeviceMemories.MAX19506Memory(eDevice, FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
             
-            byteMemories.Add(fpgaRom);
-            byteMemories.Add(fpgaSettingsMemory);
-            byteMemories.Add(adcMemory);
-            byteMemories.Add(picMemory);
-            byteMemories.Add(strobeMemory);
+            byteMemories.Add(FpgaRom);
+            byteMemories.Add(FpgaSettingsMemory);
+            byteMemories.Add(AdcMemory);
+            byteMemories.Add(PicMemory);
+            byteMemories.Add(StrobeMemory);
 
             this.romManager = CreateRomManager();
         }
@@ -102,26 +102,26 @@ namespace ECore.DeviceImplementations
                 return false;
             
             //raise global reset
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 1;
+            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //flush any transfers still queued on PIC
             //eDevice.HWInterface.FlushHW();
 
-            fpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 0;
-            fpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
+            FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 0;
+            FpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
 
             //set feedback loopand to 1V for demo purpose and enable
             this.SetDivider(0, 1);
             this.SetDivider(1, 1);
 
-            fpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
-            fpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
+            FpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).InternalValue = 78;
+            FpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
 
             //FIXME: use this instead of code below
             //this.SetTriggerLevel(0f);
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
+            FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
 
             //FIXME: these are byte values, since the setter helper is not converting volt to byte
             this.SetYOffset(0, 100f);
@@ -137,14 +137,14 @@ namespace ECore.DeviceImplementations
             //fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIV_B1);
 
             //set ADC output resistance to 300ohm instead of 50ohm
-            adcMemory.GetRegister(MAX19506.CHA_TERMINATION).InternalValue = 4;
-            adcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
-            adcMemory.GetRegister(MAX19506.CHB_TERMINATION).InternalValue = 4;
-            adcMemory.WriteSingle(MAX19506.CHB_TERMINATION);
+            AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).InternalValue = 4;
+            AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
+            AdcMemory.GetRegister(MAX19506.CHB_TERMINATION).InternalValue = 4;
+            AdcMemory.WriteSingle(MAX19506.CHB_TERMINATION);
 
             //set ADC to offset binary output (required for FPGA triggering)
-            adcMemory.GetRegister(MAX19506.FORMAT_PATTERN).InternalValue = 16;
-            adcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
+            AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).InternalValue = 16;
+            AdcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
 
             this.SetEnableDcCoupling(0, true);
             this.SetEnableDcCoupling(1, true);
@@ -152,15 +152,15 @@ namespace ECore.DeviceImplementations
             this.SetEnableFreeRunning(true);
 
             //lower global reset
-            strobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
-            strobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
+            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //generate negative voltage
-            fpgaSettingsMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 70;
-            fpgaSettingsMemory.WriteSingle(REG.NEG_DCDC_PWM);
+            FpgaSettingsMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 70;
+            FpgaSettingsMemory.WriteSingle(REG.NEG_DCDC_PWM);
 
-            strobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).InternalValue = 1;
-            strobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
+            StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).InternalValue = 1;
+            StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
 
             //romMemory.ReadSingle(ROM.FPGA_STATUS);
             //if (romMemory.RegisterByName(ROM.FPGA_STATUS).InternalValue != 3)
@@ -206,13 +206,14 @@ namespace ECore.DeviceImplementations
             double samplePeriod = 20e-9; //20ns -> 50MHz for now
             int triggerIndex = 0;
 
+
             //Split in 2 channels
             byte[] chA = new byte[buffer.Length / 2];
             byte[] chB = new byte[buffer.Length / 2];
             for (int i = 0; i < chA.Length; i++)
             {
-                chA[i] = buffer[i];
-                chB[i] = buffer[buffer.Length/2 + i];
+                chB[i] = buffer[2 * i];
+                chA[i] = buffer[2*i + 1];
             }
 
             //construct data package
@@ -228,13 +229,13 @@ namespace ECore.DeviceImplementations
             {
                 //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
                 data.SetData(ScopeChannel.ChA, 
-                    ConvertByteToVoltage(chA, fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
+                    ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!this.GetEnableLogicAnalyser())
                 {
                     data.SetData(ScopeChannel.ChB,
-                        ConvertByteToVoltage(chB, fpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
+                        ConvertByteToVoltage(chB, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
                 }
                 else
                 {
