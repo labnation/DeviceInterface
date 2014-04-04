@@ -17,10 +17,10 @@ namespace ECore.DeviceMemories
             this.eDevice = eDevice;
             this.accessorMemory = accessorMemory;
 
-            registers = new List<MemoryRegister<byte>>();
+            registers = new Dictionary<int, MemoryRegister<byte>>();
             foreach (STR str in Enum.GetValues(typeof(STR)))
             {
-                registers.Add(new MemoryRegister<byte>((int)str, Enum.GetName(typeof(STR), str)));
+                registers.Add((int)str, new MemoryRegister<byte>((int)str, Enum.GetName(typeof(STR), str)));
             }
 
         }

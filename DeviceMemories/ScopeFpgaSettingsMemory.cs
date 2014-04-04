@@ -15,10 +15,10 @@ namespace ECore.DeviceMemories
             this.eDevice = eDevice;
 
             //instantiate registerList
-            registers = new List<MemoryRegister<byte>>();
+            registers = new Dictionary<int, MemoryRegister<byte>>();
             foreach(REG reg in Enum.GetValues(typeof(REG)))
             {
-                registers.Add(new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(REG), reg)));
+                registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(REG), reg)));
             }
 
         }

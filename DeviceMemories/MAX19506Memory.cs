@@ -35,10 +35,10 @@ namespace ECore.DeviceMemories
             this.fpgaRom = fpgaRom;
 
             //look up how many registers are required
-            registers = new List<MemoryRegister<byte>>();
+            registers = new Dictionary<int, MemoryRegister<byte>>();
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
             {
-                registers.Add(new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(MAX19506), reg)));
+                registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(MAX19506), reg)));
             }
 
         }

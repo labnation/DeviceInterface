@@ -10,7 +10,7 @@ namespace ECore.DeviceMemories
     //examples: ROM, FPGA, FX2, ADC register banks, ...
     abstract public class DeviceMemory<RegisterType>
     {
-        protected List<RegisterType> registers;
+        protected Dictionary<int, RegisterType> registers;
         protected EDevice eDevice;
 
         abstract public void WriteRange(int startAddress, int burstSize);
@@ -28,6 +28,6 @@ namespace ECore.DeviceMemories
 
         //public int MaxValue { get { return registers[0].MaxValue; } }
         public int NumberOfRegisters { get { return registers.Count; } }
-        public List<RegisterType> Registers { get { return registers; } }
+        public Dictionary<int, RegisterType> Registers { get { return registers; } }
     }
 }
