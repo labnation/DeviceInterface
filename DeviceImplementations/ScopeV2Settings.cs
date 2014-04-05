@@ -193,7 +193,7 @@ namespace ECore.DeviceImplementations
                 throw new ValidationException("Trigger hold off must be between 0 and 2047");
                 return;
             }*/
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger holdoff to " + samples + " samples");
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
             FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
             FpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);

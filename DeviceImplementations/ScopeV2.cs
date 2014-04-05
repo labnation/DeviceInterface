@@ -121,8 +121,8 @@ namespace ECore.DeviceImplementations
 
             //FIXME: use this instead of code below
             //this.SetTriggerLevel(0f);
-            FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
-            FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            //FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
+            //FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
 
             //FIXME: these are byte values, since the setter helper is not converting volt to byte
             this.SetYOffset(0, 100f);
@@ -150,7 +150,7 @@ namespace ECore.DeviceImplementations
             this.SetEnableDcCoupling(0, true);
             this.SetEnableDcCoupling(1, true);
 
-            this.SetEnableFreeRunning(true);
+            //this.SetEnableFreeRunning(true);
 
             StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(1);
             StrobeMemory.WriteSingle(STR.SCOPE_ENABLE);
@@ -207,7 +207,7 @@ namespace ECore.DeviceImplementations
             byte[] buffer = this.GetBytes();
             if(buffer == null) return null;
             //FIXME: Get these scope settings from header
-            double samplePeriod = 20e-9; //20ns -> 50MHz for now
+            double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
 
 
