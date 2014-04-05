@@ -30,7 +30,7 @@ namespace ECore.DeviceMemories
         public event RegisterInternalValueChangedHandler OnInternalValueChanged;
 
         //abstract public bool ReadOnly { get; }
-        public T InternalValue { get { return this.internalValue; } set { this.internalValue = value; } }
+        public T InternalValue { get { return this.internalValue; } set { this.Set(value); } }
         public string Name { get { return this.name; } }
         public int Address { get { return this.address; } }
 
