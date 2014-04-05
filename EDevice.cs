@@ -21,7 +21,7 @@ namespace ECore
         
         //properties regarding thread management
         private Thread dataFetchThread;
-        private bool running;
+        private bool dataFetchThreadRunning;
 
 #if false
 		#if ANDROID
@@ -40,7 +40,7 @@ namespace ECore
             //this.deviceImplementation = new DeviceImplementations.ScopeDummy(this);
             deviceImplementation.InitializeHardwareInterface();
 
-            this.running = false;
+            this.dataFetchThreadRunning = false;
 
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "EDevice initialized");
         }
@@ -48,7 +48,12 @@ namespace ECore
         //start new thread, which will only fetch new data
         public void Start()
         {
-            running = true;            
+            if(this.IsRunning) {
+                Logger.AddEntry(this, LogMessageType.ECoreWarning, "Not starting device since it's still running");
+                return;
+            }
+
+            dataFetchThreadRunning = true;            
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(RunThreadDataGenerator);
             dataFetchThread.Name = "DataFetchFromDeviceThread";
@@ -77,12 +82,12 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread spawn");
 
             //start HW
-            running = deviceImplementation.Start();
-            if (!running)
+            dataFetchThreadRunning = deviceImplementation.Start();
+            if (!dataFetchThreadRunning)
                 Logger.AddEntry(this, LogMessageType.ECoreError, "Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
-            while (running)
+            while (dataFetchThreadRunning)
             {
                 //Update each dataSource (OnDataAvailable callback is fired from within)
                 foreach (DataSource d in this.deviceImplementation.DataSources)
@@ -94,20 +99,24 @@ namespace ECore
 
         public void Stop()
         {
-            //stops acquisition thread
-            running = false;
-
+            if (!this.IsRunning)
+            {
+                Logger.AddEntry(this, LogMessageType.ECoreInfo, "Not stopping device since it's not running");
+                return;
+            }
+            
+            //stop thread
+            dataFetchThreadRunning = false;
             //stop HW
-            dataFetchThread.Join(); //--> We should do this here but it causes deadlock cos of logging not being asynchronous!!!
             deviceImplementation.Stop();
 
             //add entry to log
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread stopped now");
+            Logger.AddEntry(this, LogMessageType.ECoreInfo, "Requested DataFetchThread to stop");
         }
 
         //FIXME: since EDevice is so thin now, might just as well merge with deviceImplementation
         public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
-        public bool IsRunning { get { return running; } }
+        public bool IsRunning { get { return dataFetchThread != null && dataFetchThread.IsAlive; } }
 
 
         #region settings
