@@ -19,7 +19,7 @@ namespace ECore
 
     public delegate void QueueChangedDelegate();
 
-    public enum LogMessageType { GUIError, GUIInfo, ECoreError, ECoreWarning, CommandToDevice, ReplyFromDevice, ECoreInfo, Persistent};
+    public enum LogMessageType { GUIError, GUIInfo, ECoreError, ECoreWarning, CommandToDevice, ReplyFromDevice, ECoreInfo, Persistent, ScopeSettings};
 
 	#if IPHONE || ANDROID
 	public static class Logger

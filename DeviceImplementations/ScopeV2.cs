@@ -31,6 +31,7 @@ namespace ECore.DeviceImplementations
         public float ChannelAYOffsetVoltage { get { return 0; } }
         public float ChannelBYOffsetVoltage { get { return (float)((FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
         private bool disableVoltageConversion;
+        private const double SAMPLE_PERIOD = 10e-9;
 
 		#if ANDROID
 		public Android.Content.Res.AssetManager Assets;
@@ -150,6 +151,9 @@ namespace ECore.DeviceImplementations
             this.SetEnableDcCoupling(1, true);
 
             this.SetEnableFreeRunning(true);
+
+            StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(1);
+            StrobeMemory.WriteSingle(STR.SCOPE_ENABLE);
 
             //lower global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;

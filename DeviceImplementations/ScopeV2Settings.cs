@@ -29,6 +29,13 @@ namespace ECore.DeviceImplementations
         {
             throw new ValidationException("I have no idea what a valid multiplier would be. I do know about dividers. Try that instead...");
         }
+        private void toggleUpdateStrobe()
+        {
+            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(0);
+            StrobeMemory.WriteSingle(STR.SCOPE_UPDATE);
+            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(1);
+            StrobeMemory.WriteSingle(STR.SCOPE_UPDATE);
+        }
         #endregion
 
         #region vertical
@@ -42,7 +49,8 @@ namespace ECore.DeviceImplementations
         {
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
-            FpgaSettingsMemory.GetRegister(r).InternalValue = (byte)offset;
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + " to " + offset + "V");
+            FpgaSettingsMemory.GetRegister(r).Set((byte)offset);
             FpgaSettingsMemory.WriteSingle(r);
         }
 
@@ -98,6 +106,7 @@ namespace ECore.DeviceImplementations
         {
             validateChannel(channel);            
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING: STR.CHB_DCCOUPLING;
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
             StrobeMemory.GetRegister(dc).Set((byte)(enableDc ? 1 : 0));
             StrobeMemory.WriteSingle(dc);
         }
@@ -115,9 +124,10 @@ namespace ECore.DeviceImplementations
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
-            Logger.AddEntry(this, LogMessageType.CommandToDevice, "Set triglevel to " + level);
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger level to " + voltage + "V (" + level + ")");
             FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
             FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            toggleUpdateStrobe();
         }
         /// <summary>
         /// Choose channel upon which to trigger
@@ -126,7 +136,10 @@ namespace ECore.DeviceImplementations
         public void SetTriggerChannel(uint channel)
         {
             validateChannel(channel);
-            //FIXME: throw new NotImplementedException();
+            StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set((byte)(channel == 0 ? 0 : 1));
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
+            StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
+            toggleUpdateStrobe();
         }
 
         /// <summary>
@@ -135,29 +148,26 @@ namespace ECore.DeviceImplementations
         /// <param name="direction"></param>
         public void SetTriggerDirection(TriggerDirection direction)
         {
-            throw new NotImplementedException();
+            StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set((byte)(direction == TriggerDirection.FALLING ? 1 : 0));
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
+            StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
+            toggleUpdateStrobe();
         }
 
         /// <summary>
         /// Only store every [decimation]-th sample
-        /// </summary>
-        /// <param name="decimation"></param>
-        public void SetDecimation(uint decimation)
-        {
-            //FIXME: throw new NotImplementedException();
-        }
-
-        ///<summary>
-        ///Set scope sample decimation
         ///</summary>
         ///<param name="decimation">Store every [decimation]nt sample</param>
-        public void SetDecimation(UInt16 decimation)
+        public void SetDecimation(uint decimation)
         {
+            if (decimation > UInt16.MaxValue)
+                throw new ValidationException("Decimation too large");
             //FIXME: validate
             FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).Set((byte)(decimation & 0xFF));
             FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).Set((byte)((decimation >> 8) & 0xFF));
             FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B0);
             FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
+            toggleUpdateStrobe();
         }
         ///<summary>
         ///Enable free running (don't wait for trigger)
@@ -167,6 +177,7 @@ namespace ECore.DeviceImplementations
         {
             StrobeMemory.GetRegister(STR.FREE_RUNNING).Set((byte)(freerunning ? 1 : 0));
             StrobeMemory.WriteSingle(STR.FREE_RUNNING);
+            toggleUpdateStrobe();
         }
         ///<summary>
         ///Scope hold off
@@ -174,16 +185,20 @@ namespace ECore.DeviceImplementations
         ///<param name="samples">Store [samples] before trigger</param>
         public void SetTriggerHoldOff(double time)
         {
-            //FIXME: throw new NotImplementedException();
+            Int16 samples = (Int16)(time / SAMPLE_PERIOD);
             /*
             if (samples < 0 || samples > 2047)
+            {
+                Logger.AddEntry(this, LogMessageType.ScopeSettings, "trigger holdoff out of range (" + samples + ")");
                 throw new ValidationException("Trigger hold off must be between 0 and 2047");
-            
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
-            fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
-            fpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
-             */
+                return;
+            }*/
+            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger holdoff to " + samples + " samples");
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
+            FpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
+            FpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
+            toggleUpdateStrobe();
         }
 
         #endregion
