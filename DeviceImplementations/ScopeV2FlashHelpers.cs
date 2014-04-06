@@ -258,31 +258,13 @@ namespace ECore.DeviceImplementations
 
         private void FlashFpgaInternal()
         {
+            const int COMMAND_WRITE_ENDPOINT_SIZE = 32;
             string fileName = "smartscope.bin";
 
-
-
-
-
             List<byte> dataSent = new List<byte>();
-            byte[] extendedData = new byte[16] {
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255,
-				255
-			};
+            byte[] extendedData = new byte[COMMAND_WRITE_ENDPOINT_SIZE];
+            for (int i = 0; i < extendedData.Length; i++)
+                extendedData[i] = 255;
 
             int extendedPacketsToSend = 2048 / 8;
 
@@ -360,10 +342,10 @@ namespace ECore.DeviceImplementations
             {
                 fileLength = reader.BaseStream.Length;
 
-                requiredFiller = (ushort)(16 - (fileLength % 16));
+                requiredFiller = (ushort)(COMMAND_WRITE_ENDPOINT_SIZE - (fileLength % COMMAND_WRITE_ENDPOINT_SIZE));
 
                 //prep PIC for FPGA flashing
-                long totalBytesToSend = (fileLength + requiredFiller + extendedPacketsToSend * 16);
+                long totalBytesToSend = (fileLength + requiredFiller + extendedPacketsToSend * COMMAND_WRITE_ENDPOINT_SIZE);
                 byte[] toSend1 = new byte[6];
                 int i = 0;
                 toSend1[i++] = 123; //message for PIC
@@ -386,9 +368,9 @@ namespace ECore.DeviceImplementations
 
             //now send all data in chunks of 16bytes
             long bytesSent = 0;
-            while ((fileLength - bytesSent) != (16 - requiredFiller))
+            while ((fileLength - bytesSent) != (COMMAND_WRITE_ENDPOINT_SIZE - requiredFiller))
             {
-                byte[] intermediate = reader.ReadBytes(16);
+                byte[] intermediate = reader.ReadBytes(COMMAND_WRITE_ENDPOINT_SIZE);
                 try
                 {
                     eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(intermediate);
@@ -399,12 +381,12 @@ namespace ECore.DeviceImplementations
                     return;
                 }
 
-                bytesSent += 16;
+                bytesSent += COMMAND_WRITE_ENDPOINT_SIZE;
                 //pb.Value = (int)((float)(bytesSent)/(float)(fileLength)*100f);
                 //pb.Update();
 
-                for (int ii = 0; ii < 16; ii++)
-                    dataSent.Add(intermediate[ii]);
+                //for (int ii = 0; ii < 16; ii++)
+                    //dataSent.Add(intermediate[ii]);
                 
                 int progress = (int)(bytesSent*100/fileLength);
                 DemoStatusText = "Programming FPGA " + bytesSent.ToString() + "/" + fileLength.ToString()+ " => " + progress.ToString()+"%";
@@ -413,11 +395,11 @@ namespace ECore.DeviceImplementations
             //in case filelengt is not multiple of 16: fill with FF
             if (requiredFiller > 0)
             {
-                byte[] lastData = new byte[16];
-                for (int j = 0; j < 16 - requiredFiller; j++)
+                byte[] lastData = new byte[COMMAND_WRITE_ENDPOINT_SIZE];
+                for (int j = 0; j < COMMAND_WRITE_ENDPOINT_SIZE - requiredFiller; j++)
                     lastData[j] = reader.ReadByte();
                 for (int j = 0; j < requiredFiller; j++)
-                    lastData[16 - requiredFiller + j] = 255;
+                    lastData[COMMAND_WRITE_ENDPOINT_SIZE - requiredFiller + j] = 255;
                 try
                 {
                     eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(lastData);
@@ -428,7 +410,7 @@ namespace ECore.DeviceImplementations
                     return;
                 }
 
-                for (int ii = 0; ii < 16; ii++)
+                for (int ii = 0; ii < COMMAND_WRITE_ENDPOINT_SIZE; ii++)
                     dataSent.Add(lastData[ii]);
 
                 DemoStatusText = "Sending filler " + requiredFiller.ToString();
@@ -447,11 +429,11 @@ namespace ECore.DeviceImplementations
                     Logger.AddEntry(this, LogMessageType.Persistent, "Sending extended FW flash data failed");
                     return;
                 }
-                bytesSent += 16;
+                bytesSent += COMMAND_WRITE_ENDPOINT_SIZE;
                 //pb.Value = (int)((float)(bytesSent) / (float)(extendedPacketsToSend * 16) * 100f);
                 //pb.Update();
 
-                for (int ii = 0; ii < 16; ii++)
+                for (int ii = 0; ii < COMMAND_WRITE_ENDPOINT_SIZE; ii++)
                     dataSent.Add(extendedData[ii]);
 
                 DemoStatusText = "Sending postamp " + j.ToString();
