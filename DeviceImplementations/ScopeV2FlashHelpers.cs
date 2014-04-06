@@ -22,7 +22,7 @@ namespace ECore.DeviceImplementations
             int i = 0;
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // Convert HEX file into dictionary
-            string fileName = "usb.hex";
+            string fileName = "usb_controller.production.hex";
             StreamReader reader = new StreamReader(fileName);
 
             Dictionary<uint, byte[]> flashData = new Dictionary<uint, byte[]>();
