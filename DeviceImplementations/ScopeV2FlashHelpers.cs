@@ -252,7 +252,13 @@ namespace ECore.DeviceImplementations
         //#else
         public void FlashHW()
         {
-            string fileName = "TopEntity_latest.bin";
+            System.Threading.Thread fpgaFlashThread = new System.Threading.Thread(FlashFpgaInternal);
+            fpgaFlashThread.Start();
+        }
+
+        private void FlashFpgaInternal()
+        {
+            string fileName = "smartscope.bin";
 
 
 
@@ -348,20 +354,22 @@ namespace ECore.DeviceImplementations
 
 
 
-            ushort fileLength = 0;
+            long fileLength = 0;
             ushort requiredFiller = 0;
             try
             {
-                fileLength = (ushort)reader.BaseStream.Length;
+                fileLength = reader.BaseStream.Length;
 
                 requiredFiller = (ushort)(16 - (fileLength % 16));
 
                 //prep PIC for FPGA flashing
-                ushort totalBytesToSend = (ushort)(fileLength + requiredFiller + extendedPacketsToSend * 16);
-                byte[] toSend1 = new byte[4];
+                long totalBytesToSend = (fileLength + requiredFiller + extendedPacketsToSend * 16);
+                byte[] toSend1 = new byte[6];
                 int i = 0;
                 toSend1[i++] = 123; //message for PIC
                 toSend1[i++] = 12; //HOST_COMMAND_FLASH_FPGA
+                toSend1[i++] = (byte)(totalBytesToSend >> 24);
+                toSend1[i++] = (byte)(totalBytesToSend >> 16);
                 toSend1[i++] = (byte)(totalBytesToSend >> 8);
                 toSend1[i++] = (byte)(totalBytesToSend);
 
@@ -377,7 +385,7 @@ namespace ECore.DeviceImplementations
             System.Threading.Thread.Sleep(10);
 
             //now send all data in chunks of 16bytes
-            ushort bytesSent = 0;
+            long bytesSent = 0;
             while ((fileLength - bytesSent) != (16 - requiredFiller))
             {
                 byte[] intermediate = reader.ReadBytes(16);
@@ -397,9 +405,10 @@ namespace ECore.DeviceImplementations
 
                 for (int ii = 0; ii < 16; ii++)
                     dataSent.Add(intermediate[ii]);
-
-                DemoStatusText = "Programming FPGA " + bytesSent.ToString();
-            }
+                
+                int progress = (int)(bytesSent*100/fileLength);
+                DemoStatusText = "Programming FPGA " + bytesSent.ToString() + "/" + fileLength.ToString()+ " => " + progress.ToString()+"%";
+            } 
 
             //in case filelengt is not multiple of 16: fill with FF
             if (requiredFiller > 0)
