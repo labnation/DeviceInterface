@@ -270,6 +270,7 @@ namespace ECore.DeviceImplementations
 
             Stream inStream = null;
             BinaryReader reader = null;
+            DateTime fwModified;
             try
             {
 #if ANDROID || IPHONE
@@ -303,7 +304,9 @@ namespace ECore.DeviceImplementations
 */
 
 #else
+                FileInfo fpgaFwInfo = new FileInfo(fileName);
                 inStream = new FileStream(fileName, FileMode.Open);
+                fwModified = fpgaFwInfo.LastWriteTime;
                 reader = new BinaryReader(inStream);
 #endif
             }
@@ -313,7 +316,7 @@ namespace ECore.DeviceImplementations
                 Logger.AddEntry(this, LogMessageType.Persistent, e.Message);
                 return;
             }
-
+            String fwModifiedString = Utils.GetPrettyDate(fwModified);
             //DemoStatusText = "Entered method";
             if (!eDevice.DeviceImplementation.hardwareInterface.Connected)
             {
@@ -389,7 +392,7 @@ namespace ECore.DeviceImplementations
                     //dataSent.Add(intermediate[ii]);
                 
                 int progress = (int)(bytesSent*100/fileLength);
-                DemoStatusText = "Programming FPGA " + bytesSent.ToString() + "/" + fileLength.ToString()+ " => " + progress.ToString()+"%";
+                DemoStatusText = "Programming FPGA " + bytesSent.ToString() + "/" + fileLength.ToString()+ " => " + progress.ToString()+"% - FW CREATED " + fwModifiedString;
             } 
 
             //in case filelengt is not multiple of 16: fill with FF
