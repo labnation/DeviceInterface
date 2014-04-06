@@ -152,6 +152,14 @@ namespace ECore.DeviceImplementations
 
             //this.SetEnableFreeRunning(true);
 
+            //Set ADC multiplexed output mode
+            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02);
+            AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
+            AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27);
+            AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
+            AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(24);
+            AdcMemory.WriteSingle(MAX19506.DATA_CLK_TIMING);
+            //Enable scope controller
             StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(1);
             StrobeMemory.WriteSingle(STR.SCOPE_ENABLE);
 
