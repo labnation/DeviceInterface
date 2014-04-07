@@ -267,7 +267,7 @@ namespace ECore.DeviceImplementations
         private void FlashFpgaInternal()
         {
             int packetSize = eDevice.DeviceImplementation.hardwareInterface.WriteControlMaxLength();
-            int packetsPerCommand = 4096;
+            int packetsPerCommand = 2048 / packetSize;
 
             if (packetSize <= 0) return;
             string fileName = "smartscope.bin";
