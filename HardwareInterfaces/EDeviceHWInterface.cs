@@ -7,7 +7,8 @@ namespace ECore
 {
     abstract public class EDeviceHWInterface
     {
-        abstract public void WriteControlBytes(byte[] message);
+        abstract public int WriteControlMaxLength();
+        abstract public int WriteControlBytes(byte[] message);
         abstract public byte[] ReadControlBytes(int length);
         abstract public byte[] GetData(int numberOfBytes);
         abstract public bool Connected { get; }

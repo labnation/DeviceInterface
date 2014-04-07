@@ -93,6 +93,8 @@ namespace ECore.DeviceImplementations
             return wave;
         }
 
+        public bool Connected { get { return true; } }
+
         private static void AddNoise(float[] output, double noiseAmplitude)
         {
             Random r = new Random();

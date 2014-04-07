@@ -15,7 +15,7 @@ namespace ECore.HardwareInterfaces
     //class that provides raw HW access to the device
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface
     {
-        private const int USB_TIMEOUT = 100;
+        private const int USB_TIMEOUT = 10000;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
@@ -122,36 +122,18 @@ namespace ECore.HardwareInterfaces
             
         }
 
-        public override void WriteControlBytes(byte[] message)
+        public override int WriteControlMaxLength()
         {
-            //log
-            string logString = "";
-            foreach (byte b in message)
-                logString += b.ToString() + ",";
-
-            //Logger.AddEntry(this, LogMessageType.ECoreInfo, "Request to send command to HW: [" + logString+"]");
-
-            //see if device is connected properly
             if (commandWriteEndpoint == null)
-            {
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "Trying to write to device, but commandWriteEndpoint==null");
-                return;
-            }
+                return -1;
+            return commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
+        }
 
-            //try to send data
-            ErrorCode errorCode = ErrorCode.None;
-            try
-            {
-                int bytesWritten;
-                errorCode = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);                
-            }
-            catch (Exception ex)
-            {
-                Logger.AddEntry(this, LogMessageType.ECoreError, "Writing control bytes failed");
-                Logger.AddEntry(this, LogMessageType.ECoreError, "ExceptionMessage: " + ex.Message);
-                Logger.AddEntry(this, LogMessageType.ECoreError, "USB ErrorCode: " + errorCode);
-                Logger.AddEntry(this, LogMessageType.ECoreError, "message: " + message.ToString());
-            }   
+        public override int WriteControlBytes(byte[] message)
+        {
+            int bytesWritten;
+            commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
+            return bytesWritten;
         }
         
         public override byte[] ReadControlBytes(int length)

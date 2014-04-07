@@ -54,12 +54,19 @@ namespace ECore.DeviceImplementations
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB();
 
 			//check communication by reading PIC FW version
-			hardwareInterface.WriteControlBytes(new byte[] {123, 1});
-            byte[] response = hardwareInterface.ReadControlBytes(16);
-			string resultString = "PIC FW Version readout ("+response.Length.ToString()+" bytes): ";
-			foreach (byte b in response)
-				resultString += b.ToString()+";";
-			Logger.AddEntry(this, LogMessageType.Persistent, resultString);
+            try
+            {
+                hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
+                byte[] response = hardwareInterface.ReadControlBytes(16);
+                string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
+                foreach (byte b in response)
+                    resultString += b.ToString() + ";";
+                Logger.AddEntry(this, LogMessageType.Persistent, resultString);
+            }
+            catch (NullReferenceException nre)
+            {
+                Logger.AddEntry(this, LogMessageType.Persistent, "Failed to intialize hardware interface");
+            }
 			#endif
         }
 
@@ -277,6 +284,14 @@ namespace ECore.DeviceImplementations
                 }
             }
             return data;
+        }
+
+        public bool Connected
+        {
+            get
+            {
+                return hardwareInterface.Connected;
+            }
         }
 
         #endregion

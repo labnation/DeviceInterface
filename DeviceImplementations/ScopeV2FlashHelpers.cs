@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 namespace ECore.DeviceImplementations
 {
@@ -250,27 +251,37 @@ namespace ECore.DeviceImplementations
 
         //#if IPHONE
         //#else
+        System.Threading.Thread fpgaFlashThread;
         public void FlashHW()
         {
-            System.Threading.Thread fpgaFlashThread = new System.Threading.Thread(FlashFpgaInternal);
+
+            if (fpgaFlashThread != null && fpgaFlashThread.IsAlive)
+            {
+                Logger.AddEntry(this, LogMessageType.ECoreWarning, "FPGA already being flashed");
+                return;
+            }
+            fpgaFlashThread = new System.Threading.Thread(FlashFpgaInternal);
             fpgaFlashThread.Start();
         }
 
         private void FlashFpgaInternal()
         {
-            const int COMMAND_WRITE_ENDPOINT_SIZE = 32;
+            int packetSize = eDevice.DeviceImplementation.hardwareInterface.WriteControlMaxLength();
+            int packetsPerCommand = 4096;
+
+            if (packetSize <= 0) return;
             string fileName = "smartscope.bin";
 
-            List<byte> dataSent = new List<byte>();
-            byte[] extendedData = new byte[COMMAND_WRITE_ENDPOINT_SIZE];
-            for (int i = 0; i < extendedData.Length; i++)
-                extendedData[i] = 255;
+            byte[] firmware;
+            DateTime firmwareModified;
+            int killMeNow = 2048 / 8;
+            
+            //Data to send to keep clock running after all data was sent
+            byte[] dummyData = new byte[packetSize];
+            for (int i = 0; i < dummyData.Length; i++)
+                dummyData[i] = 255;
 
-            int extendedPacketsToSend = 2048 / 8;
-
-            Stream inStream = null;
-            BinaryReader reader = null;
-            DateTime fwModified;
+            //Get FW contents
             try
             {
 #if ANDROID || IPHONE
@@ -304,10 +315,8 @@ namespace ECore.DeviceImplementations
 */
 
 #else
-                FileInfo fpgaFwInfo = new FileInfo(fileName);
-                inStream = new FileStream(fileName, FileMode.Open);
-                fwModified = fpgaFwInfo.LastWriteTime;
-                reader = new BinaryReader(inStream);
+                firmwareModified = new FileInfo(fileName).LastWriteTime;
+                firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #endif
             }
             catch (Exception e)
@@ -316,154 +325,49 @@ namespace ECore.DeviceImplementations
                 Logger.AddEntry(this, LogMessageType.Persistent, e.Message);
                 return;
             }
-            String fwModifiedString = Utils.GetPrettyDate(fwModified);
-            //DemoStatusText = "Entered method";
-            if (!eDevice.DeviceImplementation.hardwareInterface.Connected)
-            {
-                DemoStatusText += " || returning";
-                return;
-            }
-
-            if (reader == null)
-                return;
-
-            try
-            {
-                //Logger.AddEntry (this, LogMessageType.Persistent, reader.BaseStream.Length.ToString() + " bytes in file");
-            }
-            catch (Exception e)
-            {
-                Logger.AddEntry(this, LogMessageType.Persistent, e.Message);
-                return;
-            }
-
-
-
-            long fileLength = 0;
-            ushort requiredFiller = 0;
-            try
-            {
-                fileLength = reader.BaseStream.Length;
-
-                requiredFiller = (ushort)(COMMAND_WRITE_ENDPOINT_SIZE - (fileLength % COMMAND_WRITE_ENDPOINT_SIZE));
-
-                //prep PIC for FPGA flashing
-                long totalBytesToSend = (fileLength + requiredFiller + extendedPacketsToSend * COMMAND_WRITE_ENDPOINT_SIZE);
+            //Send FW to FPGA
+            try {
+                Stopwatch flashStopwatch = new Stopwatch();
+                flashStopwatch.Start();
+                String fwModifiedString = Utils.GetPrettyDate(firmwareModified);
+                int totalLength = (firmware.Length + killMeNow * packetSize);
+                //PIC: enter FPGA flashing mode
                 byte[] toSend1 = new byte[6];
                 int i = 0;
                 toSend1[i++] = 123; //message for PIC
                 toSend1[i++] = 12; //HOST_COMMAND_FLASH_FPGA
-                toSend1[i++] = (byte)(totalBytesToSend >> 24);
-                toSend1[i++] = (byte)(totalBytesToSend >> 16);
-                toSend1[i++] = (byte)(totalBytesToSend >> 8);
-                toSend1[i++] = (byte)(totalBytesToSend);
-
+                toSend1[i++] = (byte)(totalLength >> 24);
+                toSend1[i++] = (byte)(totalLength >> 16);
+                toSend1[i++] = (byte)(totalLength >> 8);
+                toSend1[i++] = (byte)(totalLength);
                 eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend1);
-            }
-            catch
-            {
-                Logger.AddEntry(this, LogMessageType.Persistent, "Preparing PIC for FPGA flashing failed");
-                return;
-            }
-
-            //sleep, allowing PIC to erase memory
-            System.Threading.Thread.Sleep(10);
-
-            //now send all data in chunks of 16bytes
-            long bytesSent = 0;
-            while ((fileLength - bytesSent) != (COMMAND_WRITE_ENDPOINT_SIZE - requiredFiller))
-            {
-                byte[] intermediate = reader.ReadBytes(COMMAND_WRITE_ENDPOINT_SIZE);
-                try
-                {
-                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(intermediate);
-                }
-                catch
-                {
-                    Logger.AddEntry(this, LogMessageType.Persistent, "Writing core FPGA flash data failed");
-                    return;
-                }
-
-                bytesSent += COMMAND_WRITE_ENDPOINT_SIZE;
-                //pb.Value = (int)((float)(bytesSent)/(float)(fileLength)*100f);
-                //pb.Update();
-
-                //for (int ii = 0; ii < 16; ii++)
-                    //dataSent.Add(intermediate[ii]);
                 
-                int progress = (int)(bytesSent*100/fileLength);
-                DemoStatusText = "Programming FPGA " + bytesSent.ToString() + "/" + fileLength.ToString()+ " => " + progress.ToString()+"% - FW CREATED " + fwModifiedString;
-            } 
-
-            //in case filelengt is not multiple of 16: fill with FF
-            if (requiredFiller > 0)
-            {
-                byte[] lastData = new byte[COMMAND_WRITE_ENDPOINT_SIZE];
-                for (int j = 0; j < COMMAND_WRITE_ENDPOINT_SIZE - requiredFiller; j++)
-                    lastData[j] = reader.ReadByte();
-                for (int j = 0; j < requiredFiller; j++)
-                    lastData[COMMAND_WRITE_ENDPOINT_SIZE - requiredFiller + j] = 255;
-                try
+                int bytesSent = 0; 
+                int commandSize = packetsPerCommand * packetSize;
+                while(bytesSent < firmware.Length)
                 {
-                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(lastData);
+                    if(bytesSent + commandSize > firmware.Length)
+                        commandSize = firmware.Length - bytesSent;
+                    byte[] commandBytes = new byte[commandSize];
+                    Array.Copy(firmware, bytesSent, commandBytes, 0, commandSize);
+                    bytesSent += eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(commandBytes);
+                    int progress = (int)(bytesSent * 100 / firmware.Length);
+                    DemoStatusText = String.Format("Flashing FPGA + " + progress.ToString() + "% in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds/1000.0);
                 }
-                catch
+                flashStopwatch.Stop();
+                for (int j = 0; j < killMeNow; j++)
                 {
-                    Logger.AddEntry(this, LogMessageType.Persistent, "Writing filler failed");
-                    return;
+                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(dummyData);
+                    DemoStatusText = String.Format("Post amp... {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0);
                 }
-
-                for (int ii = 0; ii < COMMAND_WRITE_ENDPOINT_SIZE; ii++)
-                    dataSent.Add(lastData[ii]);
-
-                DemoStatusText = "Sending filler " + requiredFiller.ToString();
-            }
-
-            //now send 2048 more packets, allowing the FPGA to boot correctly            
-            bytesSent = 0;
-            for (int j = 0; j < extendedPacketsToSend; j++)
-            {
-                try
-                {
-                    eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(extendedData);
-                }
-                catch
-                {
-                    Logger.AddEntry(this, LogMessageType.Persistent, "Sending extended FW flash data failed");
-                    return;
-                }
-                bytesSent += COMMAND_WRITE_ENDPOINT_SIZE;
-                //pb.Value = (int)((float)(bytesSent) / (float)(extendedPacketsToSend * 16) * 100f);
-                //pb.Update();
-
-                for (int ii = 0; ii < COMMAND_WRITE_ENDPOINT_SIZE; ii++)
-                    dataSent.Add(extendedData[ii]);
-
-                DemoStatusText = "Sending postamp " + j.ToString();
-            }
-
-            //close down
-            try
-            {
-                reader.Close();
-                inStream.Close();
+                DemoStatusText = String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0);
             }
             catch
             {
-                Logger.AddEntry(this, LogMessageType.Persistent, "Closing FPGA FW file failed");
+                Logger.AddEntry(this, LogMessageType.Persistent, "Writing core FPGA flash data failed");
                 return;
             }
-
-
-            DemoStatusText = "";
-            /*}
-                catch{
-                    DemoStatusText = "Error during FPGA programming";
-                }*/
-
         }
-        //#endif
-
         #endregion
     }
 }

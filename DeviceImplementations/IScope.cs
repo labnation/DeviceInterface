@@ -11,7 +11,7 @@ namespace ECore.DeviceImplementations
     public interface IScope
     {
         DataPackageScope GetScopeData();
-
+        bool Connected { get; }
         void SetTriggerHoldOff(double time);
         void SetTriggerLevel(float voltage);
         void SetYOffset(uint channel, float offset);
