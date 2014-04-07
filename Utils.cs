@@ -206,6 +206,35 @@ namespace ECore
             }
             return null;
         }
+        /// <summary>
+        /// Reads file into byte array of length N*multiple. Stuffs with stuffing
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="multiple">0 disables stuffing</param>
+        /// <param name="stuffing"></param>
+        /// <returns></returns>
+        public static byte[] FileToByteArray(string fileName, int multiple, byte stuffing)
+        {
+            byte[] buff = null;
+            FileStream fs = new FileStream(fileName,
+                                           FileMode.Open,
+                                           FileAccess.Read);
+            BinaryReader br = new BinaryReader(fs);
+            long numBytes = new FileInfo(fileName).Length;
+            buff = br.ReadBytes((int)numBytes);
+            
+            //Check if a multiple was specified or if we happen to be lucky
+            if(multiple <= 0 || buff.Length % multiple == 0)
+                return buff;
+
+            //Stuff otherwise
+            byte[] stuffed = new byte[buff.Length + multiple - (buff.Length % multiple)];
+            Array.Copy(buff, stuffed, buff.Length);
+            for (int i = buff.Length; i < stuffed.Length; i++)
+                stuffed[i] = stuffing;
+            
+            return stuffed;
+        }
 
     }
 }
