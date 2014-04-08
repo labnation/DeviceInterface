@@ -95,6 +95,7 @@ namespace ECore
                     d.Update();
                 }
             }
+            Logger.AddEntry(this, LogMessageType.ECoreInfo, "Data thread stopped");
         }
 
         public void Stop()
