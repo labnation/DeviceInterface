@@ -15,7 +15,7 @@ namespace ECore.HardwareInterfaces
     //class that provides raw HW access to the device
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface
     {
-        private const int USB_TIMEOUT = 10000;
+        private const int USB_TIMEOUT = 500;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
