@@ -50,7 +50,9 @@ namespace ECore.DeviceImplementations
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + " to " + offset + "V");
-            FpgaSettingsMemory.GetRegister(r).Set((byte)offset);
+            //Offset: 0V --> 150 - swing +-0.9V
+            byte offsetByte = (byte)((offset * 68.2) - 16.5);
+            FpgaSettingsMemory.GetRegister(r).Set(offsetByte);
             FpgaSettingsMemory.WriteSingle(r);
         }
 
