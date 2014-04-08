@@ -350,9 +350,14 @@ namespace ECore.DeviceImplementations
                         commandSize = firmware.Length - bytesSent;
                     byte[] commandBytes = new byte[commandSize];
                     Array.Copy(firmware, bytesSent, commandBytes, 0, commandSize);
-                    bytesSent += eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(commandBytes);
+                    int sent = eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(commandBytes);
+                    if(sent == 0) {
+                        Logger.AddEntry(this, LogMessageType.ECoreError, "No bytes written - aborting flash operation");
+                        return;
+                    }
+                    bytesSent += sent;
                     int progress = (int)(bytesSent * 100 / firmware.Length);
-                    DemoStatusText = String.Format("Flashing FPGA + " + progress.ToString() + "% in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds/1000.0);
+                    DemoStatusText = String.Format("Flashing FPGA + " + progress.ToString() + "% in {0:0.00}s - " + fwModifiedString, (double)flashStopwatch.ElapsedMilliseconds/1000.0);
                 }
                 flashStopwatch.Stop();
                 for (int j = 0; j < killMeNow; j++)
