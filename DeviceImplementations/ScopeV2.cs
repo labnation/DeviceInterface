@@ -112,9 +112,6 @@ namespace ECore.DeviceImplementations
             //flush any transfers still queued on PIC
             //eDevice.HWInterface.FlushHW();
 
-            FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).InternalValue = 0;
-            FpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
-
             //set feedback loopand to 1V for demo purpose and enable
             this.SetDivider(0, 1);
             this.SetDivider(1, 1);
@@ -169,10 +166,6 @@ namespace ECore.DeviceImplementations
             //lower global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).InternalValue = 0;
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
-
-            //generate negative voltage
-            FpgaSettingsMemory.GetRegister(REG.NEG_DCDC_PWM).InternalValue = 70;
-            FpgaSettingsMemory.WriteSingle(REG.NEG_DCDC_PWM);
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).InternalValue = 1;
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);

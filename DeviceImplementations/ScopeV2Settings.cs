@@ -242,14 +242,6 @@ namespace ECore.DeviceImplementations
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)1);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
-            //save previous ram config
-            FpgaSettingsMemory.ReadSingle(REG.RAM_CONFIGURATION);
-            byte previousRamConfiguration = FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Get();
-
-            //set ram config to I2C input
-            FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set((byte)2); //sets RAM0 to I2C input
-            FpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
-
             //lower global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
@@ -282,10 +274,6 @@ namespace ECore.DeviceImplementations
 
                 blockCounter++;
             }
-
-            //set ram config to original state
-            FpgaSettingsMemory.GetRegister(REG.RAM_CONFIGURATION).Set(previousRamConfiguration); //sets RAM0 to I2C input
-            FpgaSettingsMemory.WriteSingle(REG.RAM_CONFIGURATION);
 
             //lower global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
