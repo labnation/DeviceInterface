@@ -54,7 +54,7 @@ namespace ECore.DeviceImplementations
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB();
 
 			//check communication by reading PIC FW version
-            try
+            if(hardwareInterface.Connected)
             {
                 hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
                 byte[] response = hardwareInterface.ReadControlBytes(16);
@@ -62,10 +62,6 @@ namespace ECore.DeviceImplementations
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
                 Logger.AddEntry(this, LogMessageType.Persistent, resultString);
-            }
-            catch (NullReferenceException nre)
-            {
-                Logger.AddEntry(this, LogMessageType.Persistent, "Failed to intialize hardware interface");
             }
 			#endif
         }
