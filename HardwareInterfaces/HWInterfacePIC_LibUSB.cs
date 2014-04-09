@@ -111,11 +111,15 @@ namespace ECore.HardwareInterfaces
 
                     //indicate device is connected
                     isConnected = true;
-                    
                 }
             }
             else
             {
+                //init endpoints
+                dataEndpoint = null;
+                commandWriteEndpoint = null;
+                commandReadEndpoint = null;
+
                 isConnected = false;
                 Logger.AddEntry(this, LogMessageType.ECoreInfo, "No device found");
             }
