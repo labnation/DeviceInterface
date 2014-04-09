@@ -267,7 +267,7 @@ namespace ECore.DeviceImplementations
         private void FlashFpgaInternal()
         {
             int packetSize = eDevice.DeviceImplementation.hardwareInterface.WriteControlMaxLength();
-            int packetsPerCommand = 2048 / packetSize;
+            int packetsPerCommand = 64;
 
             if (packetSize <= 0) return;
             string fileName = "smartscope.bin";
@@ -330,16 +330,14 @@ namespace ECore.DeviceImplementations
                 Stopwatch flashStopwatch = new Stopwatch();
                 flashStopwatch.Start();
                 String fwModifiedString = Utils.GetPrettyDate(firmwareModified);
-                int totalLength = (firmware.Length + killMeNow * packetSize);
+                UInt16 commands = (UInt16)(firmware.Length / packetSize + killMeNow);
                 //PIC: enter FPGA flashing mode
                 byte[] toSend1 = new byte[6];
                 int i = 0;
                 toSend1[i++] = 123; //message for PIC
                 toSend1[i++] = 12; //HOST_COMMAND_FLASH_FPGA
-                toSend1[i++] = (byte)(totalLength >> 24);
-                toSend1[i++] = (byte)(totalLength >> 16);
-                toSend1[i++] = (byte)(totalLength >> 8);
-                toSend1[i++] = (byte)(totalLength);
+                toSend1[i++] = (byte)(commands >> 8);
+                toSend1[i++] = (byte)(commands);
                 eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend1);
                 
                 int bytesSent = 0; 
