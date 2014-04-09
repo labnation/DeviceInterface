@@ -87,7 +87,7 @@ namespace ECore
                 Logger.AddEntry(this, LogMessageType.ECoreError, "Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
-            while (dataFetchThreadRunning)
+            while (dataFetchThreadRunning && this.deviceImplementation.hardwareInterface.Connected)
             {
                 //Update each dataSource (OnDataAvailable callback is fired from within)
                 foreach (DataSource d in this.deviceImplementation.DataSources)
