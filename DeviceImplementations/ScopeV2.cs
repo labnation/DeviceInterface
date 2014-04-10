@@ -78,7 +78,7 @@ namespace ECore.DeviceImplementations
             PicMemory = new DeviceMemories.ScopePicRegisterMemory(eDevice);
             FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
             FpgaRom = new DeviceMemories.ScopeFpgaRom(eDevice);
-            StrobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, FpgaSettingsMemory);
+            StrobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, FpgaSettingsMemory, FpgaRom);
             AdcMemory = new DeviceMemories.MAX19506Memory(eDevice, FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
             

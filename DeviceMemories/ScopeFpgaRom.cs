@@ -20,6 +20,12 @@ namespace ECore.DeviceMemories
             {
                 registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(ROM), reg)));
             }
+            //Add ROM registers
+            int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
+            for(int i = (int)ROM.STROBES + 1; i < (int)ROM.STROBES + lastStrobe / 8 + 1; i++)
+            {
+                registers.Add(i, new MemoryRegister<byte>(i, "STROBES " + (i - (int)ROM.STROBES)));
+            }
 
         }
 
@@ -64,7 +70,7 @@ namespace ECore.DeviceMemories
 
         public override void WriteRange(int startAddress, int burstSize)
         {
-            throw new NotImplementedException("This is a ROM memory -- no write operations allowed!");
+            Logger.AddEntry(this, LogMessageType.ECoreError, "Can't write to ROM");
         }
 
         public void WriteSingle(ROM r)
@@ -78,6 +84,10 @@ namespace ECore.DeviceMemories
         public MemoryRegister<byte> GetRegister(ROM r)
         {
             return Registers[(int)r];
+        }
+        public MemoryRegister<byte> GetRegister(int address)
+        {
+            return Registers[address];
         }
     }
 }
