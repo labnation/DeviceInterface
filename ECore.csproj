@@ -86,7 +86,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ScopeConstants_GEN.cs</LastGenOutput>
     </None>
-    <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
