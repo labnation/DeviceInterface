@@ -75,6 +75,20 @@ namespace ECore
             }
             return output;
         }
+
+        public static bool[][] ByteArrayToBoolArrays(byte[] input)
+        {
+            bool[][] output = new bool[8][];
+            for(int i = 0; i < 8; i++)
+                output[i] = new bool[input.Length];
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                for(int j = 0; j < 8; j++)
+                    output[j][i] = IsBitSet(input[i], j);
+            }
+            return output;
+        }
         /// <summary>
         /// Shift the elements of an array
         /// </summary>
@@ -234,6 +248,11 @@ namespace ECore
                 stuffed[i] = stuffing;
             
             return stuffed;
+        }
+
+        public static bool IsBitSet(byte b, int bit)
+        {
+            return ((b >> bit) & 0x01) != 0;
         }
 
     }
