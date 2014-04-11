@@ -13,7 +13,7 @@ namespace ECore.DeviceImplementations
         private DateTime timeOrigin;
 
         //Wave settings
-        private WaveSource waveSource = WaveSource.FILE;
+        private WaveSource waveSource = WaveSource.GENERATOR;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
         private double[] dcOffset = new double[] { 0.0f, -0.9f };
@@ -149,7 +149,9 @@ namespace ECore.DeviceImplementations
                 return null;
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
-            float[][] output = null;
+            float[][] analogOutput = null;
+            byte[] digitalOutput = null;
+            bool[][] digitalChannels = null;
             int triggerIndex = 0;
             int triggerHoldoffInSamples = 0;
 
@@ -173,29 +175,51 @@ namespace ECore.DeviceImplementations
                 triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
                 if (ScopeDummy.Trigger(wave[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
                 {
-                    output = new float[channels][];
+                    analogOutput = new float[channels][];
                     for (int i = 0; i < channels; i++)
                     {
-                        output[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);     
+                        analogOutput[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);     
                     }
                 }
-                if (output == null)
+                if (analogOutput == null)
                     return null;
+                //Generate some bullshit digital wave
+                digitalOutput = new byte[outputWaveLength];
+                byte value = 0;
+                for (int i = 0; i < digitalOutput.Length; i++)
+                {
+                    digitalOutput[i] = value;
+                    if (i % 10 == 0) value++;
+                }
+                //new Random().NextBytes(digitalOutput);
             }
             else if (waveSource == WaveSource.FILE)
             {
 
-                if (!GetWaveFromFile(triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref output)) return null;
+                if (!GetWaveFromFile(triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref analogOutput)) return null;
                 for(int i = 0; i < channels; i++)
-                    ScopeDummy.AddNoise(output[i], noiseAmplitude[i]);
+                    ScopeDummy.AddNoise(analogOutput[i], noiseAmplitude[i]);
                 triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
             }
 
             DataPackageScope p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples);
-            p.SetData(ScopeChannel.ChA, output[0]);
-            p.SetData(ScopeChannel.ChB, output[1]);
-            p.SetOffset(ScopeChannel.ChA, yOffset[0]);
-            p.SetOffset(ScopeChannel.ChB, yOffset[1]);
+            p.SetData(ScopeChannels.ChA, analogOutput[0]);
+            p.SetData(ScopeChannels.ChB, analogOutput[1]);
+            p.SetOffset(ScopeChannels.ChA, yOffset[0]);
+            p.SetOffset(ScopeChannels.ChB, yOffset[1]);
+            if (digitalOutput != null)
+            {
+                digitalChannels = Utils.ByteArrayToBoolArrays(digitalOutput);
+                p.SetData(ScopeChannels.Digi0, digitalChannels[0]);
+                p.SetData(ScopeChannels.Digi1, digitalChannels[1]);
+                p.SetData(ScopeChannels.Digi2, digitalChannels[2]);
+                p.SetData(ScopeChannels.Digi3, digitalChannels[3]);
+                p.SetData(ScopeChannels.Digi4, digitalChannels[4]);
+                p.SetData(ScopeChannels.Digi5, digitalChannels[5]);
+                p.SetData(ScopeChannels.Digi6, digitalChannels[6]);
+                p.SetData(ScopeChannels.Digi7, digitalChannels[7]);
+            }
+
             return p;
         }
 

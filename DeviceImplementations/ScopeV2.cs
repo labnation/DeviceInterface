@@ -54,7 +54,7 @@ namespace ECore.DeviceImplementations
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB();
 
 			//check communication by reading PIC FW version
-            if(hardwareInterface.Connected)
+            if(Connected)
             {
                 hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
                 byte[] response = hardwareInterface.ReadControlBytes(16);
@@ -230,19 +230,19 @@ namespace ECore.DeviceImplementations
             //FIXME: Get bytes, split into analog/digital channels and add to scope data
             if (this.disableVoltageConversion)
             {
-                data.SetData(ScopeChannel.ChA, Utils.CastArray<byte, float>(chA));
-                data.SetData(ScopeChannel.ChB, Utils.CastArray<byte, float>(chB));
+                data.SetData(ScopeChannels.ChA, Utils.CastArray<byte, float>(chA));
+                data.SetData(ScopeChannels.ChB, Utils.CastArray<byte, float>(chB));
             }
             else
             {
                 //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
-                data.SetData(ScopeChannel.ChA, 
+                data.SetData(ScopeChannels.ChA, 
                     ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!this.GetEnableLogicAnalyser())
                 {
-                    data.SetData(ScopeChannel.ChB,
+                    data.SetData(ScopeChannels.ChB,
                         ConvertByteToVoltage(chB, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).Get()));
                 }
                 else
@@ -262,26 +262,20 @@ namespace ECore.DeviceImplementations
                         digitalSamples[6][i] = ((chB[i] & (1 << 6)) != 0) ? true : false;
                         digitalSamples[7][i] = ((chB[i] & (1 << 7)) != 0) ? true : false;
                     }
-                    data.SetData(ScopeChannel.Digi0, digitalSamples[0]);
-                    data.SetData(ScopeChannel.Digi1, digitalSamples[1]);
-                    data.SetData(ScopeChannel.Digi2, digitalSamples[2]);
-                    data.SetData(ScopeChannel.Digi3, digitalSamples[3]);
-                    data.SetData(ScopeChannel.Digi4, digitalSamples[4]);
-                    data.SetData(ScopeChannel.Digi5, digitalSamples[5]);
-                    data.SetData(ScopeChannel.Digi6, digitalSamples[6]);
-                    data.SetData(ScopeChannel.Digi7, digitalSamples[7]);
+                    data.SetData(ScopeChannels.Digi0, digitalSamples[0]);
+                    data.SetData(ScopeChannels.Digi1, digitalSamples[1]);
+                    data.SetData(ScopeChannels.Digi2, digitalSamples[2]);
+                    data.SetData(ScopeChannels.Digi3, digitalSamples[3]);
+                    data.SetData(ScopeChannels.Digi4, digitalSamples[4]);
+                    data.SetData(ScopeChannels.Digi5, digitalSamples[5]);
+                    data.SetData(ScopeChannels.Digi6, digitalSamples[6]);
+                    data.SetData(ScopeChannels.Digi7, digitalSamples[7]);
                 }
             }
             return data;
         }
 
-        public bool Connected
-        {
-            get
-            {
-                return hardwareInterface.Connected;
-            }
-        }
+        public override bool Connected { get { return hardwareInterface.Connected; } }
 
         #endregion
     }
