@@ -17,7 +17,7 @@ namespace ECore
         protected List<DeviceMemory<MemoryRegister<byte>>> byteMemories;
         protected List<DataSource> dataSources;
         public List<DataSource> DataSources { get { return this.dataSources; } }
-
+        public abstract bool Connected { get; }
         //////////////////////////////////////////////////////////////////
         //contract for inheriters
         abstract public void InitializeMemories();
@@ -31,7 +31,6 @@ namespace ECore
         protected EDeviceImplementation(EDevice eDevice)
         {
             this.eDevice = eDevice;
-
             byteMemories = new List<DeviceMemory<MemoryRegister<byte>>>();
             InitializeMemories();
             dataSources = new List<DataSource>();
