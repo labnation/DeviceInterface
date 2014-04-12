@@ -26,10 +26,8 @@ namespace ECore.DeviceMemories
         private ScopeFpgaRom fpgaRom;
 
         //this method defines which type of registers are stored in the memory
-        public MAX19506Memory(EDevice eDevice,
-            ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
+        public MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
-            this.eDevice = eDevice;
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;
             this.fpgaRom = fpgaRom;

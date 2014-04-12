@@ -11,20 +11,19 @@ using System.Windows.Forms;
 #endif
 
 
-namespace ECore.DeviceImplementations
+namespace ECore.Devices
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public partial class ScopeV2: EDeviceImplementation, IScope
+    public partial class ScopeV2: EDevice, IScope
     {
-        
+        public EDeviceHWInterface hardwareInterface;   
 		public static string DemoStatusText = "";
         public DeviceMemories.ScopeFpgaSettingsMemory  FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
         public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
         public DeviceMemories.MAX19506Memory AdcMemory { get; private set; }
         public DeviceMemories.ScopePicRegisterMemory PicMemory { get; private set; }
-        private ScopeV2RomManager romManager;
         
         private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
         private int yOffset_Midrange0V;
@@ -37,16 +36,21 @@ namespace ECore.DeviceImplementations
 		public Android.Content.Res.AssetManager Assets;
 		#endif
         
-        public ScopeV2(EDevice eDevice) : base(eDevice) 
+        public ScopeV2() : base() 
         {
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             //FIXME: no clue why this line is here...
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
+            InitializeMemories();
+            dataSources.Add(new DataSources.DataSourceScope(this));
+
+            InitializeHardwareInterface();
+
         }
 
         #region initializers
 
-        public override void InitializeHardwareInterface()
+        private void InitializeHardwareInterface()
         {
 			#if ANDROID
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
@@ -66,20 +70,15 @@ namespace ECore.DeviceImplementations
 			#endif
         }
 
-        public ScopeV2RomManager CreateRomManager()
-        {
-            return new ScopeV2RomManager(eDevice);
-        }
-
         //master method where all memories, registers etc get defined and linked together
-        public override void InitializeMemories()
+        private void InitializeMemories()
         {
             //Create memories
-            PicMemory = new DeviceMemories.ScopePicRegisterMemory(eDevice);
-            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(eDevice);
-            FpgaRom = new DeviceMemories.ScopeFpgaRom(eDevice);
-            StrobeMemory = new DeviceMemories.ScopeStrobeMemory(eDevice, FpgaSettingsMemory, FpgaRom);
-            AdcMemory = new DeviceMemories.MAX19506Memory(eDevice, FpgaSettingsMemory, StrobeMemory, FpgaRom);
+            PicMemory = new DeviceMemories.ScopePicRegisterMemory(hardwareInterface);
+            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(hardwareInterface);
+            FpgaRom = new DeviceMemories.ScopeFpgaRom(hardwareInterface);
+            StrobeMemory = new DeviceMemories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
+            AdcMemory = new DeviceMemories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
             
             byteMemories.Add(FpgaRom);
@@ -87,20 +86,13 @@ namespace ECore.DeviceImplementations
             byteMemories.Add(AdcMemory);
             byteMemories.Add(PicMemory);
             byteMemories.Add(StrobeMemory);
-
-            this.romManager = CreateRomManager();
-        }
-
-        public override void InitializeDataSources()
-        {
-            dataSources.Add(new DataSources.DataSourceScope(this));
         }
 
         #endregion
 
         #region start_stop
 
-        override public bool Start()
+        public override bool Start()
         {
             if (!hardwareInterface.Start())
                 return false;
@@ -173,12 +165,13 @@ namespace ECore.DeviceImplementations
             //romMemory.ReadSingle(ROM.FPGA_STATUS);
             //if (romMemory.RegisterByName(ROM.FPGA_STATUS).InternalValue != 3)
             //Logger.AddEntry(this, LogMessageType.ECoreError, "!!! DCMs not locked !!!");
-            return true;
+            return base.Start();
         }
 
-        override public void Stop()
+        public override void Stop()
         {
             hardwareInterface.Stop();
+            base.Stop();
         }
 
         #endregion

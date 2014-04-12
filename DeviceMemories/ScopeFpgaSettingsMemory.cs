@@ -10,9 +10,9 @@ namespace ECore.DeviceMemories
     public class ScopeFpgaSettingsMemory: DeviceMemory<MemoryRegister<byte>>
     {       
         //this method defines which type of registers are stored in the memory
-        public ScopeFpgaSettingsMemory(EDevice eDevice)
+        public ScopeFpgaSettingsMemory(EDeviceHWInterface hwInterface)
         {
-            this.eDevice = eDevice;
+            this.hwInterface = hwInterface;
 
             //instantiate registerList
             registers = new Dictionary<int, MemoryRegister<byte>>();
@@ -37,7 +37,7 @@ namespace ECore.DeviceMemories
             toSend1[i++] = (byte)startAddress; //second I2C byte: address of the register inside the FPGA
 
             //send this over, so FPGA register pointer is set to correct register
-            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend1);
+            hwInterface.WriteControlBytes(toSend1);
 
             ////////////////////////////////////////////////////////
             //now initiate I2C read operation
@@ -51,10 +51,10 @@ namespace ECore.DeviceMemories
             toSend2[i++] = (byte)burstSize;
 
             //send over to HW, to perform read operation
-            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend2);
+            hwInterface.WriteControlBytes(toSend2);
 
             //now data is stored in EP3 of PIC, so read it
-            byte[] readBuffer = eDevice.DeviceImplementation.hardwareInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
+            byte[] readBuffer = hwInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
             if (readBuffer.Length > 0)
             {
                 //strip away first 4 bytes (as these are not data) and store inside registers
@@ -80,7 +80,7 @@ namespace ECore.DeviceMemories
             for (int j = 0; j < burstSize; j++)
                 toSend[i++] = this.registers[startAddress + j].InternalValue;
 
-            eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend);
+            hwInterface.WriteControlBytes(toSend);
         }
         public void WriteSingle(REG r)
         {

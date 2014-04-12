@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-//using System.Windows.Forms;
+using ECore.HardwareInterfaces;
 
 namespace ECore.DeviceMemories
 {
@@ -11,7 +11,7 @@ namespace ECore.DeviceMemories
     abstract public class DeviceMemory<RegisterType>
     {
         protected Dictionary<int, RegisterType> registers;
-        protected EDevice eDevice;
+        protected EDeviceHWInterface hwInterface;
 
         abstract public void WriteRange(int startAddress, int burstSize);
         abstract public void ReadRange(int startAddress, int burstSize);

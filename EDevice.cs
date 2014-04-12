@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Reflection;
-using ECore.DeviceImplementations;
+using ECore.DeviceMemories;
+using ECore.DataSources;
 
-namespace ECore
+namespace ECore.Devices
 {
     //ideally would be to constrain interfaces to be applied only to AuxFunctionalities class
     //how to use generics for memory? after propagation, EDevice needs to have a List of memories, so it needs to know all the specific memory types. or just use an arraylist?
@@ -14,11 +15,15 @@ namespace ECore
     //parameters should define affected memories, and their registers as strings
 
     //main class, from which all specific cameras inherit
-    public class EDevice
+    public abstract class EDevice
     {
-        //properties regarding camera
-        private EDeviceImplementation deviceImplementation;
-        
+        //fIXME: visibility
+        protected List<DeviceMemory<MemoryRegister<byte>>> byteMemories = new List<DeviceMemory<MemoryRegister<byte>>>();
+        public List<DeviceMemory<MemoryRegister<byte>>> Memories { get { return byteMemories; } }
+        protected List<DataSource> dataSources = new List<DataSource>();
+        public List<DataSource> DataSources { get { return this.dataSources; } }
+        public abstract bool Connected { get; }
+
         //properties regarding thread management
         private Thread dataFetchThread;
         private bool dataFetchThreadRunning;
@@ -33,64 +38,42 @@ namespace ECore
 		#endif        
 #endif
 
-        public EDevice(Type deviceImplementationType)
+        public EDevice()
         {
-            //this.deviceImplementation = (EDeviceImplementation)Activator.CreateInstance(deviceImplementationType, new object[] {this});
-            this.deviceImplementation = new DeviceImplementations.ScopeV2(this);
-            //this.deviceImplementation = new DeviceImplementations.ScopeDummy(this);
-            deviceImplementation.InitializeHardwareInterface();
-
             this.dataFetchThreadRunning = false;
-
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, "EDevice initialized");
+            Logger.AddEntry(this, LogMessageType.ECoreInfo, this.GetType().Name  + " constructed");
         }
 
         //start new thread, which will only fetch new data
-        public void Start()
+        public virtual bool Start()
         {
             if(this.IsRunning) {
                 Logger.AddEntry(this, LogMessageType.ECoreWarning, "Not starting device since it's still running");
-                return;
+                return false;
             }
 
             dataFetchThreadRunning = true;            
             //create and start thread, operating on dataGeneratorNode
-            dataFetchThread = new Thread(RunThreadDataGenerator);
+            dataFetchThread = new Thread(DataFetchThreadStart);
             dataFetchThread.Name = "DataFetchFromDeviceThread";
             dataFetchThread.Priority = ThreadPriority.AboveNormal;
             dataFetchThread.Start();
+            return true;
         }
 
-        /*public void StartFromEmbedded()
-        {
-            running = true;
-
-            //check whether physical HW device is connected. if not, load data from a stream
-            
-            dataSources.Add(new DataSources.DataSourceEmbeddedResource());
-
-            //create and start thread, operating on dataGeneratorNode
-            dataFetchThread = new Thread(RunThreadDataGenerator);
-            dataFetchThread.Name = "DataFetchFromDeviceThread";
-            dataFetchThread.Priority = ThreadPriority.AboveNormal;
-            dataFetchThread.Start();
-        }*/
-
-        public void RunThreadDataGenerator()
+        public void DataFetchThreadStart()
         {           
             //main starting point for the thread which fetches the data from file
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread spawn");
 
-            //start HW
-            dataFetchThreadRunning = deviceImplementation.Start();
             if (!dataFetchThreadRunning)
                 Logger.AddEntry(this, LogMessageType.ECoreError, "Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
-            while (dataFetchThreadRunning && this.deviceImplementation.Connected)
+            while (dataFetchThreadRunning && this.Connected)
             {
                 //Update each dataSource (OnDataAvailable callback is fired from within)
-                foreach (DataSource d in this.deviceImplementation.DataSources)
+                foreach (DataSource d in this.DataSources)
                 {
                     d.Update();
                 }
@@ -98,7 +81,7 @@ namespace ECore
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "Data thread stopped");
         }
 
-        public void Stop()
+        public virtual void Stop()
         {
             if (!this.IsRunning)
             {
@@ -108,15 +91,11 @@ namespace ECore
             
             //stop thread
             dataFetchThreadRunning = false;
-            //stop HW
-            deviceImplementation.Stop();
 
             //add entry to log
             Logger.AddEntry(this, LogMessageType.ECoreInfo, "Requested DataFetchThread to stop");
         }
 
-        //FIXME: since EDevice is so thin now, might just as well merge with deviceImplementation
-        public EDeviceImplementation DeviceImplementation { get { return this.deviceImplementation; } }
         public bool IsRunning { get { return dataFetchThread != null && dataFetchThread.IsAlive; } }
 
 
@@ -130,27 +109,27 @@ namespace ECore
 
         public bool HasSetting(Setting s)
         {
-            return this.deviceImplementation.HasSetting(s);
+            return this.HasSetting(s);
         }
 
         public void Set(Setting s, Object[] parameters) {
-            if (!this.deviceImplementation.HasSetting(s))
-                throw new MissingSettingException(this.deviceImplementation, s);
-            MethodInfo m = this.deviceImplementation.GetType().GetMethod(SettingSetterMethodName(s));
+            if (!this.HasSetting(s))
+                throw new MissingSettingException(this, s);
+            MethodInfo m = this.GetType().GetMethod(SettingSetterMethodName(s));
             ParameterInfo[] pi = m.GetParameters();
             if (parameters == null || pi.Length != parameters.Length)
-                throw new SettingParameterWrongNumberException(this.deviceImplementation, s,
+                throw new SettingParameterWrongNumberException(this, s,
                     pi.Length, parameters != null ? parameters.Length : 0);
             //Match parameters with method arguments
             
             for(int i = 0; i < pi.Length; i++)
             {
                 if (!pi[i].ParameterType.Equals(parameters[i].GetType())) {
-                    throw new SettingParameterTypeMismatchException(this.deviceImplementation, s,
+                    throw new SettingParameterTypeMismatchException(this, s,
                         i+1, pi[i].ParameterType, parameters[i].GetType());
                 }
             }
-            m.Invoke(this.deviceImplementation, parameters);
+            m.Invoke(this, parameters);
         }
 
         #endregion

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore.DataPackages;
 
-namespace ECore.DeviceImplementations
+namespace ECore.Devices
 {
     public enum TriggerDirection { RISING, FALLING };
 

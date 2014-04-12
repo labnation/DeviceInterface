@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ECore
+namespace ECore.Devices
 {
     public class MissingSettingException : Exception
     {
-        public MissingSettingException(EDeviceImplementation d, Setting s) : 
+        public MissingSettingException(EDevice d, Setting s) : 
             base(
                 "The setting " + Enum.GetName(s.GetType(), s) +
                 " was not found in device of type " + d.GetType().Name) 
@@ -15,7 +15,7 @@ namespace ECore
     }
     public class SettingParameterWrongNumberException : Exception
     {
-        public SettingParameterWrongNumberException(EDeviceImplementation d, Setting s, int expected, int received) :
+        public SettingParameterWrongNumberException(EDevice d, Setting s, int expected, int received) :
             base(
                 "The setting " + Enum.GetName(s.GetType(), s) + " in device of type " + d.GetType().Name +
                 " requires " + expected + " parameters, only received " + received)
@@ -23,7 +23,7 @@ namespace ECore
     }
     public class SettingParameterTypeMismatchException : Exception
     {
-        public SettingParameterTypeMismatchException(EDeviceImplementation d, Setting s, int number, Type expected, Type received) :
+        public SettingParameterTypeMismatchException(EDevice d, Setting s, int number, Type expected, Type received) :
             base(
                 "The setting " + Enum.GetName(s.GetType(), s) + " in device of type " + d.GetType().Name +
                 " requires parameter " + number + " to be of type " + expected.Name + ", got " + received.Name)

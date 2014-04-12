@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore;
 using ECore.DataPackages;
-using ECore.DeviceImplementations;
+using ECore.Devices;
 
 namespace ECore.DataSources
 {

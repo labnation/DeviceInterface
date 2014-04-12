@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using ECore.DataPackages;
 
-namespace ECore.DeviceImplementations
+namespace ECore.Devices
 {
     public enum WaveSource { FILE, GENERATOR }
 
-    public partial class ScopeDummy : EDeviceImplementation, IScope
+    public partial class ScopeDummy : EDevice, IScope
     {
         private DateTime timeOrigin;
 
@@ -37,22 +37,13 @@ namespace ECore.DeviceImplementations
 
         #region constructor / initializer 
 
-        public ScopeDummy(EDevice d) : base(d) { }
-
-        public override void InitializeDataSources()
-        {
+        public ScopeDummy() : base() {
             dataSources.Add(new DataSources.DataSourceScope(this));
         }
-        public override void InitializeHardwareInterface()
-        {
-            //Dummy has no hardware interface. So sad, living in a computer's memory
+        public override bool Start() { 
+            timeOrigin = DateTime.Now;
+            return base.Start(); 
         }
-        public override void InitializeMemories()
-        {
-            //Dummy has not memory. Yep, it's *that* dumb.
-        }
-        public override bool Start() { timeOrigin = DateTime.Now; return true; }
-		public override void Stop() { }
 
         #endregion
 
@@ -145,7 +136,7 @@ namespace ECore.DeviceImplementations
         public DataPackageScope GetScopeData()
         {
             //FIXME: support trigger channel selection
-            if (!eDevice.IsRunning) 
+            if (!IsRunning) 
                 return null;
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);

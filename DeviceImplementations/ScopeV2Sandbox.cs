@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore.DeviceMemories;
 
-namespace ECore.DeviceImplementations
+namespace ECore.Devices
 {
     partial class ScopeV2
     {

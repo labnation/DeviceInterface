@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore.DeviceMemories;
 
-namespace ECore.DeviceImplementations
+namespace ECore.Devices
 {
     partial class ScopeV2
     {
@@ -270,7 +270,7 @@ namespace ECore.DeviceImplementations
                 for (int c = 0; c < blockSize; c++)
                     toSend[i++] = data[blockCounter * blockSize + c];
 
-                eDevice.DeviceImplementation.hardwareInterface.WriteControlBytes(toSend);
+                hardwareInterface.WriteControlBytes(toSend);
 
                 blockCounter++;
             }

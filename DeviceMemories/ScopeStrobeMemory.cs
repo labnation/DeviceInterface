@@ -13,9 +13,8 @@ namespace ECore.DeviceMemories
         private ScopeFpgaRom readMemory;
 
         //this method defines which type of registers are stored in the memory
-        public ScopeStrobeMemory(EDevice eDevice, ScopeFpgaSettingsMemory writeMemory, ScopeFpgaRom readMemory)
+        public ScopeStrobeMemory(ScopeFpgaSettingsMemory writeMemory, ScopeFpgaRom readMemory)
         {
-            this.eDevice = eDevice;
             this.writeMemory = writeMemory;
             this.readMemory = readMemory;
 
