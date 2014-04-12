@@ -46,18 +46,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataSources\DataPackages\DataPackageScope.cs" />
-    <Compile Include="DeviceImplementations\IScope.cs" />
-    <Compile Include="DeviceImplementations\ScopeDummy.cs" />
-    <Compile Include="DeviceImplementations\ScopeDummyFile.cs" />
-    <Compile Include="DeviceImplementations\ScopeDummyWaves.cs" />
-    <Compile Include="DeviceImplementations\ScopeV2Sandbox.cs" />
-    <Compile Include="DeviceImplementations\ScopeV2FlashHelpers.cs" />
-    <Compile Include="DeviceImplementations\ScopeV2Settings.cs" />
+    <Compile Include="Devices\IScope.cs" />
+    <Compile Include="Devices\ScopeDummy.cs" />
+    <Compile Include="Devices\ScopeDummyFile.cs" />
+    <Compile Include="Devices\ScopeDummyWaves.cs" />
+    <Compile Include="Devices\ScopeV2Sandbox.cs" />
+    <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
+    <Compile Include="Devices\ScopeV2Settings.cs" />
     <Compile Include="ScopeChannel.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
-    <Compile Include="DeviceImplementations\ScopeV2.cs" />
-    <Compile Include="DeviceImplementations\ScopeV2_ROM.cs" />
+    <Compile Include="Devices\ScopeV2.cs" />
+    <Compile Include="Devices\ScopeV2_ROM.cs" />
     <Compile Include="DeviceMemories\ScopeConstants_GEN.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
