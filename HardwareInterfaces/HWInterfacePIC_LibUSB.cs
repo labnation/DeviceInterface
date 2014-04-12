@@ -310,15 +310,6 @@ namespace ECore.HardwareInterfaces
 			get { return isConnected; }
 		}
 
-		public override void Stop()
-		{            
-		}
-
-		public override bool Start()
-		{
-            return this.Connected;
-        }
-
         #region ScopeInterface
 
         public void GetControllerRegister(ScopeController ctrl, int address, int length, out byte[] data)

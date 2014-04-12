@@ -25,6 +25,9 @@ namespace ECore.Devices
         public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
         public DeviceMemories.MAX19506Memory AdcMemory { get; private set; }
         public DeviceMemories.ScopePicRegisterMemory PicMemory { get; private set; }
+
+        private DataSources.DataSourceScope dataSourceScope;
+        public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
         
         private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
         private int yOffset_Midrange0V;
@@ -44,7 +47,7 @@ namespace ECore.Devices
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
             InitializeHardwareInterface();
             InitializeMemories();
-            dataSources.Add(new DataSources.DataSourceScope(this));
+            dataSourceScope = new DataSources.DataSourceScope(this);
         }
 
         #region initializers
@@ -91,11 +94,8 @@ namespace ECore.Devices
 
         #region start_stop
 
-        public override bool Start()
+        public void Configure()
         {
-            if (!hardwareInterface.Start())
-                return false;
-            
             //raise global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(1);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
@@ -160,17 +160,6 @@ namespace ECore.Devices
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(1);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
-
-            //romMemory.ReadSingle(ROM.FPGA_STATUS);
-            //if (romMemory.RegisterByName(ROM.FPGA_STATUS).InternalValue != 3)
-            //Logger.AddEntry(this, LogMessageType.ECoreError, "!!! DCMs not locked !!!");
-            return base.Start();
-        }
-
-        public override void Stop()
-        {
-            hardwareInterface.Stop();
-            base.Stop();
         }
 
         #endregion

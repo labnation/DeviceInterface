@@ -69,12 +69,10 @@
     <Compile Include="DeviceMemories\ScopePicRegisterMemory.cs" />
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaRom.cs" />
-    <Compile Include="DataSources\DataSourceEmbeddedResource.cs" />
     <Compile Include="DataSources\DataSourceScope.cs" />
     <Compile Include="DataSources\DataSource.cs" />
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
-    <Compile Include="DataSources\DataSourceFile.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />

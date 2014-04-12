@@ -12,7 +12,5 @@ namespace ECore.HardwareInterfaces
         abstract public byte[] ReadControlBytes(int length);
         abstract public byte[] GetData(int numberOfBytes);
         abstract public bool Connected { get; }
-        abstract public void Stop();
-        abstract public bool Start();
     }
 }

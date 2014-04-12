@@ -18,5 +18,7 @@ namespace ECore.Devices
         void SetTriggerChannel(uint channel);
         void SetTriggerDirection(TriggerDirection direction);
         void SetDecimation(uint decimation);
+        void Configure();
+        DataSources.DataSourceScope DataSourceScope { get; }
     }
 }

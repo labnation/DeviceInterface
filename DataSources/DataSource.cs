@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.DataPackages;
+using ECore.Devices;
 
 namespace ECore.DataSources
 {
@@ -12,11 +13,14 @@ namespace ECore.DataSources
     public abstract class DataSource
     {
         public event NewDataAvailableHandler OnNewDataAvailable;
-        
-        public DataSource() { }
+        protected EDevice device;
         protected DateTime lastUpdate;
         protected DataPackageScope latestDataPackage;
-        abstract public void Update();
+
+        public DataSource(EDevice device) { this.device = device; }
+        abstract public bool Start();
+        abstract public void Stop();
+        
         protected void fireDataAvailableEvents()
         {
             {

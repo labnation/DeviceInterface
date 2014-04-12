@@ -10,6 +10,9 @@ namespace ECore.Devices
 
     public partial class ScopeDummy : EDevice, IScope
     {
+        private DataSources.DataSourceScope dataSourceScope;
+        public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
+
         private DateTime timeOrigin;
 
         //Wave settings
@@ -38,11 +41,10 @@ namespace ECore.Devices
         #region constructor / initializer 
 
         public ScopeDummy() : base() {
-            dataSources.Add(new DataSources.DataSourceScope(this));
+            dataSourceScope = new DataSources.DataSourceScope(this);
         }
-        public override bool Start() { 
+        public void Configure() { 
             timeOrigin = DateTime.Now;
-            return base.Start(); 
         }
 
         #endregion
@@ -135,9 +137,6 @@ namespace ECore.Devices
 
         public DataPackageScope GetScopeData()
         {
-            //FIXME: support trigger channel selection
-            if (!IsRunning) 
-                return null;
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
             float[][] analogOutput = null;
