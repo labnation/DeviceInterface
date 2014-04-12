@@ -9,16 +9,10 @@ using ECore.DataSources;
 
 namespace ECore.Devices
 {
-    //ideally would be to constrain interfaces to be applied only to AuxFunctionalities class
-    //how to use generics for memory? after propagation, EDevice needs to have a List of memories, so it needs to know all the specific memory types. or just use an arraylist?
-    //strobes could be a parameter, as it is built on other registers. or an aux functionality!
-    //parameters should define affected memories, and their registers as strings
-
-    //main class, from which all specific cameras inherit
     public abstract class EDevice
     {
-        //fIXME: visibility
         protected List<DeviceMemory> memories = new List<DeviceMemory>();
+        //FIXME: visibility
         public List<DeviceMemory> Memories { get { return memories; } }
         protected List<DataSource> dataSources = new List<DataSource>();
         public List<DataSource> DataSources { get { return this.dataSources; } }

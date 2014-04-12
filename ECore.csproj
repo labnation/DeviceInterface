@@ -57,8 +57,8 @@
     <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
     <Compile Include="Devices\ScopeV2Settings.cs" />
     <Compile Include="HardwareInterfaces\IScopeHardwareInterface.cs" />
-    <Compile Include="ScopeChannel.cs" />
-    <Compile Include="Settings.cs" />
+    <Compile Include="Devices\ScopeChannel.cs" />
+    <Compile Include="Devices\Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="Devices\ScopeV2.cs" />
     <Compile Include="Devices\ScopeV2_ROM.cs" />
@@ -79,7 +79,7 @@
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />
-    <Compile Include="EDevice.cs" />
+    <Compile Include="Devices\EDevice.cs" />
     <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
     <Compile Include="DeviceMemories\DeviceMemory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
