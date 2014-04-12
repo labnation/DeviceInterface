@@ -18,8 +18,8 @@ namespace ECore.Devices
     public abstract class EDevice
     {
         //fIXME: visibility
-        protected List<DeviceMemory<ByteRegister>> byteMemories = new List<DeviceMemory<ByteRegister>>();
-        public List<DeviceMemory<ByteRegister>> Memories { get { return byteMemories; } }
+        protected List<DeviceMemory> memories = new List<DeviceMemory>();
+        public List<DeviceMemory> Memories { get { return memories; } }
         protected List<DataSource> dataSources = new List<DataSource>();
         public List<DataSource> DataSources { get { return this.dataSources; } }
         public abstract bool Connected { get; }

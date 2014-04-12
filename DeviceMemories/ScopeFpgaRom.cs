@@ -8,15 +8,13 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaRom : DeviceMemory<ByteRegister>
+    public class ScopeFpgaRom : DeviceMemory
     {       
         //this method defines which type of registers are stored in the memory
         public ScopeFpgaRom(EDeviceHWInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         
-            //instantiate registerList
-            registers = new Dictionary<int, ByteRegister>();
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
             {
                 registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(ROM), reg)));
@@ -84,11 +82,11 @@ namespace ECore.DeviceMemories
         }
         public ByteRegister GetRegister(ROM r)
         {
-            return Registers[(int)r];
+            return GetRegister((int)r);
         }
         public ByteRegister GetRegister(int address)
         {
-            return Registers[address];
+            return (ByteRegister)registers[address];
         }
     }
 }

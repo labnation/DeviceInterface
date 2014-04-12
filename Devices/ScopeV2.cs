@@ -41,10 +41,11 @@ namespace ECore.Devices
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             //FIXME: no clue why this line is here...
             yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
+            InitializeHardwareInterface();
             InitializeMemories();
             dataSources.Add(new DataSources.DataSourceScope(this));
 
-            InitializeHardwareInterface();
+            
 
         }
 
@@ -81,11 +82,11 @@ namespace ECore.Devices
             AdcMemory = new DeviceMemories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
             
-            byteMemories.Add(FpgaRom);
-            byteMemories.Add(FpgaSettingsMemory);
-            byteMemories.Add(AdcMemory);
-            byteMemories.Add(PicMemory);
-            byteMemories.Add(StrobeMemory);
+            memories.Add(FpgaRom);
+            memories.Add(FpgaSettingsMemory);
+            memories.Add(AdcMemory);
+            memories.Add(PicMemory);
+            memories.Add(StrobeMemory);
         }
 
         #endregion

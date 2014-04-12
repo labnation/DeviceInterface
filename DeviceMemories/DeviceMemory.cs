@@ -8,9 +8,9 @@ namespace ECore.DeviceMemories
 {
     //abstract class, representing a physical memory on the PCB.
     //examples: ROM, FPGA, FX2, ADC register banks, ...
-    abstract public class DeviceMemory<RegisterType> where RegisterType : MemoryRegister
+    abstract public class DeviceMemory
     {
-        protected Dictionary<int, RegisterType> registers;
+        protected Dictionary<int, MemoryRegister> registers = new Dictionary<int,MemoryRegister>();
         protected EDeviceHWInterface hwInterface;
 
         abstract public void WriteRange(int startAddress, int burstSize);
@@ -28,6 +28,6 @@ namespace ECore.DeviceMemories
 
         //public int MaxValue { get { return registers[0].MaxValue; } }
         public int NumberOfRegisters { get { return registers.Count; } }
-        public Dictionary<int, RegisterType> Registers { get { return registers; } }
+        public Dictionary<int, MemoryRegister> Registers { get { return registers; } }
     }
 }

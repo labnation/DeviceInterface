@@ -12,15 +12,13 @@ namespace ECore.DeviceMemories
         FORCE_STREAMING = 0,
     }
 
-    public class ScopePicRegisterMemory : DeviceMemory<ByteRegister>
+    public class ScopePicRegisterMemory : DeviceMemory
     {       
         //this method defines which type of registers are stored in the memory
         public ScopePicRegisterMemory(EDeviceHWInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         
-            //instantiate registerList
-            registers = new Dictionary<int, ByteRegister>();
             foreach (PIC reg in Enum.GetValues(typeof(PIC)))
             {
                 registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(PIC), reg)));
@@ -65,7 +63,7 @@ namespace ECore.DeviceMemories
 
             //append the actual data
             for (int j = 0; j < burstSize; j++)
-                toSend[i++] = this.registers[startAddress + j].GetByte();
+                toSend[i++] = GetRegister(startAddress + j).GetByte();
 
             hwInterface.WriteControlBytes(toSend);
         }
@@ -79,7 +77,11 @@ namespace ECore.DeviceMemories
         }
         public ByteRegister GetRegister(PIC r)
         {
-            return Registers[(int)r];
+            return GetRegister((int)r);
+        }
+        public ByteRegister GetRegister(int a)
+        {
+            return (ByteRegister)Registers[a];
         }
 
     }

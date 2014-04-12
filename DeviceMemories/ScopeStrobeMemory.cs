@@ -7,7 +7,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeStrobeMemory : DeviceMemory<ByteRegister>
+    public class ScopeStrobeMemory : DeviceMemory
     {
         private ScopeFpgaSettingsMemory writeMemory;
         private ScopeFpgaRom readMemory;
@@ -18,10 +18,9 @@ namespace ECore.DeviceMemories
             this.writeMemory = writeMemory;
             this.readMemory = readMemory;
 
-            registers = new Dictionary<int, ByteRegister>();
             foreach (STR str in Enum.GetValues(typeof(STR)))
             {
-                registers.Add((int)str, new ByteRegister((int)str, Enum.GetName(typeof(STR), str)));
+                registers.Add((int)str, new BoolRegister((int)str, Enum.GetName(typeof(STR), str)));
             }
 
         }
@@ -43,7 +42,7 @@ namespace ECore.DeviceMemories
             {
                 int romAddress = StrobeToRomAddress(i);
                 int offset = i % 8;
-                registers[i].Set((byte)((readMemory.GetRegister(romAddress).GetByte() >> offset) & 0x01));
+                registers[i].Set((readMemory.GetRegister(romAddress).GetByte() >> offset) & 0x01);
             }
         }
 
@@ -55,20 +54,12 @@ namespace ECore.DeviceMemories
             for (int i = 0; i < burstSize; i++)
             {
                 int strobeAddress = startAddress+i;
-                ByteRegister reg = Registers[strobeAddress];
-
-                //range check
-                if (reg.GetByte() < 0)
-                    Logger.AddEntry(this, LogMessageType.ECoreError, "Cannot upload " + reg.Get() + " into strobe " + reg.Name + "(" + reg.Address + ")");
-                else if (reg.GetByte() > 1)
-                    Logger.AddEntry(this, LogMessageType.ECoreError, "Cannot upload " + reg.Get() + " into strobe " + reg.Name + "(" + reg.Address + ")");
-                else
-                    Logger.AddEntry(this, LogMessageType.ECoreInfo, "Request to upload " + reg.Get() + " into strobe " + reg.Name + "(" + reg.Address + ")");
+                BoolRegister reg = GetRegister(strobeAddress);
 
                 //prepare data te be sent
                 int valToSend = strobeAddress;
                 valToSend = valToSend << 1;
-                valToSend += reg.GetByte(); //set strobe high or low
+                valToSend += reg.GetBool() ? 1: 0; //set strobe high or low
 
                 //now put this in the correct FPGA register
                 writeMemory.GetRegister(REG.STROBE_UPDATE).Set(valToSend);
@@ -86,9 +77,13 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public ByteRegister GetRegister(STR r)
+        public BoolRegister GetRegister(STR r)
         {
-            return Registers[(int)r];
+            return GetRegister((int)r);
+        }
+        public BoolRegister GetRegister(int a)
+        {
+            return (BoolRegister)Registers[a];
         }
     }
 }
