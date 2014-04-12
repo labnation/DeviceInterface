@@ -16,13 +16,12 @@ namespace ECore.DataSources
         public DataSource() { }
         protected DateTime lastUpdate;
         protected DataPackageScope latestDataPackage;
-        public DataPackageScope LatestDataPackage { get { return this.latestDataPackage; } }
         abstract public void Update();
         protected void fireDataAvailableEvents()
         {
             {
                 if (OnNewDataAvailable != null)
-                    OnNewDataAvailable(LatestDataPackage, new EventArgs());
+                    OnNewDataAvailable(latestDataPackage, new EventArgs());
             }
         }
     }
