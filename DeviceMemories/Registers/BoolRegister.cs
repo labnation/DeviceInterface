@@ -13,17 +13,6 @@ namespace ECore.DeviceMemories
 
         public override MemoryRegister Set(object value)
         {
-            bool castValue;
-            try
-            {
-                castValue = (bool)value;
-                if (!value.Equals(castValue))
-                    throw new Exception("Cast to byte resulted in loss of information");
-            }
-            catch (InvalidCastException)
-            {
-                throw new Exception("Cannot set BoolRegister with that kind of type (" + value.GetType().Name + ")");
-            }
             this.internalValue = (bool)value;
             CallValueChangedCallbacks();
             return this;

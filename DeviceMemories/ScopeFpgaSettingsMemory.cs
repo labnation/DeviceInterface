@@ -16,12 +16,8 @@ namespace ECore.DeviceMemories
         {
             this.hwInterface = hwInterface;
 
-            //instantiate registerList
             foreach(REG reg in Enum.GetValues(typeof(REG)))
-            {
                 registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(REG), reg)));
-            }
-
         }
 
         public override void Read(int address, int length)
@@ -36,7 +32,6 @@ namespace ECore.DeviceMemories
         public override void Write(int address, int length)
         {
             byte[] data = new byte[length];
-            //append the actual data
             for (int j = 0; j < length; j++)
                 data[j] = GetRegister(address + j).GetByte();
 

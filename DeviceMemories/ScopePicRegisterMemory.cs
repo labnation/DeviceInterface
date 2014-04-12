@@ -22,10 +22,7 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
                         
             foreach (PIC reg in Enum.GetValues(typeof(PIC)))
-            {
                 registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(PIC), reg)));
-            }
-
         }
 
         public override void Read(int address, int length)

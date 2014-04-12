@@ -6,8 +6,6 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.DeviceMemories
 {
-    //abstract class, representing a physical memory on the PCB.
-    //examples: ROM, FPGA, FX2, ADC register banks, ...
     abstract public class DeviceMemory
     {
         protected Dictionary<int, MemoryRegister> registers = new Dictionary<int, MemoryRegister>();
@@ -25,8 +23,6 @@ namespace ECore.DeviceMemories
             Read(address, 1);
         }
 
-        //public int MaxValue { get { return registers[0].MaxValue; } }
-        public int NumberOfRegisters { get { return registers.Count; } }
         public Dictionary<int, MemoryRegister> Registers { get { return registers; } }
     }
 }

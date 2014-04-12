@@ -53,7 +53,6 @@
     <Compile Include="Devices\ScopeDummy.cs" />
     <Compile Include="Devices\ScopeDummyFile.cs" />
     <Compile Include="Devices\ScopeDummyWaves.cs" />
-    <Compile Include="Devices\ScopeV2Sandbox.cs" />
     <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
     <Compile Include="Devices\ScopeV2Settings.cs" />
     <Compile Include="HardwareInterfaces\IScopeHardwareInterface.cs" />

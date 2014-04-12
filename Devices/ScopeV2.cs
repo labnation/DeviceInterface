@@ -45,9 +45,6 @@ namespace ECore.Devices
             InitializeHardwareInterface();
             InitializeMemories();
             dataSources.Add(new DataSources.DataSourceScope(this));
-
-            
-
         }
 
         #region initializers
@@ -60,15 +57,14 @@ namespace ECore.Devices
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB();
 
 			//check communication by reading PIC FW version
-            if(Connected)
-            {
-                hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
-                byte[] response = hardwareInterface.ReadControlBytes(16);
-                string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
-                foreach (byte b in response)
-                    resultString += b.ToString() + ";";
-                Logger.AddEntry(this, LogMessageType.Persistent, resultString);
-            }
+            if (!Connected) return;
+
+            hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
+            byte[] response = hardwareInterface.ReadControlBytes(16);
+            string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
+            foreach (byte b in response)
+                resultString += b.ToString() + ";";
+            Logger.AddEntry(this, LogMessageType.Persistent, resultString);
 			#endif
         }
 

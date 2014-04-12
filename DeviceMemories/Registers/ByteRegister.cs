@@ -14,17 +14,22 @@ namespace ECore.DeviceMemories
         public override MemoryRegister Set(object value)
         {
             byte castValue;
-            try
+            if(!value.GetType().Equals(typeof(byte))) 
             {
+                try
+                {
+                    castValue = (byte)((int)value & 0xFF);
+                    if ((int)value != (int)castValue)
+                        throw new Exception("Cast to byte resulted in loss of information");
+                }
+                catch (InvalidCastException)
+                {
+                    throw new Exception("Cannot set ByteRegister with that kind of type (" + value.GetType().Name + ")");
+                }
+            }
+            else
                 castValue = (byte)value;
-                if (!value.Equals(castValue))
-                    throw new Exception("Cast to byte resulted in loss of information");
-            }
-            catch (InvalidCastException)
-            {
-                throw new Exception("Cannot set ByteRegister with that kind of type (" + value.GetType().Name + ")");
-            }
-            this.internalValue = (byte)value;
+            this.internalValue = castValue;
             CallValueChangedCallbacks();
             return this;
         }

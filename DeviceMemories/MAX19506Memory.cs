@@ -25,19 +25,14 @@ namespace ECore.DeviceMemories
         private ScopeStrobeMemory strobeMemory;
         private ScopeFpgaRom fpgaRom;
 
-        //this method defines which type of registers are stored in the memory
         public MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;
             this.fpgaRom = fpgaRom;
 
-            //look up how many registers are required
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
-            {
                 registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(MAX19506), reg)));
-            }
-
         }
 
         public override void Read(int address, int length)

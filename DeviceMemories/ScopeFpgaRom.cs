@@ -11,22 +11,17 @@ namespace ECore.DeviceMemories
     public class ScopeFpgaRom : ByteMemory
     {
         private IScopeHardwareInterface hwInterface;
-        //this method defines which type of registers are stored in the memory
+
         public ScopeFpgaRom(IScopeHardwareInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
-            {
                 registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(ROM), reg)));
-            }
-            //Add ROM registers
+
             int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
             for(int i = (int)ROM.STROBES + 1; i < (int)ROM.STROBES + lastStrobe / 8 + 1; i++)
-            {
                 registers.Add(i, new ByteRegister(i, "STROBES " + (i - (int)ROM.STROBES)));
-            }
-
         }
 
         public override void Read(int address, int length)

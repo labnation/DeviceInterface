@@ -12,17 +12,13 @@ namespace ECore.DeviceMemories
         private ScopeFpgaSettingsMemory writeMemory;
         private ScopeFpgaRom readMemory;
 
-        //this method defines which type of registers are stored in the memory
         public ScopeStrobeMemory(ScopeFpgaSettingsMemory writeMemory, ScopeFpgaRom readMemory)
         {
             this.writeMemory = writeMemory;
             this.readMemory = readMemory;
 
             foreach (STR str in Enum.GetValues(typeof(STR)))
-            {
                 registers.Add((int)str, new BoolRegister((int)str, Enum.GetName(typeof(STR), str)));
-            }
-
         }
 
         private int StrobeToRomAddress(int strobe)
