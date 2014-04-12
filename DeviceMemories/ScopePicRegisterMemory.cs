@@ -13,8 +13,9 @@ namespace ECore.DeviceMemories
     }
 
     public class ScopePicRegisterMemory : DeviceMemory
-    {       
-        //this method defines which type of registers are stored in the memory
+    {
+        protected EDeviceHWInterface hwInterface;
+
         public ScopePicRegisterMemory(EDeviceHWInterface hwInterface)
         {
             this.hwInterface = hwInterface;

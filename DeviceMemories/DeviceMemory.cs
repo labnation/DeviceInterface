@@ -11,7 +11,6 @@ namespace ECore.DeviceMemories
     abstract public class DeviceMemory
     {
         protected Dictionary<int, MemoryRegister> registers = new Dictionary<int,MemoryRegister>();
-        protected EDeviceHWInterface hwInterface;
 
         abstract public void WriteRange(int startAddress, int burstSize);
         abstract public void ReadRange(int startAddress, int burstSize);

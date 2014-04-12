@@ -8,8 +8,9 @@ namespace ECore.DeviceMemories
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class ScopeFpgaSettingsMemory : DeviceMemory
-    {       
-        //this method defines which type of registers are stored in the memory
+    {
+        protected EDeviceHWInterface hwInterface;
+
         public ScopeFpgaSettingsMemory(EDeviceHWInterface hwInterface)
         {
             this.hwInterface = hwInterface;
