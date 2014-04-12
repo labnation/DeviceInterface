@@ -30,15 +30,15 @@ namespace ECore.DeviceMemories
             return (int)ROM.STROBES + (int)Math.Floor((double)strobe / 8.0);
         }
 
-        public override void ReadRange(int startAddress, int burstSize)
+        public override void Read(int address, int length)
         {
-            if (burstSize < 1) return;
+            if (length < 1) return;
             //Compute range of ROM registers to read from
-            int romStartAddress = StrobeToRomAddress(startAddress);
-            int romEndAddress = StrobeToRomAddress(startAddress + burstSize - 1);
-            readMemory.ReadRange(romStartAddress, romEndAddress - romStartAddress + 1);
+            int romStartAddress = StrobeToRomAddress(address);
+            int romEndAddress = StrobeToRomAddress(address + length - 1);
+            readMemory.Read(romStartAddress, romEndAddress - romStartAddress + 1);
 
-            for (int i = startAddress; i < startAddress + burstSize; i++)
+            for (int i = address; i < address + length; i++)
             {
                 int romAddress = StrobeToRomAddress(i);
                 int offset = i % 8;
@@ -46,14 +46,14 @@ namespace ECore.DeviceMemories
             }
         }
 
-        public override void WriteRange(int startAddress, int burstSize)
+        public override void Write(int address, int length)
         {
             int bytesWritten = 16;
             byte[] writeBuffer = new byte[bytesWritten];
 
-            for (int i = 0; i < burstSize; i++)
+            for (int i = 0; i < length; i++)
             {
-                int strobeAddress = startAddress+i;
+                int strobeAddress = address+i;
                 BoolRegister reg = GetRegister(strobeAddress);
 
                 //prepare data te be sent

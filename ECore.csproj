@@ -56,6 +56,7 @@
     <Compile Include="Devices\ScopeV2Sandbox.cs" />
     <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
     <Compile Include="Devices\ScopeV2Settings.cs" />
+    <Compile Include="HardwareInterfaces\IScopeHardwareInterface.cs" />
     <Compile Include="ScopeChannel.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />

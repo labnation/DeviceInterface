@@ -40,13 +40,11 @@ namespace ECore.DeviceMemories
 
         }
 
-        public override void ReadRange(int startAddress, int burstSize)
+        public override void Read(int address, int length)
         {
-            for (int i = 0; i < burstSize; i++)
+            for (int i = 0; i < length; i++)
             {
-                //first send correct address to FPGA
-                int address = startAddress + i;
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address+128); //for a read, MSB must be 1
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address + i + 128); //for a read, MSB must be 1
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, trigger rising edge to initiate SPI comm
@@ -58,22 +56,21 @@ namespace ECore.DeviceMemories
                 //finally read acquired value
                 fpgaRom.ReadSingle(ROM.SPI_RECEIVED_VALUE);
                 int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).GetByte();
-                Registers[address].Set(acquiredVal);
+                Registers[address + i].Set(acquiredVal);
             }            
             
         }
 
-        public override void WriteRange(int startAddress, int burstSize)
+        public override void Write(int address, int length)
         {
-            for (int i = 0; i < burstSize; i++)
+            for (int i = 0; i < length; i++)
             {
                 //first send correct address to FPGA
-                int address = startAddress + i; //for a write, MSB must be 0
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address);
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address + i);
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, send the write value to FPGA
-                int valToWrite = GetRegister(address).GetByte();
+                int valToWrite = GetRegister(address + i).GetByte();
                 fpgaSettings.GetRegister(REG.SPI_WRITE_VALUE).Set(valToWrite);
                 fpgaSettings.WriteSingle(REG.SPI_WRITE_VALUE);
 

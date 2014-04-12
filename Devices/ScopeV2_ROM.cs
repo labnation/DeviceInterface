@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using ECore.HardwareInterfaces;
 
 namespace ECore.Devices
 {

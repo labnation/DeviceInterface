@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ECore.HardwareInterfaces;
 
 namespace ECore.DeviceMemories
 {
@@ -9,9 +10,9 @@ namespace ECore.DeviceMemories
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class ScopeFpgaSettingsMemory : ByteMemory
     {
-        protected EDeviceHWInterface hwInterface;
+        protected IScopeHardwareInterface hwInterface;
 
-        public ScopeFpgaSettingsMemory(EDeviceHWInterface hwInterface)
+        public ScopeFpgaSettingsMemory(IScopeHardwareInterface hwInterface)
         {
             this.hwInterface = hwInterface;
 
@@ -23,64 +24,23 @@ namespace ECore.DeviceMemories
 
         }
 
-        public override void ReadRange(int startAddress, int burstSize)
-        {            
-            ////////////////////////////////////////////////////////
-            //first initiate i2c write to send FPGA I2C address and register to read from
-            byte[] toSend1 = new byte[5];
-            //prep header
-            int i = 0;
-            toSend1[i++] = 123; //message for FPGA
-            toSend1[i++] = 10; //I2C send
-            toSend1[i++] = (byte)(2); //just 2 bytes: the FPGA I2C address, and the register address inside the FPGA
-            toSend1[i++] = (byte)(5 << 1); //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
-            toSend1[i++] = (byte)startAddress; //second I2C byte: address of the register inside the FPGA
-
-            //send this over, so FPGA register pointer is set to correct register
-            hwInterface.WriteControlBytes(toSend1);
-
-            ////////////////////////////////////////////////////////
-            //now initiate I2C read operation
-            byte[] toSend2 = new byte[4];
-
-            //prep header
-            i = 0;
-            toSend2[i++] = 123; //message for FPGA
-            toSend2[i++] = 11; //I2C read
-            toSend2[i++] = (byte)(5); //this has to be i2c address immediately, not bitshifted or anything!
-            toSend2[i++] = (byte)burstSize;
-
-            //send over to HW, to perform read operation
-            hwInterface.WriteControlBytes(toSend2);
-
-            //now data is stored in EP3 of PIC, so read it
-            byte[] readBuffer = hwInterface.ReadControlBytes(16); //EP3 always contains 16 bytes xxx should be linked to constant
-            if (readBuffer.Length > 0)
-            {
-                //strip away first 4 bytes (as these are not data) and store inside registers
-                byte[] returnBuffer = new byte[burstSize];
-                for (int j = 0; j < burstSize; j++)
-                    registers[startAddress + j].Set(readBuffer[4 + j]);
-            }
+        public override void Read(int address, int length)
+        {
+            byte[] data = null;
+            hwInterface.GetControllerRegister(ScopeController.FPGA, address, length, out data);
+            
+            for (int j = 0; j < data.Length; j++)
+                registers[address + j].Set(data[j]);
         }
 
-        public override void WriteRange(int startAddress, int burstSize)
+        public override void Write(int address, int length)
         {
-            byte[] toSend = new byte[burstSize + 5];
-
-            //prep header
-            int i = 0;
-            toSend[i++] = 123; //message for FPGA
-            toSend[i++] = 10; //I2C send
-            toSend[i++] = (byte)(burstSize+2); //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
-            toSend[i++] = (byte)(5 << 1); //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
-            toSend[i++] = (byte)startAddress; //second I2C byte: address of the register inside the FPGA
-
+            byte[] data = new byte[length];
             //append the actual data
-            for (int j = 0; j < burstSize; j++)
-                toSend[i++] = GetRegister(startAddress + j).GetByte();
+            for (int j = 0; j < length; j++)
+                data[j] = GetRegister(address + j).GetByte();
 
-            hwInterface.WriteControlBytes(toSend);
+            hwInterface.SetControllerRegister(ScopeController.FPGA, address, data);
         }
         public void WriteSingle(REG r)
         {

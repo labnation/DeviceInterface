@@ -10,19 +10,19 @@ namespace ECore.DeviceMemories
     //examples: ROM, FPGA, FX2, ADC register banks, ...
     abstract public class DeviceMemory
     {
-        protected Dictionary<int, MemoryRegister> registers = new Dictionary<int,MemoryRegister>();
+        protected Dictionary<int, MemoryRegister> registers = new Dictionary<int, MemoryRegister>();
 
-        abstract public void WriteRange(int startAddress, int burstSize);
-        abstract public void ReadRange(int startAddress, int burstSize);
+        abstract public void Write(int address, int length);
+        abstract public void Read(int address, int length);
         
-        virtual public void WriteSingle(int registerAddress)
+        virtual public void WriteSingle(int address)
         {
-            this.WriteRange(registerAddress, 1);
+            this.Write(address, 1);
         }
 
-        virtual public void ReadSingle(int registerAddress)
+        virtual public void ReadSingle(int address)
         {
-            ReadRange(registerAddress, 1);
+            Read(address, 1);
         }
 
         //public int MaxValue { get { return registers[0].MaxValue; } }

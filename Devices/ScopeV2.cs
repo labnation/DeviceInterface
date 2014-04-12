@@ -9,6 +9,7 @@ using System.IO;
 #else
 using System.Windows.Forms;
 #endif
+using ECore.HardwareInterfaces;
 
 
 namespace ECore.Devices
@@ -75,9 +76,10 @@ namespace ECore.Devices
         private void InitializeMemories()
         {
             //Create memories
-            PicMemory = new DeviceMemories.ScopePicRegisterMemory(hardwareInterface);
-            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(hardwareInterface);
-            FpgaRom = new DeviceMemories.ScopeFpgaRom(hardwareInterface);
+            IScopeHardwareInterface scopeInterface = (IScopeHardwareInterface)hardwareInterface;
+            PicMemory = new DeviceMemories.ScopePicRegisterMemory(scopeInterface);
+            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(scopeInterface);
+            FpgaRom = new DeviceMemories.ScopeFpgaRom(scopeInterface);
             StrobeMemory = new DeviceMemories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
             AdcMemory = new DeviceMemories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
