@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 
 namespace ECore.Devices
 {
@@ -58,4 +59,42 @@ namespace ECore.Devices
         #endregion
     };
 
+    #region EDevice settings
+
+    partial class EDevice
+    {
+
+        static public String SettingSetterMethodName(Setting s)
+        {
+            String methodName = "Set" + Utils.SnakeToCamel(Enum.GetName(s.GetType(), s));
+            return methodName;
+        }
+
+        public bool HasSetting(Setting s)
+        {
+            return this.HasSetting(s);
+        }
+
+        public void Set(Setting s, Object[] parameters) {
+            if (!this.HasSetting(s))
+                throw new MissingSettingException(this, s);
+            MethodInfo m = this.GetType().GetMethod(SettingSetterMethodName(s));
+            ParameterInfo[] pi = m.GetParameters();
+            if (parameters == null || pi.Length != parameters.Length)
+                throw new SettingParameterWrongNumberException(this, s,
+                    pi.Length, parameters != null ? parameters.Length : 0);
+            //Match parameters with method arguments
+            
+            for(int i = 0; i < pi.Length; i++)
+            {
+                if (!pi[i].ParameterType.Equals(parameters[i].GetType())) {
+                    throw new SettingParameterTypeMismatchException(this, s,
+                        i+1, pi[i].ParameterType, parameters[i].GetType());
+                }
+            }
+            m.Invoke(this, parameters);
+        }
+
+    }
+    #endregion 
 }

@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Reflection;
 using ECore.DeviceMemories;
 using ECore.DataSources;
 
 namespace ECore.Devices
 {
-    public abstract class EDevice
+    public abstract partial class EDevice
     {
         protected List<DeviceMemory> memories = new List<DeviceMemory>();
         //FIXME: visibility
@@ -92,41 +91,6 @@ namespace ECore.Devices
 
         public bool IsRunning { get { return dataFetchThread != null && dataFetchThread.IsAlive; } }
 
-
-        #region settings
-
-        static public String SettingSetterMethodName(Setting s)
-        {
-            String methodName = "Set" + Utils.SnakeToCamel(Enum.GetName(s.GetType(), s));
-            return methodName;
-        }
-
-        public bool HasSetting(Setting s)
-        {
-            return this.HasSetting(s);
-        }
-
-        public void Set(Setting s, Object[] parameters) {
-            if (!this.HasSetting(s))
-                throw new MissingSettingException(this, s);
-            MethodInfo m = this.GetType().GetMethod(SettingSetterMethodName(s));
-            ParameterInfo[] pi = m.GetParameters();
-            if (parameters == null || pi.Length != parameters.Length)
-                throw new SettingParameterWrongNumberException(this, s,
-                    pi.Length, parameters != null ? parameters.Length : 0);
-            //Match parameters with method arguments
-            
-            for(int i = 0; i < pi.Length; i++)
-            {
-                if (!pi[i].ParameterType.Equals(parameters[i].GetType())) {
-                    throw new SettingParameterTypeMismatchException(this, s,
-                        i+1, pi[i].ParameterType, parameters[i].GetType());
-                }
-            }
-            m.Invoke(this, parameters);
-        }
-
-        #endregion
     }
 }
 

@@ -188,13 +188,6 @@ namespace ECore.Devices
         public void SetTriggerHoldOff(double time)
         {
             Int16 samples = (Int16)(time / SAMPLE_PERIOD);
-            /*
-            if (samples < 0 || samples > 2047)
-            {
-                Logger.AddEntry(this, LogMessageType.ScopeSettings, "trigger holdoff out of range (" + samples + ")");
-                throw new ValidationException("Trigger hold off must be between 0 and 2047");
-                return;
-            }*/
             Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
             FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
@@ -286,34 +279,6 @@ namespace ECore.Devices
             return false;
         }
         #endregion
-
-        #region the rest
-
-        //FIXME: turn into a setting getter
-        public int FreqDivider
-        {
-            get
-            {
-                FpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B1);
-                FpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B0);
-                return FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).GetByte() << 8 + FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).GetByte() + 1;
-            }
-        }
-
-        //FIXME: turn into a setting getter
-        /*
-        public int GetTriggerHoldoff()
-        {
-            fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B1);
-            fpgaSettingsMemory.ReadSingle(REG.TRIGGERHOLDOFF_B0);
-            int msb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).InternalValue;
-            msb = msb << 8;
-            int lsb = fpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).InternalValue;
-            return msb + lsb + 1;
-        }
-         * */
-        #endregion
-
         
         //FIXME: guard this so it's only in internal builds
         #region develop
