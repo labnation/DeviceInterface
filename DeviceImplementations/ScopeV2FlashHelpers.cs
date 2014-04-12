@@ -270,7 +270,7 @@ namespace ECore.Devices
             int packetsPerCommand = 64;
 
             if (packetSize <= 0) return;
-            string fileName = "smartscope.bin";
+            string fileName = "../../../fpga/work/smartscope.bin";
 
             byte[] firmware;
             DateTime firmwareModified;
@@ -363,6 +363,10 @@ namespace ECore.Devices
                     hardwareInterface.WriteControlBytes(dummyData);
                     DemoStatusText = String.Format("Post amp... {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0);
                 }
+                
+                //Send finish flashing command
+                //hardwareInterface.WriteControlBytes(new byte[] { 123, 13 });
+
                 DemoStatusText = String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0);
             }
             catch
