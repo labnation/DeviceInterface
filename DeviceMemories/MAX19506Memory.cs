@@ -43,9 +43,9 @@ namespace ECore.DeviceMemories
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, trigger rising edge to initiate SPI comm
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(0);
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(false);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(1);
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(true);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
 
                 //finally read acquired value
@@ -70,9 +70,9 @@ namespace ECore.DeviceMemories
                 fpgaSettings.WriteSingle(REG.SPI_WRITE_VALUE);
 
                 //finally, trigger rising edge
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(0);
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(false);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(1);
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(true);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
             }
         }

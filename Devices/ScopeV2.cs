@@ -97,7 +97,7 @@ namespace ECore.Devices
         public void Configure()
         {
             //raise global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(1);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //flush any transfers still queued on PIC
@@ -151,14 +151,14 @@ namespace ECore.Devices
             AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(24);
             AdcMemory.WriteSingle(MAX19506.DATA_CLK_TIMING);
             //Enable scope controller
-            StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(1);
+            StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true);
             StrobeMemory.WriteSingle(STR.SCOPE_ENABLE);
 
             //lower global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(0);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
-            StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(1);
+            StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
         }
 

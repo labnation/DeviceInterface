@@ -31,9 +31,9 @@ namespace ECore.Devices
         }
         private void toggleUpdateStrobe()
         {
-            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(0);
+            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(false);
             StrobeMemory.WriteSingle(STR.SCOPE_UPDATE);
-            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(1);
+            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(true);
             StrobeMemory.WriteSingle(STR.SCOPE_UPDATE);
         }
         #endregion
@@ -68,9 +68,9 @@ namespace ECore.Devices
             STR d1   = (channel == 0) ? STR.CHA_DIV1   : STR.CHB_DIV1;
             STR d10  = (channel == 0) ? STR.CHA_DIV10  : STR.CHB_DIV10;
             STR d100 = (channel == 0) ? STR.CHA_DIV100 : STR.CHB_DIV100;
-            StrobeMemory.GetRegister(d1).Set((byte)((divider == 1) ? 1 : 0));
-            StrobeMemory.GetRegister(d10).Set((byte)((divider == 10) ? 1 : 0));
-            StrobeMemory.GetRegister(d100).Set((byte)((divider == 100) ? 1 : 0));
+            StrobeMemory.GetRegister(d1).Set(divider == 1);
+            StrobeMemory.GetRegister(d10).Set(divider == 10);
+            StrobeMemory.GetRegister(d100).Set(divider == 100);
             StrobeMemory.WriteSingle(d1);
             StrobeMemory.WriteSingle(d10);
             StrobeMemory.WriteSingle(d100);
@@ -109,7 +109,7 @@ namespace ECore.Devices
             validateChannel(channel);            
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING: STR.CHB_DCCOUPLING;
             Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
-            StrobeMemory.GetRegister(dc).Set((byte)(enableDc ? 1 : 0));
+            StrobeMemory.GetRegister(dc).Set(enableDc);
             StrobeMemory.WriteSingle(dc);
         }
 
@@ -138,7 +138,7 @@ namespace ECore.Devices
         public void SetTriggerChannel(uint channel)
         {
             validateChannel(channel);
-            StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set((byte)(channel == 0 ? 0 : 1));
+            StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set(channel != 0);
             Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
             StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
             toggleUpdateStrobe();
@@ -150,7 +150,7 @@ namespace ECore.Devices
         /// <param name="direction"></param>
         public void SetTriggerDirection(TriggerDirection direction)
         {
-            StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set((byte)(direction == TriggerDirection.FALLING ? 1 : 0));
+            StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set(direction == TriggerDirection.FALLING);
             Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
             StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
             toggleUpdateStrobe();
@@ -177,7 +177,7 @@ namespace ECore.Devices
         ///<param name="freerunning">Whether to enable free running mode</param>
         public void SetEnableFreeRunning(bool freerunning)
         {
-            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set((byte)(freerunning ? 1 : 0));
+            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(freerunning);
             StrobeMemory.WriteSingle(STR.FREE_RUNNING);
             toggleUpdateStrobe();
         }
@@ -205,7 +205,7 @@ namespace ECore.Devices
         /// <param name="enableCalibration"></param>
         public void SetEnableCalib(bool enableCalibration)
         {
-            StrobeMemory.GetRegister(STR.CHB_ENABLECALIB).Set((byte)(enableCalibration ? 1 : 0));
+            StrobeMemory.GetRegister(STR.CHB_ENABLECALIB).Set(enableCalibration);
             StrobeMemory.WriteSingle(STR.CHB_ENABLECALIB);
         }
 
@@ -232,11 +232,11 @@ namespace ECore.Devices
                 throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
 
             //raise global reset to reset RAM address counter, and to make sure the RAM switching is safe
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)1);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //lower global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
             //break data up into blocks of 8bytes
@@ -269,7 +269,7 @@ namespace ECore.Devices
             }
 
             //lower global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set((byte)0);
+            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
         }
 

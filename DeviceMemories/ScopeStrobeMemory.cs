@@ -38,7 +38,7 @@ namespace ECore.DeviceMemories
             {
                 int romAddress = StrobeToRomAddress(i);
                 int offset = i % 8;
-                registers[i].Set((readMemory.GetRegister(romAddress).GetByte() >> offset) & 0x01);
+                registers[i].Set( ((readMemory.GetRegister(romAddress).GetByte() >> offset) & 0x01) == 0x01);
             }
         }
 
