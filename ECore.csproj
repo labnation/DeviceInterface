@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataSources\DataPackages\DataPackageScope.cs" />
+    <Compile Include="DeviceMemories\Registers\ByteRegister.cs" />
     <Compile Include="Devices\IScope.cs" />
     <Compile Include="Devices\ScopeDummy.cs" />
     <Compile Include="Devices\ScopeDummyFile.cs" />

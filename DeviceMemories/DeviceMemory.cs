@@ -8,7 +8,7 @@ namespace ECore.DeviceMemories
 {
     //abstract class, representing a physical memory on the PCB.
     //examples: ROM, FPGA, FX2, ADC register banks, ...
-    abstract public class DeviceMemory<RegisterType>
+    abstract public class DeviceMemory<RegisterType> where RegisterType : MemoryRegister
     {
         protected Dictionary<int, RegisterType> registers;
         protected EDeviceHWInterface hwInterface;

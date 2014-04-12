@@ -8,7 +8,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaRom : DeviceMemory<MemoryRegister<byte>>
+    public class ScopeFpgaRom : DeviceMemory<ByteRegister>
     {       
         //this method defines which type of registers are stored in the memory
         public ScopeFpgaRom(EDeviceHWInterface hwInterface)
@@ -16,16 +16,16 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
                         
             //instantiate registerList
-            registers = new Dictionary<int, MemoryRegister<byte>>();
+            registers = new Dictionary<int, ByteRegister>();
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
             {
-                registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(ROM), reg)));
+                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(ROM), reg)));
             }
             //Add ROM registers
             int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
             for(int i = (int)ROM.STROBES + 1; i < (int)ROM.STROBES + lastStrobe / 8 + 1; i++)
             {
-                registers.Add(i, new MemoryRegister<byte>(i, "STROBES " + (i - (int)ROM.STROBES)));
+                registers.Add(i, new ByteRegister(i, "STROBES " + (i - (int)ROM.STROBES)));
             }
 
         }
@@ -66,7 +66,7 @@ namespace ECore.DeviceMemories
             //strip away first 4 bytes (as these are not data) and store inside registers
             byte[] returnBuffer = new byte[burstSize];
             for (int j = 0; j < burstSize && (j+4) < readBuffer.Length; j++)
-                registers[startAddress + j].InternalValue = readBuffer[4 + j];
+                registers[startAddress + j].Set(readBuffer[4 + j]);
         }
 
         public override void WriteRange(int startAddress, int burstSize)
@@ -82,11 +82,11 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public MemoryRegister<byte> GetRegister(ROM r)
+        public ByteRegister GetRegister(ROM r)
         {
             return Registers[(int)r];
         }
-        public MemoryRegister<byte> GetRegister(int address)
+        public ByteRegister GetRegister(int address)
         {
             return Registers[address];
         }

@@ -122,7 +122,7 @@ namespace ECore.Devices
         ///<param name="level">Trigger level in volt</param>
         public void SetTriggerLevel(float voltage)
         {
-            float level = (voltage - FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).InternalValue * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
+            float level = (voltage - FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte() * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
@@ -296,7 +296,7 @@ namespace ECore.Devices
             {
                 FpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B1);
                 FpgaSettingsMemory.ReadSingle(REG.SAMPLECLOCKDIVIDER_B0);
-                return FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).InternalValue << 8 + FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).InternalValue + 1;
+                return FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).GetByte() << 8 + FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).GetByte() + 1;
             }
         }
 

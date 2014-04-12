@@ -19,7 +19,7 @@ namespace ECore.DeviceMemories
     }
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class MAX19506Memory : DeviceMemory<MemoryRegister<byte>>
+    public class MAX19506Memory : DeviceMemory<ByteRegister>
     {
         private ScopeFpgaSettingsMemory fpgaSettings;
         private ScopeStrobeMemory strobeMemory;
@@ -33,10 +33,10 @@ namespace ECore.DeviceMemories
             this.fpgaRom = fpgaRom;
 
             //look up how many registers are required
-            registers = new Dictionary<int, MemoryRegister<byte>>();
+            registers = new Dictionary<int, ByteRegister>();
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
             {
-                registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(MAX19506), reg)));
+                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(MAX19506), reg)));
             }
 
         }
@@ -47,19 +47,19 @@ namespace ECore.DeviceMemories
             {
                 //first send correct address to FPGA
                 int address = startAddress + i;
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)(address+128); //for a read, MSB must be 1
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address+128); //for a read, MSB must be 1
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, trigger rising edge to initiate SPI comm
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 0;
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(0);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 1;
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(1);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
 
                 //finally read acquired value
                 fpgaRom.ReadSingle(ROM.SPI_RECEIVED_VALUE);
-                int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).InternalValue;
-                Registers[address].InternalValue = (byte)acquiredVal;
+                int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).GetByte();
+                Registers[address].Set(acquiredVal);
             }            
             
         }
@@ -70,18 +70,18 @@ namespace ECore.DeviceMemories
             {
                 //first send correct address to FPGA
                 int address = startAddress + i; //for a write, MSB must be 0
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).InternalValue = (byte)address;
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address);
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, send the write value to FPGA
-                int valToWrite = Registers[address].InternalValue;
-                fpgaSettings.GetRegister(REG.SPI_WRITE_VALUE).InternalValue = (byte)valToWrite;
+                int valToWrite = Registers[address].GetByte();
+                fpgaSettings.GetRegister(REG.SPI_WRITE_VALUE).Set(valToWrite);
                 fpgaSettings.WriteSingle(REG.SPI_WRITE_VALUE);
 
                 //finally, trigger rising edge
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 0;
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(0);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).InternalValue = 1;
+                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(1);
                 strobeMemory.WriteSingle(STR.INIT_SPI_TRANSFER);
             }
         }
@@ -93,7 +93,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public MemoryRegister<byte> GetRegister(MAX19506 r)
+        public ByteRegister GetRegister(MAX19506 r)
         {
             return Registers[(int)r];
         }

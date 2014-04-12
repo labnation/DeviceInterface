@@ -12,7 +12,7 @@ namespace ECore.DeviceMemories
         FORCE_STREAMING = 0,
     }
 
-    public class ScopePicRegisterMemory : DeviceMemory<MemoryRegister<byte>>
+    public class ScopePicRegisterMemory : DeviceMemory<ByteRegister>
     {       
         //this method defines which type of registers are stored in the memory
         public ScopePicRegisterMemory(EDeviceHWInterface hwInterface)
@@ -20,10 +20,10 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
                         
             //instantiate registerList
-            registers = new Dictionary<int, MemoryRegister<byte>>();
+            registers = new Dictionary<int, ByteRegister>();
             foreach (PIC reg in Enum.GetValues(typeof(PIC)))
             {
-                registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(PIC), reg)));
+                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(PIC), reg)));
             }
 
         }
@@ -49,7 +49,7 @@ namespace ECore.DeviceMemories
             //strip away first 4 bytes (as these are not data) and store inside registers
             byte[] returnBuffer = new byte[burstSize];
             for (int j = 0; j < burstSize; j++)
-                registers[startAddress + j].InternalValue = readBuffer[4 + j];
+                registers[startAddress + j].Set(readBuffer[4 + j]);
         }
 
         public override void WriteRange(int startAddress, int burstSize)
@@ -65,7 +65,7 @@ namespace ECore.DeviceMemories
 
             //append the actual data
             for (int j = 0; j < burstSize; j++)
-                toSend[i++] = this.registers[startAddress + j].InternalValue;
+                toSend[i++] = this.registers[startAddress + j].GetByte();
 
             hwInterface.WriteControlBytes(toSend);
         }
@@ -77,7 +77,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public MemoryRegister<byte> GetRegister(PIC r)
+        public ByteRegister GetRegister(PIC r)
         {
             return Registers[(int)r];
         }

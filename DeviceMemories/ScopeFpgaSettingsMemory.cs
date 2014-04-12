@@ -7,7 +7,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaSettingsMemory: DeviceMemory<MemoryRegister<byte>>
+    public class ScopeFpgaSettingsMemory : DeviceMemory<ByteRegister>
     {       
         //this method defines which type of registers are stored in the memory
         public ScopeFpgaSettingsMemory(EDeviceHWInterface hwInterface)
@@ -15,10 +15,10 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
 
             //instantiate registerList
-            registers = new Dictionary<int, MemoryRegister<byte>>();
+            registers = new Dictionary<int, ByteRegister>();
             foreach(REG reg in Enum.GetValues(typeof(REG)))
             {
-                registers.Add((int)reg, new MemoryRegister<byte>((int)reg, Enum.GetName(typeof(REG), reg)));
+                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(REG), reg)));
             }
 
         }
@@ -60,7 +60,7 @@ namespace ECore.DeviceMemories
                 //strip away first 4 bytes (as these are not data) and store inside registers
                 byte[] returnBuffer = new byte[burstSize];
                 for (int j = 0; j < burstSize; j++)
-                    registers[startAddress + j].InternalValue = readBuffer[4 + j];
+                    registers[startAddress + j].Set(readBuffer[4 + j]);
             }
         }
 
@@ -78,7 +78,7 @@ namespace ECore.DeviceMemories
 
             //append the actual data
             for (int j = 0; j < burstSize; j++)
-                toSend[i++] = this.registers[startAddress + j].InternalValue;
+                toSend[i++] = this.registers[startAddress + j].GetByte();
 
             hwInterface.WriteControlBytes(toSend);
         }
@@ -90,7 +90,7 @@ namespace ECore.DeviceMemories
         {
             this.ReadSingle((int)r);
         }
-        public MemoryRegister<byte> GetRegister(REG r)
+        public ByteRegister GetRegister(REG r)
         {
             return Registers[(int)r];
         }
