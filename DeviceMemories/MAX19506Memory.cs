@@ -19,7 +19,7 @@ namespace ECore.DeviceMemories
     }
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class MAX19506Memory : DeviceMemory
+    public class MAX19506Memory : ByteMemory
     {
         private ScopeFpgaSettingsMemory fpgaSettings;
         private ScopeStrobeMemory strobeMemory;
@@ -95,10 +95,6 @@ namespace ECore.DeviceMemories
         public ByteRegister GetRegister(MAX19506 r)
         {
             return GetRegister((int)r);
-        }
-        public ByteRegister GetRegister(int a)
-        {
-            return (ByteRegister)registers[a];
         }
     }
 }

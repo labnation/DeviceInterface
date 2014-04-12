@@ -8,7 +8,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaRom : DeviceMemory
+    public class ScopeFpgaRom : ByteMemory
     {
         private EDeviceHWInterface hwInterface;
         //this method defines which type of registers are stored in the memory
@@ -84,10 +84,6 @@ namespace ECore.DeviceMemories
         public ByteRegister GetRegister(ROM r)
         {
             return GetRegister((int)r);
-        }
-        public ByteRegister GetRegister(int address)
-        {
-            return (ByteRegister)registers[address];
         }
     }
 }

@@ -12,7 +12,7 @@ namespace ECore.DeviceMemories
         FORCE_STREAMING = 0,
     }
 
-    public class ScopePicRegisterMemory : DeviceMemory
+    public class ScopePicRegisterMemory : ByteMemory
     {
         protected EDeviceHWInterface hwInterface;
 
@@ -80,10 +80,5 @@ namespace ECore.DeviceMemories
         {
             return GetRegister((int)r);
         }
-        public ByteRegister GetRegister(int a)
-        {
-            return (ByteRegister)Registers[a];
-        }
-
     }
 }
