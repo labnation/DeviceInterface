@@ -135,6 +135,8 @@ namespace ECore.HardwareInterfaces
 
         public override int WriteControlBytes(byte[] message)
         {
+            if (!isConnected)
+                throw new Exception("Can't write to device since it's not connected");
             int bytesWritten;
             commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             return bytesWritten;
@@ -143,10 +145,9 @@ namespace ECore.HardwareInterfaces
         public override byte[] ReadControlBytes(int length)
         {
             //see if device is connected properly
-            if (commandReadEndpoint == null)
+            if (!isConnected)
             {
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "Trying to read from device, but commandReadEndpoint==null");
-                return new byte[0];
+                throw new Exception("Can't read from device since it's not connected");
             }
 
             //try to read data
@@ -187,10 +188,9 @@ namespace ECore.HardwareInterfaces
         public override byte[] GetData(int numberOfBytes)
         {
             //see if device is connected properly
-            if (dataEndpoint == null)
+            if (!isConnected)
             {
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "Trying to stream data from device, but dataEndpoint==null");
-                return null;
+                throw new Exception("Can't get device data since it's not connected");
             }
 
             //try to read data
