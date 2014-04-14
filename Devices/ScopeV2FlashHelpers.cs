@@ -365,7 +365,7 @@ namespace ECore.Devices
                 }
                 
                 //Send finish flashing command
-                //hardwareInterface.WriteControlBytes(new byte[] { 123, 13 });
+                hardwareInterface.WriteControlBytes(new byte[] { 123, 13 });
 
                 DemoStatusText = String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0);
             }
