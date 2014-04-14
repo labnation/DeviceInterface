@@ -327,7 +327,7 @@ namespace ECore.HardwareInterfaces
 
             //strip away first 4 bytes as these are not data
             data = new byte[length];
-            Array.Copy(readback, 4, data, 0, readback.Length - 4);
+            Array.Copy(readback, 4, data, 0, length);
         }
 
         public void SetControllerRegister(ScopeController ctrl, int address, byte[] data)
