@@ -44,7 +44,7 @@ namespace ECore
         {
             LogEntry newEntry = new LogEntry();
             newEntry.timestamp = DateTime.Now;
-            newEntry.senderType = sender.GetType();
+            newEntry.senderType = sender != null ? sender.GetType() : typeof(object);
             newEntry.debugLevel = debugLevel;
             newEntry.message = message;
 
