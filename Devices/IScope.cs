@@ -13,7 +13,7 @@ namespace ECore.Devices
     {
         DataPackageScope GetScopeData();
         bool Connected { get; }
-        double DefaultTimeRange { get; }
+        double GetDefaultTimeRange();
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(byte condition);

@@ -35,9 +35,7 @@ namespace ECore.Devices
         public float ChannelBYOffsetVoltage { get { return (float)((FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
         private bool disableVoltageConversion;
         private const double SAMPLE_PERIOD = 10e-9;
-        //FIXME: no hardcoding
-        public double DefaultTimeRange { get { return SAMPLE_PERIOD * 2048.0; } }
-
+        
 		#if ANDROID
 		public Android.Content.Res.AssetManager Assets;
 		#endif

@@ -38,8 +38,6 @@ namespace ECore.Devices
         private uint triggerChannel = 0;
         private static uint triggerWidth = 4;
         private uint decimation = 1;
-        public double DefaultTimeRange
-        { get { return outputWaveLength * samplePeriodMinimum; } }
         private TriggerDirection triggerDirection = TriggerDirection.FALLING;
 
         #region constructor / initializer 
@@ -101,8 +99,12 @@ namespace ECore.Devices
         public void SetTimeRange(double timeRange)
         {
             decimation = 1;
-            while (timeRange > decimation * DefaultTimeRange)
+            while (timeRange > decimation * GetDefaultTimeRange())
                 decimation++;
+        }
+        public double GetDefaultTimeRange()
+        { 
+            return outputWaveLength * samplePeriodMinimum; 
         }
 
         #endregion

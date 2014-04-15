@@ -230,6 +230,15 @@ namespace ECore.Devices
             FpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).Set(voltToByte(voltage));
             FpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
         }
+        
+        /// <summary>
+        /// Returns the timerange when decimation is 1
+        /// </summary>
+        /// <returns></returns>
+        public double GetDefaultTimeRange() {
+            //FIXME: don't hardcode
+            return SAMPLE_PERIOD * 2048.0; 
+        }
 
         #endregion
 
