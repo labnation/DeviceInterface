@@ -11,7 +11,9 @@ namespace ECore.DataPackages
         private int triggerIndex;
         private double samplePeriod;
         private Dictionary<AnalogChannel, float[]> dataAnalog;
-        private Dictionary<DigitalChannel, bool[]> dataDigital;
+        //FIXME: think through how to deal with the digital data. For now, it's better
+        //to just pass it around as an 8-bit bus. But what if we have 10 channels? or 11? or 42?
+        private byte[] dataDigital;
         private Dictionary<AnalogChannel, float> yOffset;
 
         public DataPackageScope(double samplePeriod, int triggerIndex)
@@ -20,8 +22,6 @@ namespace ECore.DataPackages
             this.samplePeriod = samplePeriod;
             dataAnalog = new Dictionary<AnalogChannel, float[]>();
             yOffset = new Dictionary<AnalogChannel, float>();
-
-            dataDigital = new Dictionary<DigitalChannel, bool[]>();
         }
         //FIXME: this constructor shouldn't be necessary, all data should be set using Set()
         //It's just here to support "legacy" code
@@ -44,10 +44,9 @@ namespace ECore.DataPackages
             dataAnalog.Remove(ch);
             dataAnalog.Add(ch, data);
         }
-        public void SetData(DigitalChannel ch, bool[] data)
+        public void SetDataDigital(byte[] data)
         {
-            dataDigital.Remove(ch);
-            dataDigital.Add(ch, data);
+            dataDigital = data;
         }
         public void SetOffset(AnalogChannel ch, float offset)
         {
@@ -66,11 +65,9 @@ namespace ECore.DataPackages
             dataAnalog.TryGetValue(ch, out data);
             return data;
         }
-        public bool[] GetData(DigitalChannel ch)
+        public byte[] GetDataDigital()
         {
-            bool[] data = null;
-            dataDigital.TryGetValue(ch, out data);
-            return data;
+            return dataDigital;
         }
         /// <summary>
         /// Index at which the data was triggered. WARN: This index is not necessarily within the 

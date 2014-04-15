@@ -230,29 +230,7 @@ namespace ECore.Devices
                 }
                 else
                 {
-                    //Lot's of shitty code cos I don't know how to write like you do with macros in C...
-                    bool[][] digitalSamples = new bool[8][];
-                    for(int i = 0; i < 8; i++) digitalSamples[i] = new bool[chB.Length];
-
-                    for (int i = 0; i < chB.Length; i++)
-                    {
-                        digitalSamples[0][i] = ((chB[i] & (1 << 0)) != 0) ? true : false;
-                        digitalSamples[1][i] = ((chB[i] & (1 << 1)) != 0) ? true : false;
-                        digitalSamples[2][i] = ((chB[i] & (1 << 2)) != 0) ? true : false;
-                        digitalSamples[3][i] = ((chB[i] & (1 << 3)) != 0) ? true : false;
-                        digitalSamples[4][i] = ((chB[i] & (1 << 4)) != 0) ? true : false;
-                        digitalSamples[5][i] = ((chB[i] & (1 << 5)) != 0) ? true : false;
-                        digitalSamples[6][i] = ((chB[i] & (1 << 6)) != 0) ? true : false;
-                        digitalSamples[7][i] = ((chB[i] & (1 << 7)) != 0) ? true : false;
-                    }
-                    data.SetData(ScopeChannels.Digi0, digitalSamples[0]);
-                    data.SetData(ScopeChannels.Digi1, digitalSamples[1]);
-                    data.SetData(ScopeChannels.Digi2, digitalSamples[2]);
-                    data.SetData(ScopeChannels.Digi3, digitalSamples[3]);
-                    data.SetData(ScopeChannels.Digi4, digitalSamples[4]);
-                    data.SetData(ScopeChannels.Digi5, digitalSamples[5]);
-                    data.SetData(ScopeChannels.Digi6, digitalSamples[6]);
-                    data.SetData(ScopeChannels.Digi7, digitalSamples[7]);
+                    data.SetDataDigital(chB);
                 }
             }
             return data;

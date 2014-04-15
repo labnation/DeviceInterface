@@ -23,6 +23,7 @@ namespace ECore.Devices
         public static AnalogChannel Math = new AnalogChannel("Math", 2);
 
         public static ProtocolChannel I2c = new ProtocolChannel("I2C", 0);
+        public static ProtocolChannel DigitalDecoded = new ProtocolChannel("Digital", 0);
     }
 
     public class ScopeChannel

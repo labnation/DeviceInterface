@@ -27,7 +27,7 @@ namespace ECore.Devices
         private float[] yOffset = new float[] { 0, 0 };
 
         //Scope variables
-        private const uint waveLength = 2 * outputWaveLength;
+        private const uint waveLength = 3 * outputWaveLength;
         private double samplePeriodMinimum = 10e-9; //ns --> sampleFreq of 100MHz by default
         private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
         public const uint channels = 2;
@@ -171,7 +171,6 @@ namespace ECore.Devices
             System.Threading.Thread.Sleep(usbLatency);
             float[][] outputAnalog = null;
             byte[] outputDigital = null;
-            bool[][] digitalChannels = null;
             int triggerIndex = 0;
             int triggerHoldoffInSamples = 0;
 
@@ -236,18 +235,7 @@ namespace ECore.Devices
             p.SetData(ScopeChannels.ChB, outputAnalog[1]);
             p.SetOffset(ScopeChannels.ChA, yOffset[0]);
             p.SetOffset(ScopeChannels.ChB, yOffset[1]);
-            if (outputDigital != null)
-            {
-                digitalChannels = Utils.ByteArrayToBoolArrays(outputDigital);
-                p.SetData(ScopeChannels.Digi0, digitalChannels[0]);
-                p.SetData(ScopeChannels.Digi1, digitalChannels[1]);
-                p.SetData(ScopeChannels.Digi2, digitalChannels[2]);
-                p.SetData(ScopeChannels.Digi3, digitalChannels[3]);
-                p.SetData(ScopeChannels.Digi4, digitalChannels[4]);
-                p.SetData(ScopeChannels.Digi5, digitalChannels[5]);
-                p.SetData(ScopeChannels.Digi6, digitalChannels[6]);
-                p.SetData(ScopeChannels.Digi7, digitalChannels[7]);
-            }
+            p.SetDataDigital(outputDigital);
             return p;
         }
 
