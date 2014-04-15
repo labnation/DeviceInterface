@@ -17,6 +17,7 @@ namespace ECore.Devices
 
         //Wave settings
         private WaveSource waveSource = WaveSource.GENERATOR;
+        private TriggerMode triggerMode = TriggerMode.ANALOG;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
         private double[] dcOffset = new double[] { 0.0f, -0.9f };
@@ -32,10 +33,13 @@ namespace ECore.Devices
         public const uint channels = 2;
         private const uint outputWaveLength = 2048;
         private float triggerLevel = 0;
+        private byte triggerLevelDigital = 0x0;
         private double triggerHoldoff = 0;
         private uint triggerChannel = 0;
         private static uint triggerWidth = 4;
         private uint decimation = 1;
+        public double DefaultTimeRange
+        { get { return outputWaveLength * samplePeriodMinimum; } }
         private TriggerDirection triggerDirection = TriggerDirection.FALLING;
 
         #region constructor / initializer 
@@ -66,7 +70,7 @@ namespace ECore.Devices
         {
             this.triggerHoldoff = holdoff;
         }
-        public void SetTriggerLevel(float voltage)
+        public void SetTriggerAnalog(float voltage)
         {
             this.triggerLevel = voltage;
             if (Math.Abs(triggerLevel) > Math.Abs(amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel]))
@@ -86,10 +90,19 @@ namespace ECore.Devices
         {
             this.triggerDirection = direction;
         }
-        public void SetDecimation(uint decimation)
+        public void SetTriggerMode(TriggerMode mode)
         {
-            validateDecimation(decimation);
-            this.decimation = decimation;
+            this.triggerMode = mode;
+        }
+        public void SetTriggerDigital(byte condition)
+        {
+            this.triggerLevelDigital = condition;
+        }
+        public void SetTimeRange(double timeRange)
+        {
+            decimation = 1;
+            while (timeRange > decimation * DefaultTimeRange)
+                decimation++;
         }
 
         #endregion
@@ -117,11 +130,11 @@ namespace ECore.Devices
         }
         #endregion
 
-        private static bool Trigger(float[] wave, TriggerDirection direction, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
+        private static bool TriggerAnalog(float[] wave, TriggerDirection direction, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
         {
             //Hold off:
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
-            // - if negative, start looking at index 0, but add abs(holdoff) to returned index
+            // - if negative, start looking at index 0
             triggerIndex = 0;
             for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++)
             {
@@ -135,71 +148,97 @@ namespace ECore.Devices
             return false;
         }
 
+        private static bool TriggerDigital(byte[] wave, int holdoff, byte condition, uint outputWaveLength, out int triggerIndex)
+        {
+            //Hold off:
+            // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
+            // - if negative, start looking at index 0
+            triggerIndex = 0;
+            for (int i = Math.Max(0, holdoff); i < wave.Length - outputWaveLength; i++)
+            {
+                if (wave[i] == condition)
+                {
+                    triggerIndex = i;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public DataPackageScope GetScopeData()
         {
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
-            float[][] analogOutput = null;
-            byte[] digitalOutput = null;
+            float[][] outputAnalog = null;
+            byte[] outputDigital = null;
             bool[][] digitalChannels = null;
             int triggerIndex = 0;
             int triggerHoldoffInSamples = 0;
 
             if(waveSource == WaveSource.GENERATOR)
             {
-                float[][] wave = new float[channels][];
-                //Don't bother generating a wave if the trigger is larger than the amplitude
-                //if (Math.Abs(triggerLevel) > amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel])
-                //    return null;
-            
+                //Generate analog wave
+                float[][] waveAnalog = new float[channels][];
                 TimeSpan timeOffset = DateTime.Now - timeOrigin;
                 for (int i = 0; i < channels; i++)
                 {
-                    wave[i] = ScopeDummy.GenerateWave(waveForm[i], waveLength,
+                    waveAnalog[i] = ScopeDummy.GenerateWave(waveForm[i], waveLength,
                                     SamplePeriod,
                                     timeOffset.TotalSeconds,
                                     frequency[i],
                                     amplitude[i], 0, dcOffset[i]);
-                    ScopeDummy.AddNoise(wave[i], noiseAmplitude[i]);
+                    ScopeDummy.AddNoise(waveAnalog[i], noiseAmplitude[i]);
                 }
-                triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
-                if (ScopeDummy.Trigger(wave[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
-                {
-                    analogOutput = new float[channels][];
-                    for (int i = 0; i < channels; i++)
-                    {
-                        analogOutput[i] = ScopeDummy.CropWave(outputWaveLength, wave[i], triggerIndex, triggerHoldoffInSamples);     
-                    }
-                }
-                if (analogOutput == null)
-                    return null;
+
                 //Generate some bullshit digital wave
-                digitalOutput = new byte[outputWaveLength];
+                byte[] waveDigital = new byte[waveLength];
                 byte value = 0;
-                for (int i = 0; i < digitalOutput.Length; i++)
+                for (int i = 0; i < waveDigital.Length; i++)
                 {
-                    digitalOutput[i] = value;
+                    waveDigital[i] = value;
                     if (i % 10 == 0) value++;
                 }
-                //new Random().NextBytes(digitalOutput);
+
+                //Trigger detection
+                triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
+
+                bool triggerDetected = false;
+                switch (triggerMode)
+                {
+                    case TriggerMode.ANALOG:
+                        triggerDetected = ScopeDummy.TriggerAnalog(waveAnalog[triggerChannel], triggerDirection,
+                                            triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex);
+                        break;
+                    case TriggerMode.DIGITAL:
+                        triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, triggerLevelDigital, outputWaveLength, out triggerIndex);
+                        break;
+                }
+                if (!triggerDetected) return null;
+
+                outputAnalog = new float[channels][];
+                for (int i = 0; i < channels; i++)
+                {
+                    outputAnalog[i] = ScopeDummy.CropWave(outputWaveLength, waveAnalog[i], triggerIndex, triggerHoldoffInSamples);     
+                }
+                outputDigital = ScopeDummy.CropWave(outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
             }
             else if (waveSource == WaveSource.FILE)
             {
 
-                if (!GetWaveFromFile(triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref analogOutput)) return null;
+                if (!GetWaveFromFile(triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog)) return null;
                 for(int i = 0; i < channels; i++)
-                    ScopeDummy.AddNoise(analogOutput[i], noiseAmplitude[i]);
+                    ScopeDummy.AddNoise(outputAnalog[i], noiseAmplitude[i]);
                 triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
             }
 
             DataPackageScope p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples);
-            p.SetData(ScopeChannels.ChA, analogOutput[0]);
-            p.SetData(ScopeChannels.ChB, analogOutput[1]);
+            p.SetData(ScopeChannels.ChA, outputAnalog[0]);
+            p.SetData(ScopeChannels.ChB, outputAnalog[1]);
             p.SetOffset(ScopeChannels.ChA, yOffset[0]);
             p.SetOffset(ScopeChannels.ChB, yOffset[1]);
-            if (digitalOutput != null)
+            if (outputDigital != null)
             {
-                digitalChannels = Utils.ByteArrayToBoolArrays(digitalOutput);
+                digitalChannels = Utils.ByteArrayToBoolArrays(outputDigital);
                 p.SetData(ScopeChannels.Digi0, digitalChannels[0]);
                 p.SetData(ScopeChannels.Digi1, digitalChannels[1]);
                 p.SetData(ScopeChannels.Digi2, digitalChannels[2]);
@@ -209,7 +248,6 @@ namespace ECore.Devices
                 p.SetData(ScopeChannels.Digi6, digitalChannels[6]);
                 p.SetData(ScopeChannels.Digi7, digitalChannels[7]);
             }
-
             return p;
         }
 

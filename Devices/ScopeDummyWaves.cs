@@ -36,17 +36,13 @@ namespace ECore.Devices
             return wave;
         }
 
-        private static float[] CropWave(uint outputLength, float[] sourceWave, int triggerIndex, int holdoff)
+        private static T[] CropWave<T>(uint outputLength, T[] sourceWave, int triggerIndex, int holdoff)
         {
-            float[] output = new float[outputLength];
-            try
-            {
-                Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
-                return output;
-            } catch (ArgumentException e) {
-                Logger.AddEntry(null, LogMessageType.ECoreInfo, "trigger too close to source wave edge to return wave [" + e.Message + "]");
-                return null;
-            }
+            if (triggerIndex - holdoff + outputLength > sourceWave.Length) return null;
+            
+            T[] output = new T[outputLength];
+            Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
+            return output;
         }
 
         private static float[] WaveSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)

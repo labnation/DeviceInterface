@@ -120,7 +120,7 @@ namespace ECore.Devices
         ///Set scope trigger level
         ///</summary>
         ///<param name="level">Trigger level in volt</param>
-        public void SetTriggerLevel(float voltage)
+        public void SetTriggerAnalog(float voltage)
         {
             float level = (voltage - FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte() * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
             if (level < 0) level = 0;
@@ -156,12 +156,23 @@ namespace ECore.Devices
             toggleUpdateStrobe();
         }
 
+        public void SetTriggerMode(TriggerMode mode)
+        {
+            throw new NotImplementedException();
+        }
+        public void SetTriggerDigital(byte condition)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Only store every [decimation]-th sample
         ///</summary>
         ///<param name="decimation">Store every [decimation]nt sample</param>
-        public void SetDecimation(uint decimation)
+        public void SetTimeRange(double timeRange)
         {
+            throw new NotImplementedException();
+            /*
             if (decimation > UInt16.MaxValue)
                 throw new ValidationException("Decimation too large");
             //FIXME: validate
@@ -170,6 +181,7 @@ namespace ECore.Devices
             FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B0);
             FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
             toggleUpdateStrobe();
+             */
         }
         ///<summary>
         ///Enable free running (don't wait for trigger)

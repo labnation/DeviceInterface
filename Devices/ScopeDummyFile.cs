@@ -35,7 +35,7 @@ namespace ECore.Devices
 
             int triggerHoldoffInSamples = (int)Math.Min(triggerHoldoff / samplePeriod, int.MaxValue);
             int triggerIndex;
-            if (ScopeDummy.Trigger(waves[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
+            if (ScopeDummy.TriggerAnalog(waves[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex))
             {
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)

@@ -6,18 +6,22 @@ using ECore.DataPackages;
 
 namespace ECore.Devices
 {
+    public enum TriggerMode { ANALOG, DIGITAL };
     public enum TriggerDirection { RISING, FALLING };
 
     public interface IScope
     {
         DataPackageScope GetScopeData();
         bool Connected { get; }
+        double DefaultTimeRange { get; }
         void SetTriggerHoldOff(double time);
-        void SetTriggerLevel(float voltage);
+        void SetTriggerAnalog(float voltage);
+        void SetTriggerDigital(byte condition);
         void SetYOffset(uint channel, float offset);
         void SetTriggerChannel(uint channel);
         void SetTriggerDirection(TriggerDirection direction);
-        void SetDecimation(uint decimation);
+        void SetTriggerMode(TriggerMode mode);
+        void SetTimeRange(double timeRange);
         void Configure();
         DataSources.DataSourceScope DataSourceScope { get; }
     }
