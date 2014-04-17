@@ -9,8 +9,6 @@ namespace ECore.Devices
     public static class ScopeChannels
     {
         //Note: the ScopeChannel.Order field is set by order of instantiation.
-        public static ScopeChannel Undefined = null;
-
         public static DigitalChannel Digi0 = new DigitalChannel("Digital 0", 0);
         public static DigitalChannel Digi1 = new DigitalChannel("Digital 1", 1);
         public static DigitalChannel Digi2 = new DigitalChannel("Digital 2", 2);
