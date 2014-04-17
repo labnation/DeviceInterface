@@ -6,7 +6,7 @@ using ECore.DataPackages;
 
 namespace ECore.Devices
 {
-    public enum TriggerMode { ANALOG, DIGITAL };
+    public enum TriggerMode { ANALOG, DIGITAL, FREE_RUNNING };
     public enum TriggerDirection { RISING, FALLING };
 
     public interface IScope

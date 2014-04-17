@@ -213,6 +213,11 @@ namespace ECore.Devices
                     case TriggerMode.DIGITAL:
                         triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, triggerLevelDigital, outputWaveLength, out triggerIndex);
                         break;
+                    case TriggerMode.FREE_RUNNING:
+                        triggerDetected = true;
+                        triggerIndex = 0;
+                        triggerHoldoffInSamples = 0;
+                        break;
                 }
                 if (!triggerDetected) return null;
 
