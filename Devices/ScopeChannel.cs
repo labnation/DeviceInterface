@@ -28,7 +28,7 @@ namespace ECore.Devices
 
     public class ScopeChannel
     {
-        public static int SortByOrder(ScopeChannel a, ScopeChannel b)
+        public static int CompareByOrder(ScopeChannel a, ScopeChannel b)
         {
             return a.Order - b.Order;
         }
