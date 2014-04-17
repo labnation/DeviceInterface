@@ -5,8 +5,10 @@ using System.Text;
 
 namespace ECore.Devices
 {
+
     public static class ScopeChannels
     {
+        //Note: the ScopeChannel.Order field is set by order of instantiation.
         public static ScopeChannel Undefined = null;
 
         public static DigitalChannel Digi0 = new DigitalChannel("Digital 0", 0);
@@ -28,13 +30,21 @@ namespace ECore.Devices
 
     public class ScopeChannel
     {
+        public static int SortByOrder(ScopeChannel a, ScopeChannel b)
+        {
+            return a.Order - b.Order;
+        }
+        private static int order = 0;
         public string Name { get; protected set; }
         public int Value { get; protected set; }
+        public int Order { get; protected set; }
         public static List<ScopeChannel> list = new List<ScopeChannel>();
         public ScopeChannel(string name, int value)
         {
             this.Name = name; 
             this.Value = value;
+            this.Order = order;
+            order++;
             list.Add(this);
         }
     }
