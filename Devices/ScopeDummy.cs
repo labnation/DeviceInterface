@@ -136,7 +136,7 @@ namespace ECore.Devices
         }
         #endregion
 
-        private static bool TriggerAnalog(float[] wave, TriggerDirection direction, int holdoff, float level, uint outputWaveLength, out int triggerIndex)
+        private static bool TriggerAnalog(float[] wave, TriggerDirection direction, int holdoff, float level, float noise, uint outputWaveLength, out int triggerIndex)
         {
             //Hold off:
             // - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
@@ -145,7 +145,7 @@ namespace ECore.Devices
             for (int i = Math.Max(0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++)
             {
                 float invertor = (direction == TriggerDirection.RISING) ? 1f : -1f;
-                if (invertor * wave[i] < invertor * level && invertor * wave[i + triggerWidth] > invertor * level)
+                if (invertor * wave[i] < invertor * level - noise && invertor * wave[i + triggerWidth] > invertor * level)
                 {
                     triggerIndex = (int)(i + triggerWidth / 2);
                     return true;
@@ -212,7 +212,8 @@ namespace ECore.Devices
                 {
                     case TriggerMode.ANALOG:
                         triggerDetected = ScopeDummy.TriggerAnalog(waveAnalog[triggerChannel], triggerDirection,
-                                            triggerHoldoffInSamples, triggerLevel, outputWaveLength, out triggerIndex);
+                                            triggerHoldoffInSamples, triggerLevel, (float)noiseAmplitude[triggerChannel], 
+                                            outputWaveLength, out triggerIndex);
                         break;
                     case TriggerMode.DIGITAL:
                         triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, triggerLevelDigital, outputWaveLength, out triggerIndex);
