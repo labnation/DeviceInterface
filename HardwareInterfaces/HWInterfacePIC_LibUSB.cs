@@ -37,15 +37,16 @@ namespace ECore.HardwareInterfaces
 #else
         //needed for plug-unplug events
         private static IDeviceNotifier UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
+        private OnDeviceConnect onConnect;
 
-        private UsbDevice scopeUsbDevice;
+        private IUsbDevice scopeUsbDevice;
         private UsbEndpointWriter commandWriteEndpoint;
         private UsbEndpointReader commandReadEndpoint;
-        private UsbEndpointReader dataEndpoint;
-        
+        private UsbEndpointReader dataEndpoint;        
 
-        public HWInterfacePIC_LibUSB()
+        public HWInterfacePIC_LibUSB(OnDeviceConnect onConnect)
         {
+            this.onConnect += onConnect;
 #if IPHONE || ANDROID
 #else
             // Hook the device notifier event
@@ -74,45 +75,33 @@ namespace ECore.HardwareInterfaces
 
             //locate USB device
             UsbDeviceFinder scopeUsbFinder = new UsbDeviceFinder(1240, 82);
-            scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder);            
+            scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder) as IUsbDevice;            
             
             //if device is attached
-            if (scopeUsbDevice != null)
+            if (scopeUsbDevice != null && !isConnected)
             {
 				Logger.AddEntry(this, LogMessageType.ECoreInfo, "SmartScope connected!");
 
-                //check whether device was already connected, as in that case we don't have to do anything
-                if (!isConnected)
-                {
-					IUsbDevice wholeUsbDevice = scopeUsbDevice as IUsbDevice;
-					if (!ReferenceEquals(wholeUsbDevice, null))
-					{
-						// This is a "whole" USB device. Before it can be used,
-						// the desired configuration and interface must be selected.
+				// This is a "whole" USB device. Before it can be used,
+				// the desired configuration and interface must be selected.
 
-						// Select config
-						bool succes1 = wholeUsbDevice.SetConfiguration(1);
+				// Select config
+                bool succes1 = scopeUsbDevice.SetConfiguration(1);
 
 
-						// Claim interface
-						bool succes2 = wholeUsbDevice.ClaimInterface(0);
-						Logger.AddEntry (this, LogMessageType.Persistent, "Claim interface: "+succes2.ToString ());
-					} 
+				// Claim interface
+                bool succes2 = scopeUsbDevice.ClaimInterface(0);
+				Logger.AddEntry (this, LogMessageType.Persistent, "Claim interface: "+succes2.ToString ());
+				
+                //init endpoints
+                dataEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
+                commandWriteEndpoint = scopeUsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
+                commandReadEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
-                    //init endpoints
-                    dataEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
-                    commandWriteEndpoint = scopeUsbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
-                    commandReadEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
-
-		            if (commandWriteEndpoint == null)
-		            {
-			            Logger.AddEntry(this, LogMessageType.Persistent, "commandWriteEndpoint==null");
-			            return;
-		            }
-
-                    //indicate device is connected
-                    isConnected = true;
-                }
+                //indicate device is connected
+                isConnected = true;
+                if(onConnect != null)
+                    onConnect();
             }
             else
             {

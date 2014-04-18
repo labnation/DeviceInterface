@@ -18,7 +18,9 @@ namespace ECore.Devices
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
     public partial class ScopeV2: EDevice, IScope
     {
-        public EDeviceHWInterface hardwareInterface;   
+        public EDeviceHWInterface hardwareInterface;
+        private ScopeConnectHandler scopeConnectHandler;
+
 		public static string DemoStatusText = "";
         public DeviceMemories.ScopeFpgaSettingsMemory  FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
@@ -39,8 +41,9 @@ namespace ECore.Devices
 		#if ANDROID
 		public Android.Content.Res.AssetManager Assets;
 		#endif
-        
-        public ScopeV2() : base() 
+
+        public ScopeV2(ScopeConnectHandler handler)
+            : base() 
         {
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             //FIXME: no clue why this line is here...
@@ -48,6 +51,7 @@ namespace ECore.Devices
             InitializeHardwareInterface();
             InitializeMemories();
             dataSourceScope = new DataSources.DataSourceScope(this);
+            this.scopeConnectHandler += handler;
         }
 
         #region initializers
@@ -57,7 +61,7 @@ namespace ECore.Devices
 			#if ANDROID
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
 			#else
-			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB();
+			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
 
 			//check communication by reading PIC FW version
             if (!Connected) return;
@@ -69,6 +73,14 @@ namespace ECore.Devices
                 resultString += b.ToString() + ";";
             Logger.AddEntry(this, LogMessageType.Persistent, resultString);
 			#endif
+        }
+
+        private void OnDeviceConnect()
+        {
+            //Flash FPGA?
+
+            if (scopeConnectHandler != null)
+                scopeConnectHandler(this);
         }
 
         //master method where all memories, registers etc get defined and linked together

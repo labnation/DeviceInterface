@@ -7,6 +7,7 @@ namespace ECore.HardwareInterfaces
 {
     abstract public class EDeviceHWInterface
     {
+        public delegate void OnDeviceConnect();
         abstract public int WriteControlMaxLength();
         abstract public int WriteControlBytes(byte[] message);
         abstract public byte[] ReadControlBytes(int length);

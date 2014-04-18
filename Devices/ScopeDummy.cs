@@ -42,8 +42,12 @@ namespace ECore.Devices
 
         #region constructor / initializer 
 
-        public ScopeDummy() : base() {
+        public ScopeDummy(ScopeConnectHandler handler)
+            : base()
+        {
             dataSourceScope = new DataSources.DataSourceScope(this);
+            if (handler != null)
+                handler(this);
         }
         public void Configure() { 
             timeOrigin = DateTime.Now;

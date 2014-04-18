@@ -9,9 +9,12 @@ namespace ECore.Devices
     public enum TriggerMode { ANALOG, DIGITAL, FREE_RUNNING };
     public enum TriggerDirection { RISING, FALLING };
 
+    public delegate void ScopeConnectHandler(IScope scope);
+
     public interface IScope
     {
         DataPackageScope GetScopeData();
+
         bool Connected { get; }
         double GetDefaultTimeRange();
         void SetTriggerHoldOff(double time);
