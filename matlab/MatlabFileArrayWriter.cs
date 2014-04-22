@@ -123,7 +123,7 @@ namespace MatlabFileIO
                     //break;
             }
 
-            dataLength += dataToAppend.Length * MatlabFileHelper.MatlabBytesPerType<T>();
+            dataLength += dataToAppend.Length * MatfileHelper.MatlabBytesPerType(typeof(T));
 
             //needed for array dimensions
             firstDim++;

@@ -18,7 +18,7 @@ namespace MatlabFileIO
             this.writeStream = new BinaryWriter(fileStream);
 
             //write .mat file header (128 bytes)
-            MatlabFileHelper.WriteHeader(writeStream);
+            MatfileHelper.WriteHeader(writeStream);
         }
 
         public void Close()

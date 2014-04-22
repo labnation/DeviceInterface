@@ -64,25 +64,8 @@ namespace MatlabFileIO
         {
             //first definition of type of data inside array: only 3rd value is of interest
             streamReader.BaseStream.Seek(8, SeekOrigin.Current);
-            int contentTypeInt = streamReader.ReadInt32();
-            switch (contentTypeInt)
-            {
-                case 4:
-                    contentType = TypeCode.Char;
-                    break;
-                case 6:
-                    contentType = TypeCode.Double;
-                    break;
-                case 7:
-                    contentType = TypeCode.Single;
-                    break;
-                case 11:
-                    contentType = TypeCode.UInt16;
-                    break;
-                default:
-                    throw new Exception("Content of array not supported");
-                    //break;
-            }
+            uint contentTypeInt = streamReader.ReadUInt32();
+            contentType = Type.GetTypeCode(MatfileHelper.parseArrayType((byte)contentTypeInt));
             streamReader.BaseStream.Seek(4, SeekOrigin.Current);
 
             //array dimesions: skip first value
@@ -145,7 +128,7 @@ namespace MatlabFileIO
             currentRow++;
 
             //read correct number of bytes
-            int bytesToRead = firstDimension * MatlabFileHelper.MatlabBytesPerType<UInt16>();
+            int bytesToRead = firstDimension * MatfileHelper.MatlabBytesPerType(typeof(UInt16));
             byte[] byteArray = streamReader.ReadBytes(bytesToRead);
 
             //convert to correct type
@@ -170,7 +153,7 @@ namespace MatlabFileIO
             currentRow++;
 
             //read correct number of bytes
-            int bytesToRead = firstDimension * MatlabFileHelper.MatlabBytesPerType<float>();
+            int bytesToRead = firstDimension * MatfileHelper.MatlabBytesPerType(typeof(Single));
             byte[] byteArray = streamReader.ReadBytes(bytesToRead);
 
             //convert to correct type
@@ -195,11 +178,11 @@ namespace MatlabFileIO
             currentRow++;
 
             //read correct number of bytes
-            int bytesToRead = firstDimension * MatlabFileHelper.MatlabBytesPerType<double>();
+            int bytesToRead = firstDimension * MatfileHelper.MatlabBytesPerType(typeof(Double));
             byte[] byteArray = streamReader.ReadBytes(bytesToRead);
 
             //convert to correct type
-            double[] convertedData = new double[byteArray.Length / MatlabFileHelper.MatlabBytesPerType<double>()];
+            double[] convertedData = new double[byteArray.Length / MatfileHelper.MatlabBytesPerType(typeof(Double))];
             Buffer.BlockCopy(byteArray, 0, convertedData, 0, byteArray.Length);
 
             //and return
