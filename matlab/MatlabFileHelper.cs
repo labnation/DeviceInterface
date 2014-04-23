@@ -10,27 +10,25 @@ namespace MatlabFileIO
     public enum MatfileVersion { 
         MATFILE_5
     };
-    public class VariableInfo
+    public class Variable
     {
-        public List<UInt32> arrayDimensions;
         public Type dataType;
-        public UInt32 length;
         public String name;
-        public long dataOffset;
+        public object data;
     }
 
-    public class MatfileTag
+    public class Tag
     {
         public Type dataType;
         public UInt32 length;
         public object data; //In case of small data format, otherwise null
     }
 
-    public class MatfileHeader
+    public class Header
     {
         public String text;
         public MatfileVersion version;
-        public MatfileHeader(byte[] bytes)
+        public Header(byte[] bytes)
         {
             if(bytes.Length != 128)
                 throw new IOException("Matlab header should be 128 charachters");
@@ -48,7 +46,9 @@ namespace MatlabFileIO
 
     public static class MatfileHelper
     {
-        public static Type[] MatfileTagType = new Type[]
+        public const int SZ_TAG = 8; //Tag size in bytes
+
+        public static Type[] DataType = new Type[]
         {
             null,           //0
             typeof(SByte),  //1
@@ -71,29 +71,29 @@ namespace MatlabFileIO
             null            //18 UTF-32 - not supported
         };
 
-        public static MatfileTag ReadTag(BinaryReader reader)
+        public static Tag ReadTag(BinaryReader reader)
         {
-            return ParseTag(reader.ReadUInt32(), reader.ReadUInt32());
-        }
 
-        public static MatfileTag ParseTag(UInt32 int1, UInt32 int2)
-        {
-            MatfileTag t = new MatfileTag();
-            if (int1 >> 16 != 0)
-            {
-                t.dataType = MatfileTagType[int1 & 0xFFFF];
-                t.length = int1 >> 16;
-                byte[] smalldata = new byte[t.length];
-                for (int i = 0; i < t.length; i++)
-                    smalldata[i] = (byte)(int2 >> i * 8);
-                t.data = CastToMatlabType(t.dataType, smalldata);
+            byte[] bytes = reader.ReadBytes(SZ_TAG);
+            Tag t = new Tag();
+
+            t.dataType = DataType[BitConverter.ToInt16(bytes, 0)];
+            if (BitConverter.ToUInt16(bytes, 2) != 0) //Small tag fmt
+            {   
+                t.length = BitConverter.ToUInt16(bytes, 2);
+                t.data = CastToMatlabType(t.dataType, bytes, 4, (int)t.length);
             }
-            else //Normal data format
+            else
             {
-                t.dataType = MatfileTagType[int1 & 0xFFFF];
-                t.length = int2;
+                t.length = BitConverter.ToUInt32(bytes, 4);
             }
             return t;
+        }
+
+        public static void AdvanceTo8ByteBoundary(BinaryReader r)
+        {
+            long offset = (8 - (r.BaseStream.Position % 8)) % 8;
+            r.BaseStream.Seek(offset, SeekOrigin.Current);
         }
 
         public static void WriteHeader(BinaryWriter writeStream)
@@ -118,6 +118,7 @@ namespace MatlabFileIO
 
         public static int MatlabBytesPerType(Type T)
         {
+            
             switch (Type.GetTypeCode(T))
             {
                 case TypeCode.Double:
@@ -178,10 +179,12 @@ namespace MatlabFileIO
             }
         }
 
-        public static Array CastToMatlabType(Type t, byte[] data)
+        public static Array CastToMatlabType(Type t, byte[] data, int offset = 0, int length = -1)
         {
-            Array result = Array.CreateInstance(t, data.Length / MatlabBytesPerType(t));
-            Buffer.BlockCopy(data, 0, result, 0, data.Length);
+            if (length < 0)
+                length = data.Length - offset;
+            Array result = Array.CreateInstance(t, length / MatlabBytesPerType(t));
+            Buffer.BlockCopy(data, offset, result, 0, length);
             return result;
         }
     }

@@ -6,52 +6,51 @@ using System.IO;
 
 namespace MatlabFileIO
 {
-    public class MatlabFileReader
+    public class MatfileReader
     {
-        BinaryReader readStream;
-        List<VariableInfo> variables;
+        private BinaryReader readStream;
+        public Dictionary<String, Variable> Variables { get; private set; }
 
-        public MatlabFileReader(string fileName)
+        public MatfileReader(string fileName)
         {
             //create stream from filename
             FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
             this.readStream = new BinaryReader(fileStream);
 
             byte[] headerBytes = readStream.ReadBytes(128);
-            MatfileHeader header = new MatfileHeader(headerBytes);
+            Header header = new Header(headerBytes);
 
-            EnumerateVariables(readStream.BaseStream.Length);
+            ReadVariables();
         }
 
-        private void EnumerateVariables(long length)
+        private void ReadVariables()
         {
-            variables = new List<VariableInfo>();
+            Variables = new Dictionary<string, Variable>();
             while(readStream.BaseStream.Position < readStream.BaseStream.Length)
             {
-                long offset = readStream.BaseStream.Position;  
-                VariableInfo v = new VariableInfo();
+                Variable v = new Variable();
 
-                MatfileTag t = MatfileHelper.ReadTag(readStream);
-                if (t.dataType.Equals(typeof(Array))) //This means type is 14, MiMatrix
+                Tag t = MatfileHelper.ReadTag(readStream);
+                if(t.dataType == null)
+                    throw new Exception("Not an array, don't know what to do with this stuff");
+                else if (t.dataType.Equals(typeof(Array))) //We use Array to indicate MiMatrix
                 {
-                    v.dataOffset = readStream.BaseStream.Position;
-                    v.length = t.length;
-                    v.arrayDimensions = new List<UInt32>();
-                    ParseMatlabMatrix(ref v);
+                    ReadMatrix(ref v, t.length);
                 }
                 else
                     throw new Exception("Not an array, don't know what to do with this stuff");
                 
-                variables.Add(v);
-                //readStream.BaseStream.Seek(v.length, SeekOrigin.Current);
+                Variables.Add(v.name, v);
             }
         }
 
-        private void ParseMatlabMatrix(ref VariableInfo vi)
+        private void ReadMatrix(ref Variable vi, UInt32 length)
         {
-            MatfileTag t;
+            Tag t;
+            long offset = readStream.BaseStream.Position;
+
             //Array flags
-            //Will always be too large to be in small data format
+            //Will always be too large to be in small data format, so not checking t.data
             t = MatfileHelper.ReadTag(readStream);
             UInt32 flagsClass = readStream.ReadUInt32();
             byte flags = (byte)(flagsClass >> 8) ;
@@ -60,11 +59,23 @@ namespace MatlabFileIO
             vi.dataType = MatfileHelper.parseArrayType((byte)flagsClass);
             readStream.ReadUInt32();//unused flags
 
-            //Dimensions array - There are always 2 dimensions, so this
-            //tag will never be of small data format
+            //Dimensions - There are always 2 dimensions, so this
+            //tag will never be of small data format, i.e. not checking for t.data
             t = MatfileHelper.ReadTag(readStream);
-            for (int i = 0; i < t.length / MatfileHelper.MatlabBytesPerType(t.dataType); i++)
-                vi.arrayDimensions.Add(readStream.ReadUInt32());
+            int[] arrayDimensions = new int[t.length / MatfileHelper.MatlabBytesPerType(t.dataType)];
+            int elements = 1;
+            for (int i = 0; i < arrayDimensions.Length; i++)
+            {
+                int dimension = (int)readStream.ReadUInt32();
+                arrayDimensions[arrayDimensions.Length - i - 1] = dimension;
+                elements *= dimension;
+            }
+            //Don't keep single dimensions
+            arrayDimensions = arrayDimensions.Where(x => x > 1).ToArray();
+            //If by doing this, we end up without dimensions, it means we had a 1x...x1 array. 
+            //We need at least 1 dimension to instantiate the final array, so...
+            if (arrayDimensions.Length == 0)
+                arrayDimensions = new int[1] { 1 };
 
             //Array name
             t = MatfileHelper.ReadTag(readStream);
@@ -75,23 +86,38 @@ namespace MatlabFileIO
             } else {
                 byte[] varname = readStream.ReadBytes((int)t.length);
                 vi.name = vi.name = Encoding.UTF8.GetString(varname);
+                MatfileHelper.AdvanceTo8ByteBoundary(readStream);
             }
             
-            //Check if dimensions are correct
-            int j = 0;
-            while(readStream.BaseStream.Position < vi.dataOffset + vi.length)
-            {
-                t = MatfileHelper.ReadTag(readStream);
-                if (t.length / MatfileHelper.MatlabBytesPerType(vi.dataType) != vi.arrayDimensions[j++])
-                    throw new IOException("Read dimensions didn't correspond to header dimensions");
-                readStream.BaseStream.Seek(t.length, SeekOrigin.Current);
-            }
-        }
+            
+            //Read and reshape data
+            t = MatfileHelper.ReadTag(readStream);
+            if (t.length / MatfileHelper.MatlabBytesPerType(t.dataType) != elements)
+                throw new IOException("Read dimensions didn't correspond to header dimensions");
+                    
+            Array readBytes;
+            if (t.data == null)
+                readBytes = MatfileHelper.CastToMatlabType(t.dataType, readStream.ReadBytes((int)t.length));
+            else
+                readBytes = (Array)t.data;
 
-        public MatlabFileArrayReader OpenArray(string varName)
-        {
-            MatlabFileArrayReader arrayReader = new MatlabFileArrayReader(varName, readStream);
-            return arrayReader;
+            Array reshapedData = Array.CreateInstance(vi.dataType, arrayDimensions);
+            if (t.dataType != vi.dataType) //This happens when matlab choses to store the data in a smaller datatype when the values permit it
+            {
+                Array linearData = Array.CreateInstance(vi.dataType, readBytes.Length);
+                Array.Copy(readBytes, linearData, readBytes.Length);
+                Buffer.BlockCopy(linearData, 0, reshapedData, 0, linearData.Length * MatfileHelper.MatlabBytesPerType(vi.dataType));
+            }
+            else //Readbytes is already in the correct type
+                Buffer.BlockCopy(readBytes, 0, reshapedData, 0, readBytes.Length * MatfileHelper.MatlabBytesPerType(vi.dataType));
+
+            if(reshapedData.Length == 1)
+                vi.data = reshapedData.GetValue(0);
+            else
+                vi.data = reshapedData;
+
+            //Move on in case the data didn't end on a 64 byte boundary
+            readStream.BaseStream.Seek(offset + length, SeekOrigin.Begin);
         }
 
         public void Close()
