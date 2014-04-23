@@ -16,7 +16,7 @@ namespace ECore.Devices
         private DateTime timeOrigin;
 
         //Wave settings
-        private WaveSource waveSource = WaveSource.GENERATOR;
+        private WaveSource waveSource = WaveSource.FILE;
         private TriggerMode triggerMode = TriggerMode.ANALOG;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
@@ -236,7 +236,7 @@ namespace ECore.Devices
             else if (waveSource == WaveSource.FILE)
             {
 
-                if (!GetWaveFromFile(triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog)) return null;
+                if (!GetWaveFromFile(triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog)) return null;
                 for(int i = 0; i < channels; i++)
                     ScopeDummy.AddNoise(outputAnalog[i], noiseAmplitude[i]);
                 triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
