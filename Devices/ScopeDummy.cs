@@ -16,7 +16,7 @@ namespace ECore.Devices
         private DateTime timeOrigin;
 
         //Wave settings
-        private WaveSource waveSource = WaveSource.GENERATOR;
+        private WaveSource waveSource = WaveSource.FILE;
         private TriggerMode triggerMode = TriggerMode.ANALOG;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
