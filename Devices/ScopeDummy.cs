@@ -16,7 +16,7 @@ namespace ECore.Devices
         private DateTime timeOrigin;
 
         //Wave settings
-        private WaveSource waveSource = WaveSource.FILE;
+        private WaveSource waveSource = WaveSource.GENERATOR;
         private TriggerMode triggerMode = TriggerMode.ANALOG;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
@@ -75,8 +75,6 @@ namespace ECore.Devices
         public void SetTriggerAnalog(float voltage)
         {
             this.triggerLevel = voltage;
-            if (Math.Abs(triggerLevel) > Math.Abs(amplitude[triggerChannel] + dcOffset[triggerChannel] + noiseAmplitude[triggerChannel]))
-                Logger.AddEntry(this, LogMessageType.ECoreInfo, "Not gonna generate dummy waves since trigger level is larger than amplitude");
         }
         public void SetYOffset(uint channel, float yOffset)
         {
