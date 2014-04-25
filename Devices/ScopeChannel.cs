@@ -21,9 +21,6 @@ namespace ECore.Devices
         public static AnalogChannel ChA  = new AnalogChannel("Channel A", 0);
         public static AnalogChannel ChB  = new AnalogChannel("Channel B", 1);
         public static AnalogChannel Math = new AnalogChannel("Math", 2);
-
-        public static ProtocolChannel I2c = new ProtocolChannel("I2C", 0);
-        public static ProtocolChannel LogicAnalyser = new ProtocolChannel("Logic Analyser", 0);
     }
 
     public class ScopeChannel
