@@ -61,7 +61,9 @@ namespace ECore.Devices
 			#if ANDROID
 			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
 			#else
-			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
+            HWInterfacePIC_LibUSB hwPic = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
+			hardwareInterface = hwPic;
+            hwPic.CheckForDevices();
 
 			//check communication by reading PIC FW version
             if (!Connected) return;
@@ -77,7 +79,10 @@ namespace ECore.Devices
 
         private void OnDeviceConnect()
         {
-            //Flash FPGA?
+            //Flash FPGA
+            //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
+            //but there should be when flashing the FPGA.
+            //FlashFpgaInternal();
 
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this);

@@ -52,9 +52,10 @@ namespace ECore.HardwareInterfaces
             // Hook the device notifier event
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;            
 #endif
-            //and call the method, to check if device is already connected
+        }
+        public void CheckForDevices()
+        {
             OnDeviceNotifyEvent(null, null);
-
         }
 
         //called at init, and each time a system event occurs
