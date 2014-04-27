@@ -32,9 +32,7 @@ namespace ECore.Devices
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
         
         private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
-        private int yOffset_Midrange0V;
-        public float ChannelAYOffsetVoltage { get { return 0; } }
-        public float ChannelBYOffsetVoltage { get { return (float)((FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()-yOffset_Midrange0V)) * calibrationCoefficients[1]; } }
+
         private bool disableVoltageConversion;
         private const double SAMPLE_PERIOD = 10e-9;
         
@@ -47,11 +45,13 @@ namespace ECore.Devices
         {
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             //FIXME: no clue why this line is here...
-            yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
+            //yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
+            this.scopeConnectHandler += handler;
+            dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
             InitializeMemories();
-            dataSourceScope = new DataSources.DataSourceScope(this);
-            this.scopeConnectHandler += handler;
+            
+            
         }
 
         #region initializers

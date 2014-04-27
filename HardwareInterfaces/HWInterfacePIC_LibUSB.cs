@@ -16,7 +16,7 @@ namespace ECore.HardwareInterfaces
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface, IScopeHardwareInterface
     {
         private enum Operation { READ, WRITE };
-        private const int USB_TIMEOUT = 1000;
+        private const int USB_TIMEOUT = 100;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
