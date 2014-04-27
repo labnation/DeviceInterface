@@ -270,7 +270,7 @@ namespace ECore.Devices
             int packetsPerCommand = 64;
 
             if (packetSize <= 0) return;
-            string fileName = "../../../fpga/work/smartscope.bin";
+            string fileName = "smartscope.bin";
 
             byte[] firmware;
             DateTime firmwareModified;
