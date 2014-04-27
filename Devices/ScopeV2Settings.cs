@@ -158,11 +158,14 @@ namespace ECore.Devices
 
         public void SetTriggerMode(TriggerMode mode)
         {
-            throw new NotImplementedException();
+
+            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(mode == TriggerMode.FREE_RUNNING);
+            StrobeMemory.WriteSingle(STR.FREE_RUNNING);
+            toggleUpdateStrobe();
         }
         public void SetTriggerDigital(byte condition)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         /// <summary>
@@ -171,7 +174,7 @@ namespace ECore.Devices
         ///<param name="decimation">Store every [decimation]nt sample</param>
         public void SetTimeRange(double timeRange)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
             /*
             if (decimation > UInt16.MaxValue)
                 throw new ValidationException("Decimation too large");
