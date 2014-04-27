@@ -82,7 +82,7 @@ namespace ECore.Devices
             //Flash FPGA
             //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
             //but there should be when flashing the FPGA.
-            //FlashFpgaInternal();
+            FlashFpgaInternal();
 
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this);
