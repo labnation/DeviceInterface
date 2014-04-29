@@ -42,18 +42,23 @@ namespace ECore.Devices
             order++;
             list.Add(this);
         }
+
+        public virtual void Destroy() { list.Remove(this); }
     }
     public class AnalogChannel : ScopeChannel 
     {
         new public static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
-        public AnalogChannel(string name, int value) : base(name, value) { list.Add(this); } 
+        public AnalogChannel(string name, int value) : base(name, value) { list.Add(this); }
+        override public void Destroy() { list.Remove(this); base.Destroy(); }
     }
     public class DigitalChannel : ScopeChannel {
         new public static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
-        public DigitalChannel(string name, int value) : base(name, value) { list.Add(this); } 
+        public DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
+        override public void Destroy() { list.Remove(this); base.Destroy(); }
     }
     public class ProtocolChannel : ScopeChannel {
         new public static HashSet<ProtocolChannel> list = new HashSet<ProtocolChannel>();
-        public ProtocolChannel(string name, int value) : base(name, value) { list.Add(this);  } 
+        public ProtocolChannel(string name, int value) : base(name, value) { list.Add(this);  }
+        override public void Destroy() { list.Remove(this); base.Destroy(); }
     }
 }
