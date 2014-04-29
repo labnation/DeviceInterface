@@ -56,15 +56,4 @@ namespace ECore.Devices
         public DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
         override public void Destroy() { list.Remove(this); base.Destroy(); }
     }
-    public class ProtocolDecoderChannel : ScopeChannel {
-        new public static HashSet<ProtocolDecoderChannel> list = new HashSet<ProtocolDecoderChannel>();
-        public ProtocolDecoderChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { list.Remove(this); base.Destroy(); }
-    }
-    public class DigitalBusChannel : ScopeChannel
-    {
-        new public static HashSet<DigitalBusChannel> list = new HashSet<DigitalBusChannel>();
-        public DigitalBusChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { list.Remove(this); base.Destroy(); }
-    }
 }
