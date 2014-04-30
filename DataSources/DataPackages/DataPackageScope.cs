@@ -69,6 +69,34 @@ namespace ECore.DataPackages
         {
             return dataDigital;
         }
+
+        public bool[] GetDataDigital(ScopeChannel ch, float? thresholdHigh = null, float? thresholdLow = null)
+        {
+            if (ch is AnalogChannel)
+            {
+                float[] analogData = GetData(ch as AnalogChannel);
+                if (analogData == null) return null;
+
+                float H = thresholdHigh.HasValue ? thresholdHigh.Value : analogData.Min() + (analogData.Max() - analogData.Min()) * 0.7f;
+                float L = thresholdLow.HasValue ? thresholdLow.Value : analogData.Min() + (analogData.Max() - analogData.Min()) * 0.3f;
+
+                bool[] digitalData = new bool[analogData.Length];
+                bool digitalDataPrevious = false;
+                for (int i = 0; i < analogData.Length; i++)
+                    digitalDataPrevious = digitalData[i] = ECore.Utils.Schmitt(analogData[i], digitalDataPrevious, H, L);
+                return digitalData;
+            }
+            else if (ch is DigitalChannel)
+            {
+                byte[] bus = GetDataDigital();
+                if(bus == null) return null;
+
+                Func<byte, bool> bitFilter = new Func<byte,bool>(x => Utils.IsBitSet(x, ch.Value));
+                bool[] output = Utils.TransformArray(bus, bitFilter);
+                return output;
+            }
+            return null;
+        }
         /// <summary>
         /// Index at which the data was triggered. WARN: This index is not necessarily within the 
         /// data array's bounds, depending on what trigger holdoff was used
