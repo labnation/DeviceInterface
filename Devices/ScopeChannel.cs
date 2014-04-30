@@ -9,17 +9,17 @@ namespace ECore.Devices
     public static class ScopeChannels
     {
         //Note: the ScopeChannel.Order field is set by order of instantiation.
-        public static DigitalChannel Digi0 = new DigitalChannel("Digital 0", 0);
-        public static DigitalChannel Digi1 = new DigitalChannel("Digital 1", 1);
-        public static DigitalChannel Digi2 = new DigitalChannel("Digital 2", 2);
-        public static DigitalChannel Digi3 = new DigitalChannel("Digital 3", 3);
-        public static DigitalChannel Digi4 = new DigitalChannel("Digital 4", 4);
-        public static DigitalChannel Digi5 = new DigitalChannel("Digital 5", 5);
-        public static DigitalChannel Digi6 = new DigitalChannel("Digital 6", 6);
-        public static DigitalChannel Digi7 = new DigitalChannel("Digital 7", 7);
+        public static DigitalChannel Digi0 = new DigitalChannel("0", 0);
+        public static DigitalChannel Digi1 = new DigitalChannel("1", 1);
+        public static DigitalChannel Digi2 = new DigitalChannel("2", 2);
+        public static DigitalChannel Digi3 = new DigitalChannel("3", 3);
+        public static DigitalChannel Digi4 = new DigitalChannel("4", 4);
+        public static DigitalChannel Digi5 = new DigitalChannel("5", 5);
+        public static DigitalChannel Digi6 = new DigitalChannel("6", 6);
+        public static DigitalChannel Digi7 = new DigitalChannel("7", 7);
 
-        public static AnalogChannel ChA  = new AnalogChannel("Ch A", 0);
-        public static AnalogChannel ChB  = new AnalogChannel("Ch B", 1);
+        public static AnalogChannel ChA  = new AnalogChannel("A", 0);
+        public static AnalogChannel ChB  = new AnalogChannel("B", 1);
         public static AnalogChannel Math = new AnalogChannel("Math", 2);
     }
 
