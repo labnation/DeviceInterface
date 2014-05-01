@@ -8,6 +8,7 @@ namespace ECore.Devices
 {
     public enum TriggerMode { ANALOG, DIGITAL, FREE_RUNNING };
     public enum TriggerDirection { RISING, FALLING };
+    public enum Coupling { AC, DC };
 
     public delegate void ScopeConnectHandler(IScope scope);
 
@@ -24,6 +25,8 @@ namespace ECore.Devices
         void SetTriggerChannel(uint channel);
         void SetTriggerDirection(TriggerDirection direction);
         void SetTriggerMode(TriggerMode mode);
+        void SetCoupling(uint channel, Coupling coupling);
+        Coupling GetCoupling(uint channel);
         void SetTimeRange(double timeRange);
         void Configure();
         DataSources.DataSourceScope DataSourceScope { get; }

@@ -155,9 +155,6 @@ namespace ECore.Devices
             AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16);
             AdcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
 
-            this.SetEnableDcCoupling(0, true);
-            this.SetEnableDcCoupling(1, true);
-
             //this.SetEnableFreeRunning(true);
 
             //Set ADC multiplexed output mode

@@ -99,18 +99,22 @@ namespace ECore.Devices
             */
         }
 
-        ///<summary>
-        ///Enable DC coupling
-        ///</summary>
-        ///<param name="channel">0 or 1 (channel A or B)</param>
-        ///<param name="enableDc">true for DC coupling, false for AC coupling</param>
-        public void SetEnableDcCoupling(uint channel, bool enableDc)
+        public void SetCoupling(uint channel, Coupling coupling)
         {
-            validateChannel(channel);            
-            STR dc = (channel == 0) ? STR.CHA_DCCOUPLING: STR.CHB_DCCOUPLING;
+            validateChannel(channel);
+            STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
+            bool enableDc = coupling == Coupling.DC;
             Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
             StrobeMemory.GetRegister(dc).Set(enableDc);
             StrobeMemory.WriteSingle(dc);
+        }
+        public Coupling GetCoupling(uint channel)
+        {
+            validateChannel(channel);
+            STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
+            StrobeMemory.ReadSingle(dc);
+            bool dcEnabled = StrobeMemory.GetRegister(dc).GetBool();
+            return dcEnabled ? Coupling.DC : Coupling.AC;
         }
 
         #endregion

@@ -16,10 +16,11 @@ namespace ECore.Devices
         private DateTime timeOrigin;
 
         //Wave settings
-        private WaveSource waveSource = WaveSource.FILE;
+        private WaveSource waveSource = WaveSource.GENERATOR;
         private TriggerMode triggerMode = TriggerMode.ANALOG;
         private WaveForm[] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
         private double[] amplitude = new double[] {1.3, 1.8};
+        private Coupling[] coupling = new Coupling[] { Coupling.DC, Coupling.DC };
         private double[] dcOffset = new double[] { 0.0f, -0.9f };
         private double[] frequency = new double[] { 200e3, 600e3 };
         private double[] noiseAmplitude = new double[] { 0.1, 0.1 }; //Noise mean voltage
@@ -104,6 +105,17 @@ namespace ECore.Devices
             while (timeRange > decimation * GetDefaultTimeRange())
                 decimation++;
         }
+        public void SetCoupling(uint channel, Coupling coupling)
+        {
+            validateChannel(channel);
+            this.coupling[channel] = coupling;
+        }
+        public Coupling GetCoupling(uint channel)
+        {
+            validateChannel(channel);
+            return coupling[channel];
+        }
+
         public double GetDefaultTimeRange()
         { 
             return outputWaveLength * samplePeriodMinimum; 
