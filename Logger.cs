@@ -2,10 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#if IPHONE || ANDROID
-#else
-using System.Windows.Forms;
-#endif
 
 namespace ECore
 {    
