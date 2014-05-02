@@ -131,13 +131,17 @@
       <Project>{1E7E3A00-57A6-48C4-A19E-926BADC501B6}</Project>
       <Name>Math (mono)</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
-      <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
-      <Name>MatlabFileIO</Name>
-    </ProjectReference>
     <ProjectReference Include="..\LUDN2\LUDN2.csproj">
       <Project>{558E1773-40C4-47C9-8D72-4B81E0C99878}</Project>
       <Name>LUDN2</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ExcelFileIO\ExcelFileIO.iOS.csproj">
+      <Project>{B960D53B-BEBE-4817-B847-1DA49D75593E}</Project>
+      <Name>ExcelFileIO.iOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.iOS.csproj">
+      <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
+      <Name>MatlabFileIO.iOS</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
