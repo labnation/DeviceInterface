@@ -5,3 +5,4 @@ Release/
 /*.userprefs
 Resource.designer.cs
 *csproj.user
+.DS_Store
