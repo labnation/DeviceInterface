@@ -70,7 +70,7 @@ namespace ECore.DataPackages
             return dataDigital;
         }
 
-        public bool[] GetDataDigital(ScopeChannel ch, float? thresholdHigh = null, float? thresholdLow = null)
+        public bool[] GetDataDigital(Channel ch, float? thresholdHigh = null, float? thresholdLow = null)
         {
             if (ch is AnalogChannel)
             {

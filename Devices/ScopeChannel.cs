@@ -20,12 +20,11 @@ namespace ECore.Devices
 
         public static AnalogChannel ChA  = new AnalogChannel("A", 0);
         public static AnalogChannel ChB  = new AnalogChannel("B", 1);
-        public static AnalogChannel Math = new AnalogChannel("Math", 2);
     }
 
-    public class ScopeChannel
+    public class Channel
     {
-        public static int CompareByOrder(ScopeChannel a, ScopeChannel b)
+        public static int CompareByOrder(Channel a, Channel b)
         {
             return a.Order - b.Order;
         }
@@ -33,8 +32,8 @@ namespace ECore.Devices
         public string Name { get; protected set; }
         public int Value { get; protected set; }
         public int Order { get; protected set; }
-        public static HashSet<ScopeChannel> list = new HashSet<ScopeChannel>();
-        public ScopeChannel(string name, int value)
+        public static HashSet<Channel> list = new HashSet<Channel>();
+        public Channel(string name, int value)
         {
             this.Name = name; 
             this.Value = value;
@@ -45,13 +44,13 @@ namespace ECore.Devices
 
         public virtual void Destroy() { list.Remove(this); }
     }
-    public class AnalogChannel : ScopeChannel 
+    public class AnalogChannel : Channel 
     {
         new public static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
         public AnalogChannel(string name, int value) : base(name, value) { list.Add(this); }
         override public void Destroy() { list.Remove(this); base.Destroy(); }
     }
-    public class DigitalChannel : ScopeChannel {
+    public class DigitalChannel : Channel {
         new public static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
         public DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
         override public void Destroy() { list.Remove(this); base.Destroy(); }
