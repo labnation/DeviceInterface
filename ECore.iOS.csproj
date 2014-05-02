@@ -1,85 +1,159 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{F09EF291-65DB-4412-8C6E-D6869DAD5343}</ProjectGuid>
+    <ProjectGuid>{85EC5920-5B60-4E6F-83C2-7A44367C8DFB}</ProjectGuid>
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
-    <RootNamespace>ECore.iOS</RootNamespace>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ECore</RootNamespace>
+    <AssemblyName>ECore</AssemblyName>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>ECore.iOS</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG; IPHONE</DefineConstants>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
+    <DefineConstants>DEBUG;__MOBILE__;__IOS__;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <DefineConstants>IPHONE</DefineConstants>
+    <MtouchLink>None</MtouchLink>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchDebug>true</MtouchDebug>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
+    <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <MtouchLink>None</MtouchLink>
+    <ConsolePause>false</ConsolePause>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhone\Debug</OutputPath>
+    <DefineConstants>DEBUG;__MOBILE__;__IOS__;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchDebug>true</MtouchDebug>
+    <CodesignKey>iPhone Developer</CodesignKey>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <ConsolePause>false</ConsolePause>
+    <CodesignKey>iPhone Developer</CodesignKey>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
-    <Reference Include="monotouch" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Resources\" />
-    <Folder Include="DeviceMemories\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <Compile Include="EDataPackage.cs" />
-    <Compile Include="EDevice.cs" />
-    <Compile Include="EDeviceParameters.cs" />
-    <Compile Include="DeviceImplementations\EDeviceImplementation.cs" />
-    <Compile Include="DeviceImplementations\Scop3v1.cs" />
-    <Compile Include="DeviceMemories\EDeviceMemory.cs" />
+    <Compile Include="DataSources\DataPackages\DataPackageScope.cs" />
+    <Compile Include="DeviceMemories\ByteMemory.cs" />
+    <Compile Include="DeviceMemories\Registers\ByteRegister.cs" />
+    <Compile Include="DeviceMemories\Registers\BoolRegister.cs" />
+    <Compile Include="Devices\IScope.cs" />
+    <Compile Include="Devices\ScopeDummy.cs" />
+    <Compile Include="Devices\ScopeDummyFile.cs" />
+    <Compile Include="Devices\ScopeDummyWaves.cs" />
+    <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
+    <Compile Include="Devices\ScopeV2Settings.cs" />
+    <Compile Include="HardwareInterfaces\IScopeHardwareInterface.cs" />
+    <Compile Include="Devices\ScopeChannel.cs" />
+    <Compile Include="Devices\Settings.cs" />
+    <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
+    <Compile Include="Devices\ScopeV2.cs" />
+    <Compile Include="Devices\ScopeV2_ROM.cs" />
+    <Compile Include="DeviceMemories\ScopeConstants_GEN.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ScopeConstants_GEN.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DeviceMemories\ScopePicRegisterMemory.cs" />
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
-    <Compile Include="DeviceMemories\Scop3FpgaRegisterMemory.cs" />
-    <Compile Include="DeviceMemories\Scop3FpgaRomMemory.cs" />
-    <Compile Include="DeviceMemories\Scop3StrobeMemory.cs" />
-    <Compile Include="EDataNodes\EDataNode.cs" />
-    <Compile Include="EDataNodes\EDataNodeFromDevice.cs" />
-    <Compile Include="EDataNodes\EDataNodeFromFile.cs" />
-    <Compile Include="EFuctionalities\EFCalibrationVoltage.cs" />
-    <Compile Include="EFuctionalities\EFDivisionFactor.cs" />
-    <Compile Include="EFuctionalities\EFMultiplicationFactor.cs" />
-    <Compile Include="EFuctionalities\EFOffset.cs" />
-    <Compile Include="EFuctionalities\EFSamplingFrequency.cs" />
-    <Compile Include="EFuctionalities\EFunctionality.cs" />
-    <Compile Include="EInterfaces\ICalibrationVoltage.cs" />
-    <Compile Include="EInterfaces\IScopeChannel.cs" />
-    <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
-    <Compile Include="MemoryRegisters\BoolRegister.cs" />
-    <Compile Include="MemoryRegisters\ByteRegister.cs" />
-    <Compile Include="MemoryRegisters\EDeviceMemoryRegister.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="Utils.cs" />
-    <Compile Include="DeviceMemories\Scop3PICRegisterMemory.cs" />
-    <Compile Include="DeviceImplementations\Scop3v2.cs" />
-    <Compile Include="EFuctionalities\EFTriggerPosition.cs" />
-    <Compile Include="EInterfaces\ITriggerPosition.cs" />
+    <Compile Include="DeviceMemories\ScopeFpgaRom.cs" />
+    <Compile Include="DataSources\DataSourceScope.cs" />
+    <Compile Include="DataSources\DataSource.cs" />
+    <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
+    <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
-    <Compile Include="EDataNodes\EDataNodeFromEmbeddedResource.cs" />
-    <Compile Include="DeviceImplementations\Scop3v2_ROM.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />
+    <Compile Include="Devices\EDevice.cs" />
+    <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
+    <Compile Include="DeviceMemories\DeviceMemory.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DeviceMemories\ScopeConstants_GEN.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ScopeConstants_GEN.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="aforge\Math\Math %28mono%29.csproj">
+      <Project>{1E7E3A00-57A6-48C4-A19E-926BADC501B6}</Project>
+      <Name>Math (mono)</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
+      <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
+      <Name>MatlabFileIO</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LUDN2\LUDN2.csproj">
       <Project>{558E1773-40C4-47C9-8D72-4B81E0C99878}</Project>
       <Name>LUDN2</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
 </Project>
