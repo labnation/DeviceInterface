@@ -5,10 +5,6 @@ using System.Text;
 using ECore.DeviceMemories;
 using ECore.DataPackages;
 using System.IO;
-#if IPHONE || ANDROID
-#else
-using System.Windows.Forms;
-#endif
 using ECore.HardwareInterfaces;
 
 
