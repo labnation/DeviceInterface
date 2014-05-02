@@ -1,0 +1,76 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace ECore.DeviceMemories
+{
+    public enum REG
+    {
+		STROBE_UPDATE = 0,
+		SPI_ADDRESS = 1,
+		SPI_WRITE_VALUE = 2,
+		CALIB_VOLTAGE = 3,
+		TRIGGERLEVEL = 4,
+		TRIGGERHOLDOFF_B0 = 5,
+		TRIGGERHOLDOFF_B1 = 6,
+		SAMPLECLOCKDIVIDER_B0 = 7,
+		SAMPLECLOCKDIVIDER_B1 = 8,
+		CHA_YOFFSET_VOLTAGE = 9,
+		CHB_YOFFSET_VOLTAGE = 10,
+		DIGITAL_OUT = 11,
+		VIEW_DECIMATION = 13,
+		VIEW_OFFSET = 14,
+		VIEW_ACQUISITIONS = 15,
+		VIEW_BURSTS = 16,
+    }
+
+    public enum STR
+    {
+		GLOBAL_RESET = 2,
+		INIT_SPI_TRANSFER = 1,
+		DEBUG_PIC = 0,
+		DEBUG_RAM = 3,
+		FORCE_TRIGGER = 4,
+		FREE_RUNNING = 5,
+		CHB_DIV1 = 6,
+		CHB_DIV10 = 7,
+		CHB_DIV100 = 8,
+		CHB_MULT1 = 9,
+		CHB_MULT2 = 10,
+		CHB_MULT3 = 11,
+		CHB_MULT4 = 12,
+		CHB_ENABLECALIB = 13,
+		CHB_DCCOUPLING = 14,
+		RESET_DCM = 15,
+		CHA_DIV1 = 16,
+		CHA_DIV10 = 17,
+		CHA_DIV100 = 18,
+		CHA_MULT1 = 19,
+		CHA_MULT2 = 20,
+		CHA_MULT3 = 21,
+		CHA_MULT4 = 22,
+		CHA_ENABLECALIB = 23,
+		CHA_DCCOUPLING = 24,
+		ENABLE_NEG_DCDC = 25,
+		TRIGGER_CHB = 26,
+		TRIGGER_FALLING = 27,
+		SCOPE_ENABLE = 28,
+		SCOPE_UPDATE = 29,
+		DISABLE_RAM = 30,
+		POWER_DIGITAL_IO = 31,
+		AWG_ENABLE = 32,
+		LA_ENABLE = 33,
+    }
+
+    public enum ROM
+    {
+		FW_MSB = 0,
+		FW_LSB = 1,
+		FW_BUILD = 2,
+		SPI_RECEIVED_VALUE = 3,
+		FPGA_STATUS = 4,
+		STROBES = 5,
+    }
+
+}
