@@ -31,6 +31,7 @@ namespace ECore.Devices
 
         private bool disableVoltageConversion;
         private const double SAMPLE_PERIOD = 10e-9;
+        private const uint NUMBER_OF_SAMPLES = 2048;
         
 		#if ANDROID
 		public Android.Content.Res.AssetManager Assets;

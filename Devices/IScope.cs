@@ -18,6 +18,8 @@ namespace ECore.Devices
 
         bool Connected { get; }
         double GetDefaultTimeRange();
+        double GetSamplePeriod();
+        int GetNumberOfSamples();
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(byte condition);

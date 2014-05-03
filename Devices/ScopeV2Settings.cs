@@ -244,7 +244,17 @@ namespace ECore.Devices
         /// <returns></returns>
         public double GetDefaultTimeRange() {
             //FIXME: don't hardcode
-            return SAMPLE_PERIOD * 2048.0; 
+            return SAMPLE_PERIOD * NUMBER_OF_SAMPLES; 
+        }
+
+        public double GetSamplePeriod()
+        {
+            return SAMPLE_PERIOD;
+        }
+
+        public int GetNumberOfSamples()
+        {
+            return (int)NUMBER_OF_SAMPLES;
         }
 
         #endregion

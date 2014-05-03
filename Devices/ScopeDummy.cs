@@ -143,6 +143,16 @@ namespace ECore.Devices {
 			return outputWaveLength * samplePeriodMinimum; 
 		}
 
+        public double GetSamplePeriod()
+        {
+            return SamplePeriod;
+        }
+
+        public int GetNumberOfSamples()
+        {
+            return (int)outputWaveLength;
+        }
+
 		#endregion
 
 		#region dummy scope settings
