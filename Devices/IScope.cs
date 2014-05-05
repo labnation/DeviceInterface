@@ -9,6 +9,7 @@ namespace ECore.Devices
     public enum TriggerMode { ANALOG, DIGITAL, FREE_RUNNING };
     public enum TriggerDirection { RISING, FALLING };
     public enum Coupling { AC, DC };
+    public enum AcquisitionMode { SINGLE, CONTINUOUS, SWEEP };
 
     public delegate void ScopeConnectHandler(IScope scope);
 
@@ -20,6 +21,9 @@ namespace ECore.Devices
         double GetDefaultTimeRange();
         double GetSamplePeriod();
         int GetNumberOfSamples();
+        void SetAcquisitionMode(AcquisitionMode mode);
+        void SetAcuisitionRunning(bool running);
+        bool GetAcuisitionRunning();
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(byte condition);

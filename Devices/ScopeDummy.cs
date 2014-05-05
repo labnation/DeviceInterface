@@ -47,6 +47,8 @@ namespace ECore.Devices {
 		private static uint triggerWidth = 4;
 		private uint decimation = 1;
 		private TriggerDirection triggerDirection = TriggerDirection.FALLING;
+        private AcquisitionMode acquisitionMode = AcquisitionMode.CONTINUOUS;
+        private bool acquisitionRunning = false;
 		//Hack
 		bool regenerate = true;
 		DataPackageScope p;
@@ -81,6 +83,19 @@ namespace ECore.Devices {
 			if (decimation < 1)
 				throw new ValidationException ("Decimation must be larger than 0");
 		}
+
+        public void SetAcquisitionMode(AcquisitionMode mode)
+        {
+            this.acquisitionMode = mode;
+        }
+        public void SetAcuisitionRunning(bool running)
+        {
+            this.acquisitionRunning = running;
+        }
+        public bool GetAcuisitionRunning()
+        {
+            return this.acquisitionRunning;
+        }
 
 		public void SetTriggerHoldOff (double holdoff)
 		{
@@ -223,6 +238,9 @@ namespace ECore.Devices {
 			int triggerIndex = 0;
 			int triggerHoldoffInSamples = 0;
 
+            while (!acquisitionRunning)
+                System.Threading.Thread.Sleep(10);
+
 			if (regenerate) {
 				if (waveSource == WaveSource.GENERATOR) {
 					//Generate analog wave
@@ -291,6 +309,9 @@ namespace ECore.Devices {
 #if __IOS__
 			regenerate = true;
 #endif
+
+            if (acquisitionMode == AcquisitionMode.SINGLE)
+                acquisitionRunning = false;
 
 			return p;
 		}

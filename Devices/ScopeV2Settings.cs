@@ -167,6 +167,24 @@ namespace ECore.Devices
             StrobeMemory.WriteSingle(STR.FREE_RUNNING);
             toggleUpdateStrobe();
         }
+
+        public void SetAcquisitionMode(AcquisitionMode mode)
+        {
+            //FIXME
+            throw new NotImplementedException();
+        }
+        public void SetAcuisitionRunning(bool running)
+        {
+            //FIXME
+            throw new NotImplementedException();
+        }
+
+        public bool GetAcuisitionRunning()
+        {
+            //FIXME
+            throw new NotImplementedException();
+        }
+
         public void SetTriggerDigital(byte condition)
         {
             //throw new NotImplementedException();
