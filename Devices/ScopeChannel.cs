@@ -43,6 +43,10 @@ namespace ECore.Devices
         }
 
         public virtual void Destroy() { list.Remove(this); }
+        public override string ToString()
+        {
+            return this.Name;
+        }
     }
     public class AnalogChannel : Channel 
     {

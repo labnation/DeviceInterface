@@ -185,7 +185,7 @@ namespace ECore.Devices
             throw new NotImplementedException();
         }
 
-        public void SetTriggerDigital(byte condition)
+        public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
         {
             //throw new NotImplementedException();
         }

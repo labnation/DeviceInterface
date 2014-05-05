@@ -250,6 +250,19 @@ namespace ECore
             return stuffed;
         }
 
+        public static void SetBit(ref byte b, int bit)
+        {
+            int mask = 0x01 << bit;
+            b |= (byte)mask;
+        }
+
+        public static void ClearBit(ref byte b, int bit)
+        {
+            int mask = 0x01 << bit;
+            b &= (byte)(~mask);
+        }
+
+
         public static bool IsBitSet(byte b, int bit)
         {
             return ((b >> bit) & 0x01) != 0;

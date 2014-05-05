@@ -41,10 +41,18 @@ namespace ECore.Devices {
 		public const uint channels = 2;
 		private const uint outputWaveLength = 2048;
 		private float triggerLevel = 0;
-		private byte triggerLevelDigital = 0x0;
 		private double triggerHoldoff = 0;
 		private uint triggerChannel = 0;
 		private static uint triggerWidth = 4;
+
+        private struct DigitalTrigger {
+            public byte triggerCondition;
+            public byte triggerMask;
+            public byte preTriggerCondition;
+            public byte preTriggerMask;
+        }
+        private DigitalTrigger digitalTrigger;
+
 		private uint decimation = 1;
 		private TriggerDirection triggerDirection = TriggerDirection.FALLING;
         private AcquisitionMode acquisitionMode = AcquisitionMode.CONTINUOUS;
@@ -129,9 +137,42 @@ namespace ECore.Devices {
 			this.triggerMode = mode;
 		}
 
-		public void SetTriggerDigital (byte condition)
+        public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
 		{
-			this.triggerLevelDigital = condition;
+            digitalTrigger.triggerCondition = 0x0;
+            digitalTrigger.triggerMask = 0xFF;
+            digitalTrigger.preTriggerCondition = 0x0;
+            digitalTrigger.preTriggerMask = 0xFF;
+            foreach (KeyValuePair<DigitalChannel, DigitalTriggerValue> kvp in condition)
+            {
+                int bit = kvp.Key.Value;
+                DigitalTriggerValue value = kvp.Value;
+                if (value == DigitalTriggerValue.X)
+                {
+                    Utils.ClearBit(ref digitalTrigger.triggerMask, bit);
+                    Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                }
+                if (value == DigitalTriggerValue.I)
+                {
+                    Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                    Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
+                }
+                if (value == DigitalTriggerValue.O)
+                {
+                    Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                    Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                }
+                if (value == DigitalTriggerValue.R)
+                {
+                    Utils.ClearBit(ref digitalTrigger.preTriggerCondition, bit);
+                    Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
+                }
+                if (value == DigitalTriggerValue.F)
+                {
+                    Utils.SetBit(ref digitalTrigger.preTriggerCondition, bit);
+                    Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                }
+            }
 		}
 
 		public void SetTimeRange (double timeRange)
@@ -214,15 +255,19 @@ namespace ECore.Devices {
 			return false;
 		}
 
-		private static bool TriggerDigital (byte [] wave, int holdoff, byte condition, uint outputWaveLength, out int triggerIndex)
+        private static bool TriggerDigital(byte[] wave, int holdoff, DigitalTrigger trigger, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
 			// - if negative, start looking at index 0
 			triggerIndex = 0;
-			for (int i = Math.Max (0, holdoff); i < wave.Length - outputWaveLength; i++) {
-				if (wave [i] == condition) {
-					triggerIndex = i;
+			for (int i = Math.Max (1, holdoff); i < wave.Length - outputWaveLength; i++) {
+				if (
+                    (wave[i] & trigger.triggerMask) == trigger.triggerCondition 
+                    &&
+                    (wave[i - 1] & trigger.preTriggerMask) == trigger.preTriggerCondition 
+                    ) {
+                    triggerIndex = i;
 					return true;
 				}
 			}
@@ -275,7 +320,7 @@ namespace ECore.Devices {
 							outputWaveLength, out triggerIndex);
 						break;
 					case TriggerMode.DIGITAL:
-						triggerDetected = ScopeDummy.TriggerDigital (waveDigital, triggerHoldoffInSamples, triggerLevelDigital, outputWaveLength, out triggerIndex);
+                        triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
 						break;
 					case TriggerMode.FREE_RUNNING:
 						triggerDetected = true;

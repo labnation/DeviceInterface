@@ -10,6 +10,7 @@ namespace ECore.Devices
     public enum TriggerDirection { RISING, FALLING };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE, CONTINUOUS, SWEEP };
+    public enum DigitalTriggerValue { O, I, R, F, X };
 
     public delegate void ScopeConnectHandler(IScope scope);
 
@@ -26,7 +27,7 @@ namespace ECore.Devices
         bool GetAcuisitionRunning();
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
-        void SetTriggerDigital(byte condition);
+        void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
         void SetYOffset(uint channel, float offset);
         void SetTriggerChannel(uint channel);
         void SetTriggerDirection(TriggerDirection direction);
