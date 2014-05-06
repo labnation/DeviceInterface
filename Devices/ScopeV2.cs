@@ -46,9 +46,6 @@ namespace ECore.Devices
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
-            InitializeMemories();
-            
-            
         }
 
         #region initializers
@@ -74,15 +71,18 @@ namespace ECore.Devices
 			#endif
         }
 
-        private void OnDeviceConnect()
+        private void OnDeviceConnect(bool connected)
         {
             //Flash FPGA
             //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
             //but there should be when flashing the FPGA.
-            FlashFpgaInternal();
-
+            if (connected)
+            {
+                FlashFpgaInternal();
+                InitializeMemories();
+            }
             if (scopeConnectHandler != null)
-                scopeConnectHandler(this);
+                scopeConnectHandler(this, connected);
         }
 
         //master method where all memories, registers etc get defined and linked together

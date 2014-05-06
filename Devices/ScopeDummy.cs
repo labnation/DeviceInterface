@@ -68,7 +68,7 @@ namespace ECore.Devices {
 		{
 			dataSourceScope = new DataSources.DataSourceScope (this);
 			if (handler != null)
-				handler (this);
+				handler (this, true);
 		}
 
 		public void Configure ()

@@ -12,7 +12,7 @@ namespace ECore.Devices
     public enum AcquisitionMode { SINGLE, CONTINUOUS, SWEEP };
     public enum DigitalTriggerValue { O, I, R, F, X };
 
-    public delegate void ScopeConnectHandler(IScope scope);
+    public delegate void ScopeConnectHandler(IScope scope, bool connected);
 
     public interface IScope
     {

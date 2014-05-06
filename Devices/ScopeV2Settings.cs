@@ -171,18 +171,19 @@ namespace ECore.Devices
         public void SetAcquisitionMode(AcquisitionMode mode)
         {
             //FIXME
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
         public void SetAcuisitionRunning(bool running)
         {
             //FIXME
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public bool GetAcuisitionRunning()
         {
             //FIXME
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return false;
         }
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
