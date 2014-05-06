@@ -16,14 +16,11 @@ namespace ECore.HardwareInterfaces
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface, IScopeHardwareInterface
     {
         private enum Operation { READ, WRITE };
-        private const int USB_TIMEOUT = 100;
+        private const int USB_TIMEOUT = 10000;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
 #if ANDROID
-
-
-
 		public HWInterfacePIC(){
 		}
 		public override void WriteControlBytes(byte[] message){
@@ -32,8 +29,6 @@ namespace ECore.HardwareInterfaces
 		}
 		public override byte[] GetData(int numberOfBytes) { return null;
 		}
-
-
 #else
         //needed for plug-unplug events
         private static IDeviceNotifier UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
@@ -47,7 +42,7 @@ namespace ECore.HardwareInterfaces
         public HWInterfacePIC_LibUSB(OnDeviceConnect onConnect)
         {
             this.onConnect += onConnect;
-#if IPHONE || ANDROID
+#if __IOS__ || ANDROID
 #else
             // Hook the device notifier event
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;            
@@ -100,23 +95,23 @@ namespace ECore.HardwareInterfaces
                 commandReadEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
                 //indicate device is connected
-                isConnected = true;
+		isConnected = true;
                 if(onConnect != null)
                     onConnect(true);
             }
             else
             {
+		isConnected = false;
                 //de-init endpoints
                 dataEndpoint = null;
                 commandWriteEndpoint = null;
                 commandReadEndpoint = null;
 
-                isConnected = false;
+                
                 if (onConnect != null)
                     onConnect(false);
                 Logger.AddEntry(this, LogMessageType.ECoreInfo, "No device found");
             }
-            
         }
 
         public override int WriteControlMaxLength()
@@ -128,8 +123,8 @@ namespace ECore.HardwareInterfaces
 
         public override int WriteControlBytes(byte[] message)
         {
-            if (!isConnected)
-                throw new Exception("Can't write to device since it's not connected");
+            //if (!isConnected)
+            //    throw new Exception("Can't write to device since it's not connected");
             int bytesWritten;
             commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             return bytesWritten;
@@ -138,10 +133,8 @@ namespace ECore.HardwareInterfaces
         public override byte[] ReadControlBytes(int length)
         {
             //see if device is connected properly
-            if (!isConnected)
-            {
-                throw new Exception("Can't read from device since it's not connected");
-            }
+            //if (!isConnected)
+                //throw new Exception("Can't read from device since it's not connected");
 
             //try to read data
             ErrorCode errorCode = ErrorCode.None;

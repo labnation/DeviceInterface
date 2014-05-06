@@ -229,12 +229,18 @@ namespace ECore
         /// <returns></returns>
         public static byte[] FileToByteArray(string fileName, int multiple, byte stuffing)
         {
-            byte[] buff = null;
             FileStream fs = new FileStream(fileName,
                                            FileMode.Open,
                                            FileAccess.Read);
             BinaryReader br = new BinaryReader(fs);
             long numBytes = new FileInfo(fileName).Length;
+	
+	    return BinaryReaderStuffer(br, numBytes, multiple, stuffing);
+        }
+		
+	public static byte[] BinaryReaderStuffer (BinaryReader br, long numBytes, int multiple, byte stuffing)
+	{
+	    byte[] buff = null;
             buff = br.ReadBytes((int)numBytes);
             
             //Check if a multiple was specified or if we happen to be lucky
@@ -248,7 +254,8 @@ namespace ECore
                 stuffed[i] = stuffing;
             
             return stuffed;
-        }
+		
+	}
 
         public static void SetBit(ref byte b, int bit)
         {

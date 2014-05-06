@@ -52,23 +52,13 @@ namespace ECore.Devices
 
         private void InitializeHardwareInterface()
         {
-			#if ANDROID
-			hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
-			#else
-            HWInterfacePIC_LibUSB hwPic = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
-			hardwareInterface = hwPic;
-            hwPic.CheckForDevices();
-
-			//check communication by reading PIC FW version
-            if (!Connected) return;
-
-            hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
-            byte[] response = hardwareInterface.ReadControlBytes(16);
-            string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
-            foreach (byte b in response)
-                resultString += b.ToString() + ";";
-            Logger.AddEntry(this, LogMessageType.Persistent, resultString);
-			#endif
+	#if ANDROID
+		hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
+	#else
+        	HWInterfacePIC_LibUSB hwPic = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
+		hardwareInterface = hwPic;
+            	hwPic.CheckForDevices();
+	#endif
         }
 
         private void OnDeviceConnect(bool connected)
@@ -78,8 +68,19 @@ namespace ECore.Devices
             //but there should be when flashing the FPGA.
             if (connected)
             {
-                FlashFpgaInternal();
+		hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
+		byte[] response = hardwareInterface.ReadControlBytes(16);
+		string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
+		foreach (byte b in response)
+		resultString += b.ToString() + ";";
+		Logger.AddEntry(this, LogMessageType.Persistent, resultString);
+                
+		FlashFpgaInternal();
                 InitializeMemories();
+				
+		FpgaRom.ReadSingle(ROM.FW_MSB);
+		FpgaRom.ReadSingle(ROM.FW_LSB);
+		Logger.AddEntry(this, LogMessageType.ECoreInfo, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
             }
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);
