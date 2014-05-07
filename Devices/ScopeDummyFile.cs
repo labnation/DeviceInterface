@@ -13,7 +13,7 @@ namespace ECore.Devices
         private static float[] readChannelB = null;
         private static double[] readTime = null;
 
-        public static bool GetWaveFromFile(TriggerMode triggerMode, double triggerHoldoff, int triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
+        public static bool GetWaveFromFile(AcquisitionMode acqMode, TriggerMode triggerMode, double triggerHoldoff, int triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
             string filename = Utils.ApplicationDataPath + sequenceFilename;
             if(readChannelA == null || readChannelB == null || readTime == null) 
@@ -53,7 +53,7 @@ namespace ECore.Devices
             }
             else if (triggerMode == TriggerMode.ANALOG)
             {
-                if (ScopeDummy.TriggerAnalog(waves[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, 0f, outputWaveLength, out triggerIndex))
+                if (ScopeDummy.TriggerAnalog(acqMode, waves[triggerChannel], triggerDirection, triggerHoldoffInSamples, triggerLevel, 0f, outputWaveLength, out triggerIndex))
                 {
                     output = new float[channels][];
                     for (int i = 0; i < channels; i++)

@@ -271,7 +271,7 @@ namespace ECore.Devices {
 
 		#endregion
 
-		private static bool TriggerAnalog (float [] wave, TriggerDirection direction, int holdoff, float level, float noise, uint outputWaveLength, out int triggerIndex)
+		private static bool TriggerAnalog (AcquisitionMode acqMode, float [] wave, TriggerDirection direction, int holdoff, float level, float noise, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
@@ -284,7 +284,13 @@ namespace ECore.Devices {
 					return true;
 				}
 			}
-			return false;
+            if (acqMode == AcquisitionMode.SWEEP)
+            {
+                triggerIndex = holdoff;
+                return true;
+            }
+            else
+			    return false;
 		}
 
         private static bool TriggerDigital(byte[] wave, int holdoff, DigitalTrigger trigger, uint outputWaveLength, out int triggerIndex)
@@ -355,7 +361,7 @@ namespace ECore.Devices {
                         switch (triggerMode)
                         {
                             case TriggerMode.ANALOG:
-                                triggerDetected = ScopeDummy.TriggerAnalog(waveAnalog[triggerChannel], triggerDirection,
+                                triggerDetected = ScopeDummy.TriggerAnalog(acquisitionMode, waveAnalog[triggerChannel], triggerDirection,
                                     triggerHoldoffInSamples, triggerLevel, (float)_channelConfig[triggerChannel].noise,
                                     outputWaveLength, out triggerIndex);
                                 break;
@@ -372,12 +378,7 @@ namespace ECore.Devices {
                             break;
                     }
                     if (!triggerDetected)
-                    {
-                        if (acquisitionMode == AcquisitionMode.SWEEP)
-                            triggerIndex = triggerHoldoffInSamples;
-                        else
-                            return null;
-                    }
+                        return null;
 
 					outputAnalog = new float[channels][];
 					for (int i = 0; i < channels; i++) {
@@ -386,7 +387,7 @@ namespace ECore.Devices {
 					outputDigital = ScopeDummy.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
 				} else if (waveSource == WaveSource.FILE) {
 
-					if (!GetWaveFromFile (triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
+					if (!GetWaveFromFile (acquisitionMode, triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
 					for (int i = 0; i < channels; i++)
                         ScopeDummy.AddNoise(outputAnalog[i], _channelConfig[i].noise);
