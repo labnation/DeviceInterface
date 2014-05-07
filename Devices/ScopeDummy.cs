@@ -371,8 +371,13 @@ namespace ECore.Devices {
                         if (triggerDetected)
                             break;
                     }
-					if (!triggerDetected)
-						return null;
+                    if (!triggerDetected)
+                    {
+                        if (acquisitionMode == AcquisitionMode.SWEEP)
+                            triggerIndex = triggerHoldoffInSamples;
+                        else
+                            return null;
+                    }
 
 					outputAnalog = new float[channels][];
 					for (int i = 0; i < channels; i++) {
