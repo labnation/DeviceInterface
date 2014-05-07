@@ -15,7 +15,7 @@ namespace ECore.Devices
             //FIXME: implement this
             return (byte)((int)volt);
         }
-        private void validateChannel(uint ch)
+        private void validateChannel(int ch)
         {
             if (ch != 0 && ch != 1) 
                 throw new ValidationException("Channel must be 0 or 1");
@@ -45,7 +45,7 @@ namespace ECore.Devices
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
-        public void SetYOffset(uint channel, float offset)
+        public void SetYOffset(int channel, float offset)
         {
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
@@ -61,7 +61,7 @@ namespace ECore.Devices
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="divider">1, 10 or 100</param>
-        public void SetDivider(uint channel, uint divider)
+        public void SetDivider(int channel, uint divider)
         {
             validateChannel(channel);
             validateDivider(divider);
@@ -81,7 +81,7 @@ namespace ECore.Devices
         ///</summary>
         ///<param name="channel">0 or 1 (channel A or B)</param>
         ///<param name="multiplier">Set input stage multiplier (?? or ??)</param>
-        public void SetMultiplier(uint channel, uint multiplier)
+        public void SetMultiplier(int channel, uint multiplier)
         {
             validateChannel(channel);
             validateMultiplier(multiplier);
@@ -99,7 +99,7 @@ namespace ECore.Devices
             */
         }
 
-        public void SetCoupling(uint channel, Coupling coupling)
+        public void SetCoupling(int channel, Coupling coupling)
         {
             validateChannel(channel);
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
@@ -108,7 +108,7 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(dc).Set(enableDc);
             StrobeMemory.WriteSingle(dc);
         }
-        public Coupling GetCoupling(uint channel)
+        public Coupling GetCoupling(int channel)
         {
             validateChannel(channel);
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
@@ -139,7 +139,7 @@ namespace ECore.Devices
         /// Choose channel upon which to trigger
         /// </summary>
         /// <param name="channel"></param>
-        public void SetTriggerChannel(uint channel)
+        public void SetTriggerChannel(int channel)
         {
             validateChannel(channel);
             StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set(channel != 0);

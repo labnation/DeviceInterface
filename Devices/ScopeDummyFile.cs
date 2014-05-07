@@ -13,7 +13,7 @@ namespace ECore.Devices
         private static float[] readChannelB = null;
         private static double[] readTime = null;
 
-        public static bool GetWaveFromFile(TriggerMode triggerMode, double triggerHoldoff, uint triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
+        public static bool GetWaveFromFile(TriggerMode triggerMode, double triggerHoldoff, int triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
             string filename = Utils.ApplicationDataPath + sequenceFilename;
             if(readChannelA == null || readChannelB == null || readTime == null) 

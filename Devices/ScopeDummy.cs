@@ -10,6 +10,17 @@ namespace ECore.Devices {
 		GENERATOR
 	}
 
+    public struct ScopeDummyChannelConfig
+    {
+        public WaveForm waveform;
+        public double amplitude;
+        public Coupling coupling;
+        public double dcOffset;
+        public double frequency;
+        public double phase;
+        public double noise;
+    }
+
 	public partial class ScopeDummy : EDevice, IScope {
 		private DataSources.DataSourceScope dataSourceScope;
 
@@ -17,17 +28,8 @@ namespace ECore.Devices {
 
 		private DateTime timeOrigin;
 		//Wave settings
-		private WaveSource waveSource = WaveSource.FILE;
+		private WaveSource waveSource = WaveSource.GENERATOR;
 		private TriggerMode triggerMode = TriggerMode.ANALOG;
-		private WaveForm [] waveForm = { WaveForm.SINE, WaveForm.SAWTOOTH_SINE };
-		private double [] amplitude = new double[] { 1.3, 1.8 };
-		private Coupling [] coupling = new Coupling[] {
-			Coupling.DC,
-			Coupling.DC
-		};
-		private double [] dcOffset = new double[] { 0.0f, -0.9f };
-		private double [] frequency = new double[] { 200e3, 600e3 };
-		private double [] noiseAmplitude = new double[] { 0.1, 0.1 };
 		//Noise mean voltage
 		private int usbLatency = 40;
 		//milliseconds of latency to simulate USB request delay
@@ -38,11 +40,13 @@ namespace ECore.Devices {
 		//ns --> sampleFreq of 100MHz by default
 		private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
 
-		public const uint channels = 2;
+        public const uint channels = 2;
+        private ScopeDummyChannelConfig[] channelConfig = new ScopeDummyChannelConfig[channels];
+
 		private const uint outputWaveLength = 2048;
 		private float triggerLevel = 0;
 		private double triggerHoldoff = 0;
-		private uint triggerChannel = 0;
+		private int triggerChannel = 0;
 		private static uint triggerWidth = 4;
 
         private struct DigitalTrigger {
@@ -60,12 +64,28 @@ namespace ECore.Devices {
 		//Hack
 		bool regenerate = true;
 		DataPackageScope p;
+        private int maxAttempts = 10;
 
 		#region constructor / initializer
 
 		public ScopeDummy (ScopeConnectHandler handler)
             : base ()
 		{
+            for(int i = 0; i < channelConfig.Length; i++)
+            {
+                channelConfig[i] = new ScopeDummyChannelConfig()
+                {
+                    amplitude = 2.0,
+                    noise = 0.1,
+                    coupling = Coupling.DC,
+                    dcOffset = 0.0,
+                    frequency = 250e3,
+                    phase = 0,
+                    waveform = WaveForm.TRIANGLE
+                };
+            }
+                
+
 			dataSourceScope = new DataSources.DataSourceScope (this);
 			if (handler != null)
 				handler (this, true);
@@ -80,7 +100,7 @@ namespace ECore.Devices {
 
 		#region real scope settings
 
-		private void validateChannel (uint ch)
+		private void validateChannel (int ch)
 		{
 			if (ch >= channels)
 				throw new ValidationException ("Channel must be between 0 and " + (channels - 1));
@@ -115,13 +135,13 @@ namespace ECore.Devices {
 			this.triggerLevel = voltage;
 		}
 
-		public void SetYOffset (uint channel, float yOffset)
+		public void SetYOffset (int channel, float yOffset)
 		{
 			validateChannel (channel);
 			this.yOffset [channel] = yOffset;
 		}
 
-		public void SetTriggerChannel (uint channel)
+		public void SetTriggerChannel (int channel)
 		{
 			validateChannel (channel);
 			this.triggerChannel = channel;
@@ -182,16 +202,16 @@ namespace ECore.Devices {
 				decimation++;
 		}
 
-		public void SetCoupling (uint channel, Coupling coupling)
+		public void SetCoupling (int channel, Coupling coupling)
 		{
 			validateChannel (channel);
-			this.coupling [channel] = coupling;
+            channelConfig[channel].coupling = coupling;
 		}
 
-		public Coupling GetCoupling (uint channel)
+		public Coupling GetCoupling (int channel)
 		{
 			validateChannel (channel);
-			return coupling [channel];
+            return channelConfig[channel].coupling;
 		}
 
 		public double GetDefaultTimeRange ()
@@ -213,28 +233,39 @@ namespace ECore.Devices {
 
 		#region dummy scope settings
 
-		public void SetDummyWaveAmplitude (uint channel, double amplitude)
+        public void SetDummyWaveSource(WaveSource source)
+        {
+            this.waveSource = source;
+        }
+
+		public void SetDummyWaveAmplitude (int channel, double amplitude)
 		{
 			validateChannel (channel);
-			this.amplitude [channel] = amplitude;
+            channelConfig[channel].amplitude = amplitude;
 		}
 
-		public void SetDummyWaveFrequency (uint channel, double frequency)
+		public void SetDummyWaveFrequency (int channel, double frequency)
 		{
 			validateChannel (channel);
-			this.frequency [channel] = frequency;
+			channelConfig[channel].frequency = frequency;
 		}
 
-		public void SetDummyWaveForm (uint channel, WaveForm w)
+        public void SetDummyWavePhase(int channel, double phase)
+        {
+            validateChannel(channel);
+            channelConfig[channel].phase = phase;
+        }
+
+		public void SetDummyWaveForm (int channel, WaveForm w)
 		{
 			validateChannel (channel);
-			this.waveForm [channel] = w;
+            channelConfig[channel].waveform = w;
 		}
 
-		public void SetNoiseAmplitude (uint channel, double noiseAmplitude)
+		public void SetNoiseAmplitude (int channel, double noiseAmplitude)
 		{
 			validateChannel (channel);
-			this.noiseAmplitude [channel] = noiseAmplitude;
+            channelConfig[channel].noise = noiseAmplitude;
 		}
 
 		#endregion
@@ -247,7 +278,7 @@ namespace ECore.Devices {
 			triggerIndex = 0;
 			for (int i = Math.Max (0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++) {
 				float invertor = (direction == TriggerDirection.RISING) ? 1f : -1f;
-				if (invertor * wave [i] < invertor * level - noise && invertor * wave [i + triggerWidth] > invertor * level) {
+				if (invertor * wave [i] < invertor * level - noise && invertor * wave [i + triggerWidth] + noise > invertor * level) {
 					triggerIndex = (int) (i + triggerWidth / 2);
 					return true;
 				}
@@ -288,46 +319,57 @@ namespace ECore.Devices {
 
 			if (regenerate) {
 				if (waveSource == WaveSource.GENERATOR) {
-					//Generate analog wave
-					float [][] waveAnalog = new float[channels][];
-					TimeSpan timeOffset = DateTime.Now - timeOrigin;
-					for (int i = 0; i < channels; i++) {
-						waveAnalog [i] = ScopeDummy.GenerateWave (waveForm [i], waveLength,
-							SamplePeriod,
-							timeOffset.TotalSeconds,
-							frequency [i],
-							amplitude [i], 0, dcOffset [i]);
-						ScopeDummy.AddNoise (waveAnalog [i], noiseAmplitude [i]);
-					}
+                    byte[] waveDigital = null;
+                    float[][] waveAnalog = null;
+                    bool triggerDetected = false;
+                    
+                    for (int k = 0; k < maxAttempts; k++)
+                    {
+                        //Generate analog wave
+                        waveAnalog = new float[channels][];
+                        TimeSpan timeOffset = DateTime.Now - timeOrigin;
+                        for (int i = 0; i < channels; i++)
+                        {
+                            waveAnalog[i] = ScopeDummy.GenerateWave(waveLength,
+                                SamplePeriod,
+                                timeOffset.TotalSeconds,
+                                channelConfig[i]);
+                            ScopeDummy.AddNoise(waveAnalog[i], channelConfig[i].noise);
+                        }
 
-					//Generate some bullshit digital wave
-					byte [] waveDigital = new byte[waveLength];
-					byte value = 0;
-					for (int i = 0; i < waveDigital.Length; i++) {
-						waveDigital [i] = value;
-						if (i % 10 == 0)
-							value++;
-					}
+                        //Generate some bullshit digital wave
+                        waveDigital = new byte[waveLength];
+                        byte value = 0;
+                        for (int i = 0; i < waveDigital.Length; i++)
+                        {
+                            waveDigital[i] = value;
+                            if (i % 10 == 0)
+                                value++;
+                        }
 
-					//Trigger detection
-					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
+                        //Trigger detection
+                        triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
 
-					bool triggerDetected = false;
-					switch (triggerMode) {
-					case TriggerMode.ANALOG:
-						triggerDetected = ScopeDummy.TriggerAnalog (waveAnalog [triggerChannel], triggerDirection,
-							triggerHoldoffInSamples, triggerLevel, (float) noiseAmplitude [triggerChannel], 
-							outputWaveLength, out triggerIndex);
-						break;
-					case TriggerMode.DIGITAL:
-                        triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
-						break;
-					case TriggerMode.FREE_RUNNING:
-						triggerDetected = true;
-						triggerIndex = 0;
-						triggerHoldoffInSamples = 0;
-						break;
-					}
+
+                        switch (triggerMode)
+                        {
+                            case TriggerMode.ANALOG:
+                                triggerDetected = ScopeDummy.TriggerAnalog(waveAnalog[triggerChannel], triggerDirection,
+                                    triggerHoldoffInSamples, triggerLevel, (float)channelConfig[triggerChannel].noise,
+                                    outputWaveLength, out triggerIndex);
+                                break;
+                            case TriggerMode.DIGITAL:
+                                triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
+                                break;
+                            case TriggerMode.FREE_RUNNING:
+                                triggerDetected = true;
+                                triggerIndex = 0;
+                                triggerHoldoffInSamples = 0;
+                                break;
+                        }
+                        if (triggerDetected)
+                            break;
+                    }
 					if (!triggerDetected)
 						return null;
 
@@ -341,7 +383,7 @@ namespace ECore.Devices {
 					if (!GetWaveFromFile (triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
 					for (int i = 0; i < channels; i++)
-						ScopeDummy.AddNoise (outputAnalog [i], noiseAmplitude [i]);
+                        ScopeDummy.AddNoise(outputAnalog[i], channelConfig[i].noise);
 					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
 				}
 				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples);
