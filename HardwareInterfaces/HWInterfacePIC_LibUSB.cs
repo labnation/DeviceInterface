@@ -101,12 +101,27 @@ namespace ECore.HardwareInterfaces
             }
             else
             {
-		isConnected = false;
+				isConnected = false;
                 //de-init endpoints
-                dataEndpoint = null;
-                commandWriteEndpoint = null;
-                commandReadEndpoint = null;
+                if (dataEndpoint != null)
+                {
+                    dataEndpoint.Abort();
+                    dataEndpoint.Dispose();
+                    dataEndpoint = null;
+                }
 
+                if (commandWriteEndpoint != null)
+                {
+                    commandWriteEndpoint.Abort();
+                    commandWriteEndpoint.Dispose();
+                    commandWriteEndpoint = null;
+                }
+                if (commandReadEndpoint != null)
+                {
+                    commandReadEndpoint.Abort();
+                    commandReadEndpoint.Dispose();
+                    commandReadEndpoint = null;
+                }
                 
                 if (onConnect != null)
                     onConnect(false);
@@ -123,8 +138,8 @@ namespace ECore.HardwareInterfaces
 
         public override int WriteControlBytes(byte[] message)
         {
-            //if (!isConnected)
-            //    throw new Exception("Can't write to device since it's not connected");
+            if (!isConnected)
+                throw new Exception("Can't write to device since it's not connected");
             int bytesWritten;
             commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             return bytesWritten;
@@ -133,8 +148,8 @@ namespace ECore.HardwareInterfaces
         public override byte[] ReadControlBytes(int length)
         {
             //see if device is connected properly
-            //if (!isConnected)
-                //throw new Exception("Can't read from device since it's not connected");
+            if (!isConnected)
+                throw new Exception("Can't read from device since it's not connected");
 
             //try to read data
             ErrorCode errorCode = ErrorCode.None;
