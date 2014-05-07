@@ -41,7 +41,8 @@ namespace ECore.Devices {
 		private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
 
         public const uint channels = 2;
-        private ScopeDummyChannelConfig[] channelConfig = new ScopeDummyChannelConfig[channels];
+        private ScopeDummyChannelConfig[] _channelConfig = new ScopeDummyChannelConfig[channels];
+        public ScopeDummyChannelConfig[] ChannelConfig { get { return _channelConfig; } }
 
 		private const uint outputWaveLength = 2048;
 		private float triggerLevel = 0;
@@ -71,9 +72,9 @@ namespace ECore.Devices {
 		public ScopeDummy (ScopeConnectHandler handler)
             : base ()
 		{
-            for(int i = 0; i < channelConfig.Length; i++)
+            for(int i = 0; i < _channelConfig.Length; i++)
             {
-                channelConfig[i] = new ScopeDummyChannelConfig()
+                _channelConfig[i] = new ScopeDummyChannelConfig()
                 {
                     amplitude = 2.0,
                     noise = 0.1,
@@ -205,13 +206,13 @@ namespace ECore.Devices {
 		public void SetCoupling (int channel, Coupling coupling)
 		{
 			validateChannel (channel);
-            channelConfig[channel].coupling = coupling;
+            _channelConfig[channel].coupling = coupling;
 		}
 
 		public Coupling GetCoupling (int channel)
 		{
 			validateChannel (channel);
-            return channelConfig[channel].coupling;
+            return _channelConfig[channel].coupling;
 		}
 
 		public double GetDefaultTimeRange ()
@@ -241,31 +242,31 @@ namespace ECore.Devices {
 		public void SetDummyWaveAmplitude (int channel, double amplitude)
 		{
 			validateChannel (channel);
-            channelConfig[channel].amplitude = amplitude;
+            _channelConfig[channel].amplitude = amplitude;
 		}
 
 		public void SetDummyWaveFrequency (int channel, double frequency)
 		{
 			validateChannel (channel);
-			channelConfig[channel].frequency = frequency;
+			_channelConfig[channel].frequency = frequency;
 		}
 
         public void SetDummyWavePhase(int channel, double phase)
         {
             validateChannel(channel);
-            channelConfig[channel].phase = phase;
+            _channelConfig[channel].phase = phase;
         }
 
 		public void SetDummyWaveForm (int channel, WaveForm w)
 		{
 			validateChannel (channel);
-            channelConfig[channel].waveform = w;
+            _channelConfig[channel].waveform = w;
 		}
 
 		public void SetNoiseAmplitude (int channel, double noiseAmplitude)
 		{
 			validateChannel (channel);
-            channelConfig[channel].noise = noiseAmplitude;
+            _channelConfig[channel].noise = noiseAmplitude;
 		}
 
 		#endregion
@@ -333,8 +334,8 @@ namespace ECore.Devices {
                             waveAnalog[i] = ScopeDummy.GenerateWave(waveLength,
                                 SamplePeriod,
                                 timeOffset.TotalSeconds,
-                                channelConfig[i]);
-                            ScopeDummy.AddNoise(waveAnalog[i], channelConfig[i].noise);
+                                _channelConfig[i]);
+                            ScopeDummy.AddNoise(waveAnalog[i], _channelConfig[i].noise);
                         }
 
                         //Generate some bullshit digital wave
@@ -355,7 +356,7 @@ namespace ECore.Devices {
                         {
                             case TriggerMode.ANALOG:
                                 triggerDetected = ScopeDummy.TriggerAnalog(waveAnalog[triggerChannel], triggerDirection,
-                                    triggerHoldoffInSamples, triggerLevel, (float)channelConfig[triggerChannel].noise,
+                                    triggerHoldoffInSamples, triggerLevel, (float)_channelConfig[triggerChannel].noise,
                                     outputWaveLength, out triggerIndex);
                                 break;
                             case TriggerMode.DIGITAL:
@@ -383,7 +384,7 @@ namespace ECore.Devices {
 					if (!GetWaveFromFile (triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
 					for (int i = 0; i < channels; i++)
-                        ScopeDummy.AddNoise(outputAnalog[i], channelConfig[i].noise);
+                        ScopeDummy.AddNoise(outputAnalog[i], _channelConfig[i].noise);
 					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
 				}
 				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples);
