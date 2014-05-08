@@ -218,7 +218,8 @@ namespace ECore.Devices
             }
 
             //construct data package
-            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex);
+            //FIXME: get firstsampletime and samples from FPGA
+            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, chA.Length, 0);
             //FIXME: parse package header and set DataPackageScope's trigger index
             //FIXME: Get bytes, split into analog/digital channels and add to scope data
             if (this.disableVoltageConversion)

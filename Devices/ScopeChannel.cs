@@ -20,6 +20,8 @@ namespace ECore.Devices
 
         public static AnalogChannel ChA  = new AnalogChannel("A", 0);
         public static AnalogChannel ChB  = new AnalogChannel("B", 1);
+
+        public static LogicAnalyserChannel LogicAnalyser = new LogicAnalyserChannel("LA", 0);
     }
 
     public class Channel
@@ -59,4 +61,11 @@ namespace ECore.Devices
         public DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
         override public void Destroy() { list.Remove(this); base.Destroy(); }
     }
+    public class LogicAnalyserChannel : Channel
+    {
+        new public static HashSet<LogicAnalyserChannel> list = new HashSet<LogicAnalyserChannel>();
+        public LogicAnalyserChannel(string name, int value) : base(name, value) { list.Add(this); }
+        override public void Destroy() { list.Remove(this); base.Destroy(); }
+    }
+
 }

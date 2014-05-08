@@ -8,35 +8,20 @@ namespace ECore.DataPackages
 {
     public class DataPackageScope
     {
-        private int triggerIndex;
-        private double samplePeriod;
         private Dictionary<AnalogChannel, float[]> dataAnalog;
         //FIXME: think through how to deal with the digital data. For now, it's better
         //to just pass it around as an 8-bit bus. But what if we have 10 channels? or 11? or 42?
         private byte[] dataDigital;
         private Dictionary<AnalogChannel, float> yOffset;
 
-        public DataPackageScope(double samplePeriod, int triggerIndex)
+        public DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime)
         {
-            this.triggerIndex = triggerIndex;
-            this.samplePeriod = samplePeriod;
+            this.TriggerIndex = triggerIndex;
+            this.SamplePeriod = samplePeriod;
+            this.Samples = samples;
+            this.FirstSampleTime = firstSampleTime;
             dataAnalog = new Dictionary<AnalogChannel, float[]>();
             yOffset = new Dictionary<AnalogChannel, float>();
-        }
-        //FIXME: this constructor shouldn't be necessary, all data should be set using Set()
-        //It's just here to support "legacy" code
-        public DataPackageScope(float[] buffer)
-            : this(20e-9, 0)
-        {
-            float[] chA = new float[buffer.Length / 2];
-            float[] chB = new float[buffer.Length / 2];
-            for (int i = 0; i < chA.Length; i++)
-            {
-                chA[i] = buffer[i];
-                chB[i] = buffer[buffer.Length / 2 + i];
-            }
-            dataAnalog.Add(ScopeChannels.ChA, chA);
-            dataAnalog.Add(ScopeChannels.ChB, chB);
         }
 
         public void SetData(AnalogChannel ch, float[] data)
@@ -101,10 +86,21 @@ namespace ECore.DataPackages
         /// Index at which the data was triggered. WARN: This index is not necessarily within the 
         /// data array's bounds, depending on what trigger holdoff was used
         /// </remarks>
-        public int TriggerIndex { get { return this.triggerIndex; } }
+        public int TriggerIndex { get; private set; }
         /// <summary>
         /// Time between 2 consecutive data array elements. In seconds.
         /// </summary>
-        public double SamplePeriod { get { return this.samplePeriod; } }
+        public double SamplePeriod { get; private set; }
+
+        /// <summary>
+        /// The time in ns scale at which the first sample of the
+        /// data was acquired, relative to the scope's own clock
+        /// </summary>
+        public UInt64 FirstSampleTime { get; private set; }
+
+        /// <summary>
+        /// The number of samples stored per channel
+        /// </summary>
+        public int Samples { get; private set; }
     }
 }

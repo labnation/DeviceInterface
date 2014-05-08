@@ -35,7 +35,7 @@ namespace ECore.Devices {
 		//milliseconds of latency to simulate USB request delay
 		private float [] yOffset = new float[] { 0, 0 };
 		//Scope variables
-		private const uint waveLength = 3 * outputWaveLength;
+		private const int waveLength = 3 * outputWaveLength;
 		private double samplePeriodMinimum = 10e-9;
 		//ns --> sampleFreq of 100MHz by default
 		private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
@@ -44,7 +44,7 @@ namespace ECore.Devices {
         private ScopeDummyChannelConfig[] _channelConfig = new ScopeDummyChannelConfig[channels];
         public ScopeDummyChannelConfig[] ChannelConfig { get { return _channelConfig; } }
 
-		private const uint outputWaveLength = 2048;
+		private const int outputWaveLength = 2048;
 		private float triggerLevel = 0;
 		private double triggerHoldoff = 0;
 		private int triggerChannel = 0;
@@ -324,6 +324,7 @@ namespace ECore.Devices {
             while (!acquisitionRunning)
                 System.Threading.Thread.Sleep(10);
 
+            TimeSpan timeOffset = DateTime.Now - timeOrigin;
 			if (regenerate) {
 				if (waveSource == WaveSource.GENERATOR) {
                     byte[] waveDigital = null;
@@ -334,7 +335,7 @@ namespace ECore.Devices {
                     {
                         //Generate analog wave
                         waveAnalog = new float[channels][];
-                        TimeSpan timeOffset = DateTime.Now - timeOrigin;
+                        timeOffset = DateTime.Now - timeOrigin;
                         for (int i = 0; i < channels; i++)
                         {
                             waveAnalog[i] = ScopeDummy.GenerateWave(waveLength,
@@ -386,14 +387,15 @@ namespace ECore.Devices {
 					}
 					outputDigital = ScopeDummy.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
 				} else if (waveSource == WaveSource.FILE) {
-
 					if (!GetWaveFromFile (acquisitionMode, triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
 					for (int i = 0; i < channels; i++)
                         ScopeDummy.AddNoise(outputAnalog[i], _channelConfig[i].noise);
 					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
 				}
-				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples);
+                double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
+                UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
+				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs);
 				p.SetData (ScopeChannels.ChA, outputAnalog [0]);
 				p.SetData (ScopeChannels.ChB, outputAnalog [1]);
 				p.SetOffset (ScopeChannels.ChA, yOffset [0]);
