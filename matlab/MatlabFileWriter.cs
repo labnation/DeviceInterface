@@ -55,7 +55,7 @@ namespace MatlabFileIO
                     string dataAsString = data as string;
                     MatLabFileArrayWriter charArrayWriter = OpenArray(typeof(char), name);
                     charArrayWriter.AddRow(dataAsString.ToCharArray());
-                    charArrayWriter.FinishArray(t);
+                    charArrayWriter.FinishArray(typeof(char));
             }
             else{
                     //even singletons are/canBe saved as arrays.

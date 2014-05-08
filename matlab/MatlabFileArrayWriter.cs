@@ -58,7 +58,7 @@ namespace MatlabFileIO
         private void WriteDataHeader(Type t)
         {
             //type of contents
-            writeStream.Write(MatlabTypeNumber(t));
+            writeStream.Write(MatfileHelper.MatlabTypeNumber(t));
             
             //store position, so we can later overwrite this placeholder
             dataLengthStartPosition = writeStream.BaseStream.Position;
@@ -80,56 +80,73 @@ namespace MatlabFileIO
             
             //dump data in stream
             int size = 0;
-            if (data.GetType().Equals(typeof(double[]))) {
+            if (data.GetType().Equals(typeof(byte[])))
+            {
+                byte[] castedDataByte = dataToAppend as byte[];
+                for (int i = 0; i < data.Length; i++)
+                    writeStream.Write(castedDataByte[i]);
+                size = sizeof(byte);
+            }
+            else if (data.GetType().Equals(typeof(double[]))) {
                     double[] castedDataDouble = dataToAppend as double[];
                     for (int i = 0; i < data.Length; i++)
-                        writeStream.Write((Double)castedDataDouble[i]);
+                        writeStream.Write(castedDataDouble[i]);
                     size = sizeof(double);
             }
             else if (data.GetType().Equals(typeof(float[])))
             {
                     float[] castedDataSingle = dataToAppend as float[];
                     for (int i = 0; i < data.Length; i++)
-                        writeStream.Write((Single)castedDataSingle[i]);
+                        writeStream.Write(castedDataSingle[i]);
                     size = sizeof(float);
             }
             else if (data.GetType().Equals(typeof(Int16[])))
             {
                     Int16[] castedDataI16 = dataToAppend as Int16[];
                     for (int i = 0; i < data.Length; i++)
-                        writeStream.Write((Int16)castedDataI16[i]);
+                        writeStream.Write(castedDataI16[i]);
                     size = sizeof(Int16);
             }
             else if (data.GetType().Equals(typeof(UInt16[])))
             {
                     UInt16[] castedDataUI16 = dataToAppend as UInt16[];
                     for (int i = 0; i < data.Length; i++)
-                        writeStream.Write((UInt16)castedDataUI16[i]);
+                        writeStream.Write(castedDataUI16[i]);
                     size = sizeof(UInt16);
             }
             else if (data.GetType().Equals(typeof(Int32[])))
             {
                     Int32[] castedDataI32 = dataToAppend as Int32[];
                     for (int i = 0; i < data.Length; i++)
-                        writeStream.Write((Int32)castedDataI32[i]);
+                        writeStream.Write(castedDataI32[i]);
                     size = sizeof(Int32);
             }
             else if (data.GetType().Equals(typeof(UInt32[])))
             {
                     UInt32[] castedDataUI32 = dataToAppend as UInt32[];
                     for (int i = 0; i < data.Length; i++)
-                        writeStream.Write((UInt32)castedDataUI32[i]);
+                        writeStream.Write(castedDataUI32[i]);
                     size = sizeof(UInt32);
             }
-            else if (data.GetType().Equals(typeof(char[]))) {
-                    char[] castedDataChar = dataToAppend as char[];
+            else if (data.GetType().Equals(typeof(sbyte[]))) {
+                    sbyte[] castedDataChar = dataToAppend as sbyte[];
                     for (int i = 0; i < data.Length; i++)
                     {
-                        writeStream.Write((char)castedDataChar[i]);
-                        writeStream.Write((byte)0); 
+                        writeStream.Write(castedDataChar[i]);
                     }
-                    size = sizeof(char);
+                    size = sizeof(sbyte);
             }
+            else if (data.GetType().Equals(typeof(char[]))) //Char is internally sbyte
+            {
+                char[] castedDataChar = dataToAppend as char[];
+                for (int i = 0; i < data.Length; i++)
+                {
+                    writeStream.Write(castedDataChar[i]);
+                    writeStream.Write((byte)0);
+                }
+                size = sizeof(char);
+            }
+
             else
                 throw new NotImplementedException("Writing arrays of " + data.GetType().ToString() + " to .mat file not implemented");
 
@@ -138,18 +155,6 @@ namespace MatlabFileIO
             //needed for array dimensions
             firstDim++;
         }        
-
-        private static int MatlabTypeNumber(Type t)
-        {
-            if (t.Equals(typeof(double))) return 9;
-            if (t.Equals(typeof(float)))  return 7;
-            if (t.Equals(typeof(Int16)))  return 3;
-            if (t.Equals(typeof(UInt16))) return 4;
-            if (t.Equals(typeof(Int32)))  return 5;
-            if (t.Equals(typeof(UInt32))) return 6;
-            if (t.Equals(typeof(Char)))   return 4;
-            throw new NotImplementedException("Writing arrays of " + t.ToString() + " to .mat file not implemented");
-        }
 
         public void FinishArray(Type t)
         {
@@ -208,15 +213,7 @@ namespace MatlabFileIO
             writeStream.Write((int)8);
 
             //array class
-            if (t.Equals(typeof(double)))      writeStream.Write((int)6);
-            else if (t.Equals(typeof(float)))  writeStream.Write((int)7);
-            else if (t.Equals(typeof(Int16)))  writeStream.Write((int)10);
-            else if (t.Equals(typeof(UInt16))) writeStream.Write((int)11);
-            else if (t.Equals(typeof(Int32)))  writeStream.Write((int)12);
-            else if (t.Equals(typeof(UInt32))) writeStream.Write((int)13);
-            else if (t.Equals(typeof(Char)))   writeStream.Write((int)4);
-            else 
-                throw new NotImplementedException("Writing arrays of " + t.ToString() + " to .mat file not implemented");
+            writeStream.Write(MatfileHelper.MatlabTypeNumber(t));
 
             //padding (always 0)
             writeStream.Write((int)0);            

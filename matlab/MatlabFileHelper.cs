@@ -140,44 +140,39 @@ namespace MatlabFileIO
             }
         }
 
+        private static Type[] ArrayTypes = new Type[] {
+            null,               //0
+            null,               //1
+            null,               //2
+            null,               //3
+            typeof(Char),       //4
+            null,               //5
+            typeof(Double),     //6
+            typeof(Single),     //7
+            typeof(SByte),      //8
+            typeof(Byte),       //9
+            typeof(Int16),      //10
+            typeof(UInt16),     //11
+            typeof(Int32),      //12
+            typeof(UInt32),     //13
+            typeof(Int64),      //14
+            typeof(UInt64)      //15
+        };
+
         public static Type parseArrayType(byte contentTypeInt)
         {
-            switch (contentTypeInt)
-            {
-                case 1:
-                    throw new IOException("Type <Cell array> not supported");
-                case 2:
-                    throw new IOException("Type <Structure> not supported");
-                case 3:
-                    throw new IOException("Type <Object> not supported");
-                case 4:
-                    return typeof(Char);
-                case 5:
-                    throw new IOException("Sparse array not supported");
-                case 6:
-                    return typeof(Double);
-                case 7:
-                    return typeof(Single);
-                case 8:
-                    return typeof(SByte);
-                case 9:
-                    return typeof(Byte);
-                case 10:
-                    return typeof(Int16);
-                case 11:
-                    return typeof(UInt16);
-                case 12:
-                    return typeof(Int32);
-                case 13:
-                    return typeof(UInt32);
-                case 14:
-                    return typeof(Int64);
-                case 15:
-                    return typeof(UInt64);
-                default:
-                    throw new Exception("Content of array not supported");
-            }
+            Type t = ArrayTypes[contentTypeInt];
+            if (t != null) return t;
+            throw new Exception("Content of array not supported");
         }
+
+        public static int MatlabTypeNumber(Type t)
+        {
+            int i = Array.IndexOf(ArrayTypes, t);
+            if (i > 0) return i;
+            throw new NotImplementedException("Arrays of " + t.ToString() + " to .mat file not implemented");
+        }
+
 
         public static Array CastToMatlabType(Type t, byte[] data, int offset = 0, int length = -1)
         {
