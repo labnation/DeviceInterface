@@ -26,7 +26,7 @@ namespace MatlabFileIO
             writeStream.Close();
         }
 
-        public MatLabFileArrayWriter<T> OpenArray<T>(string varName)
+        public MatLabFileArrayWriter OpenArray(Type t, string varName)
         {
             //first check if there is no array operation ongoing
             if (locker != null)
@@ -34,15 +34,15 @@ namespace MatlabFileIO
                     throw new Exception("Previous array still open!");
 
             //check whether type is not a string, as this is not supported for now
-            if (Type.GetTypeCode(typeof(T)) == TypeCode.String)
+            if (t.Equals(typeof(String)))
                 throw new NotImplementedException("Writing arrays of strings is not supported (as strings are arrays already)");
 
-            MatLabFileArrayWriter<T> arrayWriter = new MatLabFileArrayWriter<T>(varName, writeStream);
+            MatLabFileArrayWriter arrayWriter = new MatLabFileArrayWriter(t, varName, writeStream);
             locker = (IMatlabFileWriterLocker)arrayWriter;
             return arrayWriter;
         }
 
-        public void Write<T>(string name, T data)
+        public void Write(Type t, string name, object data)
         {
             //first check if there is no array operation ongoing
             if (locker != null)
@@ -50,22 +50,19 @@ namespace MatlabFileIO
                     throw new Exception("Array being written! Cannot write to file until array has been finished.");
 
             //let's write some data
-            switch (Type.GetTypeCode(typeof(T)))
-            {
-                case TypeCode.String:
+            if(t.Equals(typeof(String))) {
                     //a string is considered an array of chars
                     string dataAsString = data as string;
-                    MatLabFileArrayWriter<char> charArrayWriter = OpenArray<char>(name);
+                    MatLabFileArrayWriter charArrayWriter = OpenArray(typeof(char), name);
                     charArrayWriter.AddRow(dataAsString.ToCharArray());
-                    charArrayWriter.FinishArray();
-                    break;
-                default:
+                    charArrayWriter.FinishArray(t);
+            }
+            else{
                     //even singletons are/canBe saved as arrays.
                     //so let's write an array of 1 element!
-                    MatLabFileArrayWriter<T> arrayWriter = OpenArray<T>(name);
-                    arrayWriter.AddRow(new T[] { data });
-                    arrayWriter.FinishArray();
-                    break;
+                    MatLabFileArrayWriter arrayWriter = OpenArray(t, name);
+                    arrayWriter.AddRow(data);
+                    arrayWriter.FinishArray(t);
             }
         }
     }

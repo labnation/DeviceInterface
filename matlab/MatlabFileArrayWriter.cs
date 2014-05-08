@@ -10,7 +10,7 @@ namespace MatlabFileIO
         bool HasFinished();
     }
 
-    public class MatLabFileArrayWriter<T> : IMatlabFileWriterLocker
+    public class MatLabFileArrayWriter : IMatlabFileWriterLocker
     {
         private BinaryWriter writeStream;
         bool hasFinished;
@@ -25,7 +25,7 @@ namespace MatlabFileIO
         private long headerLength = 0;
         private int totalPaddingAdded = 0;
 
-        public MatLabFileArrayWriter(string varName, BinaryWriter writeStream)
+        public MatLabFileArrayWriter(Type t, string varName, BinaryWriter writeStream)
         {
             this.writeStream = writeStream;
             this.hasFinished = false;
@@ -36,7 +36,7 @@ namespace MatlabFileIO
             WriteArrayHeaderRG();
 
             //flags
-            WriteFlagsRG<T>();
+            WriteFlagsRG(t);
 
             //dimensions            
             WriteDimensionsPlaceholderRG();
@@ -48,17 +48,17 @@ namespace MatlabFileIO
             headerLength = writeStream.BaseStream.Position - beginPosition;            
 
             //data header
-            WriteDataHeader();
+            WriteDataHeader(t);
 
             //reset dataLength, as this might have been affected by padding
             dataLength = 0;
             totalPaddingAdded = 0;
         }
 
-        private void WriteDataHeader()
+        private void WriteDataHeader(Type t)
         {
             //type of contents
-            writeStream.Write((int)MatlabTypeNumber<T>());
+            writeStream.Write(MatlabTypeNumber(t));
             
             //store position, so we can later overwrite this placeholder
             dataLengthStartPosition = writeStream.BaseStream.Position;
@@ -68,110 +68,97 @@ namespace MatlabFileIO
                 writeStream.Write((byte)0xcc);            
         }
 
-        public void AddRow(T[] dataToAppend)
+        public void AddRow(object dataToAppend)
         {
+            Array data = dataToAppend as Array;
             //store this dimension size, and check if it is the same as any previous data stored
             if (secondDim == 0) //first data
-                secondDim = dataToAppend.Length;
+                secondDim = data.Length;
             else //not first data
-                if (secondDim != dataToAppend.Length) //different size!
+                if (secondDim != data.Length) //different size!
                     throw new Exception("Data to be appended has a different size than previously appended data!");
             
             //dump data in stream
-            switch (Type.GetTypeCode(typeof(T)))
-            {
-                case TypeCode.Double:
-                    Double[] castedDataDouble = dataToAppend as Double[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
+            int size = 0;
+            if (data.GetType().Equals(typeof(double[]))) {
+                    double[] castedDataDouble = dataToAppend as double[];
+                    for (int i = 0; i < data.Length; i++)
                         writeStream.Write((Double)castedDataDouble[i]);
-                    break;
-                case TypeCode.Single:
-                    Single[] castedDataSingle = dataToAppend as Single[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
+                    size = sizeof(double);
+            }
+            else if (data.GetType().Equals(typeof(float[])))
+            {
+                    float[] castedDataSingle = dataToAppend as float[];
+                    for (int i = 0; i < data.Length; i++)
                         writeStream.Write((Single)castedDataSingle[i]);
-                    break;
-                case TypeCode.Int16:
+                    size = sizeof(float);
+            }
+            else if (data.GetType().Equals(typeof(Int16[])))
+            {
                     Int16[] castedDataI16 = dataToAppend as Int16[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
+                    for (int i = 0; i < data.Length; i++)
                         writeStream.Write((Int16)castedDataI16[i]);
-                    break;
-                case TypeCode.UInt16:
+                    size = sizeof(Int16);
+            }
+            else if (data.GetType().Equals(typeof(UInt16[])))
+            {
                     UInt16[] castedDataUI16 = dataToAppend as UInt16[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
-                        writeStream.Write((UInt16)castedDataUI16[i]);                    
-                    break;
-                case TypeCode.Int32:
+                    for (int i = 0; i < data.Length; i++)
+                        writeStream.Write((UInt16)castedDataUI16[i]);
+                    size = sizeof(UInt16);
+            }
+            else if (data.GetType().Equals(typeof(Int32[])))
+            {
                     Int32[] castedDataI32 = dataToAppend as Int32[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
+                    for (int i = 0; i < data.Length; i++)
                         writeStream.Write((Int32)castedDataI32[i]);
-                    break;
-                case TypeCode.UInt32:
+                    size = sizeof(Int32);
+            }
+            else if (data.GetType().Equals(typeof(UInt32[])))
+            {
                     UInt32[] castedDataUI32 = dataToAppend as UInt32[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
+                    for (int i = 0; i < data.Length; i++)
                         writeStream.Write((UInt32)castedDataUI32[i]);
-                    break;
-                case TypeCode.Char:
+                    size = sizeof(UInt32);
+            }
+            else if (data.GetType().Equals(typeof(char[]))) {
                     char[] castedDataChar = dataToAppend as char[];
-                    for (int i = 0; i < dataToAppend.Length; i++)
+                    for (int i = 0; i < data.Length; i++)
                     {
                         writeStream.Write((char)castedDataChar[i]);
                         writeStream.Write((byte)0); 
                     }
-                    break;
-                default:
-                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(T)).ToString() + " to .mat file not implemented");
-                    //break;
+                    size = sizeof(char);
             }
+            else
+                throw new NotImplementedException("Writing arrays of " + data.GetType().ToString() + " to .mat file not implemented");
 
-            dataLength += dataToAppend.Length * MatfileHelper.MatlabBytesPerType(typeof(T));
+            dataLength += data.Length * size;
 
             //needed for array dimensions
             firstDim++;
         }        
 
-        private int MatlabTypeNumber<E>()
+        private static int MatlabTypeNumber(Type t)
         {
-            int typeNumber = 0;
-
-            switch (Type.GetTypeCode(typeof(E)))
-            {
-                case TypeCode.Double:
-                    typeNumber = 9;
-                    break;
-                case TypeCode.Single:
-                    typeNumber = 7;
-                    break;                
-                case TypeCode.Int16:
-                    typeNumber = 3;
-                    break;
-                case TypeCode.UInt16:
-                    typeNumber = 4;
-                    break;
-                case TypeCode.Int32:
-                    typeNumber = 5;
-                    break;
-                case TypeCode.UInt32:
-                    typeNumber = 6;
-                    break;
-                case TypeCode.Char:
-                    typeNumber = 4;
-                    break;
-                default:
-                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(E)).ToString() + " to .mat file not implemented");
-                    //break;
-            }
-
-            return typeNumber;
+            if (t.Equals(typeof(double))) return 9;
+            if (t.Equals(typeof(float)))  return 7;
+            if (t.Equals(typeof(Int16)))  return 3;
+            if (t.Equals(typeof(UInt16))) return 4;
+            if (t.Equals(typeof(Int32)))  return 5;
+            if (t.Equals(typeof(UInt32))) return 6;
+            if (t.Equals(typeof(Char)))   return 4;
+            throw new NotImplementedException("Writing arrays of " + t.ToString() + " to .mat file not implemented");
         }
 
-        public void FinishArray()
+        public void FinishArray(Type t)
         {
             AddPadding(dataLength);
             
             //now need to overwrite the dimensions with the correct value
             writeStream.Seek((int)dimensionsStartPosition, SeekOrigin.Begin);
             //silly matlab format dimension definition wasn't made for realtime streaming... without the following, strings would need to be transposed in matlab to be readable
-            if (Type.GetTypeCode(typeof(T)) == TypeCode.Char)
+            if (t.Equals(typeof(char)))
             {                
                 writeStream.Write((int)firstDim);
                 writeStream.Write((int)secondDim);
@@ -210,7 +197,7 @@ namespace MatlabFileIO
                 writeStream.Write((byte)0xff);
         }
 
-        private void WriteFlagsRG<E>()
+        private void WriteFlagsRG(Type t)
         {
             //write 4 values for flag block
 
@@ -221,33 +208,15 @@ namespace MatlabFileIO
             writeStream.Write((int)8);
 
             //array class
-            switch (Type.GetTypeCode(typeof(E)))
-            {
-                case TypeCode.Double:
-                    writeStream.Write((int)6);
-                    break;
-                case TypeCode.Single:
-                    writeStream.Write((int)7);
-                    break;
-                case TypeCode.Int16:
-                    writeStream.Write((int)10);
-                    break;
-                case TypeCode.UInt16:
-                    writeStream.Write((int)11);
-                    break;
-                case TypeCode.Int32:
-                    writeStream.Write((int)12);
-                    break;
-                case TypeCode.UInt32:
-                    writeStream.Write((int)13);
-                    break;
-                case TypeCode.Char:
-                    writeStream.Write((int)4);
-                    break;
-                default:
-                    throw new NotImplementedException("Writing arrays of " + Type.GetTypeCode(typeof(E)).ToString() + " to .mat file not implemented");
-                    //break;
-            }
+            if (t.Equals(typeof(double)))      writeStream.Write((int)6);
+            else if (t.Equals(typeof(float)))  writeStream.Write((int)7);
+            else if (t.Equals(typeof(Int16)))  writeStream.Write((int)10);
+            else if (t.Equals(typeof(UInt16))) writeStream.Write((int)11);
+            else if (t.Equals(typeof(Int32)))  writeStream.Write((int)12);
+            else if (t.Equals(typeof(UInt32))) writeStream.Write((int)13);
+            else if (t.Equals(typeof(Char)))   writeStream.Write((int)4);
+            else 
+                throw new NotImplementedException("Writing arrays of " + t.ToString() + " to .mat file not implemented");
 
             //padding (always 0)
             writeStream.Write((int)0);            
