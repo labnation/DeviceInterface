@@ -12,13 +12,13 @@ namespace ECore.Devices
 {
     //this is the main class which fills the EDevice with data specific to the HW implementation.
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
-    public partial class ScopeV2: EDevice, IScope
+    public partial class ScopeV2 : EDevice, IScope
     {
         public EDeviceHWInterface hardwareInterface;
         private ScopeConnectHandler scopeConnectHandler;
 
-		public static string DemoStatusText = "";
-        public DeviceMemories.ScopeFpgaSettingsMemory  FpgaSettingsMemory { get; private set; }
+        public static string DemoStatusText = "";
+        public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
         public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
         public DeviceMemories.MAX19506Memory AdcMemory { get; private set; }
@@ -26,19 +26,19 @@ namespace ECore.Devices
 
         private DataSources.DataSourceScope dataSourceScope;
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
-        
-        private float[] calibrationCoefficients = new float[] {0.0042f, -0.0029f, 0.1028f};
+
+        private float[] calibrationCoefficients = new float[] { 0.0042f, -0.0029f, 0.1028f };
 
         private bool disableVoltageConversion;
         private const double SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
-        
-		#if ANDROID
+
+#if ANDROID
 		public Android.Content.Res.AssetManager Assets;
-		#endif
+#endif
 
         public ScopeV2(ScopeConnectHandler handler)
-            : base() 
+            : base()
         {
             //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
             //FIXME: no clue why this line is here...
@@ -52,13 +52,13 @@ namespace ECore.Devices
 
         private void InitializeHardwareInterface()
         {
-	#if ANDROID
+#if ANDROID
 		hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
-	#else
-        	HWInterfacePIC_LibUSB hwPic = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
-		hardwareInterface = hwPic;
-            	hwPic.CheckForDevices();
-	#endif
+#else
+            HWInterfacePIC_LibUSB hwPic = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
+            hardwareInterface = hwPic;
+            hwPic.CheckForDevices();
+#endif
         }
 
         private void OnDeviceConnect(bool connected)
@@ -68,19 +68,19 @@ namespace ECore.Devices
             //but there should be when flashing the FPGA.
             if (connected)
             {
-		hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
-		byte[] response = hardwareInterface.ReadControlBytes(16);
-		string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
-		foreach (byte b in response)
-		resultString += b.ToString() + ";";
-		Logger.AddEntry(this, LogMessageType.Persistent, resultString);
-                
-		FlashFpgaInternal();
+                hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
+                byte[] response = hardwareInterface.ReadControlBytes(16);
+                string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
+                foreach (byte b in response)
+                    resultString += b.ToString() + ";";
+                Logger.AddEntry(this, LogMessageType.Persistent, resultString);
+
+                FlashFpgaInternal();
                 InitializeMemories();
-				
-		FpgaRom.ReadSingle(ROM.FW_MSB);
-		FpgaRom.ReadSingle(ROM.FW_LSB);
-		Logger.AddEntry(this, LogMessageType.ECoreInfo, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
+
+                FpgaRom.ReadSingle(ROM.FW_MSB);
+                FpgaRom.ReadSingle(ROM.FW_LSB);
+                Logger.AddEntry(this, LogMessageType.ECoreInfo, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
             }
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);
@@ -97,7 +97,7 @@ namespace ECore.Devices
             StrobeMemory = new DeviceMemories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
             AdcMemory = new DeviceMemories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
-            
+
             memories.Add(FpgaRom);
             memories.Add(FpgaSettingsMemory);
             memories.Add(AdcMemory);
@@ -109,53 +109,64 @@ namespace ECore.Devices
 
         #region start_stop
 
+        private void LogWait(string message)
+        {
+            Logger.AddEntry(this, LogMessageType.ECoreInfo, message);
+            //System.Threading.Thread.Sleep(500);
+        }
+
         public void Configure()
         {
+
             //raise global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
-
+            LogWait("FPGA reset");
             //set feedback loopand to 1V for demo purpose and enable
-            StrobeMemory.GetRegister(STR.CHA_DIV1).Set(false);
-            StrobeMemory.GetRegister(STR.CHA_DIV10).Set(false);
-            StrobeMemory.GetRegister(STR.CHA_DIV100).Set(false);
-            StrobeMemory.WriteSingle(STR.CHA_DIV1);
-            StrobeMemory.WriteSingle(STR.CHA_DIV10);
-            StrobeMemory.WriteSingle(STR.CHA_DIV100);
-            StrobeMemory.GetRegister(STR.CHB_DIV1).Set(false);
-            StrobeMemory.GetRegister(STR.CHB_DIV10).Set(false);
-            StrobeMemory.GetRegister(STR.CHB_DIV100).Set(false);
-            StrobeMemory.WriteSingle(STR.CHB_DIV1);
-            StrobeMemory.WriteSingle(STR.CHB_DIV10);
-            StrobeMemory.WriteSingle(STR.CHB_DIV100);
+            SetDivider(0, 1);
+            SetDivider(1, 1);
+            LogWait("dividers to 1");
 
             //FIXME: these are byte values, since the setter helper is not converting volt to byte
             this.SetYOffset(0, 0f);
             this.SetYOffset(1, 0f);
+            LogWait("yoffset to zero");
 
             //set ADC to offset binary output (required for FPGA triggering)
             AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4);
             AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
+            LogWait("ADC pwr mgmgt (4)");
+
             AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16);
             AdcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
+            LogWait("ADC format patt");
 
             //Set ADC multiplexed output mode
             AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
             AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
+            LogWait("ADC Output format");
+
             AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27);
             AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
+            LogWait("ADC CHA term");
+
             AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(24);
             AdcMemory.WriteSingle(MAX19506.DATA_CLK_TIMING);
+            LogWait("ADC DCLK timing");
+
             //Enable scope controller
             StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true);
             StrobeMemory.WriteSingle(STR.SCOPE_ENABLE);
+            LogWait("Scope enable");
 
             //lower global reset
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            LogWait("Global reset false");
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
+            LogWait("Enable neg dcdc");
         }
 
         #endregion
@@ -166,7 +177,7 @@ namespace ECore.Devices
         {
             int samplesToFetch = 4096;
             int bytesToFetch = samplesToFetch;
-            return hardwareInterface.GetData(bytesToFetch);          
+            return hardwareInterface.GetData(bytesToFetch);
         }
 
         private float[] ConvertByteToVoltage(byte[] buffer, byte yOffset)
@@ -186,7 +197,7 @@ namespace ECore.Devices
         public DataPackageScope GetScopeData()
         {
             byte[] buffer = this.GetBytes();
-            if(buffer == null) return null;
+            if (buffer == null) return null;
             //FIXME: Get these scope settings from header
             double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
@@ -198,7 +209,7 @@ namespace ECore.Devices
             for (int i = 0; i < chA.Length; i++)
             {
                 chB[i] = buffer[2 * i];
-                chA[i] = buffer[2*i + 1];
+                chA[i] = buffer[2 * i + 1];
             }
 
             //construct data package
@@ -214,7 +225,7 @@ namespace ECore.Devices
             else
             {
                 //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
-                data.SetData(ScopeChannels.ChA, 
+                data.SetData(ScopeChannels.ChA,
                     ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels

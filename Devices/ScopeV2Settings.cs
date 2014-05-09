@@ -65,15 +65,14 @@ namespace ECore.Devices
         {
             validateChannel(channel);
             validateDivider(divider);
-            STR d1   = (channel == 0) ? STR.CHA_DIV1   : STR.CHB_DIV1;
-            STR d10  = (channel == 0) ? STR.CHA_DIV10  : STR.CHB_DIV10;
-            STR d100 = (channel == 0) ? STR.CHA_DIV100 : STR.CHB_DIV100;
-            StrobeMemory.GetRegister(d1).Set(divider == 1);
-            StrobeMemory.GetRegister(d10).Set(divider == 10);
-            StrobeMemory.GetRegister(d100).Set(divider == 100);
-            StrobeMemory.WriteSingle(d1);
-            StrobeMemory.WriteSingle(d10);
-            StrobeMemory.WriteSingle(d100);
+            byte pow = (byte)Math.Log10(divider);
+            STR b0   = (channel == 0) ? STR.CHA_DIV_B0   : STR.CHB_DIV_B0;
+            STR b1  = (channel == 0) ? STR.CHA_DIV_B1  : STR.CHB_DIV_B1;
+            StrobeMemory.GetRegister(b0).Set(Utils.IsBitSet(pow, 0));
+            StrobeMemory.GetRegister(b1).Set(Utils.IsBitSet(pow, 1));
+
+            StrobeMemory.WriteSingle(b0);
+            StrobeMemory.WriteSingle(b1);
         }
 
         ///<summary>
