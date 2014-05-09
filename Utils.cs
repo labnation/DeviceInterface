@@ -130,7 +130,7 @@ namespace ECore
             get
             {
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
-                path += "//LabNation//";
+                path = Path.Combine(path, "LabNation");
                 System.IO.Directory.CreateDirectory(path);
                 return path;
             }
@@ -140,7 +140,7 @@ namespace ECore
             get
             {
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
-                path += "//LabNation//";
+                path = Path.Combine(path, "LabNation");
                 System.IO.Directory.CreateDirectory(path);
                 return path;
             }
