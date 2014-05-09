@@ -115,48 +115,32 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
 
-            //flush any transfers still queued on PIC
-            //eDevice.HWInterface.FlushHW();
-
             //set feedback loopand to 1V for demo purpose and enable
-            this.SetDivider(0, 1);
-            this.SetDivider(1, 1);
-
-            FpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).Set(78);
-            FpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
-
-            //FIXME: use this instead of code below
-            //this.SetTriggerLevel(0f);
-            //FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).InternalValue = 130;
-            //FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            StrobeMemory.GetRegister(STR.CHA_DIV1).Set(false);
+            StrobeMemory.GetRegister(STR.CHA_DIV10).Set(false);
+            StrobeMemory.GetRegister(STR.CHA_DIV100).Set(false);
+            StrobeMemory.WriteSingle(STR.CHA_DIV1);
+            StrobeMemory.WriteSingle(STR.CHA_DIV10);
+            StrobeMemory.WriteSingle(STR.CHA_DIV100);
+            StrobeMemory.GetRegister(STR.CHB_DIV1).Set(false);
+            StrobeMemory.GetRegister(STR.CHB_DIV10).Set(false);
+            StrobeMemory.GetRegister(STR.CHB_DIV100).Set(false);
+            StrobeMemory.WriteSingle(STR.CHB_DIV1);
+            StrobeMemory.WriteSingle(STR.CHB_DIV10);
+            StrobeMemory.WriteSingle(STR.CHB_DIV100);
 
             //FIXME: these are byte values, since the setter helper is not converting volt to byte
-            this.SetYOffset(0, 100f);
-            this.SetYOffset(1, 100f);
-
-            //fpgaMemory.RegisterByName(REG.TRIGGERHOLDOFF_B1).InternalValue = 4;
-            //fpgaMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
-
-            //fpgaMemory.RegisterByName(REG.SAMPLECLOCKDIV_B1).InternalValue = 1;
-            //fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIV_B1);
-
-            //fpgaMemory.RegisterByName(REG.SAMPLECLOCKDIV_B1).InternalValue = 1;
-            //fpgaMemory.WriteSingle(REG.SAMPLECLOCKDIV_B1);
-
-            //set ADC output resistance to 300ohm instead of 50ohm
-            AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(4);
-            AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
-            AdcMemory.GetRegister(MAX19506.CHB_TERMINATION).Set(4);
-            AdcMemory.WriteSingle(MAX19506.CHB_TERMINATION);
+            this.SetYOffset(0, 0f);
+            this.SetYOffset(1, 0f);
 
             //set ADC to offset binary output (required for FPGA triggering)
+            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4);
+            AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
             AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16);
             AdcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
 
-            //this.SetEnableFreeRunning(true);
-
             //Set ADC multiplexed output mode
-            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02);
+            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
             AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
             AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27);
             AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
