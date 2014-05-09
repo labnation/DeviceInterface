@@ -74,10 +74,11 @@ namespace ECore.Devices
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
                 Logger.AddEntry(this, LogMessageType.Persistent, resultString);
-
+				LogWait("Starting fpga flashing...", 0);
                 FlashFpgaInternal();
+				LogWait("FPGA flashed...");
                 InitializeMemories();
-
+				LogWait("Memories initialized...");
                 FpgaRom.ReadSingle(ROM.FW_MSB);
                 FpgaRom.ReadSingle(ROM.FW_LSB);
                 Logger.AddEntry(this, LogMessageType.ECoreInfo, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
@@ -109,10 +110,10 @@ namespace ECore.Devices
 
         #region start_stop
 
-        private void LogWait(string message)
+		private void LogWait(string message, int sleep = 5000)
         {
             Logger.AddEntry(this, LogMessageType.ECoreInfo, message);
-            //System.Threading.Thread.Sleep(500);
+			System.Threading.Thread.Sleep(sleep);
         }
 
         public void Configure()
