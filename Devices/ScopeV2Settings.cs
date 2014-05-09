@@ -278,6 +278,7 @@ namespace ECore.Devices
         #endregion
 
         #region AWG/LA
+#if false
         /// <summary>
         /// Set the data with which the AWG runs
         /// </summary>
@@ -328,6 +329,7 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
         }
+#endif
 
         public bool GetEnableLogicAnalyser()
         {

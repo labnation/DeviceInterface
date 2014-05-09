@@ -28,7 +28,7 @@ namespace ECore.DeviceMemories
 
     public enum STR
     {
-		GLOBAL_RESET = 2,
+		GLOBAL_NRESET = 2,
 		INIT_SPI_TRANSFER = 1,
 		DEBUG_PIC = 0,
 		DEBUG_RAM = 3,

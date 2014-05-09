@@ -110,7 +110,7 @@ namespace ECore.Devices
 
         #region start_stop
 
-		private void LogWait(string message, int sleep = 5000)
+		private void LogWait(string message, int sleep = 0)
         {
             Logger.AddEntry(this, LogMessageType.ECoreInfo, message);
 			System.Threading.Thread.Sleep(sleep);
@@ -120,8 +120,8 @@ namespace ECore.Devices
         {
 
             //raise global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(true);
-            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false);
+            StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
             LogWait("FPGA reset");
             //set feedback loopand to 1V for demo purpose and enable
             SetDivider(0, 1);
@@ -161,9 +161,10 @@ namespace ECore.Devices
             LogWait("Scope enable");
 
             //lower global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
-            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
-            LogWait("Global reset false");
+            LogWait("Waiting to get device out of reset...", 5000);
+            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
+            StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
+            LogWait("Ended reset");
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
