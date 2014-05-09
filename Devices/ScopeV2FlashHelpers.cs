@@ -405,6 +405,10 @@ namespace ECore.Devices {
 					DemoStatusText = String.Format ("Flashing FPGA + " + progress.ToString () + "% in {0:0.00}s - " + fwModifiedString, (double) flashStopwatch.ElapsedMilliseconds / 1000.0);
 				}
 				flashStopwatch.Stop ();
+				for (int j = 0; j < killMeNow; j++) {
+					hardwareInterface.WriteControlBytes (dummyData);
+					DemoStatusText = String.Format ("Post amp... {0:0.00}s", (double) flashStopwatch.ElapsedMilliseconds / 1000.0);
+				}
                 
 				//Send finish flashing command
 				hardwareInterface.WriteControlBytes (new byte[] { 123, 13 });
