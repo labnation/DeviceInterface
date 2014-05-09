@@ -161,10 +161,19 @@ namespace ECore.Devices
             LogWait("Scope enable");
 
             //lower global reset
-            LogWait("Waiting to get device out of reset...", 5000);
+            LogWait("Waiting to get device out of reset...", 2000);
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
             LogWait("Ended reset");
+
+            StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
+            StrobeMemory.WriteSingle(STR.ENABLE_ADC);
+            LogWait("ADC clock enabled", 2000);
+
+            StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true);
+            StrobeMemory.WriteSingle(STR.ENABLE_RAM);
+            LogWait("RAM enabled", 2000);
+
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
