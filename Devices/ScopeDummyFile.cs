@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MatlabFileIO;
+using System.IO;
 
 namespace ECore.Devices
 {
@@ -15,7 +16,7 @@ namespace ECore.Devices
 
         public static bool GetWaveFromFile(AcquisitionMode acqMode, TriggerMode triggerMode, double triggerHoldoff, int triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
-            string filename = Utils.ApplicationDataPath + sequenceFilename;
+	    string filename = Path.Combine(Utils.ApplicationDataPath, sequenceFilename);
             if(readChannelA == null || readChannelB == null || readTime == null) 
             {
                 MatfileReader matfileReader = new MatlabFileIO.MatfileReader(filename);
