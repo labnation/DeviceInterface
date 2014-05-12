@@ -328,7 +328,7 @@ namespace ECore.Devices {
 
 			//Get FW contents
 			try {
-#if ANDROID || __IOS__
+#if ANDROID
 				Stream inStream;
 				BinaryReader reader = null;
 				//show all embedded resources
@@ -378,6 +378,7 @@ namespace ECore.Devices {
 				Stopwatch flashStopwatch = new Stopwatch ();
 				flashStopwatch.Start ();
 				String fwModifiedString = Utils.GetPrettyDate (firmwareModified);
+				Logger.AddEntry(this, LogMessageType.ECoreInfo, "Firmware was created " + fwModifiedString);
 				UInt16 commands = (UInt16) (firmware.Length / packetSize + killMeNow);
 				//PIC: enter FPGA flashing mode
 				byte [] toSend1 = new byte[6];
