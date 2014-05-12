@@ -49,7 +49,7 @@ namespace ECore.Devices
         {
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + " to " + offset + "V");
+            Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
             byte offsetByte = (byte)((offset * 68.2) - 16.5);
             FpgaSettingsMemory.GetRegister(r).Set(offsetByte);
@@ -103,7 +103,7 @@ namespace ECore.Devices
             validateChannel(channel);
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
             bool enableDc = coupling == Coupling.DC;
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, "Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
+            Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
             StrobeMemory.GetRegister(dc).Set(enableDc);
             StrobeMemory.WriteSingle(dc);
         }
@@ -129,7 +129,7 @@ namespace ECore.Devices
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger level to " + voltage + "V (" + level + ")");
+            Logger.AddEntry(this, LogLevel.Debug, " Set trigger level to " + voltage + "V (" + level + ")");
             FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
             FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
             toggleUpdateStrobe();
@@ -142,7 +142,7 @@ namespace ECore.Devices
         {
             validateChannel(channel);
             StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set(channel != 0);
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
+            Logger.AddEntry(this, LogLevel.Debug, " Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
             StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
             toggleUpdateStrobe();
         }
@@ -154,7 +154,7 @@ namespace ECore.Devices
         public void SetTriggerDirection(TriggerDirection direction)
         {
             StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set(direction == TriggerDirection.FALLING);
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
+            Logger.AddEntry(this, LogLevel.Debug, " Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
             StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
             toggleUpdateStrobe();
         }
@@ -225,7 +225,7 @@ namespace ECore.Devices
         public void SetTriggerHoldOff(double time)
         {
             Int16 samples = (Int16)(time / SAMPLE_PERIOD);
-            Logger.AddEntry(this, LogMessageType.ScopeSettings, " Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
+            Logger.AddEntry(this, LogLevel.Debug, " Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
             FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
             FpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);

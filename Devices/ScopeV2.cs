@@ -17,7 +17,6 @@ namespace ECore.Devices
         public EDeviceHWInterface hardwareInterface;
         private ScopeConnectHandler scopeConnectHandler;
 
-        public static string DemoStatusText = "";
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
         public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
@@ -73,7 +72,7 @@ namespace ECore.Devices
                 string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
-                Logger.AddEntry(this, LogMessageType.Persistent, resultString);
+                Logger.AddEntry(this, LogLevel.Debug, resultString);
 				LogWait("Starting fpga flashing...", 0);
                 FlashFpgaInternal();
 				LogWait("FPGA flashed...");
@@ -81,7 +80,7 @@ namespace ECore.Devices
 				LogWait("Memories initialized...");
                 FpgaRom.ReadSingle(ROM.FW_MSB);
                 FpgaRom.ReadSingle(ROM.FW_LSB);
-                Logger.AddEntry(this, LogMessageType.ECoreInfo, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
+                Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
             }
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);
@@ -112,7 +111,7 @@ namespace ECore.Devices
 
 		private void LogWait(string message, int sleep = 0)
         {
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, message);
+            Logger.AddEntry(this, LogLevel.Debug, message);
 			System.Threading.Thread.Sleep(sleep);
         }
 

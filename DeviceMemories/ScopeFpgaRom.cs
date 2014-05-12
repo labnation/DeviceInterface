@@ -35,7 +35,7 @@ namespace ECore.DeviceMemories
 
         public override void Write(int address, int length)
         {
-            Logger.AddEntry(this, LogMessageType.ECoreError, "Can't write to ROM");
+            Logger.AddEntry(this, LogLevel.Error, "Can't write to ROM");
         }
 
         public void WriteSingle(ROM r)

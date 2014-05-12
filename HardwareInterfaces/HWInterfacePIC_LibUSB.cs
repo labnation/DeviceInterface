@@ -16,7 +16,7 @@ namespace ECore.HardwareInterfaces
     public class HWInterfacePIC_LibUSB: EDeviceHWInterface, IScopeHardwareInterface
     {
         private enum Operation { READ, WRITE };
-        private const int USB_TIMEOUT = 10000;
+        private const int USB_TIMEOUT = 100;
 		private int tempFrameCounter = 0;
 		private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 		private bool isConnected;
@@ -57,7 +57,7 @@ namespace ECore.HardwareInterfaces
         private void OnDeviceNotifyEvent(object sender, DeviceNotifyEventArgs e)
         {           
 			UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
-			Logger.AddEntry (this, LogMessageType.Persistent, "Total number of USB devices attached: "+usbDeviceList.Count.ToString ());
+			Logger.AddEntry (this, LogLevel.Debug, "Total number of USB devices attached: "+usbDeviceList.Count.ToString ());
 			foreach (UsbRegistry device in usbDeviceList)
 			{
 				string sAdd = string.Format("Vid:0x{0:X4} Pid:0x{1:X4} (rev:{2}) - {3}",
@@ -66,7 +66,7 @@ namespace ECore.HardwareInterfaces
 				                            (ushort) device.Rev,
 				                            device[SPDRP.DeviceDesc]);
 
-				Logger.AddEntry (this, LogMessageType.Persistent, sAdd);
+				Logger.AddEntry (this, LogLevel.Debug, sAdd);
 			}
 
             //locate USB device
@@ -76,7 +76,7 @@ namespace ECore.HardwareInterfaces
             //if device is attached
             if (scopeUsbDevice != null && !isConnected)
             {
-				Logger.AddEntry(this, LogMessageType.ECoreInfo, "SmartScope connected!");
+				Logger.AddEntry(this, LogLevel.Info, "SmartScope connected");
 
 				// This is a "whole" USB device. Before it can be used,
 				// the desired configuration and interface must be selected.
@@ -87,7 +87,7 @@ namespace ECore.HardwareInterfaces
 
 				// Claim interface
                 bool succes2 = scopeUsbDevice.ClaimInterface(0);
-				Logger.AddEntry (this, LogMessageType.Persistent, "Claim interface: "+succes2.ToString ());
+				Logger.AddEntry (this, LogLevel.Debug, "Claim interface: "+succes2.ToString ());
 				
                 //init endpoints
                 dataEndpoint = scopeUsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
@@ -125,7 +125,7 @@ namespace ECore.HardwareInterfaces
                 
                 if (onConnect != null)
                     onConnect(false);
-                Logger.AddEntry(this, LogMessageType.ECoreInfo, "No device found");
+                Logger.AddEntry(this, LogLevel.Debug, "No device found");
             }
         }
 
@@ -177,10 +177,10 @@ namespace ECore.HardwareInterfaces
             }
             catch (Exception ex)
             {
-                Logger.AddEntry(this, LogMessageType.ECoreError, "Reading control bytes failed");
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "ExceptionMessage: " + ex.Message);
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "USB ErrorCode: " + errorCode);
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "requested length: " + length.ToString());
+                Logger.AddEntry(this, LogLevel.Error, "Reading control bytes failed");
+                Logger.AddEntry(this, LogLevel.Error, "ExceptionMessage: " + ex.Message);
+                Logger.AddEntry(this, LogLevel.Error, "USB ErrorCode: " + errorCode);
+                Logger.AddEntry(this, LogLevel.Error, "requested length: " + length.ToString());
 
                 return new byte[0];
             }   
@@ -229,10 +229,10 @@ namespace ECore.HardwareInterfaces
             }
             catch (Exception ex)
             {
-                Logger.AddEntry(this, LogMessageType.ECoreError, "Streaming data from camera failed");
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "ExceptionMessage: " + ex.Message);
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "USB ErrorCode: " + errorCode);
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "requested length: " + numberOfBytes.ToString());
+                Logger.AddEntry(this, LogLevel.Error, "Streaming data from camera failed");
+                Logger.AddEntry(this, LogLevel.Error, "ExceptionMessage: " + ex.Message);
+                Logger.AddEntry(this, LogLevel.Error, "USB ErrorCode: " + errorCode);
+                Logger.AddEntry(this, LogLevel.Error, "requested length: " + numberOfBytes.ToString());
 
                 return new byte[0];
             }   

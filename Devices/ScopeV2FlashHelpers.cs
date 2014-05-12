@@ -301,7 +301,7 @@ namespace ECore.Devices {
 		{
 
 			if (fpgaFlashThread != null && fpgaFlashThread.IsAlive) {
-				Logger.AddEntry (this, LogMessageType.ECoreWarning, "FPGA already being flashed");
+				Logger.AddEntry (this, LogLevel.Warning, "FPGA already being flashed");
 				return;
 			}
 			fpgaFlashThread = new System.Threading.Thread (FlashFpgaInternal);
@@ -363,15 +363,15 @@ namespace ECore.Devices {
                 firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #endif
 			} catch (Exception e) {
-				Logger.AddEntry (this, LogMessageType.Persistent, "Opening FPGA FW file failed");
-				Logger.AddEntry (this, LogMessageType.Persistent, e.Message);
+				Logger.AddEntry (this, LogLevel.Error, "Opening FPGA FW file failed");
+				Logger.AddEntry (this, LogLevel.Error, e.Message);
 				return;
 			}
 			if(firmware == null) {
-				Logger.AddEntry(this, LogMessageType.ECoreInfo, "Failed to read FW (got null) ");
+				Logger.AddEntry(this, LogLevel.Error, "Failed to read FW");
 			}
 				
-			Logger.AddEntry(this, LogMessageType.ECoreInfo, "Got firmware of length " + firmware.Length);
+			Logger.AddEntry(this, LogLevel.Info, "Got firmware of length " + firmware.Length);
 
 			//Send FW to FPGA
 			try {
@@ -397,25 +397,24 @@ namespace ECore.Devices {
 					Array.Copy (firmware, bytesSent, commandBytes, 0, commandSize);
 					int sent = hardwareInterface.WriteControlBytes (commandBytes);
 					if (sent == 0) {
-						Logger.AddEntry (this, LogMessageType.ECoreError, "No bytes written - aborting flash operation");
+						Logger.AddEntry (this, LogLevel.Error, "No bytes written - aborting flash operation");
 						return;
 					}
 					bytesSent += sent;
 					int progress = (int) (bytesSent * 100 / firmware.Length);
-					DemoStatusText = String.Format ("Flashing FPGA + " + progress.ToString () + "% in {0:0.00}s - " + fwModifiedString, (double) flashStopwatch.ElapsedMilliseconds / 1000.0);
+					Logger.AddEntry(this, LogLevel.Debug, String.Format ("Flashing FPGA + " + progress.ToString () + "% in {0:0.00}s - " + fwModifiedString, (double) flashStopwatch.ElapsedMilliseconds / 1000.0));
 				}
 				flashStopwatch.Stop ();
 				for (int j = 0; j < killMeNow; j++) {
 					hardwareInterface.WriteControlBytes (dummyData);
-					DemoStatusText = String.Format ("Post amp... {0:0.00}s", (double) flashStopwatch.ElapsedMilliseconds / 1000.0);
 				}
                 
 				//Send finish flashing command
 				hardwareInterface.WriteControlBytes (new byte[] { 123, 13 });
-
-				DemoStatusText = String.Format ("Flashed FPGA in {0:0.00}s", (double) flashStopwatch.ElapsedMilliseconds / 1000.0);
-			} catch {
-				Logger.AddEntry (this, LogMessageType.Persistent, "Writing core FPGA flash data failed");
+                Logger.AddEntry(this, LogLevel.Info, String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
+			} catch (Exception e) {
+				Logger.AddEntry (this, LogLevel.Error, "Flashing FPGA failed failed");
+                Logger.AddEntry(this, LogLevel.Error, e.Message);
 				return;
 			}
 		}

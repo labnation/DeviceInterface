@@ -9,13 +9,18 @@ namespace ECore
     {
         public DateTime timestamp;
         public Type senderType;
-        public LogMessageType debugLevel;
+        public LogLevel logLevel;
         public string message;  
     }
 
     public delegate void QueueChangedDelegate();
 
-    public enum LogMessageType { GUIError, GUIInfo, ECoreError, ECoreWarning, CommandToDevice, ReplyFromDevice, ECoreInfo, Persistent, ScopeSettings};
+    public enum LogLevel { 
+        Error   = 10, 
+        Warning = 20, 
+        Info    = 30, 
+        Debug   = 40
+    };
 
 	#if IPHONE || ANDROID
 	public static class Logger
@@ -36,13 +41,14 @@ namespace ECore
         static private Dictionary<Queue<LogEntry>, QueueChangedDelegate> logQueues = new Dictionary<Queue<LogEntry>, QueueChangedDelegate>();
         
         //allows any method anywhere in the project to send log information
-        static public void AddEntry(object sender, LogMessageType debugLevel, string message)
+        static public void AddEntry(object sender, LogLevel debugLevel, string message)
         {
-            LogEntry newEntry = new LogEntry();
-            newEntry.timestamp = DateTime.Now;
-            newEntry.senderType = sender != null ? sender.GetType() : typeof(object);
-            newEntry.debugLevel = debugLevel;
-            newEntry.message = message;
+            LogEntry newEntry = new LogEntry() {
+                timestamp = DateTime.Now,
+                senderType = sender != null ? sender.GetType() : typeof(object),
+                logLevel = debugLevel,
+                message = message
+            };
 
             foreach (KeyValuePair<Queue<LogEntry>, QueueChangedDelegate> kvp in logQueues)
             {

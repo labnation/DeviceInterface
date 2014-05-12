@@ -28,7 +28,7 @@ namespace ECore.DataSources
         {
             if (IsRunning)
             {
-                Logger.AddEntry(this, LogMessageType.ECoreWarning, "Not starting datasource since it's still/already running");
+                Logger.AddEntry(this, LogLevel.Warning, "Not starting datasource since it's still/already running");
                 return false;
             }
 
@@ -44,22 +44,22 @@ namespace ECore.DataSources
         {
             if (!IsRunning)
             {
-                Logger.AddEntry(this, LogMessageType.ECoreInfo, "Not stopping device since it's not running");
+                Logger.AddEntry(this, LogLevel.Info, "Not stopping device since it's not running");
                 return;
             }            
             //stop thread
             running = false;
 
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, "Requested DataFetchThread to stop");
+            Logger.AddEntry(this, LogLevel.Debug, "Requested DataFetchThread to stop");
         }
 
         public void DataFetchThreadStart()
         {           
             //main starting point for the thread which fetches the data from file
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, "DataFetchThread spawn");
+            Logger.AddEntry(this, LogLevel.Info, "DataFetchThread spawn");
 
             if (!running)
-                Logger.AddEntry(this, LogMessageType.ECoreError, "Device not started as device.Start() didn't return true");
+                Logger.AddEntry(this, LogLevel.Error, "Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
             while (running && device.Connected)
@@ -68,7 +68,7 @@ namespace ECore.DataSources
                 if (latestDataPackage != null)
                     this.fireDataAvailableEvents();
             }
-            Logger.AddEntry(this, LogMessageType.ECoreInfo, "Data thread stopped");
+            Logger.AddEntry(this, LogLevel.Info, "Data fetch thread stopped");
         }
     }
 }
