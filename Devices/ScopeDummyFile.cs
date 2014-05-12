@@ -9,16 +9,19 @@ namespace ECore.Devices
 {
     partial class ScopeDummy
     {
-        private static string sequenceFilename = "i2c_sequence.mat";
         private static float[] readChannelA = null;
         private static float[] readChannelB = null;
         private static double[] readTime = null;
 
         public static bool GetWaveFromFile(AcquisitionMode acqMode, TriggerMode triggerMode, double triggerHoldoff, int triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
-	    string filename = Path.Combine(Utils.ApplicationDataPath, sequenceFilename);
             if(readChannelA == null || readChannelB == null || readTime == null) 
             {
+                String filename = Path.GetTempFileName();
+                FileStream f = new FileStream(filename, FileMode.Create, FileAccess.Write);
+                f.Write(Resources.i2c_sequence, 0, Resources.i2c_sequence.Length);
+                f.Close();
+
                 MatfileReader matfileReader = new MatlabFileIO.MatfileReader(filename);
                 readChannelA = Utils.CastArray<double, float>(matfileReader.Variables["chA"].data as double[]);
                 readChannelB = Utils.CastArray<double, float>(matfileReader.Variables["chB"].data as double[]);
