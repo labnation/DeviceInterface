@@ -347,7 +347,7 @@ namespace ECore.Devices {
 
                         //Generate some bullshit digital wave
                         waveDigital = new byte[waveLength];
-                        byte value = 0;
+                        byte value = (byte)(timeOffset.Milliseconds);
                         for (int i = 0; i < waveDigital.Length; i++)
                         {
                             waveDigital[i] = value;
