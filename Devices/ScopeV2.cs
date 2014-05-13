@@ -137,14 +137,13 @@ namespace ECore.Devices
             AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
             LogWait("ADC pwr mgmgt (4)");
 
+			AdcMemory.GetRegister(MAX19506.OUTPUT_PWR_MNGMNT).Set(1);
+			AdcMemory.WriteSingle(MAX19506.OUTPUT_PWR_MNGMNT);
+			LogWait("DCLK driving off");
+
             AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16);
             AdcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
             LogWait("ADC format patt");
-
-            //Set ADC multiplexed output mode
-            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
-            AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
-            LogWait("ADC Output format");
 
             AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27);
             AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
@@ -160,23 +159,28 @@ namespace ECore.Devices
             LogWait("Scope enable");
 
             //lower global reset
-            LogWait("Waiting to get device out of reset...", 2000);
+            LogWait("Waiting to get device out of reset...");
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
-            LogWait("Ended reset");
+			LogWait("Ended reset", 100);
 
             StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_ADC);
-            LogWait("ADC clock enabled", 2000);
+			LogWait("ADC clock enabled", 200);
 
-            StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true);
-            StrobeMemory.WriteSingle(STR.ENABLE_RAM);
-            LogWait("RAM enabled", 2000);
+			StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true);
+			StrobeMemory.WriteSingle(STR.ENABLE_RAM);
+			LogWait("RAM enabled", 100);
+
+			//Set ADC multiplexed output mode
+			AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
+			AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
+			LogWait("ADC Output format", 200);
 
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
-            LogWait("Enable neg dcdc");
+			LogWait("Enable neg dcdc", 200);
         }
 
         #endregion

@@ -378,7 +378,7 @@ namespace ECore.Devices {
 				Stopwatch flashStopwatch = new Stopwatch ();
 				flashStopwatch.Start ();
 				String fwModifiedString = Utils.GetPrettyDate (firmwareModified);
-				Logger.AddEntry(this, LogMessageType.ECoreInfo, "Firmware was created " + fwModifiedString);
+				Logger.AddEntry(this, LogLevel.Debug, "Firmware was created " + fwModifiedString);
 				UInt16 commands = (UInt16) (firmware.Length / packetSize + killMeNow);
 				//PIC: enter FPGA flashing mode
 				byte [] toSend1 = new byte[6];
