@@ -79,7 +79,7 @@ namespace ECore.Devices
             for (int i = 0; i < wave.Length; i++)
             {
                 //Number between 0 and 1 indicating which part of the period we're in
-                double periodSection = (((double)i * samplePeriod + timeOffset + (phase / 2.0 / Math.PI / frequency)) % (1.0 / frequency)) * frequency;
+                double periodSection = ((i * samplePeriod + timeOffset) * frequency + (phase / 2.0 / Math.PI)) % 1.0;
                 double scaler = periodSection < 1f/2 ? (periodSection - 1f/4) * 4 : (periodSection - 3f/4) * -4;
                 wave[i] = (float)(scaler * amplitude);
             }
