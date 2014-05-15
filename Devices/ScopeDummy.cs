@@ -48,7 +48,7 @@ namespace ECore.Devices {
 		private float triggerLevel = 0;
 		private double triggerHoldoff = 0;
 		private int triggerChannel = 0;
-		private static uint triggerWidth = 4;
+		private static uint triggerWidth = 10;
 
         private struct DigitalTrigger {
             public byte triggerCondition;
@@ -80,7 +80,7 @@ namespace ECore.Devices {
                     noise = 0.1,
                     coupling = Coupling.DC,
                     dcOffset = 0.0,
-                    frequency = 250e3,
+                    frequency = 135e3,
                     phase = 0,
                     waveform = WaveForm.TRIANGLE
                 };
@@ -263,6 +263,12 @@ namespace ECore.Devices {
             _channelConfig[channel].waveform = w;
 		}
 
+        public void SetDummyWaveDcOffset(int channel, double dcOffset)
+        {
+            validateChannel(channel);
+            _channelConfig[channel].dcOffset = dcOffset;
+        }
+
 		public void SetNoiseAmplitude (int channel, double noiseAmplitude)
 		{
 			validateChannel (channel);
@@ -342,6 +348,10 @@ namespace ECore.Devices {
                                 SamplePeriod,
                                 timeOffset.TotalSeconds,
                                 _channelConfig[i]);
+                            if (_channelConfig[i].coupling == Coupling.AC)
+                                ScopeDummy.RemoveDcComponent(ref waveAnalog[i], _channelConfig[i].frequency, SamplePeriod);
+                            else
+                                ScopeDummy.AddDcComponent(ref waveAnalog[i], (float)_channelConfig[i].dcOffset);
                             ScopeDummy.AddNoise(waveAnalog[i], _channelConfig[i].noise);
                         }
 
@@ -383,7 +393,7 @@ namespace ECore.Devices {
 
 					outputAnalog = new float[channels][];
 					for (int i = 0; i < channels; i++) {
-						outputAnalog [i] = ScopeDummy.CropWave (outputWaveLength, waveAnalog [i], triggerIndex, triggerHoldoffInSamples);     
+						outputAnalog [i] = ScopeDummy.CropWave (outputWaveLength, waveAnalog [i], triggerIndex, triggerHoldoffInSamples);
 					}
 					outputDigital = ScopeDummy.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
 				} else if (waveSource == WaveSource.FILE) {
@@ -411,5 +421,21 @@ namespace ECore.Devices {
 
 			return p;
 		}
+
+        private static void AddDcComponent(ref float[] p, float offset)
+        {
+            if (offset == 0f) 
+                return;
+            p = p.AsParallel().Select(x => x + offset).ToArray();
+        }
+
+        private static void RemoveDcComponent(ref float[] p, double frequency, double samplePeriod)
+        {
+            int periodLength = (int)Math.Round(1.0 / (frequency * samplePeriod));
+            float mean = p.Take(periodLength).Average();
+            if (mean == 0f) 
+                return;
+            p = p.AsParallel().Select(x => x - mean).ToArray();
+        }
 	}
 }
