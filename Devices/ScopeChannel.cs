@@ -5,25 +5,6 @@ using System.Text;
 
 namespace ECore.Devices
 {
-
-    public static class ScopeChannels
-    {
-        //Note: the ScopeChannel.Order field is set by order of instantiation.
-        public static DigitalChannel Digi0 = new DigitalChannel("0", 0);
-        public static DigitalChannel Digi1 = new DigitalChannel("1", 1);
-        public static DigitalChannel Digi2 = new DigitalChannel("2", 2);
-        public static DigitalChannel Digi3 = new DigitalChannel("3", 3);
-        public static DigitalChannel Digi4 = new DigitalChannel("4", 4);
-        public static DigitalChannel Digi5 = new DigitalChannel("5", 5);
-        public static DigitalChannel Digi6 = new DigitalChannel("6", 6);
-        public static DigitalChannel Digi7 = new DigitalChannel("7", 7);
-
-        public static AnalogChannel ChA  = new AnalogChannel("A", 0);
-        public static AnalogChannel ChB  = new AnalogChannel("B", 1);
-
-        public static LogicAnalyserChannel LogicAnalyser = new LogicAnalyserChannel("LA", 0);
-    }
-
     public class Channel
     {
         public static int CompareByOrder(Channel a, Channel b)
@@ -50,22 +31,36 @@ namespace ECore.Devices
             return this.Name;
         }
     }
-    public class AnalogChannel : Channel 
+    public sealed class AnalogChannel : Channel 
     {
         new public static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
-        public AnalogChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { list.Remove(this); base.Destroy(); }
+        private AnalogChannel(string name, int value) : base(name, value) { list.Add(this); }
+        override public void Destroy() { /* indestructable */ }
+
+        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
+        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
     }
-    public class DigitalChannel : Channel {
+    public sealed class DigitalChannel : Channel {
         new public static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
-        public DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { list.Remove(this); base.Destroy(); }
+        private DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
+        override public void Destroy() { /* indestructable */ }
+
+        public static readonly DigitalChannel Digi0 = new DigitalChannel("0", 0);
+        public static readonly DigitalChannel Digi1 = new DigitalChannel("1", 1);
+        public static readonly DigitalChannel Digi2 = new DigitalChannel("2", 2);
+        public static readonly DigitalChannel Digi3 = new DigitalChannel("3", 3);
+        public static readonly DigitalChannel Digi4 = new DigitalChannel("4", 4);
+        public static readonly DigitalChannel Digi5 = new DigitalChannel("5", 5);
+        public static readonly DigitalChannel Digi6 = new DigitalChannel("6", 6);
+        public static readonly DigitalChannel Digi7 = new DigitalChannel("7", 7);
     }
-    public class LogicAnalyserChannel : Channel
+    public sealed class LogicAnalyserChannel : Channel
     {
         new public static HashSet<LogicAnalyserChannel> list = new HashSet<LogicAnalyserChannel>();
-        public LogicAnalyserChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { list.Remove(this); base.Destroy(); }
+        private LogicAnalyserChannel(string name, int value) : base(name, value) { list.Add(this); }
+        override public void Destroy() { /* indestructable */ }
+
+        public static readonly LogicAnalyserChannel LogicAnalyser = new LogicAnalyserChannel("LA", 0);
     }
 
 }

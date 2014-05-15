@@ -233,19 +233,19 @@ namespace ECore.Devices
             //FIXME: Get bytes, split into analog/digital channels and add to scope data
             if (this.disableVoltageConversion)
             {
-                data.SetData(ScopeChannels.ChA, Utils.CastArray<byte, float>(chA));
-                data.SetData(ScopeChannels.ChB, Utils.CastArray<byte, float>(chB));
+                data.SetData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
+                data.SetData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
             }
             else
             {
                 //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
-                data.SetData(ScopeChannels.ChA,
+                data.SetData(AnalogChannel.ChA,
                     ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!this.GetEnableLogicAnalyser())
                 {
-                    data.SetData(ScopeChannels.ChB,
+                    data.SetData(AnalogChannel.ChB,
                         ConvertByteToVoltage(chB, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()));
                 }
                 else

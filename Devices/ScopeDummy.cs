@@ -396,10 +396,10 @@ namespace ECore.Devices {
                 double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
                 UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
 				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs);
-				p.SetData (ScopeChannels.ChA, outputAnalog [0]);
-				p.SetData (ScopeChannels.ChB, outputAnalog [1]);
-				p.SetOffset (ScopeChannels.ChA, yOffset [0]);
-				p.SetOffset (ScopeChannels.ChB, yOffset [1]);
+				p.SetData (AnalogChannel.ChA, outputAnalog [0]);
+                p.SetData(AnalogChannel.ChB, outputAnalog[1]);
+                p.SetOffset(AnalogChannel.ChA, yOffset[0]);
+                p.SetOffset(AnalogChannel.ChB, yOffset[1]);
 				p.SetDataDigital (outputDigital);
 			}
 #if __IOS__
