@@ -14,7 +14,7 @@ namespace ECore.Devices
     //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
     public partial class ScopeV2 : EDevice, IScope
     {
-        public EDeviceHWInterface hardwareInterface;
+        private ScopeUsbInterface hardwareInterface;
         private ScopeConnectHandler scopeConnectHandler;
 
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
@@ -54,33 +54,40 @@ namespace ECore.Devices
 #if ANDROID
 		hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
 #else
-            HWInterfacePIC_LibUSB hwPic = new HardwareInterfaces.HWInterfacePIC_LibUSB(OnDeviceConnect);
-            hardwareInterface = hwPic;
-            hwPic.CheckForDevices();
+            HWInterfacePIC_LibUSB.AddConnectHandler(OnDeviceConnect);
+            HWInterfacePIC_LibUSB.Initialize();
 #endif
         }
 
-        private void OnDeviceConnect(bool connected)
+        private void OnDeviceConnect(EDeviceHWInterface hwInterface, bool connected)
         {
-            //Flash FPGA
-            //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
-            //but there should be when flashing the FPGA.
             if (connected)
             {
+                ScopeUsbInterface scopeInterface = hwInterface as ScopeUsbInterface;
+                if (scopeInterface == null) return;
+                this.hardwareInterface = scopeInterface;
+                //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
+                //but there should be when flashing the FPGA.
+
                 hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
                 byte[] response = hardwareInterface.ReadControlBytes(16);
                 string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
                 Logger.AddEntry(this, LogLevel.Debug, resultString);
-				LogWait("Starting fpga flashing...", 0);
+                LogWait("Starting fpga flashing...", 0);
                 FlashFpgaInternal();
-				LogWait("FPGA flashed...");
+                LogWait("FPGA flashed...");
                 InitializeMemories();
-				LogWait("Memories initialized...");
+                LogWait("Memories initialized...");
                 FpgaRom.ReadSingle(ROM.FW_MSB);
                 FpgaRom.ReadSingle(ROM.FW_LSB);
                 Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
+            }
+            else
+            {
+                if (this.hardwareInterface == hwInterface)
+                    this.hardwareInterface = null;
             }
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);
@@ -89,6 +96,7 @@ namespace ECore.Devices
         //master method where all memories, registers etc get defined and linked together
         private void InitializeMemories()
         {
+            memories.Clear();
             //Create memories
             IScopeHardwareInterface scopeInterface = (IScopeHardwareInterface)hardwareInterface;
             PicMemory = new DeviceMemories.ScopePicRegisterMemory(scopeInterface);
@@ -256,7 +264,8 @@ namespace ECore.Devices
             return data;
         }
 
-        public override bool Connected { get { return hardwareInterface.Connected; } }
+        //FIXME: this needs proper handling
+        public override bool Connected { get { return this.hardwareInterface != null; } }
 
         #endregion
     }

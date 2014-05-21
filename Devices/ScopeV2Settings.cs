@@ -161,7 +161,6 @@ namespace ECore.Devices
 
         public void SetTriggerMode(TriggerMode mode)
         {
-
             StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(mode == TriggerMode.FREE_RUNNING);
             StrobeMemory.WriteSingle(STR.FREE_RUNNING);
             toggleUpdateStrobe();

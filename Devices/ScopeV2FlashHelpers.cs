@@ -403,7 +403,6 @@ namespace ECore.Devices {
 					}
 					bytesSent += sent;
 					int progress = (int) (bytesSent * 100 / firmware.Length);
-					Logger.AddEntry(this, LogLevel.Debug, String.Format ("Flashing FPGA + " + progress.ToString () + "% in {0:0.00}s - " + fwModifiedString, (double) flashStopwatch.ElapsedMilliseconds / 1000.0));
 				}
 				flashStopwatch.Stop ();
 				for (int j = 0; j < killMeNow; j++) {
