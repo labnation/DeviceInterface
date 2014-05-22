@@ -140,7 +140,10 @@ namespace ECore.Devices
             this.SetYOffset(1, 0f);
             LogWait("yoffset to zero");
 
-            //set ADC to offset binary output (required for FPGA triggering)
+            AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90);
+            AdcMemory.WriteSingle(MAX19506.SOFT_RESET);
+            LogWait("ADC SW reset");
+            
             AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4);
             AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
             LogWait("ADC pwr mgmgt (4)");
@@ -160,6 +163,11 @@ namespace ECore.Devices
             AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(24);
             AdcMemory.WriteSingle(MAX19506.DATA_CLK_TIMING);
             LogWait("ADC DCLK timing");
+
+            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(3);
+            AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
+            LogWait("ADC pwr mgmgt enable (3)");
+
 
             //Enable scope controller
             StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true);
@@ -230,8 +238,8 @@ namespace ECore.Devices
             byte[] chB = new byte[buffer.Length / 2];
             for (int i = 0; i < chA.Length; i++)
             {
-                chA[i] = buffer[2 * i];
-                chB[i] = buffer[2 * i + 1];
+                chA[i] = buffer[2 * i + 1];
+                chB[i] = buffer[2 * i];
             }
 
             //construct data package
