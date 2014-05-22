@@ -91,13 +91,13 @@ namespace ECore.Devices
             validateChannel(channel);
             validateDivider(divider);
             byte pow = (byte)Math.Log10(divider);
-            STR b0   = (channel == 0) ? STR.CHA_DIV_B0   : STR.CHB_DIV_B0;
-            STR b1  = (channel == 0) ? STR.CHA_DIV_B1  : STR.CHB_DIV_B1;
-            StrobeMemory.GetRegister(b0).Set(Utils.IsBitSet(pow, 0));
-            StrobeMemory.GetRegister(b1).Set(Utils.IsBitSet(pow, 1));
+            int bitOffset = channel * 4;
+            byte mask = (byte)(0x3 << bitOffset);
 
-            StrobeMemory.WriteSingle(b0);
-            StrobeMemory.WriteSingle(b1);
+            byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
+            divMul = (byte)((divMul & ~mask) + (pow << bitOffset));
+            FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
+            FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
         }
 
         ///<summary>
@@ -109,14 +109,15 @@ namespace ECore.Devices
         {
             validateChannel(channel);
             validateMultiplier(multiplier);
-            STR m1 = (channel == 0) ? STR.CHA_MULT1 : STR.CHB_MULT1;
-            STR m2 = (channel == 0) ? STR.CHA_MULT2 : STR.CHB_MULT2;
 
-            byte divSetting = (byte)Array.IndexOf(validMultipliers, multiplier);
-            StrobeMemory.GetRegister(m1).Set(Utils.IsBitSet(divSetting, 0));
-            StrobeMemory.GetRegister(m2).Set(Utils.IsBitSet(divSetting, 1));
-            StrobeMemory.WriteSingle(m1);
-            StrobeMemory.WriteSingle(m2);
+            int bitOffset = channel * 4;
+            byte mul = (byte)(Array.IndexOf(validMultipliers, multiplier) << 2);
+            byte mask = (byte)(0xC << bitOffset);
+
+            byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
+            divMul = (byte)((divMul & ~mask) + (mul << bitOffset));
+            FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
+            FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
         }
 
         /// <summary>
@@ -271,27 +272,7 @@ namespace ECore.Devices
 
         #endregion
 
-        #region other
-        /// <summary>
-        /// Enable or disable the calibration voltage
-        /// </summary>
-        /// <param name="enableCalibration"></param>
-        public void SetEnableCalib(bool enableCalibration)
-        {
-            StrobeMemory.GetRegister(STR.CHB_ENABLECALIB).Set(enableCalibration);
-            StrobeMemory.WriteSingle(STR.CHB_ENABLECALIB);
-        }
-
-        /// <summary>
-        /// Sets the calibration voltage on a channel
-        /// </summary>
-        /// <param name="voltage">The desired voltage</param>
-        public void SetCalibrationVoltage(float voltage)
-        {
-            FpgaSettingsMemory.GetRegister(REG.CALIB_VOLTAGE).Set(voltToByte(voltage));
-            FpgaSettingsMemory.WriteSingle(REG.CALIB_VOLTAGE);
-        }
-        
+        #region other        
         /// <summary>
         /// Returns the timerange when decimation is 1
         /// </summary>
