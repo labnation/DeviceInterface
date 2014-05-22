@@ -38,6 +38,8 @@ namespace ECore.DeviceMemories
 		CHB_DIV_B1 = 7,
 		CHB_MULT1 = 9,
 		CHB_MULT2 = 10,
+		ACQ_SINGLE = 11,
+		ACQ_RUN = 12,
 		CHB_ENABLECALIB = 13,
 		CHB_DCCOUPLING = 14,
 		RESET_DCM = 15,
