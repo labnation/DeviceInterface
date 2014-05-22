@@ -8,8 +8,12 @@ namespace ECore.Devices
 {
     partial class ScopeV2
     {
-        //FIXME: might have to be moved to more general class
+        readonly int[] validChannels = new int[] { 0, 1 };
+        readonly uint[] validDividers = new uint[] { 1, 10, 100 };
+        readonly uint[] validMultipliers = new uint[] { 1, 2, 5 };
+
         #region helpers
+
         private byte voltToByte(float volt)
         {
             //FIXME: implement this
@@ -17,17 +21,27 @@ namespace ECore.Devices
         }
         private void validateChannel(int ch)
         {
-            if (ch != 0 && ch != 1) 
-                throw new ValidationException("Channel must be 0 or 1");
+            if (!validChannels.Contains(ch))
+                throw new ValidationException(
+                    "Invalid channel, valid values are: " +
+                    String.Join(", ", validChannels.Select(x => x.ToString()).ToArray())
+                    );
         }
         private void validateDivider(uint div)
         {
-            if (div != 1 && div != 10 && div != 100) 
-                throw new ValidationException("Divider must be 1, 10 or 100");
+            if (!validDividers.Contains(div))
+                throw new ValidationException(
+                    "Invalid divider, valid values are: " +
+                    String.Join(", ", validDividers.Select(x => x.ToString()).ToArray())
+                    );
         }
         private void validateMultiplier(uint mul)
         {
-            throw new ValidationException("I have no idea what a valid multiplier would be. I do know about dividers. Try that instead...");
+            if(!validMultipliers.Contains(mul))
+                throw new ValidationException(
+                    "Invalid multiplier, valid values are: " + 
+                    String.Join(", ", validMultipliers.Select(x => x.ToString()).ToArray())
+                    );
         }
         private void toggleUpdateStrobe()
         {
@@ -47,12 +61,23 @@ namespace ECore.Devices
         /// <param name="offset">Vertical offset in Volt</param>
         public void SetYOffset(int channel, float offset)
         {
+            validateChannel(channel);
             //FIXME: convert offset to byte value
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
             byte offsetByte = (byte)((offset * 68.2) - 16.5);
             FpgaSettingsMemory.GetRegister(r).Set(offsetByte);
+            FpgaSettingsMemory.WriteSingle(r);
+        }
+
+#if INTERNAL
+        public void SetYOffsetByte(int channel, byte offset)
+        {
+            validateChannel(channel);
+            REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
+            Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
+            FpgaSettingsMemory.GetRegister(r).Set(offset);
             FpgaSettingsMemory.WriteSingle(r);
         }
 
@@ -86,17 +111,14 @@ namespace ECore.Devices
             validateMultiplier(multiplier);
             STR m1 = (channel == 0) ? STR.CHA_MULT1 : STR.CHB_MULT1;
             STR m2 = (channel == 0) ? STR.CHA_MULT2 : STR.CHB_MULT2;
-            STR m3 = (channel == 0) ? STR.CHA_MULT3 : STR.CHB_MULT3;
-            //FIXME: do something with the registers
-            /*
-            strobeMemory.GetRegister(m1).Set(?);
-            strobeMemory.GetRegister(m2).Set(?);
-            strobeMemory.GetRegister(m3).Set(?);
-            strobeMemory.WriteSingle(m1);
-            strobeMemory.WriteSingle(m2);
-            strobeMemory.WriteSingle(m3);
-            */
+
+            byte divSetting = (byte)Array.IndexOf(validMultipliers, multiplier);
+            StrobeMemory.GetRegister(m1).Set(Utils.IsBitSet(divSetting, 0));
+            StrobeMemory.GetRegister(m2).Set(Utils.IsBitSet(divSetting, 1));
+            StrobeMemory.WriteSingle(m1);
+            StrobeMemory.WriteSingle(m2);
         }
+#endif
 
         public void SetCoupling(int channel, Coupling coupling)
         {
