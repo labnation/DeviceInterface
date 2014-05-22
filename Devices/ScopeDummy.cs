@@ -121,7 +121,7 @@ namespace ECore.Devices {
         {
             this.acquisitionRunning = running;
         }
-        public bool GetAcuisitionRunning()
+        public bool GetAcquisitionRunning()
         {
             return this.acquisitionRunning;
         }

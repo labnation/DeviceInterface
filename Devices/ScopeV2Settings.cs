@@ -66,7 +66,7 @@ namespace ECore.Devices
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
-            byte offsetByte = (byte)((offset * 68.2) - 16.5);
+            byte offsetByte = (byte)Math.Min(byte.MaxValue, Math.Max(byte.MinValue, ((offset * 68.2) - 16.5)));
             FpgaSettingsMemory.GetRegister(r).Set(offsetByte);
             FpgaSettingsMemory.WriteSingle(r);
         }
@@ -117,6 +117,15 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(m2).Set(Utils.IsBitSet(divSetting, 1));
             StrobeMemory.WriteSingle(m1);
             StrobeMemory.WriteSingle(m2);
+        }
+
+        /// <summary>
+        /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
+        /// </summary>
+        /// <param name="disable"></param>
+        public void SetDisableVoltageConversion(bool disable)
+        {
+            this.disableVoltageConversion = disable;
         }
 #endif
 
@@ -190,20 +199,26 @@ namespace ECore.Devices
 
         public void SetAcquisitionMode(AcquisitionMode mode)
         {
-            //FIXME
-            //throw new NotImplementedException();
+            bool single = mode == AcquisitionMode.SINGLE;
+
+            StrobeMemory.GetRegister(STR.ACQ_SINGLE).Set(single);
+            StrobeMemory.WriteSingle(STR.ACQ_SINGLE);
         }
         public void SetAcuisitionRunning(bool running)
         {
-            //FIXME
-            //throw new NotImplementedException();
+            STR s;
+            if (running)
+                s = STR.ACQ_START;
+            else
+                s = STR.ACQ_STOP;
+            StrobeMemory.GetRegister(s).Set(true);
+            StrobeMemory.WriteSingle(s);
         }
 
-        public bool GetAcuisitionRunning()
+        public bool GetAcquisitionRunning()
         {
-            //FIXME
-            //throw new NotImplementedException();
-            return false;
+            FpgaRom.ReadSingle(ROM.SCOPE_STATE);
+            return Utils.IsBitSet(FpgaRom.GetRegister(ROM.SCOPE_STATE).GetByte(), 0);
         }
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
@@ -356,18 +371,6 @@ namespace ECore.Devices
         {
             //FIXME: implement this
             return false;
-        }
-        #endregion
-        
-        //FIXME: guard this so it's only in internal builds
-        #region develop
-        /// <summary>
-        /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
-        /// </summary>
-        /// <param name="disable"></param>
-        public void SetDisableVoltageConversion(bool disable)
-        {
-            this.disableVoltageConversion = true;
         }
         #endregion
 

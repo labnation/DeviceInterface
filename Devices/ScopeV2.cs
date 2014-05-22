@@ -230,8 +230,8 @@ namespace ECore.Devices
             byte[] chB = new byte[buffer.Length / 2];
             for (int i = 0; i < chA.Length; i++)
             {
-                chB[i] = buffer[2 * i];
-                chA[i] = buffer[2 * i + 1];
+                chA[i] = buffer[2 * i];
+                chB[i] = buffer[2 * i + 1];
             }
 
             //construct data package
@@ -248,7 +248,7 @@ namespace ECore.Devices
             {
                 //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
                 data.SetData(AnalogChannel.ChA,
-                    ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()));
+                    ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).GetByte()));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!this.GetEnableLogicAnalyser())

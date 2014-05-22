@@ -24,7 +24,7 @@ namespace ECore.Devices
         int GetNumberOfSamples();
         void SetAcquisitionMode(AcquisitionMode mode);
         void SetAcuisitionRunning(bool running);
-        bool GetAcuisitionRunning();
+        bool GetAcquisitionRunning();
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
