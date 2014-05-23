@@ -129,10 +129,6 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
             LogWait("FPGA reset");
-            //set feedback loopand to 1V for demo purpose and enable
-            SetDivider(0, 1);
-            SetDivider(1, 1);
-            LogWait("dividers to 1");
 
             //FIXME: these are byte values, since the setter helper is not converting volt to byte
             this.SetYOffset(0, 0f);
@@ -178,6 +174,16 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
 			LogWait("Ended reset", 100);
+
+            //set feedback loopand to 1V for demo purpose and enable
+            SetDivider(0, 10);
+            SetDivider(1, 10);
+            LogWait("dividers to 10");
+
+            SetDivider(0, 1);
+            SetDivider(1, 1);
+            LogWait("dividers to 1");
+
 
             StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_ADC);
