@@ -50,6 +50,9 @@ namespace ECore.DeviceMemories
 		ENABLE_RAM = 19,
 		DEBUG_PIC = 20,
 		DEBUG_RAM = 21,
+		DOUT_3V_5V = 22,
+		EN_NEG = 23,
+		EN_OPAMP_B = 24,
     }
 
     public enum ROM
