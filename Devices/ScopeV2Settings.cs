@@ -71,6 +71,55 @@ namespace ECore.Devices
             FpgaSettingsMemory.WriteSingle(r);
         }
 
+		/// <summary>
+		/// Set divider of a channel
+		/// </summary>
+		/// <param name="channel">0 or 1 (channel A or B)</param>
+		/// <param name="divider">1, 10 or 100</param>
+		#if INTERNAL
+		public
+		#else
+		private
+		#endif
+		void SetDivider(int channel, uint divider)
+		{
+			validateChannel(channel);
+			validateDivider(divider);
+			byte pow = (byte)Math.Log10(divider);
+			int bitOffset = channel * 4;
+			byte mask = (byte)(0x3 << bitOffset);
+
+			byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
+			divMul = (byte)((divMul & ~mask) + (pow << bitOffset));
+			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
+			FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
+		}
+
+		///<summary>
+		///Set multiplier of a channel
+		///</summary>
+		///<param name="channel">0 or 1 (channel A or B)</param>
+		///<param name="multiplier">Set input stage multiplier (?? or ??)</param>
+		#if INTERNAL
+		public
+		#else
+		private
+		#endif
+		void SetMultiplier(int channel, uint multiplier)
+		{
+			validateChannel(channel);
+			validateMultiplier(multiplier);
+
+			int bitOffset = channel * 4;
+			byte mul = (byte)(Array.IndexOf(validMultipliers, multiplier) << 2);
+			byte mask = (byte)(0xC << bitOffset);
+
+			byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
+			divMul = (byte)((divMul & ~mask) + (mul << bitOffset));
+			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
+			FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
+		}
+
 #if INTERNAL
         public void SetYOffsetByte(int channel, byte offset)
         {
@@ -79,45 +128,6 @@ namespace ECore.Devices
             Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
             FpgaSettingsMemory.GetRegister(r).Set(offset);
             FpgaSettingsMemory.WriteSingle(r);
-        }
-
-        /// <summary>
-        /// Set divider of a channel
-        /// </summary>
-        /// <param name="channel">0 or 1 (channel A or B)</param>
-        /// <param name="divider">1, 10 or 100</param>
-        public void SetDivider(int channel, uint divider)
-        {
-            validateChannel(channel);
-            validateDivider(divider);
-            byte pow = (byte)Math.Log10(divider);
-            int bitOffset = channel * 4;
-            byte mask = (byte)(0x3 << bitOffset);
-
-            byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
-            divMul = (byte)((divMul & ~mask) + (pow << bitOffset));
-            FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
-            FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
-        }
-
-        ///<summary>
-        ///Set multiplier of a channel
-        ///</summary>
-        ///<param name="channel">0 or 1 (channel A or B)</param>
-        ///<param name="multiplier">Set input stage multiplier (?? or ??)</param>
-        public void SetMultiplier(int channel, uint multiplier)
-        {
-            validateChannel(channel);
-            validateMultiplier(multiplier);
-
-            int bitOffset = channel * 4;
-            byte mul = (byte)(Array.IndexOf(validMultipliers, multiplier) << 2);
-            byte mask = (byte)(0xC << bitOffset);
-
-            byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
-            divMul = (byte)((divMul & ~mask) + (mul << bitOffset));
-            FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
-            FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
         }
 
         /// <summary>
