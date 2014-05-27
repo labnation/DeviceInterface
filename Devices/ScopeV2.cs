@@ -155,7 +155,7 @@ namespace ECore.Devices
             AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
             LogWait("ADC CHA term");
 
-            AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(24);
+            AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(5);
             AdcMemory.WriteSingle(MAX19506.DATA_CLK_TIMING);
             LogWait("ADC DCLK timing");
 
@@ -199,8 +199,8 @@ namespace ECore.Devices
 			LogWait("ADC Output format", 200);
 
 
-            StrobeMemory.GetRegister(STR.ENABLE_NEG_DCDC).Set(true);
-            StrobeMemory.WriteSingle(STR.ENABLE_NEG_DCDC);
+            StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true);
+            StrobeMemory.WriteSingle(STR.ENABLE_NEG);
 			LogWait("Enable neg dcdc", 200);
         }
 

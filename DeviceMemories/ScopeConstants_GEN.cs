@@ -45,14 +45,13 @@ namespace ECore.DeviceMemories
 		CHB_DCCOUPLING = 14,
 		ENABLE_ADC = 15,
 		OVERFLOW_DETECT = 16,
-		ENABLE_NEG_DCDC = 17,
+		ENABLE_NEG = 17,
 		POWER_DIGITAL_IO = 18,
 		ENABLE_RAM = 19,
 		DEBUG_PIC = 20,
 		DEBUG_RAM = 21,
 		DOUT_3V_5V = 22,
-		EN_NEG = 23,
-		EN_OPAMP_B = 24,
+		EN_OPAMP_B = 23,
     }
 
     public enum ROM
