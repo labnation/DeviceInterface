@@ -28,6 +28,8 @@ namespace ECore.DeviceMemories
         {
             byte[] data = null;
             hwInterface.GetControllerRegister(ScopeController.FPGA_ROM, address, length, out data);
+            if (data == null)
+                return;
 
             for (int j = 0; j < data.Length; j++)
                 registers[address + j].Set(data[j]);

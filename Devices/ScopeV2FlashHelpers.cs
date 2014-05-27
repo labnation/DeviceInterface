@@ -310,6 +310,7 @@ namespace ECore.Devices {
 
 		private void FlashFpgaInternal ()
 		{
+            this.flashed = false;
 			int packetSize = 32;//hardwareInterface.WriteControlMaxLength ();
 			int packetsPerCommand = 64;
 
@@ -412,6 +413,7 @@ namespace ECore.Devices {
 				//Send finish flashing command
 				hardwareInterface.WriteControlBytes (new byte[] { 123, 13 });
                 Logger.AddEntry(this, LogLevel.Info, String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
+                this.flashed = true;
 			} catch (Exception e) {
 				Logger.AddEntry (this, LogLevel.Error, "Flashing FPGA failed failed");
                 Logger.AddEntry(this, LogLevel.Error, e.Message);

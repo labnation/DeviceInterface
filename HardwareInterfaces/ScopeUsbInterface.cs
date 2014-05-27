@@ -12,12 +12,13 @@ namespace ECore.HardwareInterfaces
     {
         private enum Operation { READ, WRITE };
 
-        private const int USB_TIMEOUT = 100;
+        private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 
         private UsbEndpointWriter commandWriteEndpoint;
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
+        private object registerLock = new object();
 
         internal ScopeUsbInterface(UsbDevice usbDevice)
         {
@@ -51,7 +52,9 @@ namespace ECore.HardwareInterfaces
         public override int WriteControlBytes(byte[] message)
         {
             int bytesWritten;
-            commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
+            ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
+            if (code != ErrorCode.Success)
+                Logger.AddEntry(this, LogLevel.Error, "Failed to write `ontrol bytes : " + code.ToString("G"));
             return bytesWritten;
         }
 
@@ -65,7 +68,6 @@ namespace ECore.HardwareInterfaces
                 byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
                 int bytesRead;
                 errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-
                 //log
                 string logString = "";
                 foreach (byte b in readBuffer)
@@ -102,7 +104,6 @@ namespace ECore.HardwareInterfaces
                 byte[] readBuffer = new byte[numberOfBytes];
                 int bytesRead;
                 errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-
                 // Asynchronously check for data
                 /*
                 UsbTransfer dataReadTransfer;
@@ -125,7 +126,7 @@ namespace ECore.HardwareInterfaces
                 Logger.AddEntry(this, LogLevel.Error, "USB ErrorCode: " + errorCode);
                 Logger.AddEntry(this, LogLevel.Error, "requested length: " + numberOfBytes.ToString());
 
-                return new byte[0];
+                return null;
             }
         }
 
@@ -143,7 +144,11 @@ namespace ECore.HardwareInterfaces
             //EP3 always contains 16 bytes xxx should be linked to constant
             //FIXME: use endpoint length or so, or don't pass the argument to the function
             byte[] readback = ReadControlBytes(16);
-
+            if (readback == null)
+            {
+                data = null;
+                return;
+            }
             //strip away first 4 bytes as these are not data
             data = new byte[length];
             Array.Copy(readback, 4, data, 0, length);

@@ -15,6 +15,7 @@ namespace ECore.Devices
     public partial class ScopeV2 : EDevice, IScope
     {
         private ScopeUsbInterface hardwareInterface;
+        private bool flashed = false;
         private ScopeConnectHandler scopeConnectHandler;
 
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
@@ -124,7 +125,6 @@ namespace ECore.Devices
 
         public void Configure()
         {
-
             //raise global reset
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
@@ -174,7 +174,7 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
 			LogWait("Ended reset", 100);
-
+            System.Threading.Thread.Sleep(100);
             //set feedback loopand to 1V for demo purpose and enable
             SetDivider(0, 10);
             SetDivider(1, 10);
@@ -183,7 +183,6 @@ namespace ECore.Devices
             SetDivider(0, 1);
             SetDivider(1, 1);
             LogWait("dividers to 1");
-
 
             StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_ADC);
@@ -197,7 +196,6 @@ namespace ECore.Devices
 			AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
 			AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
 			LogWait("ADC Output format", 200);
-
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG);
@@ -278,7 +276,7 @@ namespace ECore.Devices
         }
 
         //FIXME: this needs proper handling
-        public override bool Connected { get { return this.hardwareInterface != null; } }
+        public override bool Connected { get { return this.hardwareInterface != null && this.flashed; } }
 
         #endregion
     }

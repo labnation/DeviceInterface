@@ -93,6 +93,7 @@ namespace ECore.Devices
 			divMul = (byte)((divMul & ~mask) + (pow << bitOffset));
 			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
 			FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
+            System.Threading.Thread.Sleep(150);
 		}
 
 		///<summary>
