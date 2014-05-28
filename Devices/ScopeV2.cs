@@ -208,8 +208,8 @@ namespace ECore.Devices
 
         public byte[] GetBytes()
         {
-            int samplesToFetch = 4096;
-            int bytesToFetch = samplesToFetch;
+            int samplesToFetch = 2048;
+            int bytesToFetch = 64 + samplesToFetch * 2;//64 byte header + 2048 * 2 channels
             return hardwareInterface.GetData(bytesToFetch);
         }
 
@@ -231,18 +231,22 @@ namespace ECore.Devices
         {
             byte[] buffer = this.GetBytes();
             if (buffer == null) return null;
+
+            //Parse header
+            ScopeV2Header header = new ScopeV2Header(buffer);
+            int payloadOffset = 64;
             //FIXME: Get these scope settings from header
             double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
 
 
             //Split in 2 channels
-            byte[] chA = new byte[buffer.Length / 2];
-            byte[] chB = new byte[buffer.Length / 2];
+            byte[] chA = new byte[header.Samples / 2];
+            byte[] chB = new byte[header.Samples / 2];
             for (int i = 0; i < chA.Length; i++)
             {
-                chA[i] = buffer[2 * i + 1];
-                chB[i] = buffer[2 * i];
+                chA[i] = buffer[payloadOffset + 2 * i + 1];
+                chB[i] = buffer[payloadOffset + 2 * i];
             }
 
             //construct data package
