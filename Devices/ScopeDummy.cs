@@ -410,6 +410,11 @@ namespace ECore.Devices {
                 p.SetData(AnalogChannel.ChB, outputAnalog[1]);
                 p.SetOffset(AnalogChannel.ChA, yOffset[0]);
                 p.SetOffset(AnalogChannel.ChB, yOffset[1]);
+                p.SetDivider(AnalogChannel.ChA, 1.0);
+                p.SetDivider(AnalogChannel.ChB, 1.0);
+                p.SetMultiplier(AnalogChannel.ChA, 1.0);
+                p.SetMultiplier(AnalogChannel.ChB, 1.0);
+
 				p.SetDataDigital (outputDigital);
 			}
 #if __IOS__

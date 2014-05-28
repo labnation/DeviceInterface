@@ -32,6 +32,7 @@ namespace ECore.Devices
         private bool disableVoltageConversion;
         private const double SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
+        private bool acquisitionRunning = false;
 
 #if ANDROID
 		public Android.Content.Res.AssetManager Assets;
@@ -234,6 +235,7 @@ namespace ECore.Devices
 
             //Parse header
             ScopeV2Header header = new ScopeV2Header(buffer);
+            acquisitionRunning = header.scopeRunning;
             int payloadOffset = 64;
             //FIXME: Get these scope settings from header
             double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
@@ -253,23 +255,35 @@ namespace ECore.Devices
             //FIXME: get firstsampletime and samples from FPGA
             DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, chA.Length, 0);
             //FIXME: parse package header and set DataPackageScope's trigger index
-            //FIXME: Get bytes, split into analog/digital channels and add to scope data
+            
+            //Parse div_mul
+            byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
+            double divA = validDividers[(divMul >> 0) & 0x3];
+            double mulA = validMultipliers[(divMul >> 2) & 0x3];
+            double divB = validDividers[(divMul >> 4) & 0x3];
+            double mulB = validMultipliers[(divMul >> 6) & 0x3];
+            data.SetDivider(AnalogChannel.ChA, divA);
+            data.SetDivider(AnalogChannel.ChB, divB);
+            data.SetMultiplier(AnalogChannel.ChA, mulA);
+            data.SetMultiplier(AnalogChannel.ChB, mulB);
+
             if (this.disableVoltageConversion)
             {
                 data.SetData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
                 data.SetData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
+                data.SetOffset(AnalogChannel.ChA, (float)header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
+                data.SetOffset(AnalogChannel.ChB, (float)header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
             }
             else
             {
-                //FIXME: shouldn't the register here be CHA_YOFFSET_VOLTAGE?
                 data.SetData(AnalogChannel.ChA,
-                    ConvertByteToVoltage(chA, FpgaSettingsMemory.GetRegister(REG.CHA_YOFFSET_VOLTAGE).GetByte()));
+                    ConvertByteToVoltage(chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
-                if (!this.GetEnableLogicAnalyser())
+                if (!header.GetStrobe(STR.LA_ENABLE))
                 {
                     data.SetData(AnalogChannel.ChB,
-                        ConvertByteToVoltage(chB, FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte()));
+                        ConvertByteToVoltage(chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
                 }
                 else
                 {

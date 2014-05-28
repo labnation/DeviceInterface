@@ -13,6 +13,8 @@ namespace ECore.DataPackages
         //to just pass it around as an 8-bit bus. But what if we have 10 channels? or 11? or 42?
         private byte[] dataDigital;
         private Dictionary<AnalogChannel, float> yOffset;
+        private Dictionary<AnalogChannel, double> multiplier;
+        private Dictionary<AnalogChannel, double> divider;
 
         public DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime)
         {
@@ -22,6 +24,8 @@ namespace ECore.DataPackages
             this.FirstSampleTime = firstSampleTime;
             dataAnalog = new Dictionary<AnalogChannel, float[]>();
             yOffset = new Dictionary<AnalogChannel, float>();
+            multiplier = new Dictionary<AnalogChannel, double>();
+            divider = new Dictionary<AnalogChannel, double>();
         }
 
         public void SetData(AnalogChannel ch, float[] data)
@@ -37,12 +41,16 @@ namespace ECore.DataPackages
         {
             this.yOffset.Add(ch, offset);
         }
-        public float GetOffset(AnalogChannel ch)
+
+        public void SetMultiplier(AnalogChannel ch, double mul)
         {
-            float offset = 0f;
-            this.yOffset.TryGetValue(ch, out offset);
-            return offset;
+            this.multiplier.Add(ch, mul);
         }
+        public void SetDivider(AnalogChannel ch, double div)
+        {
+            this.divider.Add(ch, div);
+        }
+
         //FIXME: should we perhaps return a copy of the array?
         public float[] GetData(AnalogChannel ch)
         {

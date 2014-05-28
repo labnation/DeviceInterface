@@ -223,14 +223,14 @@ namespace ECore.Devices
                 s = STR.ACQ_START;
             else
                 s = STR.ACQ_STOP;
+            acquisitionRunning = running;
             StrobeMemory.GetRegister(s).Set(true);
             StrobeMemory.WriteSingle(s);
         }
 
         public bool GetAcquisitionRunning()
         {
-            FpgaRom.ReadSingle(ROM.SCOPE_STATE);
-            return Utils.IsBitSet(FpgaRom.GetRegister(ROM.SCOPE_STATE).GetByte(), 0);
+            return acquisitionRunning;
         }
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
@@ -359,11 +359,6 @@ namespace ECore.Devices
         }
 #endif
 
-        public bool GetEnableLogicAnalyser()
-        {
-            //FIXME: implement this
-            return false;
-        }
         #endregion
 
     }
