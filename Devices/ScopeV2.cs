@@ -176,13 +176,13 @@ namespace ECore.Devices
 			LogWait("Ended reset", 100);
             System.Threading.Thread.Sleep(100);
             //set feedback loopand to 1V for demo purpose and enable
-            SetDivider(0, 10);
-            SetDivider(1, 10);
-            LogWait("dividers to 10");
+            SetDivider(0, validDividers.Max());
+            SetDivider(1, validDividers.Max());
+            LogWait("dividers to " + validDividers.Max());
 
-            SetDivider(0, 1);
-            SetDivider(1, 1);
-            LogWait("dividers to 1");
+            SetDivider(0, validDividers.Min());
+            SetDivider(1, validDividers.Min());
+            LogWait("dividers to " + validDividers.Min());
 
             StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_ADC);

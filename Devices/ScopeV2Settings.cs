@@ -8,9 +8,9 @@ namespace ECore.Devices
 {
     partial class ScopeV2
     {
-        readonly int[] validChannels = new int[] { 0, 1 };
-        readonly uint[] validDividers = new uint[] { 1, 10, 100 };
-        readonly uint[] validMultipliers = new uint[] { 1, 2, 5 };
+        public static readonly int[] validChannels = { 0, 1 };
+        public static readonly double[] validDividers = { 1, 6, 36 };
+        public static readonly double[] validMultipliers = { 1.1, 2, 3 };
 
         #region helpers
 
@@ -27,7 +27,7 @@ namespace ECore.Devices
                     String.Join(", ", validChannels.Select(x => x.ToString()).ToArray())
                     );
         }
-        private void validateDivider(uint div)
+        private void validateDivider(double div)
         {
             if (!validDividers.Contains(div))
                 throw new ValidationException(
@@ -35,7 +35,7 @@ namespace ECore.Devices
                     String.Join(", ", validDividers.Select(x => x.ToString()).ToArray())
                     );
         }
-        private void validateMultiplier(uint mul)
+        private void validateMultiplier(double mul)
         {
             if(!validMultipliers.Contains(mul))
                 throw new ValidationException(
@@ -81,16 +81,16 @@ namespace ECore.Devices
 		#else
 		private
 		#endif
-		void SetDivider(int channel, uint divider)
+		void SetDivider(int channel, double divider)
 		{
 			validateChannel(channel);
 			validateDivider(divider);
-			byte pow = (byte)Math.Log10(divider);
+            byte div = (byte)(Array.IndexOf(validDividers, divider));
 			int bitOffset = channel * 4;
 			byte mask = (byte)(0x3 << bitOffset);
 
 			byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
-			divMul = (byte)((divMul & ~mask) + (pow << bitOffset));
+			divMul = (byte)((divMul & ~mask) + (div << bitOffset));
 			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
 			FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
             System.Threading.Thread.Sleep(150);
@@ -106,7 +106,7 @@ namespace ECore.Devices
 		#else
 		private
 		#endif
-		void SetMultiplier(int channel, uint multiplier)
+		void SetMultiplier(int channel, double multiplier)
 		{
 			validateChannel(channel);
 			validateMultiplier(multiplier);
