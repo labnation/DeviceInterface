@@ -262,17 +262,17 @@ namespace ECore.Devices
             double mulA = validMultipliers[(divMul >> 2) & 0x3];
             double divB = validDividers[(divMul >> 4) & 0x3];
             double mulB = validMultipliers[(divMul >> 6) & 0x3];
-            data.SetDivider(AnalogChannel.ChA, divA);
-            data.SetDivider(AnalogChannel.ChB, divB);
-            data.SetMultiplier(AnalogChannel.ChA, mulA);
-            data.SetMultiplier(AnalogChannel.ChB, mulB);
+            data.AddSetting("DividerA", divA);
+            data.AddSetting("DividerB", divB);
+            data.AddSetting("MultiplierA", mulA);
+            data.AddSetting("MultiplierB", mulB);
 
             if (this.disableVoltageConversion)
             {
                 data.SetData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
                 data.SetData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
-                data.SetOffset(AnalogChannel.ChA, (float)header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-                data.SetOffset(AnalogChannel.ChB, (float)header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
+                data.AddSetting("OffsetA", (float)header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
+                data.AddSetting("OffsetB", (float)header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
             }
             else
             {
