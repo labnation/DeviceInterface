@@ -12,6 +12,9 @@ namespace ECore.DataSources
     
     public abstract class DataSource
     {
+#if INTERNAL
+        public event NewDataAvailableHandler BeforeNewDataAvailable;
+#endif
         public event NewDataAvailableHandler OnNewDataAvailable;
         protected EDevice device;
         protected DateTime lastUpdate;
@@ -24,6 +27,10 @@ namespace ECore.DataSources
         protected void fireDataAvailableEvents()
         {
             {
+#if INTERNAL
+                if (BeforeNewDataAvailable != null)
+                    BeforeNewDataAvailable(latestDataPackage, new EventArgs());
+#endif
                 if (OnNewDataAvailable != null)
                     OnNewDataAvailable(latestDataPackage, new EventArgs());
             }

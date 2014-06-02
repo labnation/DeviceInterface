@@ -15,6 +15,12 @@ namespace ECore.Devices
     public partial class ScopeV2 : EDevice, IScope
     {
         private ScopeUsbInterface hardwareInterface;
+#if INTERNAL
+        public
+#else
+        private
+#endif
+        Rom rom;
         private bool flashed = false;
         private ScopeConnectHandler scopeConnectHandler;
 
@@ -77,6 +83,8 @@ namespace ECore.Devices
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
                 Logger.AddEntry(this, LogLevel.Debug, resultString);
+
+                //Init FPGA
                 LogWait("Starting fpga flashing...", 0);
                 FlashFpgaInternal();
                 LogWait("FPGA flashed...");
@@ -85,6 +93,9 @@ namespace ECore.Devices
                 FpgaRom.ReadSingle(ROM.FW_MSB);
                 FpgaRom.ReadSingle(ROM.FW_LSB);
                 Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
+
+                //Init ROM
+                this.rom = new Rom(scopeInterface);
             }
             else
             {

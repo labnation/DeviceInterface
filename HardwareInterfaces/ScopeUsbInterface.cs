@@ -242,5 +242,107 @@ namespace ECore.HardwareInterfaces
 
         #endregion
 
+        #region ROM - to be merged with ScopeInterface
+
+
+        public int Write16BytesToROM(int addressOffset, byte[] byteArr)
+        {
+            //unlock
+            this.WriteControlBytes(new byte[] { 123, 5 });
+
+            //prepare packages
+            byte[] writePackage1 = new byte[14];
+            byte[] writePackage2 = new byte[14];
+
+            int addressAbsolute = 0x3A00 + addressOffset;
+
+            //fill first packet
+            int i = 0;
+            writePackage1[i++] = 123;
+            writePackage1[i++] = 8;
+            writePackage1[i++] = (byte)(addressAbsolute >> 8);
+            writePackage1[i++] = (byte)(addressAbsolute);
+            writePackage1[i++] = 8;
+            writePackage1[i++] = 1; //first data                    
+            for (i = 0; i < 8; i++)
+                if (byteArr.Length > i)
+                    writePackage1[6 + i] = byteArr[i];
+                else
+                    writePackage1[6 + i] = 0xFF;
+
+            //fill second packet
+            i = 0;
+            writePackage2[i++] = 123;
+            writePackage2[i++] = 8;
+            writePackage2[i++] = (byte)(addressAbsolute >> 8);
+            writePackage2[i++] = (byte)(addressAbsolute);
+            writePackage2[i++] = 8;
+            writePackage2[i++] = 0; //not first data
+            byte[] last8Bytes = new byte[8];
+            for (i = 0; i < 8; i++)
+                if (byteArr.Length > 8 + i)
+                    writePackage2[6 + i] = byteArr[8 + i];
+                else
+                    writePackage2[6 + i] = 0xFF;
+
+            //send first packet
+            this.WriteControlBytes(writePackage1);
+            //send second packet, including the 16th byte, after which the write actually happens
+            this.WriteControlBytes(writePackage2);
+
+            //lock
+            this.WriteControlBytes(new byte[] { 123, 6 });
+
+            return 16;
+        }
+
+        public byte[] ReadBytesFromROM(int addressOffset, int numberOfBytes)
+        {
+            List<byte> byteList = new List<byte>();
+
+            int addressPointer = 0x3A00 + addressOffset;
+            while (numberOfBytes > 0)
+            {
+                int numberOfBytesToBeFetched = numberOfBytes;
+                if (numberOfBytesToBeFetched > 10) numberOfBytesToBeFetched = 10;
+
+                //read bytes at address                    
+                byte[] sendBytesForRead = new byte[] { 123, 7, (byte)(addressPointer >> 8), (byte)addressOffset, (byte)numberOfBytesToBeFetched };
+                this.WriteControlBytes(sendBytesForRead);
+                byte[] readBytes = this.ReadControlBytes(16);
+
+                //append to list
+                for (int i = 0; i < numberOfBytesToBeFetched; i++)
+                    byteList.Add(readBytes[i + 5]);
+
+                //prep for next while cycle
+                addressOffset += numberOfBytesToBeFetched;
+                numberOfBytes -= numberOfBytesToBeFetched;
+            }
+
+            //return to caller method
+            return byteList.ToArray();
+        }
+
+        public void EraseROM()
+        {
+            byte[] sendBytesForUnlock = new byte[] { 123, 5 };
+            this.WriteControlBytes(sendBytesForUnlock);
+
+            //full erase of upper block, done in blocks of 64B at once
+            for (int i = 0x3A00; i < 0x3FFF; i = i + 64)
+            {
+                byte addressMSB = (byte)(i >> 8);
+                byte addressLSB = (byte)i;
+                byte[] sendBytesForBlockErase = new byte[] { 123, 9, addressMSB, addressLSB };
+                this.WriteControlBytes(sendBytesForBlockErase);
+            }
+
+            Console.WriteLine("ROM memory area erased successfuly");
+            //lock
+            this.WriteControlBytes(new byte[] { 123, 6 });
+        }
+
+        #endregion
     }
 }

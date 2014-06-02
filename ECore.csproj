@@ -23,6 +23,7 @@
     <DefineConstants>TRACE;DEBUG;INTERNAL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -31,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibUsbDotNet, Version=2.2.8.104, Culture=neutral, processorArchitecture=x86">
@@ -57,13 +59,13 @@
     <Compile Include="Devices\ScopeDummyFile.cs" />
     <Compile Include="Devices\ScopeDummyWaves.cs" />
     <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
+    <Compile Include="Devices\ScopeV2Rom.cs" />
     <Compile Include="Devices\ScopeV2Settings.cs" />
     <Compile Include="HardwareInterfaces\IScopeHardwareInterface.cs" />
     <Compile Include="Devices\ScopeChannel.cs" />
     <Compile Include="Devices\Settings.cs" />
     <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="Devices\ScopeV2.cs" />
-    <Compile Include="Devices\ScopeV2_ROM.cs" />
     <Compile Include="DeviceMemories\ScopeConstants_GEN.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
