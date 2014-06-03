@@ -44,9 +44,6 @@ namespace ECore.DeviceMemories
 
         public override void Write(int address, int length)
         {
-            int bytesWritten = 16;
-            byte[] writeBuffer = new byte[bytesWritten];
-
             for (int i = 0; i < length; i++)
             {
                 int strobeAddress = address+i;
