@@ -28,6 +28,7 @@ namespace ECore.Devices
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
+        void SetVerticalRange(int channel, float minimum, float maximum);
         void SetYOffset(int channel, float offset);
         void SetTriggerChannel(int channel);
         void SetTriggerDirection(TriggerDirection direction);

@@ -10,7 +10,7 @@ namespace ECore.Devices
     {
         private byte[] raw;
         private byte bursts;
-        private byte bytesPerBurst;
+        public byte bytesPerBurst { get; private set; }
         public int Samples { get; private set; }
         public bool scopeRunning { get; private set; }
         public ScopeV2Header(byte[] data)

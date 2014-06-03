@@ -10,8 +10,6 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.Devices
 {
-    //this is the main class which fills the EDevice with data specific to the HW implementation.
-    //eg: which memories, which registers in these memories, which additional functionalities, the start and stop routines, ...
     public partial class ScopeV2 : EDevice, IScope
     {
         private ScopeUsbInterface hardwareInterface;
@@ -33,12 +31,12 @@ namespace ECore.Devices
         private DataSources.DataSourceScope dataSourceScope;
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
 
-        private float[] calibrationCoefficients = new float[] { 0.0042f, -0.0029f, 0.1028f };
-
         private bool disableVoltageConversion;
         private const double SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
         private bool acquisitionRunning = false;
+        private Calibration[] channelSettings;
+        private float triggerLevel = 0f;
 
 #if ANDROID
 		public Android.Content.Res.AssetManager Assets;
@@ -47,9 +45,7 @@ namespace ECore.Devices
         public ScopeV2(ScopeConnectHandler handler)
             : base()
         {
-            //figure out which yOffset value needs to be put in order to set a 0V signal to midrange of the ADC = 128binary
-            //FIXME: no clue why this line is here...
-            //yOffset_Midrange0V = (int)((0 - 128f * calibrationCoefficients[0] - calibrationCoefficients[2]) / calibrationCoefficients[1]);
+            channelSettings = new Calibration[2];
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
@@ -83,6 +79,9 @@ namespace ECore.Devices
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
                 Logger.AddEntry(this, LogLevel.Debug, resultString);
+                
+                //Init ROM
+                this.rom = new Rom(scopeInterface);
 
                 //Init FPGA
                 LogWait("Starting fpga flashing...", 0);
@@ -93,9 +92,6 @@ namespace ECore.Devices
                 FpgaRom.ReadSingle(ROM.FW_MSB);
                 FpgaRom.ReadSingle(ROM.FW_LSB);
                 Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
-
-                //Init ROM
-                this.rom = new Rom(scopeInterface);
             }
             else
             {
@@ -142,10 +138,9 @@ namespace ECore.Devices
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
             LogWait("FPGA reset");
 
-            //FIXME: these are byte values, since the setter helper is not converting volt to byte
-            this.SetYOffset(0, 0f);
-            this.SetYOffset(1, 0f);
-            LogWait("yoffset to zero");
+            /*********
+             *  ADC  *
+             *********/
 
             AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90);
             AdcMemory.WriteSingle(MAX19506.SOFT_RESET);
@@ -175,6 +170,11 @@ namespace ECore.Devices
             AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
             LogWait("ADC pwr mgmgt enable (3)");
 
+            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
+            AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
+            LogWait("ADC Output format");
+
+            /***************************/
 
             //Enable scope controller
             StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true);
@@ -185,33 +185,24 @@ namespace ECore.Devices
             LogWait("Waiting to get device out of reset...");
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
             StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
-			LogWait("Ended reset", 100);
-            System.Threading.Thread.Sleep(100);
-            //set feedback loopand to 1V for demo purpose and enable
-            SetDivider(0, validDividers.Max());
-            SetDivider(1, validDividers.Max());
-            LogWait("dividers to " + validDividers.Max());
+			LogWait("Ended reset");
 
-            SetDivider(0, validDividers.Min());
-            SetDivider(1, validDividers.Min());
-            LogWait("dividers to " + validDividers.Min());
+            SetVerticalRange(0, -1f, 1f);
+            SetVerticalRange(1, -1f, 1f);
+            SetYOffset(0, 0f);
+            SetYOffset(1, 0f);
 
             StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_ADC);
-			LogWait("ADC clock enabled", 200);
+			LogWait("ADC clock enabled");
 
 			StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true);
 			StrobeMemory.WriteSingle(STR.ENABLE_RAM);
-			LogWait("RAM enabled", 100);
-
-			//Set ADC multiplexed output mode
-			AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
-			AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
-			LogWait("ADC Output format", 200);
+			LogWait("RAM enabled");
 
             StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true);
             StrobeMemory.WriteSingle(STR.ENABLE_NEG);
-			LogWait("Enable neg dcdc", 200);
+			LogWait("Enable neg dcdc");
         }
 
         #endregion
@@ -225,17 +216,14 @@ namespace ECore.Devices
             return hardwareInterface.GetData(bytesToFetch);
         }
 
-        private float[] ConvertByteToVoltage(byte[] buffer, byte yOffset)
+        private float[] ConvertByteToVoltage(AnalogChannel ch, double divider, double multiplier, byte[] buffer, byte yOffset)
         {
+            double[] coefficients = rom.getCalibration(ch, divider, multiplier).coefficients;
             float[] voltage = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value
-            float totalOffset = (float)yOffset * calibrationCoefficients[1] + calibrationCoefficients[2];
-            for (int i = 0; i < buffer.Length; i++)
-            {
-                float gainedVal = (float)buffer[i] * calibrationCoefficients[0];
-                voltage[i] = gainedVal + totalOffset;
-            }
+            float totalOffset = (float)(yOffset * coefficients[1] + coefficients[2]);
+            voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset)).ToArray();
             return voltage;
         }
 
@@ -247,11 +235,10 @@ namespace ECore.Devices
             //Parse header
             ScopeV2Header header = new ScopeV2Header(buffer);
             acquisitionRunning = header.scopeRunning;
-            int payloadOffset = 64;
+            int payloadOffset = header.bytesPerBurst;
             //FIXME: Get these scope settings from header
             double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
-
 
             //Split in 2 channels
             byte[] chA = new byte[header.Samples / 2];
@@ -264,8 +251,8 @@ namespace ECore.Devices
 
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
-            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, chA.Length, 0);
             //FIXME: parse package header and set DataPackageScope's trigger index
+            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, chA.Length, 0);
             
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
@@ -288,18 +275,14 @@ namespace ECore.Devices
             else
             {
                 data.SetData(AnalogChannel.ChA,
-                    ConvertByteToVoltage(chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
+                    ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!header.GetStrobe(STR.LA_ENABLE))
-                {
                     data.SetData(AnalogChannel.ChB,
-                        ConvertByteToVoltage(chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
-                }
+                        ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
                 else
-                {
                     data.SetDataDigital(chB);
-                }
             }
             return data;
         }

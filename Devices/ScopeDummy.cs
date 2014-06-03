@@ -136,6 +136,10 @@ namespace ECore.Devices {
 			this.triggerLevel = voltage;
 		}
 
+        public void SetVerticalRange(int channel, float minimum, float maximum)
+        {
+        }
+
 		public void SetYOffset (int channel, float yOffset)
 		{
 			validateChannel (channel);

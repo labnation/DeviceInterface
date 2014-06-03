@@ -12,6 +12,15 @@ namespace ECore.Devices
         public static readonly double[] validDividers = { 1, 6, 36 };
         public static readonly double[] validMultipliers = { 1.1, 2, 3 };
 
+#if INTERNAL
+        public 
+#endif
+        static byte yOffsetMax = 200;
+#if INTERNAL
+        public 
+#endif
+        static byte yOffsetMin = 10;
+
         #region helpers
 
         private byte voltToByte(float volt)
@@ -66,9 +75,37 @@ namespace ECore.Devices
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
-            byte offsetByte = (byte)Math.Min(byte.MaxValue, Math.Max(byte.MinValue, ((offset * 68.2) - 16.5)));
+            double[] c = channelSettings[channel].coefficients;
+            //Let ADC output of 127 be the zero point of the Yoffset
+            byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(offset + c[2] + c[0]*127)/c[1]));
             FpgaSettingsMemory.GetRegister(r).Set(offsetByte);
+            Logger.AddEntry(this, LogLevel.Debug, String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
             FpgaSettingsMemory.WriteSingle(r);
+        }
+
+        public void SetVerticalRange(int channel, float minimum, float maximum)
+        {
+            //The voltage range for div/mul = 1/1
+            float baseMin = -0.7f; //V
+            float baseMax = 0.7f; //V
+
+            //Walk through dividers/multipliers till requested range fits
+            int dividerIndex = 0;
+            int multIndex = 0;
+            for (int i = 0; i < rom.computedDividers.Length * rom.computedMultipliers.Length; i++)
+            {
+                dividerIndex= i / rom.computedMultipliers.Length;
+                multIndex = rom.computedMultipliers.Length - (i % rom.computedMultipliers.Length) - 1;
+                if (
+                    (maximum < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    &&
+                    (minimum > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    )
+                    break;
+            }
+            SetDivider(channel, validDividers[dividerIndex]);
+            SetMultiplier(channel, validMultipliers[multIndex]);
+            channelSettings[channel] = rom.getCalibration(AnalogChannel.list.Where(x => x.Value == channel).First(), validDividers[dividerIndex], validMultipliers[multIndex]);
         }
 
 		/// <summary>
@@ -168,7 +205,10 @@ namespace ECore.Devices
         ///<param name="level">Trigger level in volt</param>
         public void SetTriggerAnalog(float voltage)
         {
-            float level = (voltage - FpgaSettingsMemory.GetRegister(REG.CHB_YOFFSET_VOLTAGE).GetByte() * calibrationCoefficients[1] - calibrationCoefficients[2]) / calibrationCoefficients[0];
+            this.triggerLevel = voltage;
+            double[] coefficients = channelSettings[StrobeMemory.GetRegister(STR.TRIGGER_CHB).GetBool() ? 1 : 0].coefficients;
+            REG offsetRegister = StrobeMemory.GetRegister(STR.TRIGGER_CHB).GetBool() ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+            double level = (voltage - FpgaSettingsMemory.GetRegister(offsetRegister).GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
@@ -187,7 +227,8 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set(channel != 0);
             Logger.AddEntry(this, LogLevel.Debug, " Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
             StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
-            toggleUpdateStrobe();
+            SetTriggerAnalog(this.triggerLevel);
+            //toggleUpdateStrobe();
         }
 
         /// <summary>

@@ -36,6 +36,8 @@ namespace ECore.Devices
             public ulong plugCount { get; private set; }
             public List<Calibration> calibration { get; private set; }
             ScopeUsbInterface hwInterface;
+            public double[] computedMultipliers { get; private set; }
+            public double[] computedDividers { get; private set; }
 
             internal Rom(ScopeUsbInterface hwInterface)
             {
@@ -43,6 +45,22 @@ namespace ECore.Devices
                 Download();
                 plugCount++;
                 Upload();
+            }
+
+            private void computeDividersMultipliers()
+            {
+                computedMultipliers = new double[validMultipliers.Length];
+                computedMultipliers[0] = 1;
+                double[] referenceCalibration = getCalibration(AnalogChannel.ChA, validDividers[0], validMultipliers[0]).coefficients;
+
+                for(int i = 1; i < validMultipliers.Length;i++)
+                    computedMultipliers[i] = referenceCalibration[0] / getCalibration(AnalogChannel.ChA, validDividers[0], validMultipliers[i]).coefficients[0];
+
+                computedDividers = new double[validDividers.Length];
+                computedDividers[0] = 1;
+                for (int i = 1; i < validDividers.Length; i++)
+                    computedDividers[i] = getCalibration(AnalogChannel.ChA, validDividers[i], validMultipliers[0]).coefficients[0] / referenceCalibration[0];
+
             }
 
 #if INTERNAL
@@ -65,9 +83,9 @@ namespace ECore.Devices
 #else
             private
 #endif
-            double[] getCalibration(AnalogChannel ch, double divider, double multiplier)
+            Calibration getCalibration(AnalogChannel ch, double divider, double multiplier)
             {
-                return calibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First().coefficients;
+                return calibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
             }
 
             private byte[] MapToBytes(Map m)
@@ -180,6 +198,7 @@ namespace ECore.Devices
                         }
                     }
                 }
+                computeDividersMultipliers();
             }
         }
 

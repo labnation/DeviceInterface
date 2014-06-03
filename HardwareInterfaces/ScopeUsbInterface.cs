@@ -244,7 +244,7 @@ namespace ECore.HardwareInterfaces
 
         #region ROM - to be merged with ScopeInterface
 
-
+        //FIXME: translate these ROM functions to ScopeInterface calls with appropriate ScopeController values
         public int Write16BytesToROM(int addressOffset, byte[] byteArr)
         {
             //unlock
