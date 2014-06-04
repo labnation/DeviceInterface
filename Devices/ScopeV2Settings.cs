@@ -86,8 +86,8 @@ namespace ECore.Devices
         public void SetVerticalRange(int channel, float minimum, float maximum)
         {
             //The voltage range for div/mul = 1/1
-            float baseMin = -0.7f; //V
-            float baseMax = 0.7f; //V
+            float baseMin = -0.6345f; //V
+            float baseMax = 0.6769f; //V
 
             //Walk through dividers/multipliers till requested range fits
             int dividerIndex = 0;
@@ -106,6 +106,7 @@ namespace ECore.Devices
             SetDivider(channel, validDividers[dividerIndex]);
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(AnalogChannel.list.Where(x => x.Value == channel).First(), validDividers[dividerIndex], validMultipliers[multIndex]);
+            SetTriggerAnalog(this.triggerLevel);
         }
 
 		/// <summary>
