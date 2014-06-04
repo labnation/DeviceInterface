@@ -240,7 +240,7 @@ namespace ECore.Devices
         {
             StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set(direction == TriggerDirection.FALLING);
             Logger.AddEntry(this, LogLevel.Debug, " Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
-            StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
+            StrobeMemory.WriteSingle(STR.TRIGGER_FALLING);
             toggleUpdateStrobe();
         }
 
