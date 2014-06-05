@@ -5,11 +5,11 @@ using System.Text;
 
 namespace ECore.Devices
 {
-    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE };
+    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE };
 
     partial class ScopeDummy
     {
-        private static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, ScopeDummyChannelConfig config )
+        public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, ScopeDummyChannelConfig config )
         {
             WaveForm waveForm = config.waveform;
             double frequency = config.frequency;
@@ -42,7 +42,7 @@ namespace ECore.Devices
             return wave;
         }
 
-        private static T[] CropWave<T>(uint outputLength, T[] sourceWave, int triggerIndex, int holdoff)
+        public static T[] CropWave<T>(uint outputLength, T[] sourceWave, int triggerIndex, int holdoff)
         {
             if (triggerIndex - holdoff + outputLength > sourceWave.Length) return null;
             
@@ -51,7 +51,7 @@ namespace ECore.Devices
             return output;
         }
 
-        private static float[] WaveSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        public static float[] WaveSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[nSamples];
             for (int i = 0; i < wave.Length; i++)
@@ -59,21 +59,21 @@ namespace ECore.Devices
             return wave;
         }
 
-        private static float[] WaveSquare(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        public static float[] WaveSquare(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[nSamples];
             for (int i = 0; i < wave.Length; i++)
                 wave[i] = (((double)i * samplePeriod + timeOffset + (phase / 2.0 / Math.PI / frequency)) % (1.0 / frequency)) * frequency > 0.5 ? (float)amplitude : -1f * (float)amplitude;
             return wave;
         }
-        private static float[] WaveSawTooth(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        public static float[] WaveSawTooth(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[nSamples];
             for (int i = 0; i < wave.Length; i++)
                 wave[i] = (float)((((double)i * samplePeriod + timeOffset + (phase / 2.0 / Math.PI / frequency)) % (1.0 / frequency)) * frequency * amplitude);
             return wave;
         }
-        private static float[] WaveTriangle(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        public static float[] WaveTriangle(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[nSamples];
             for (int i = 0; i < wave.Length; i++)
@@ -86,7 +86,7 @@ namespace ECore.Devices
             return wave;
         }
 
-        private static float[] WaveSawtoothSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        public static float[] WaveSawtoothSine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             Func<float, float, float> sumFloat = (x, y) => (x + y);
             float[] wave1 = WaveSawTooth(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase);
