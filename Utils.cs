@@ -290,5 +290,17 @@ namespace ECore
             return ((b >> bit) & 0x01) != 0;
         }
 
+        public static UInt16 nextFpgaTestVector(UInt16 input)
+        {
+            if (input == 0x8000)
+                return 0;
+            else
+            {
+                if ((input & 0x8000) == 0x0000)
+                    return (UInt16)~input;
+                else
+                    return (UInt16)(~input + 1);
+            }
+        }
     }
 }

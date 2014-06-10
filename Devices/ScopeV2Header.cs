@@ -13,6 +13,7 @@ namespace ECore.Devices
         public byte bytesPerBurst { get; private set; }
         public int Samples { get; private set; }
         public bool scopeRunning { get; private set; }
+        public const int channels = 2;
         public ScopeV2Header(byte[] data)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
@@ -25,7 +26,7 @@ namespace ECore.Devices
             
             bytesPerBurst = data[3];
             bursts = data[4];
-            Samples = bursts * bytesPerBurst;
+            Samples = bursts * bytesPerBurst / channels;
 
             scopeRunning = Utils.IsBitSet(data[5], 0);
         }

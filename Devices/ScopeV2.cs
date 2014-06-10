@@ -240,13 +240,37 @@ namespace ECore.Devices
             double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
 
+#if INTERNAL
+            if (StrobeMemory.GetRegister(STR.DEBUG_RAM).GetBool())
+            {
+                UInt16[] testData = new UInt16[header.Samples];
+                Buffer.BlockCopy(buffer, payloadOffset, testData, 0, sizeof(UInt16) * testData.Length);
+                if (testData[0] != testData[1])
+                {
+                    for (int i = 1; i < testData.Length; i++)
+                    {
+                        UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
+                        bool mismatch = !expected.Equals(testData[i]);
+                        if (mismatch)
+                        {
+                            Logger.AddEntry(this, LogLevel.Debug, "Stress test mismatch at sample " + i);
+                        }
+                    }
+                }
+                else
+                {
+                    Logger.AddEntry(this, LogLevel.Info, "Skipping stress test verification due to bogus data. You shouldn't see this message more than once per test");
+                }
+            }
+#endif
+
             //Split in 2 channels
-            byte[] chA = new byte[header.Samples / 2];
-            byte[] chB = new byte[header.Samples / 2];
+            byte[] chA = new byte[header.Samples];
+            byte[] chB = new byte[header.Samples];
             for (int i = 0; i < chA.Length; i++)
             {
-                chA[i] = buffer[payloadOffset + 2 * i + 1];
-                chB[i] = buffer[payloadOffset + 2 * i];
+                chA[i] = buffer[payloadOffset + 2 * i];
+                chB[i] = buffer[payloadOffset + 2 * i + 1];
             }
 
             //construct data package
