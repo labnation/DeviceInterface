@@ -149,13 +149,14 @@ namespace ECore.Devices
                 }
                 byte[] b = MapToBytes(m);
 
-                hwInterface.EraseROM();
                 int bytesWritten = 0;
                 while (bytesWritten < b.Length)
                 {
-                    byte[] tmp = new byte[16];
-                    Array.Copy(b, bytesWritten, tmp, 0, Math.Min(16, b.Length - bytesWritten));
-                    bytesWritten += hwInterface.Write16BytesToROM(bytesWritten, tmp);
+                    int writeLength=Math.Min(16, b.Length - bytesWritten);
+                    byte[] tmp = new byte[writeLength];
+                    Array.Copy(b, bytesWritten, tmp, 0, writeLength);
+                    hwInterface.SetControllerRegister(ScopeController.ROM, bytesWritten, tmp);
+                    bytesWritten += writeLength;
                 }
             }
 #if INTERNAL
@@ -166,7 +167,15 @@ namespace ECore.Devices
             void Download()
             {
                 int size = Marshal.SizeOf(typeof(Map));
-                byte[] romContents = hwInterface.ReadBytesFromROM(0, size);
+                byte[] romContents = new byte[size];
+                int maxReadLength = 16;
+                for (int byteOffset = 0; byteOffset < size; )
+                {
+                    int readLength = Math.Max(maxReadLength, size - byteOffset);
+                    byte[] tmp;
+                    hwInterface.GetControllerRegister(ScopeController.ROM, byteOffset, readLength, out tmp);
+                    Array.Copy(tmp, 0, romContents, byteOffset, readLength);
+                }
                 Map m = BytesToMap(romContents);
                 this.plugCount = m.plugCount;
 

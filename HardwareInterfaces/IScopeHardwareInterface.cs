@@ -7,6 +7,7 @@ namespace ECore.HardwareInterfaces
 {
     public enum ScopeController {
         PIC,
+        ROM,
         FPGA,
         FPGA_ROM
     }
