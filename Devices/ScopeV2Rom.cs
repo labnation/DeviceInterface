@@ -152,7 +152,7 @@ namespace ECore.Devices
                 int bytesWritten = 0;
                 while (bytesWritten < b.Length)
                 {
-                    int writeLength=Math.Min(16, b.Length - bytesWritten);
+                    int writeLength=Math.Min(12, b.Length - bytesWritten);
                     byte[] tmp = new byte[writeLength];
                     Array.Copy(b, bytesWritten, tmp, 0, writeLength);
                     hwInterface.SetControllerRegister(ScopeController.ROM, bytesWritten, tmp);
@@ -168,13 +168,14 @@ namespace ECore.Devices
             {
                 int size = Marshal.SizeOf(typeof(Map));
                 byte[] romContents = new byte[size];
-                int maxReadLength = 16;
+                int maxReadLength = 12;
                 for (int byteOffset = 0; byteOffset < size; )
                 {
-                    int readLength = Math.Max(maxReadLength, size - byteOffset);
+                    int readLength = Math.Min(maxReadLength, size - byteOffset);
                     byte[] tmp;
                     hwInterface.GetControllerRegister(ScopeController.ROM, byteOffset, readLength, out tmp);
                     Array.Copy(tmp, 0, romContents, byteOffset, readLength);
+                    byteOffset += readLength;
                 }
                 Map m = BytesToMap(romContents);
                 this.plugCount = m.plugCount;

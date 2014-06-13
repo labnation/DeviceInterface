@@ -8,7 +8,12 @@ using LibUsbDotNet.LibUsb;
 
 namespace ECore.HardwareInterfaces
 {
-    internal class ScopeUsbInterface: EDeviceHWInterface, IScopeHardwareInterface, IDisposable
+#if INTERNAL
+	public
+#else
+    internal
+#endif
+    class ScopeUsbInterface: EDeviceHWInterface, IScopeHardwareInterface, IDisposable
     {
         private enum PIC_COMMANDS
         {
@@ -222,7 +227,7 @@ namespace ECore.HardwareInterfaces
                 {
                     header = new byte[4] {
                                PIC_PREAMBLE,
-                (byte)PIC_COMMANDS.I2C_READ, 
+                (byte)PIC_COMMANDS.ROM_READ, 
                             (byte)(address),
                              (byte)(length)
                         };

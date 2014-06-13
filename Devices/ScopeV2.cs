@@ -12,7 +12,12 @@ namespace ECore.Devices
 {
     public partial class ScopeV2 : EDevice, IScope
     {
-        private ScopeUsbInterface hardwareInterface;
+#if INTERNAL
+        public
+#else
+        private 
+#endif
+        ScopeUsbInterface hardwareInterface;
 #if INTERNAL
         public
 #else
