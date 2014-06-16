@@ -21,6 +21,7 @@ namespace ECore.HardwareInterfaces
             PIC_WRITE           =  2,
             PIC_READ            =  3,
             PIC_RESET		    =  4,
+            PIC_BOOTLOADER      =  5,
             ROM_READ            =  7,
             ROM_WRITE           =  8,
             I2C_WRITE			= 10,
@@ -185,6 +186,17 @@ namespace ECore.HardwareInterfaces
             if (length > 0)
                 Array.Copy(data, 0, toSend, header.Length, data.Length);
             WriteControlBytes(toSend);
+        }
+
+        private void SendCommand(PIC_COMMANDS cmd)
+        {
+            byte[] toSend = new byte[2] { PIC_PREAMBLE, (byte)cmd };
+            WriteControlBytes(toSend);
+        }
+
+        public void LoadBootLoader()
+        {
+            this.SendCommand(PIC_COMMANDS.PIC_BOOTLOADER);
         }
 
         private static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, int address, int length)

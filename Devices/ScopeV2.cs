@@ -210,6 +210,11 @@ namespace ECore.Devices
 			LogWait("Enable neg dcdc");
         }
 
+        public void LoadBootLoader()
+        {
+            this.hardwareInterface.LoadBootLoader();
+        }
+
         #endregion
 
         #region data_handlers

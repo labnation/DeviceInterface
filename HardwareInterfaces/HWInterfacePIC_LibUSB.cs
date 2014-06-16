@@ -21,8 +21,8 @@ namespace ECore.HardwareInterfaces
         public static OnDeviceConnect onConnect;
         public static IDeviceNotifier UsbDeviceNotifier;
         private static bool initialized = false;
-        private static int VID = 1240;
-        private static int PID = 82;
+        private static int VID = 0x04D8;
+        private static int[] PIDs = new int[] {0x0052, 0xF4B5};
         private static Dictionary<string, ScopeUsbInterface> interfaces = new Dictionary<string,ScopeUsbInterface>();
 
         public static void Initialize()
@@ -47,10 +47,16 @@ namespace ECore.HardwareInterfaces
 
                 Logger.AddEntry(null, LogLevel.Debug, sAdd);
             }
-            UsbDeviceFinder scopeUsbFinder = new UsbDeviceFinder(VID, PID);
-            UsbDevice scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder);
-            if(scopeUsbDevice != null)
-                DeviceFound(scopeUsbDevice);
+            foreach (int PID in PIDs)
+            {
+                UsbDeviceFinder scopeUsbFinder = new UsbDeviceFinder(VID, PID);
+                UsbDevice scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder);
+                if (scopeUsbDevice != null)
+                {
+                    DeviceFound(scopeUsbDevice);
+                    break;
+                }
+            }
         }
 
         private static void DeviceFound(UsbDevice scopeUsbDevice)
@@ -79,7 +85,7 @@ namespace ECore.HardwareInterfaces
             {
                 case EventType.DeviceArrival:
                     Logger.AddEntry(null, LogLevel.Debug, "LibUSB device arrival");
-                    if (e.Device == null || e.Device.IdVendor != VID || e.Device.IdProduct != PID)
+                    if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains(e.Device.IdProduct))
                     {
                         Logger.AddEntry(null, LogLevel.Info, "Not taking this device, PID/VID not a smartscope");
                         return;
