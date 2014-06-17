@@ -47,8 +47,7 @@ namespace ECore.DeviceMemories
                 strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(true).Write();
 
                 //finally read acquired value
-                fpgaRom.ReadSingle(ROM.SPI_RECEIVED_VALUE);
-                int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).GetByte();
+                int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).Read().GetByte();
                 Registers[address + i].Set(acquiredVal);
             }            
             

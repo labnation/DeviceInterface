@@ -94,17 +94,12 @@ namespace ECore.Devices
                 LogWait("FPGA flashed...");
                 InitializeMemories();
                 LogWait("Memories initialized...");
-                FpgaRom.ReadSingle(ROM.FW_MSB);
-                FpgaRom.ReadSingle(ROM.FW_LSB);
-                Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
-                FpgaRom.ReadSingle(ROM.FW_GIT0);
-                FpgaRom.ReadSingle(ROM.FW_GIT1);
-                FpgaRom.ReadSingle(ROM.FW_GIT2);
-                FpgaRom.ReadSingle(ROM.FW_GIT3);
-                UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).GetByte() +
-                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).GetByte() <<  8) +
-                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).GetByte() << 16) +
-                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).GetByte() << 24));
+                Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
+
+                UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() +
+                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() <<  8) +
+                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
+                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
                 Logger.AddEntry(this, LogLevel.Info, String.Format("FPGA FW version = 0x{0:x}", GitHash));
             }
             else

@@ -20,6 +20,7 @@ namespace ECore.DeviceMemories
         
         public override object Get() { return this.internalValue; }
         public bool GetBool() { return this.internalValue; }
+        new public BoolRegister Read() { return (BoolRegister)base.Read(); }
         public override int MaxValue { get { return 1; } }
     }
 }

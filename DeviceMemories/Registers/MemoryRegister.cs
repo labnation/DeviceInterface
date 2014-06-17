@@ -29,6 +29,12 @@ namespace ECore.DeviceMemories
             this.Memory.WriteSingle(this.Address);
         }
 
+        public MemoryRegister Read()
+        {
+            this.Memory.ReadSingle(this.Address);
+            return this;
+        }
+
         protected void CallValueChangedCallbacks()
         {
             if (OnInternalValueChanged != null)

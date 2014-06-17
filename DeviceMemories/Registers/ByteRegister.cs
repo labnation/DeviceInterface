@@ -36,6 +36,7 @@ namespace ECore.DeviceMemories
         
         public override object Get() { return this.internalValue; }
         public byte GetByte() { return this.internalValue; }
+        new public ByteRegister Read() { return (ByteRegister)base.Read(); }
         public override int MaxValue { get { return 255; } }
     }
 }

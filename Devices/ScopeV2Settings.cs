@@ -187,8 +187,7 @@ namespace ECore.Devices
         {
             validateChannel(channel);
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
-            StrobeMemory.ReadSingle(dc);
-            bool dcEnabled = StrobeMemory.GetRegister(dc).GetBool();
+            bool dcEnabled = StrobeMemory.GetRegister(dc).Read().GetBool();
             return dcEnabled ? Coupling.DC : Coupling.AC;
         }
 
