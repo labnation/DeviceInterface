@@ -91,8 +91,8 @@ namespace ECore.HardwareInterfaces
                         return;
                     }
 
-                    UsbDeviceFinder usbFinder = new UsbDeviceFinder(e.Device.IdVendor, e.Device.IdProduct, e.Device.SerialNumber);
-                    UsbDevice usbDevice = UsbDevice.OpenUsbDevice(usbFinder) as UsbDevice;
+                    UsbDeviceFinder usbFinder = new UsbDeviceFinder(e.Device.IdVendor, e.Device.IdProduct);
+                    UsbDevice usbDevice = UsbDevice.OpenUsbDevice(usbFinder);
                     
                     DeviceFound(usbDevice);
                     break;

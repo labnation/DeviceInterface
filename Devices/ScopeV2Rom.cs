@@ -81,7 +81,7 @@ namespace ECore.Devices
 #if INTERNAL
             public 
 #else
-	internal
+            internal
 #endif
             Calibration getCalibration(AnalogChannel ch, double divider, double multiplier)
             {

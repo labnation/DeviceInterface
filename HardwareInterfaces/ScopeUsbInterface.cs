@@ -43,13 +43,15 @@ namespace ECore.HardwareInterfaces
 
         internal ScopeUsbInterface(UsbDevice usbDevice)
         {
-            bool succes1 = (usbDevice as IUsbDevice).SetConfiguration(1);
-            if (!succes1)
-                throw new Exception("Failed to set usb device configuration");
-            bool succes2 = (usbDevice as IUsbDevice).ClaimInterface(0);
-            if (!succes2)
-                throw new Exception("Failed to claim usb interface6");
-
+            if (usbDevice is IUsbDevice)
+            {
+                bool succes1 = (usbDevice as IUsbDevice).SetConfiguration(1);
+                if (!succes1)
+                    throw new Exception("Failed to set usb device configuration");
+                bool succes2 = (usbDevice as IUsbDevice).ClaimInterface(0);
+                if (!succes2)
+                    throw new Exception("Failed to claim usb interface6");
+            }
             dataEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);

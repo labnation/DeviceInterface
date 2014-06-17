@@ -58,10 +58,12 @@ namespace ECore.DeviceMemories
     {
 		FW_MSB = 0,
 		FW_LSB = 1,
-		FW_BUILD = 2,
-		SPI_RECEIVED_VALUE = 3,
-		SCOPE_STATE = 4,
-		STROBES = 5,
+		FW_GIT0 = 2,
+		FW_GIT1 = 3,
+		FW_GIT2 = 4,
+		FW_GIT3 = 5,
+		SPI_RECEIVED_VALUE = 6,
+		STROBES = 7,
     }
 
 }

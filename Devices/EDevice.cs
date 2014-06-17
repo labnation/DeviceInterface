@@ -12,7 +12,12 @@ namespace ECore.Devices
     {
         protected List<DeviceMemory> memories = new List<DeviceMemory>();
         //FIXME: visibility
-        public List<DeviceMemory> Memories { get { return memories; } }
+#if INTERNAL
+        public
+#else
+        private
+#endif
+        List<DeviceMemory> Memories { get { return memories; } }
         public abstract bool Connected { get; }
 
 		#if ANDROID
