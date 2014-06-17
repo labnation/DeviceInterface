@@ -32,7 +32,7 @@ namespace ECore.DeviceMemories
             this.fpgaRom = fpgaRom;
 
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
-                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(MAX19506), reg)));
+                registers.Add((int)reg, new ByteRegister(this, (int)reg, reg.ToString()));
         }
 
         public override void Read(int address, int length)

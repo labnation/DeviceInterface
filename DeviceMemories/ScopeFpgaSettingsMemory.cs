@@ -17,7 +17,7 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
 
             foreach(REG reg in Enum.GetValues(typeof(REG)))
-                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(REG), reg)));
+                registers.Add((int)reg, new ByteRegister(this, (int)reg, reg.ToString()));
         }
 
         public override void Read(int address, int length)

@@ -9,13 +9,15 @@ namespace ECore.DeviceMemories
 
     public abstract class MemoryRegister
     {
+        public DeviceMemory Memory { get; private set; }
         public string Name { get; private set; }
         public int Address { get; private set; }
 
-        public MemoryRegister(int address, string name)
+        public MemoryRegister(DeviceMemory memory, int address, string name)
         {
             Address = address;
             Name = name;
+            Memory = memory;
         }
         public event RegisterValueChangedHandler OnInternalValueChanged;
 

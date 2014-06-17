@@ -18,7 +18,7 @@ namespace ECore.DeviceMemories
             this.readMemory = readMemory;
 
             foreach (STR str in Enum.GetValues(typeof(STR)))
-                registers.Add((int)str, new BoolRegister((int)str, Enum.GetName(typeof(STR), str)));
+                registers.Add((int)str, new BoolRegister(this, (int)str, str.ToString()));
         }
 
         private int StrobeToRomAddress(int strobe)

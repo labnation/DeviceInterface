@@ -17,11 +17,11 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
                         
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
-                registers.Add((int)reg, new ByteRegister((int)reg, Enum.GetName(typeof(ROM), reg)));
+                registers.Add((int)reg, new ByteRegister(this, (int)reg, reg.ToString()));
 
             int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
             for(int i = (int)ROM.STROBES + 1; i < (int)ROM.STROBES + lastStrobe / 8 + 1; i++)
-                registers.Add(i, new ByteRegister(i, "STROBES " + (i - (int)ROM.STROBES)));
+                registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
         }
 
         public override void Read(int address, int length)
