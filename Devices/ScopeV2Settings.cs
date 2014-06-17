@@ -54,10 +54,8 @@ namespace ECore.Devices
         }
         private void toggleUpdateStrobe()
         {
-            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(false);
-            StrobeMemory.WriteSingle(STR.SCOPE_UPDATE);
-            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(true);
-            StrobeMemory.WriteSingle(STR.SCOPE_UPDATE);
+            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(false).Write();
+            StrobeMemory.GetRegister(STR.SCOPE_UPDATE).Set(true).Write();
         }
         #endregion
 
@@ -78,9 +76,8 @@ namespace ECore.Devices
             double[] c = channelSettings[channel].coefficients;
             //Let ADC output of 127 be the zero point of the Yoffset
             byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(offset + c[2] + c[0]*127)/c[1]));
-            FpgaSettingsMemory.GetRegister(r).Set(offsetByte);
+            FpgaSettingsMemory.GetRegister(r).Set(offsetByte).Write();
             Logger.AddEntry(this, LogLevel.Debug, String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
-            FpgaSettingsMemory.WriteSingle(r);
         }
 
         public void SetVerticalRange(int channel, float minimum, float maximum)
@@ -129,8 +126,7 @@ namespace ECore.Devices
 
 			byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
 			divMul = (byte)((divMul & ~mask) + (div << bitOffset));
-			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
-			FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
+			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul).Write();
             System.Threading.Thread.Sleep(150);
 		}
 
@@ -155,8 +151,7 @@ namespace ECore.Devices
 
 			byte divMul = FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).GetByte();
 			divMul = (byte)((divMul & ~mask) + (mul << bitOffset));
-			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul);
-			FpgaSettingsMemory.WriteSingle(REG.DIVIDER_MULTIPLIER);
+			FpgaSettingsMemory.GetRegister(REG.DIVIDER_MULTIPLIER).Set(divMul).Write();
 		}
 
 #if INTERNAL
@@ -165,8 +160,7 @@ namespace ECore.Devices
             validateChannel(channel);
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + " to " + offset + "V");
-            FpgaSettingsMemory.GetRegister(r).Set(offset);
-            FpgaSettingsMemory.WriteSingle(r);
+            FpgaSettingsMemory.GetRegister(r).Set(offset).Write();
         }
 
         /// <summary>
@@ -187,8 +181,7 @@ namespace ECore.Devices
             STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
             bool enableDc = coupling == Coupling.DC;
             Logger.AddEntry(this, LogLevel.Debug, "Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
-            StrobeMemory.GetRegister(dc).Set(enableDc);
-            StrobeMemory.WriteSingle(dc);
+            StrobeMemory.GetRegister(dc).Set(enableDc).Write();
         }
         public Coupling GetCoupling(int channel)
         {
@@ -216,8 +209,7 @@ namespace ECore.Devices
             if (level > 255) level = 255;
 
             Logger.AddEntry(this, LogLevel.Debug, " Set trigger level to " + voltage + "V (" + level + ")");
-            FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level);
-            FpgaSettingsMemory.WriteSingle(REG.TRIGGERLEVEL);
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level).Write();
             toggleUpdateStrobe();
         }
         /// <summary>
@@ -227,9 +219,8 @@ namespace ECore.Devices
         public void SetTriggerChannel(int channel)
         {
             validateChannel(channel);
-            StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set(channel != 0);
+            StrobeMemory.GetRegister(STR.TRIGGER_CHB).Set(channel != 0).Write();
             Logger.AddEntry(this, LogLevel.Debug, " Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
-            StrobeMemory.WriteSingle(STR.TRIGGER_CHB);
             SetTriggerAnalog(this.triggerLevel);
             //toggleUpdateStrobe();
         }
@@ -240,16 +231,14 @@ namespace ECore.Devices
         /// <param name="direction"></param>
         public void SetTriggerDirection(TriggerDirection direction)
         {
-            StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set(direction == TriggerDirection.FALLING);
+            StrobeMemory.GetRegister(STR.TRIGGER_FALLING).Set(direction == TriggerDirection.FALLING).Write();
             Logger.AddEntry(this, LogLevel.Debug, " Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
-            StrobeMemory.WriteSingle(STR.TRIGGER_FALLING);
             toggleUpdateStrobe();
         }
 
         public void SetTriggerMode(TriggerMode mode)
         {
-            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(mode == TriggerMode.FREE_RUNNING);
-            StrobeMemory.WriteSingle(STR.FREE_RUNNING);
+            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(mode == TriggerMode.FREE_RUNNING).Write();
             toggleUpdateStrobe();
         }
 
@@ -257,8 +246,7 @@ namespace ECore.Devices
         {
             bool single = mode == AcquisitionMode.SINGLE;
 
-            StrobeMemory.GetRegister(STR.ACQ_SINGLE).Set(single);
-            StrobeMemory.WriteSingle(STR.ACQ_SINGLE);
+            StrobeMemory.GetRegister(STR.ACQ_SINGLE).Set(single).Write();
         }
         public void SetAcuisitionRunning(bool running)
         {
@@ -268,8 +256,7 @@ namespace ECore.Devices
             else
                 s = STR.ACQ_STOP;
             acquisitionRunning = running;
-            StrobeMemory.GetRegister(s).Set(true);
-            StrobeMemory.WriteSingle(s);
+            StrobeMemory.GetRegister(s).Set(true).Write();
         }
 
         public bool GetAcquisitionRunning()
@@ -306,8 +293,7 @@ namespace ECore.Devices
         ///<param name="freerunning">Whether to enable free running mode</param>
         public void SetEnableFreeRunning(bool freerunning)
         {
-            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(freerunning);
-            StrobeMemory.WriteSingle(STR.FREE_RUNNING);
+            StrobeMemory.GetRegister(STR.FREE_RUNNING).Set(freerunning).Write();
             toggleUpdateStrobe();
         }
         ///<summary>
@@ -318,10 +304,8 @@ namespace ECore.Devices
         {
             Int16 samples = (Int16)(time / SAMPLE_PERIOD);
             Logger.AddEntry(this, LogLevel.Debug, " Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
-            FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)); 
-            FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8));
-            FpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B0);
-            FpgaSettingsMemory.WriteSingle(REG.TRIGGERHOLDOFF_B1);
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B0).Set((byte)(samples)).Write(); 
+            FpgaSettingsMemory.GetRegister(REG.TRIGGERHOLDOFF_B1).Set((byte)(samples >> 8)).Write();
             toggleUpdateStrobe();
         }
 

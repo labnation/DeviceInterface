@@ -97,6 +97,15 @@ namespace ECore.Devices
                 FpgaRom.ReadSingle(ROM.FW_MSB);
                 FpgaRom.ReadSingle(ROM.FW_LSB);
                 Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).GetByte());
+                FpgaRom.ReadSingle(ROM.FW_GIT0);
+                FpgaRom.ReadSingle(ROM.FW_GIT1);
+                FpgaRom.ReadSingle(ROM.FW_GIT2);
+                FpgaRom.ReadSingle(ROM.FW_GIT3);
+                UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).GetByte() +
+                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).GetByte() <<  8) +
+                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).GetByte() << 16) +
+                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).GetByte() << 24));
+                Logger.AddEntry(this, LogLevel.Info, String.Format("FPGA FW version = 0x{0:x}", GitHash));
             }
             else
             {
@@ -139,75 +148,36 @@ namespace ECore.Devices
         public void Configure()
         {
             //raise global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false);
-            StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
+            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false).Write();
             LogWait("FPGA reset");
 
             /*********
              *  ADC  *
              *********/
 
-            AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90);
-            AdcMemory.WriteSingle(MAX19506.SOFT_RESET);
-            LogWait("ADC SW reset");
-            
-            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4);
-            AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
-            LogWait("ADC pwr mgmgt (4)");
-
-			AdcMemory.GetRegister(MAX19506.OUTPUT_PWR_MNGMNT).Set(1);
-			AdcMemory.WriteSingle(MAX19506.OUTPUT_PWR_MNGMNT);
-			LogWait("DCLK driving off");
-
-            AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16);
-            AdcMemory.WriteSingle(MAX19506.FORMAT_PATTERN);
-            LogWait("ADC format patt");
-
-            AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27);
-            AdcMemory.WriteSingle(MAX19506.CHA_TERMINATION);
-            LogWait("ADC CHA term");
-
-            AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(5);
-            AdcMemory.WriteSingle(MAX19506.DATA_CLK_TIMING);
-            LogWait("ADC DCLK timing");
-
-            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(3);
-            AdcMemory.WriteSingle(MAX19506.POWER_MANAGEMENT);
-            LogWait("ADC pwr mgmgt enable (3)");
-
-            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02); //DDR on chA
-            AdcMemory.WriteSingle(MAX19506.OUTPUT_FORMAT);
-            LogWait("ADC Output format");
+            AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90).Write();
+            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4).Write();
+			AdcMemory.GetRegister(MAX19506.OUTPUT_PWR_MNGMNT).Set(1).Write();
+            AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16).Write();
+            AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27).Write();
+            AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(5).Write();
+            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(3).Write();
+            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02).Write(); //DDR on chA
 
             /***************************/
 
             //Enable scope controller
-            StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true);
-            StrobeMemory.WriteSingle(STR.SCOPE_ENABLE);
-            LogWait("Scope enable");
-
-            //lower global reset
+            StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true).Write();
             LogWait("Waiting to get device out of reset...");
-            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true);
-            StrobeMemory.WriteSingle(STR.GLOBAL_NRESET);
-			LogWait("Ended reset");
-
+            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true).Write();
             SetVerticalRange(0, -1f, 1f);
             SetVerticalRange(1, -1f, 1f);
             SetYOffset(0, 0f);
             SetYOffset(1, 0f);
 
-            StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true);
-            StrobeMemory.WriteSingle(STR.ENABLE_ADC);
-			LogWait("ADC clock enabled");
-
-			StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true);
-			StrobeMemory.WriteSingle(STR.ENABLE_RAM);
-			LogWait("RAM enabled");
-
-            StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true);
-            StrobeMemory.WriteSingle(STR.ENABLE_NEG);
-			LogWait("Enable neg dcdc");
+            StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true).Write();
+            StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true).Write();
+            StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true).Write();
         }
 
         public void LoadBootLoader()

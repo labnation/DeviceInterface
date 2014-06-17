@@ -24,6 +24,11 @@ namespace ECore.DeviceMemories
         public abstract object Get();
         public abstract MemoryRegister Set(object value);
 
+        public void Write()
+        {
+            this.Memory.WriteSingle(this.Address);
+        }
+
         protected void CallValueChangedCallbacks()
         {
             if (OnInternalValueChanged != null)
