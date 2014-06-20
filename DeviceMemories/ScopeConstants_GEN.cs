@@ -24,6 +24,7 @@ namespace ECore.DeviceMemories
 		VIEW_OFFSET = 14,
 		VIEW_ACQUISITIONS = 15,
 		VIEW_BURSTS = 16,
+		AWG_DEBUG = 17,
     }
 
     public enum STR
@@ -46,12 +47,13 @@ namespace ECore.DeviceMemories
 		ENABLE_ADC = 15,
 		OVERFLOW_DETECT = 16,
 		ENABLE_NEG = 17,
-		POWER_DIGITAL_IO = 18,
 		ENABLE_RAM = 19,
 		DEBUG_PIC = 20,
 		DEBUG_RAM = 21,
 		DOUT_3V_5V = 22,
 		EN_OPAMP_B = 23,
+		AWG_DEBUG = 24,
+		DIGI_DEBUG = 25,
     }
 
     public enum ROM
