@@ -268,6 +268,7 @@ namespace ECore.Devices
             {
                 data.SetData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
                 data.SetData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
+                data.SetDataDigital(chB);
                 data.AddSetting("OffsetA", (float)header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
                 data.AddSetting("OffsetB", (float)header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
             }
