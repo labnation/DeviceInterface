@@ -89,7 +89,8 @@ namespace ECore.Devices
 			STR.CHB_DCCOUPLING,
 			STR.TRIGGER_CHB,
 			STR.TRIGGER_FALLING,
-            STR.DEBUG_RAM
+            STR.DEBUG_RAM,
+            STR.DIGI_DEBUG
         };
     }
 }

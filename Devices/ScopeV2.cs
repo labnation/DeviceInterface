@@ -43,6 +43,9 @@ namespace ECore.Devices
         private Calibration[] channelSettings;
         private float triggerLevel = 0f;
 
+#if INTERNAL
+        public int ram_test_passes, ram_test_fails, digital_test_passes, digital_test_fails;
+#endif
 #if ANDROID
 		public Android.Content.Res.AssetManager Assets;
 #endif
@@ -72,6 +75,12 @@ namespace ECore.Devices
         {
             if (connected)
             {
+#if INTERNAL
+                ram_test_passes = 0;
+                ram_test_fails = 0;
+                digital_test_passes = 0;
+                digital_test_fails = 0;
+#endif
                 ScopeUsbInterface scopeInterface = hwInterface as ScopeUsbInterface;
                 if (scopeInterface == null) return;
                 this.hardwareInterface = scopeInterface;
@@ -227,9 +236,13 @@ namespace ECore.Devices
                     if (mismatch)
                     {
                         Logger.AddEntry(this, LogLevel.Debug, "Stress test mismatch at sample " + i);
+                        ram_test_fails++;
+                        goto ram_test_done;
                     }
                 }
+                ram_test_passes++;
             }
+            ram_test_done:
 #endif
 
             //Split in 2 channels
@@ -240,6 +253,28 @@ namespace ECore.Devices
                 chA[i] = buffer[payloadOffset + 2 * i];
                 chB[i] = buffer[payloadOffset + 2 * i + 1];
             }
+#if INTERNAL
+            if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM))
+            {
+                //Test if data in CHB is correct
+                byte[] testVector = new byte[chB.Length];
+                byte nextValue = chB[0];
+                for (int i = 0; i < testVector.Length; i++)
+                {
+                    testVector[i] = nextValue;
+                    int val = (nextValue >> 4) + 1;
+                    nextValue = (byte)((val << 4) + (Utils.ReverseWithLookupTable((byte)val) >> 4));
+                    if (testVector[i] != chB[i])
+                    {
+                        Logger.AddEntry(this, LogLevel.Error, "Digital mismatch at sample " + i + ". Aborting check");
+                        digital_test_fails++;
+                        goto done;
+                    }
+                }
+                digital_test_passes++;
+            }
+        done:
+#endif
 
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
