@@ -216,25 +216,18 @@ namespace ECore.Devices
             int triggerIndex = 0;
 
 #if INTERNAL
-            if (StrobeMemory.GetRegister(STR.DEBUG_RAM).GetBool())
+            if (header.GetStrobe(STR.DEBUG_RAM))
             {
                 UInt16[] testData = new UInt16[header.Samples];
                 Buffer.BlockCopy(buffer, payloadOffset, testData, 0, sizeof(UInt16) * testData.Length);
-                if (testData[0] != testData[1])
+                for (int i = 1; i < testData.Length; i++)
                 {
-                    for (int i = 1; i < testData.Length; i++)
+                    UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
+                    bool mismatch = !expected.Equals(testData[i]);
+                    if (mismatch)
                     {
-                        UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
-                        bool mismatch = !expected.Equals(testData[i]);
-                        if (mismatch)
-                        {
-                            Logger.AddEntry(this, LogLevel.Debug, "Stress test mismatch at sample " + i);
-                        }
+                        Logger.AddEntry(this, LogLevel.Debug, "Stress test mismatch at sample " + i);
                     }
-                }
-                else
-                {
-                    Logger.AddEntry(this, LogLevel.Info, "Skipping stress test verification due to bogus data. You shouldn't see this message more than once per test");
                 }
             }
 #endif

@@ -57,6 +57,11 @@ namespace ECore.Devices
             offset += Array.IndexOf(AcquisitionStrobes, s) / 8;
             return Utils.IsBitSet(raw[offset], (int)Array.IndexOf(AcquisitionStrobes, s) % 8);
         }
+        /*
+         * WARNING: the following arrays are manually constructed from VHDL code in
+         * TypesConstants.vhd - Make sure that when you change the VHDL, you also
+         * update this code
+         */
         public static readonly REG[] AcquisitionRegisters = new REG[]
         {
             REG.TRIGGERLEVEL, 
@@ -83,7 +88,8 @@ namespace ECore.Devices
 			STR.CHA_DCCOUPLING,
 			STR.CHB_DCCOUPLING,
 			STR.TRIGGER_CHB,
-			STR.TRIGGER_FALLING
+			STR.TRIGGER_FALLING,
+            STR.DEBUG_RAM
         };
     }
 }
