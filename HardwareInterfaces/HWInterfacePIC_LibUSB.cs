@@ -8,6 +8,7 @@ using System.Threading;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.DeviceNotify;
+using Common;
 //#endif
 
 namespace ECore.HardwareInterfaces
@@ -36,7 +37,7 @@ namespace ECore.HardwareInterfaces
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;            
 #endif
             UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
-            Logger.AddEntry(null, LogLevel.Debug, "Total number of USB devices attached: " + usbDeviceList.Count.ToString());
+            Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
             foreach (UsbRegistry device in usbDeviceList)
             {
                 string sAdd = string.Format("Vid:0x{0:X4} Pid:0x{1:X4} (rev:{2}) - {3}",
@@ -45,7 +46,7 @@ namespace ECore.HardwareInterfaces
                                             (ushort)device.Rev,
                                             device[SPDRP.DeviceDesc]);
 
-                Logger.AddEntry(null, LogLevel.Debug, sAdd);
+                Logger.Debug(sAdd);
             }
             foreach (int PID in PIDs)
             {
@@ -84,10 +85,10 @@ namespace ECore.HardwareInterfaces
             switch (e.EventType)
             {
                 case EventType.DeviceArrival:
-                    Logger.AddEntry(null, LogLevel.Debug, "LibUSB device arrival");
+                    Logger.Debug("LibUSB device arrival");
                     if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains(e.Device.IdProduct))
                     {
-                        Logger.AddEntry(null, LogLevel.Info, "Not taking this device, PID/VID not a smartscope");
+                        Logger.Info("Not taking this device, PID/VID not a smartscope");
                         return;
                     }
 
@@ -100,7 +101,7 @@ namespace ECore.HardwareInterfaces
                     if (!interfaces.ContainsKey(e.Device.SerialNumber))
                         return;
 
-                    Logger.AddEntry(null, LogLevel.Debug, String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct)); 
+                    Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct)); 
                     if (onConnect != null)
                         onConnect(interfaces[e.Device.SerialNumber], false);
                     
@@ -109,7 +110,7 @@ namespace ECore.HardwareInterfaces
 
                     break;
                 default:
-                    Logger.AddEntry(null, LogLevel.Debug, "LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
+                    Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
                     break;
             }
         }

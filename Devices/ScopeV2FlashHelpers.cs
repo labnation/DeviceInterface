@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Diagnostics;
+using Common;
 
 namespace ECore.Devices {
 	partial class ScopeV2 {
@@ -63,22 +64,22 @@ namespace ECore.Devices {
                 firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #endif
 			} catch (Exception e) {
-				Logger.AddEntry (this, LogLevel.Error, "Opening FPGA FW file failed");
-				Logger.AddEntry (this, LogLevel.Error, e.Message);
+				Logger.Error("Opening FPGA FW file failed");
+				Logger.Error(e.Message);
 				return;
 			}
 			if(firmware == null) {
-				Logger.AddEntry(this, LogLevel.Error, "Failed to read FW");
+				Logger.Error("Failed to read FW");
 			}
 				
-			Logger.AddEntry(this, LogLevel.Info, "Got firmware of length " + firmware.Length);
+			Logger.Info("Got firmware of length " + firmware.Length);
 
 			//Send FW to FPGA
 			try {
 				Stopwatch flashStopwatch = new Stopwatch ();
 				flashStopwatch.Start ();
 				String fwModifiedString = Utils.GetPrettyDate (firmwareModified);
-				Logger.AddEntry(this, LogLevel.Debug, "Firmware was created " + fwModifiedString);
+				Logger.Debug("Firmware was created " + fwModifiedString);
 				UInt16 commands = (UInt16) (firmware.Length / packetSize + killMeNow);
 				//PIC: enter FPGA flashing mode
 				byte [] toSend1 = new byte[6];
@@ -98,7 +99,7 @@ namespace ECore.Devices {
 					Array.Copy (firmware, bytesSent, commandBytes, 0, commandSize);
 					int sent = hardwareInterface.WriteControlBytes (commandBytes);
 					if (sent == 0) {
-						Logger.AddEntry (this, LogLevel.Error, "No bytes written - aborting flash operation");
+						Logger.Error("No bytes written - aborting flash operation");
 						return;
 					}
 					bytesSent += sent;
@@ -111,11 +112,11 @@ namespace ECore.Devices {
                 
 				//Send finish flashing command
 				hardwareInterface.WriteControlBytes (new byte[] { 123, 13 });
-                Logger.AddEntry(this, LogLevel.Info, String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
+                Logger.Info(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
                 this.flashed = true;
 			} catch (Exception e) {
-				Logger.AddEntry (this, LogLevel.Error, "Flashing FPGA failed failed");
-                Logger.AddEntry(this, LogLevel.Error, e.Message);
+				Logger.Error("Flashing FPGA failed failed");
+                Logger.Error(e.Message);
 				return;
 			}
 		}

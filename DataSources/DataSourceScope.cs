@@ -6,6 +6,7 @@ using System.Threading;
 using ECore;
 using ECore.DataPackages;
 using ECore.Devices;
+using Common;
 
 namespace ECore.DataSources
 {
@@ -28,7 +29,7 @@ namespace ECore.DataSources
         {
             if (IsRunning)
             {
-                Logger.AddEntry(this, LogLevel.Warning, "Not starting datasource since it's still/already running");
+                Logger.Warn("Not starting datasource since it's still/already running");
                 return false;
             }
 
@@ -44,22 +45,22 @@ namespace ECore.DataSources
         {
             if (!IsRunning)
             {
-                Logger.AddEntry(this, LogLevel.Info, "Not stopping device since it's not running");
+                Logger.Info("Not stopping device since it's not running");
                 return;
             }            
             //stop thread
             running = false;
 
-            Logger.AddEntry(this, LogLevel.Debug, "Requested DataFetchThread to stop");
+            Logger.Debug("Requested DataFetchThread to stop");
         }
 
         public void DataFetchThreadStart()
         {           
             //main starting point for the thread which fetches the data from file
-            Logger.AddEntry(this, LogLevel.Info, "DataFetchThread spawn");
+            Logger.Info("DataFetchThread spawn");
 
             if (!running)
-                Logger.AddEntry(this, LogLevel.Error, "Device not started as device.Start() didn't return true");
+                Logger.Error("Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
             while (running && device.Connected)
@@ -68,7 +69,7 @@ namespace ECore.DataSources
                 if (latestDataPackage != null)
                     this.fireDataAvailableEvents();
             }
-            Logger.AddEntry(this, LogLevel.Info, "Data fetch thread stopped");
+            Logger.Info("Data fetch thread stopped");
         }
     }
 }

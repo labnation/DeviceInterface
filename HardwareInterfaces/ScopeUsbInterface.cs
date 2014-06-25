@@ -5,6 +5,7 @@ using System.Text;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.LibUsb;
+using Common;
 
 namespace ECore.HardwareInterfaces
 {
@@ -56,7 +57,7 @@ namespace ECore.HardwareInterfaces
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
             
-            Logger.AddEntry(null, LogLevel.Debug, "Created new ScopeUsbInterface");
+            Logger.Debug("Created new ScopeUsbInterface");
         }
 
         public void Dispose()
@@ -76,7 +77,7 @@ namespace ECore.HardwareInterfaces
             int bytesWritten;
             ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             if (code != ErrorCode.Success)
-                Logger.AddEntry(this, LogLevel.Error, "Failed to write `ontrol bytes : " + code.ToString("G"));
+                Logger.Error("Failed to write `ontrol bytes : " + code.ToString("G"));
             return bytesWritten;
         }
 
@@ -107,10 +108,10 @@ namespace ECore.HardwareInterfaces
             }
             catch (Exception ex)
             {
-                Logger.AddEntry(this, LogLevel.Error, "Reading control bytes failed");
-                Logger.AddEntry(this, LogLevel.Error, "ExceptionMessage: " + ex.Message);
-                Logger.AddEntry(this, LogLevel.Error, "USB ErrorCode: " + errorCode);
-                Logger.AddEntry(this, LogLevel.Error, "requested length: " + length.ToString());
+                Logger.Error("Reading control bytes failed");
+                Logger.Error("ExceptionMessage: " + ex.Message);
+                Logger.Error("USB ErrorCode: " + errorCode);
+                Logger.Error("requested length: " + length.ToString());
 
                 return new byte[0];
             }
@@ -143,10 +144,10 @@ namespace ECore.HardwareInterfaces
             }
             catch (Exception ex)
             {
-                Logger.AddEntry(this, LogLevel.Error, "Streaming data from camera failed");
-                Logger.AddEntry(this, LogLevel.Error, "ExceptionMessage: " + ex.Message);
-                Logger.AddEntry(this, LogLevel.Error, "USB ErrorCode: " + errorCode);
-                Logger.AddEntry(this, LogLevel.Error, "requested length: " + numberOfBytes.ToString());
+                Logger.Error("Streaming data from camera failed");
+                Logger.Error("ExceptionMessage: " + ex.Message);
+                Logger.Error("USB ErrorCode: " + errorCode);
+                Logger.Error("requested length: " + numberOfBytes.ToString());
 
                 return null;
             }

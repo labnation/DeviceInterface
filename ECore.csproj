@@ -80,7 +80,6 @@
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="HardwareInterfaces\ScopeUsbInterface.cs" />
-    <Compile Include="Logger.cs" />
     <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />
     <Compile Include="Devices\EDevice.cs" />
     <Compile Include="HardwareInterfaces\EDeviceHWInterface.cs" />
@@ -101,6 +100,10 @@
     <None Include="i2c_sequence.mat" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\birthControl\Common\Common.csproj">
+      <Project>{D119D2F8-3ABA-4C7A-9A8B-FD8C755633BA}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
       <Name>MatlabFileIO</Name>

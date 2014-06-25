@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.HardwareInterfaces;
+using Common;
 
 namespace ECore.DeviceMemories
 {
@@ -37,7 +38,7 @@ namespace ECore.DeviceMemories
 
         public override void Write(int address, int length)
         {
-            Logger.AddEntry(this, LogLevel.Error, "Can't write to ROM");
+            Logger.Error("Can't write to ROM");
         }
 
         public void WriteSingle(ROM r)

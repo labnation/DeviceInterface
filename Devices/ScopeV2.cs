@@ -6,6 +6,7 @@ using ECore.DeviceMemories;
 using ECore.DataPackages;
 using System.IO;
 using ECore.HardwareInterfaces;
+using Common;
 
 
 namespace ECore.Devices
@@ -92,7 +93,7 @@ namespace ECore.Devices
                 string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
                 foreach (byte b in response)
                     resultString += b.ToString() + ";";
-                Logger.AddEntry(this, LogLevel.Debug, resultString);
+                Logger.Debug(resultString);
                 
                 //Init ROM
                 this.rom = new Rom(scopeInterface);
@@ -103,13 +104,13 @@ namespace ECore.Devices
                 LogWait("FPGA flashed...");
                 InitializeMemories();
                 LogWait("Memories initialized...");
-                Logger.AddEntry(this, LogLevel.Debug, "FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
+                Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
 
                 UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() +
                                  (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() <<  8) +
                                  (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
                                  (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
-                Logger.AddEntry(this, LogLevel.Info, String.Format("FPGA FW version = 0x{0:x}", GitHash));
+                Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GitHash));
             }
             else
             {
@@ -145,7 +146,7 @@ namespace ECore.Devices
 
 		private void LogWait(string message, int sleep = 0)
         {
-            Logger.AddEntry(this, LogLevel.Debug, message);
+            Logger.Debug(message);
 			System.Threading.Thread.Sleep(sleep);
         }
 
@@ -235,7 +236,7 @@ namespace ECore.Devices
                     bool mismatch = !expected.Equals(testData[i]);
                     if (mismatch)
                     {
-                        Logger.AddEntry(this, LogLevel.Debug, "Stress test mismatch at sample " + i);
+                        Logger.Debug("Stress test mismatch at sample " + i);
                         ram_test_fails++;
                         goto ram_test_done;
                     }
@@ -266,7 +267,7 @@ namespace ECore.Devices
                     nextValue = (byte)((val << 4) + (Utils.ReverseWithLookupTable((byte)val) >> 4));
                     if (testVector[i] != chB[i])
                     {
-                        Logger.AddEntry(this, LogLevel.Error, "Digital mismatch at sample " + i + ". Aborting check");
+                        Logger.Error("Digital mismatch at sample " + i + ". Aborting check");
                         digital_test_fails++;
                         goto done;
                     }
