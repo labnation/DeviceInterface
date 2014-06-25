@@ -100,7 +100,7 @@
     <None Include="i2c_sequence.mat" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\birthControl\Common\Common.csproj">
+    <ProjectReference Include="..\Common\Common.csproj">
       <Project>{D119D2F8-3ABA-4C7A-9A8B-FD8C755633BA}</Project>
       <Name>Common</Name>
     </ProjectReference>
