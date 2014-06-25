@@ -45,7 +45,7 @@ namespace ECore.Devices
         private float triggerLevel = 0f;
 
 #if INTERNAL
-        public int ram_test_passes, ram_test_fails, digital_test_passes, digital_test_fails;
+        public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
 #endif
 #if ANDROID
 		public Android.Content.Res.AssetManager Assets;
@@ -77,10 +77,7 @@ namespace ECore.Devices
             if (connected)
             {
 #if INTERNAL
-                ram_test_passes = 0;
-                ram_test_fails = 0;
-                digital_test_passes = 0;
-                digital_test_fails = 0;
+                resetTestResults("all");
 #endif
                 ScopeUsbInterface scopeInterface = hwInterface as ScopeUsbInterface;
                 if (scopeInterface == null) return;
@@ -120,6 +117,23 @@ namespace ECore.Devices
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);
         }
+
+#if INTERNAL
+        public void resetTestResults(string test)
+        {
+            if (test == "ram" || test == "all")
+            {
+                ramTestPasses = 0;
+                ramTestFails = 0;
+            }
+
+            if (test == "digi" || test == "all")
+            {
+                digitalTestPasses = 0;
+                digitalTestFails = 0;
+            }
+        }
+#endif
 
         //master method where all memories, registers etc get defined and linked together
         private void InitializeMemories()
@@ -237,11 +251,11 @@ namespace ECore.Devices
                     if (mismatch)
                     {
                         Logger.Debug("Stress test mismatch at sample " + i);
-                        ram_test_fails++;
+                        ramTestFails++;
                         goto ram_test_done;
                     }
                 }
-                ram_test_passes++;
+                ramTestPasses++;
             }
             ram_test_done:
 #endif
@@ -268,11 +282,11 @@ namespace ECore.Devices
                     if (testVector[i] != chB[i])
                     {
                         Logger.Error("Digital mismatch at sample " + i + ". Aborting check");
-                        digital_test_fails++;
+                        digitalTestFails++;
                         goto done;
                     }
                 }
-                digital_test_passes++;
+                digitalTestPasses++;
             }
         done:
 #endif
