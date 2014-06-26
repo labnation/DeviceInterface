@@ -91,12 +91,6 @@ namespace ECore.HardwareInterfaces
                 byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
                 int bytesRead;
                 errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-                //log
-                string logString = "";
-                foreach (byte b in readBuffer)
-                    logString += b.ToString() + ",";
-
-                //Logger.AddEntry(this, LogMessageType.ECoreInfo, "Answer received from HW: [" + logString + "]");
 
                 //extract required data
                 byte[] returnBuffer = new byte[length];
