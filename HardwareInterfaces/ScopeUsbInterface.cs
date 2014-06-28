@@ -23,14 +23,17 @@ namespace ECore.HardwareInterfaces
             PIC_READ            =  3,
             PIC_RESET		    =  4,
             PIC_BOOTLOADER      =  5,
-            ROM_READ            =  7,
-            ROM_WRITE           =  8,
-            I2C_WRITE			= 10,
+            EEPROM_READ         =  6,
+            EEPROM_WRITE        =  7,
+            FLASH_ROM_READ      =  8,
+            FLASH_ROM_WRITE     =  9,
+            I2C_WRITE           = 10,
             I2C_READ		    = 11,
             FLASH_FPGA          = 12,
             FLASH_FPGA_FINISH   = 13,
         }
         const byte PIC_PREAMBLE = 123;
+        const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
 
         private enum Operation { READ, WRITE };
 
@@ -156,6 +159,13 @@ namespace ECore.HardwareInterfaces
             if (ctrl == ScopeController.FPGA || ctrl == ScopeController.FPGA_ROM)
                 SetControllerRegister(ctrl, address, null);
 
+            if (ctrl == ScopeController.FLASH && (address + length) > FLASH_USER_ADDRESS_MASK)
+            {
+                Logger.Error(String.Format("Can't read flash rom beyond 0x{0:X8}", FLASH_USER_ADDRESS_MASK));
+                data = null;
+                return;
+            }
+
             byte[] header = UsbCommandHeader(ctrl, Operation.READ, address, length);
             this.WriteControlBytes(header);
 
@@ -167,9 +177,16 @@ namespace ECore.HardwareInterfaces
                 data = null;
                 return;
             }
+
+            int readHeaderLength;
+            if (ctrl == ScopeController.FLASH)
+                readHeaderLength = 5;
+            else
+                readHeaderLength = 4;
+
             //strip away first 4 bytes as these are not data
             data = new byte[length];
-            Array.Copy(readback, 4, data, 0, length);
+            Array.Copy(readback, readHeaderLength, data, 0, length);
         }
 
         public void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
@@ -227,7 +244,7 @@ namespace ECore.HardwareInterfaces
                 {
                     header = new byte[4] {
                                PIC_PREAMBLE,
-               (byte)PIC_COMMANDS.ROM_WRITE, 
+            (byte)PIC_COMMANDS.EEPROM_WRITE, 
                             (byte)(address),
                              (byte)(length)
                         };
@@ -236,9 +253,32 @@ namespace ECore.HardwareInterfaces
                 {
                     header = new byte[4] {
                                PIC_PREAMBLE,
-                (byte)PIC_COMMANDS.ROM_READ, 
+             (byte)PIC_COMMANDS.EEPROM_READ, 
                             (byte)(address),
                              (byte)(length)
+                        };
+                }
+            }
+            else if (ctrl == ScopeController.FLASH)
+            {
+                if (op == Operation.WRITE)
+                {
+                    header = new byte[5] {
+                               PIC_PREAMBLE,
+         (byte)PIC_COMMANDS.FLASH_ROM_WRITE, 
+                            (byte)(address),
+                             (byte)(length),
+                       (byte)(address >> 8),
+                        };
+                }
+                else if (op == Operation.READ)
+                {
+                    header = new byte[5] {
+                               PIC_PREAMBLE,
+          (byte)PIC_COMMANDS.FLASH_ROM_READ, 
+                            (byte)(address),
+                             (byte)(length),
+                       (byte)(address >> 8),
                         };
                 }
             }
