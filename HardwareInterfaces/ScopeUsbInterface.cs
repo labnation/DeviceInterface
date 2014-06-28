@@ -82,7 +82,6 @@ namespace ECore.HardwareInterfaces
                 Logger.Error("USB message too long for endpoint");
                 return 0;
             }
-            Logger.Info("WriteCtrlBytes: " + String.Join(";", message));
             return WriteControlBytesBulk(message); ;
         }
         public int WriteControlBytesBulk(byte[] message)
