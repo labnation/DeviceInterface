@@ -11,9 +11,9 @@ namespace ECore.DeviceMemories
     {
         public DeviceMemory Memory { get; private set; }
         public string Name { get; private set; }
-        public int Address { get; private set; }
+        public uint Address { get; private set; }
 
-        public MemoryRegister(DeviceMemory memory, int address, string name)
+        public MemoryRegister(DeviceMemory memory, uint address, string name)
         {
             Address = address;
             Name = name;

@@ -149,10 +149,10 @@ namespace ECore.Devices
                 }
                 byte[] b = MapToBytes(m);
 
-                int bytesWritten = 0;
+                uint bytesWritten = 0;
                 while (bytesWritten < b.Length)
                 {
-                    int writeLength=Math.Min(12, b.Length - bytesWritten);
+                    uint writeLength=Math.Min(12, (uint)(b.Length - bytesWritten));
                     byte[] tmp = new byte[writeLength];
                     Array.Copy(b, bytesWritten, tmp, 0, writeLength);
                     hwInterface.SetControllerRegister(ScopeController.ROM, bytesWritten, tmp);
@@ -168,10 +168,10 @@ namespace ECore.Devices
             {
                 int size = Marshal.SizeOf(typeof(Map));
                 byte[] romContents = new byte[size];
-                int maxReadLength = 12;
-                for (int byteOffset = 0; byteOffset < size; )
+                uint maxReadLength = 12;
+                for (uint byteOffset = 0; byteOffset < size; )
                 {
-                    int readLength = Math.Min(maxReadLength, size - byteOffset);
+                    uint readLength = (uint)Math.Min(maxReadLength, size - byteOffset);
                     byte[] tmp;
                     hwInterface.GetControllerRegister(ScopeController.ROM, byteOffset, readLength, out tmp);
                     Array.Copy(tmp, 0, romContents, byteOffset, readLength);

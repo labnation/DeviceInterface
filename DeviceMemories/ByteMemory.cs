@@ -8,7 +8,7 @@ namespace ECore.DeviceMemories
 {
     abstract public class ByteMemory : DeviceMemory
     {
-        public ByteRegister GetRegister(int address)
+        public ByteRegister GetRegister(uint address)
         {
             return (ByteRegister)registers[address];
         }

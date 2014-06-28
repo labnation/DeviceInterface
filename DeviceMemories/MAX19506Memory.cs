@@ -32,12 +32,12 @@ namespace ECore.DeviceMemories
             this.fpgaRom = fpgaRom;
 
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
-                registers.Add((int)reg, new ByteRegister(this, (int)reg, reg.ToString()));
+                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        public override void Read(int address, int length)
+        public override void Read(uint address, uint length)
         {
-            for (int i = 0; i < length; i++)
+            for (uint i = 0; i < length; i++)
             {
                 fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address + i + 128); //for a read, MSB must be 1
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
@@ -53,9 +53,9 @@ namespace ECore.DeviceMemories
             
         }
 
-        public override void Write(int address, int length)
+        public override void Write(uint address, uint length)
         {
-            for (int i = 0; i < length; i++)
+            for (uint i = 0; i < length; i++)
             {
                 //first send correct address to FPGA
                 fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address + i);
@@ -73,15 +73,15 @@ namespace ECore.DeviceMemories
         }
         public void WriteSingle(MAX19506 r)
         {
-            this.WriteSingle((int)r);
+            this.WriteSingle((uint)r);
         }
         public void ReadSingle(MAX19506 r)
         {
-            this.ReadSingle((int)r);
+            this.ReadSingle((uint)r);
         }
         public ByteRegister GetRegister(MAX19506 r)
         {
-            return GetRegister((int)r);
+            return GetRegister((uint)r);
         }
     }
 }

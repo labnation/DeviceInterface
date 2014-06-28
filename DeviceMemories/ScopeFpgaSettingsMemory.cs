@@ -17,37 +17,37 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
 
             foreach(REG reg in Enum.GetValues(typeof(REG)))
-                registers.Add((int)reg, new ByteRegister(this, (int)reg, reg.ToString()));
+                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        public override void Read(int address, int length)
+        public override void Read(uint address, uint length)
         {
             byte[] data = null;
             hwInterface.GetControllerRegister(ScopeController.FPGA, address, length, out data);
             
-            for (int j = 0; j < data.Length; j++)
+            for (uint j = 0; j < data.Length; j++)
                 registers[address + j].Set(data[j]);
         }
 
-        public override void Write(int address, int length)
+        public override void Write(uint address, uint length)
         {
             byte[] data = new byte[length];
-            for (int j = 0; j < length; j++)
+            for (uint j = 0; j < length; j++)
                 data[j] = GetRegister(address + j).GetByte();
 
             hwInterface.SetControllerRegister(ScopeController.FPGA, address, data);
         }
         public void WriteSingle(REG r)
         {
-            this.WriteSingle((int)r);
+            this.WriteSingle((uint)r);
         }
         public void ReadSingle(REG r)
         {
-            this.ReadSingle((int)r);
+            this.ReadSingle((uint)r);
         }
         public ByteRegister GetRegister(REG r)
         {
-            return GetRegister((int)r);
+            return GetRegister((uint)r);
         }
     }
 }

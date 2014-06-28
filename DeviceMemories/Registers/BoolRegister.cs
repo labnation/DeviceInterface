@@ -9,7 +9,7 @@ namespace ECore.DeviceMemories
     {
         private bool internalValue;
 
-        public BoolRegister(DeviceMemory memory, int address, string name) : base(memory, address, name) { }
+        public BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
 
         public override MemoryRegister Set(object value)
         {

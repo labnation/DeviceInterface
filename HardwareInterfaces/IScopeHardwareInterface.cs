@@ -13,9 +13,9 @@ namespace ECore.HardwareInterfaces
     }
     public interface IScopeHardwareInterface
     {
-        void SetControllerRegister(ScopeController ctrl, int address, byte[] data);
+        void SetControllerRegister(ScopeController ctrl, uint address, byte[] data);
 
-        void GetControllerRegister(ScopeController ctrl, int address, int length, out byte[] data);
+        void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data);
 
     }
 }

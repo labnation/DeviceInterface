@@ -18,41 +18,41 @@ namespace ECore.DeviceMemories
             this.readMemory = readMemory;
 
             foreach (STR str in Enum.GetValues(typeof(STR)))
-                registers.Add((int)str, new BoolRegister(this, (int)str, str.ToString()));
+                registers.Add((uint)str, new BoolRegister(this, (uint)str, str.ToString()));
         }
 
-        private int StrobeToRomAddress(int strobe)
+        private uint StrobeToRomAddress(uint strobe)
         {
-            return (int)ROM.STROBES + (int)Math.Floor((double)strobe / 8.0);
+            return (uint)ROM.STROBES + (uint)Math.Floor((double)strobe / 8.0);
         }
 
-        public override void Read(int address, int length)
+        public override void Read(uint address, uint length)
         {
             if (length < 1) return;
             //Compute range of ROM registers to read from
-            int romStartAddress = StrobeToRomAddress(address);
-            int romEndAddress = StrobeToRomAddress(address + length - 1);
+            uint romStartAddress = StrobeToRomAddress(address);
+            uint romEndAddress = StrobeToRomAddress(address + length - 1);
             readMemory.Read(romStartAddress, romEndAddress - romStartAddress + 1);
 
-            for (int i = address; i < address + length; i++)
+            for (uint i = address; i < address + length; i++)
             {
-                int romAddress = StrobeToRomAddress(i);
-                int offset = i % 8;
+                uint romAddress = StrobeToRomAddress(i);
+                int offset = (int)(i % 8);
                 registers[i].Set( ((readMemory.GetRegister(romAddress).GetByte() >> offset) & 0x01) == 0x01);
             }
         }
 
-        public override void Write(int address, int length)
+        public override void Write(uint address, uint length)
         {
-            for (int i = 0; i < length; i++)
+            for (uint i = 0; i < length; i++)
             {
-                int strobeAddress = address+i;
+                uint strobeAddress = address+i;
                 BoolRegister reg = GetRegister(strobeAddress);
 
                 //prepare data te be sent
-                int valToSend = strobeAddress;
+                uint valToSend = strobeAddress;
                 valToSend = valToSend << 1;
-                valToSend += reg.GetBool() ? 1: 0; //set strobe high or low
+                valToSend += reg.GetBool() ? (uint)1: 0; //set strobe high or low
 
                 //now put this in the correct FPGA register
                 writeMemory.GetRegister(REG.STROBE_UPDATE).Set(valToSend);
@@ -64,17 +64,17 @@ namespace ECore.DeviceMemories
 
         public void WriteSingle(STR r)
         {
-            this.WriteSingle((int)r);
+            this.WriteSingle((uint)r);
         }
         public void ReadSingle(STR r)
         {
-            this.ReadSingle((int)r);
+            this.ReadSingle((uint)r);
         }
         public BoolRegister GetRegister(STR r)
         {
-            return GetRegister((int)r);
+            return GetRegister((uint)r);
         }
-        public BoolRegister GetRegister(int a)
+        public BoolRegister GetRegister(uint a)
         {
             return (BoolRegister)Registers[a];
         }

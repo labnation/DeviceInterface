@@ -149,7 +149,7 @@ namespace ECore.HardwareInterfaces
 
         #region ScopeInterface
 
-        public void GetControllerRegister(ScopeController ctrl, int address, int length, out byte[] data)
+        public void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
@@ -172,9 +172,9 @@ namespace ECore.HardwareInterfaces
             Array.Copy(readback, 4, data, 0, length);
         }
 
-        public void SetControllerRegister(ScopeController ctrl, int address, byte[] data)
+        public void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
-            int length = data != null ? data.Length : 0;
+            uint length = data != null ? (uint)data.Length : 0;
             byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);
 
             //Paste header and data together and send it
@@ -196,7 +196,7 @@ namespace ECore.HardwareInterfaces
             this.SendCommand(PIC_COMMANDS.PIC_BOOTLOADER);
         }
 
-        private static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, int address, int length)
+        private static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)
         {
             byte[] header = null;
 

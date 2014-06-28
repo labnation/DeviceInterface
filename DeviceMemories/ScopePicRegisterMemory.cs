@@ -22,37 +22,37 @@ namespace ECore.DeviceMemories
             this.hwInterface = hwInterface;
                         
             foreach (PIC reg in Enum.GetValues(typeof(PIC)))
-                registers.Add((int)reg, new ByteRegister(this, (int)reg, reg.ToString()));
+                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        public override void Read(int address, int length)
+        public override void Read(uint address, uint length)
         {            
             byte[] data;
             hwInterface.GetControllerRegister(ScopeController.PIC, address, length, out data);
             
-            for (int i = 0; i < data.Length; i++)
+            for (uint i = 0; i < data.Length; i++)
                 registers[address + i].Set(data[i]);
         }
 
-        public override void Write(int address, int length)
+        public override void Write(uint address, uint length)
         {
             byte[] data = new byte[length];
-            for (int i = 0; i < length; i++)
+            for (uint i = 0; i < length; i++)
                 data[i] = GetRegister(address + i).GetByte();
             
             hwInterface.SetControllerRegister(ScopeController.PIC, address, data);
         }
         public void WriteSingle(PIC r)
         {
-            this.WriteSingle((int)r);
+            this.WriteSingle((uint)r);
         }
         public void ReadSingle(PIC r)
         {
-            this.ReadSingle((int)r);
+            this.ReadSingle((uint)r);
         }
         public ByteRegister GetRegister(PIC r)
         {
-            return GetRegister((int)r);
+            return GetRegister((uint)r);
         }
     }
 }

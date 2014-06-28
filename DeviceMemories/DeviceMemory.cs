@@ -8,21 +8,21 @@ namespace ECore.DeviceMemories
 {
     abstract public class DeviceMemory
     {
-        protected Dictionary<int, MemoryRegister> registers = new Dictionary<int, MemoryRegister>();
+        protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
 
-        abstract public void Write(int address, int length);
-        abstract public void Read(int address, int length);
+        abstract public void Write(uint address, uint length);
+        abstract public void Read(uint address, uint length);
         
-        virtual public void WriteSingle(int address)
+        virtual public void WriteSingle(uint address)
         {
             this.Write(address, 1);
         }
 
-        virtual public void ReadSingle(int address)
+        virtual public void ReadSingle(uint address)
         {
             Read(address, 1);
         }
 
-        public Dictionary<int, MemoryRegister> Registers { get { return registers; } }
+        public Dictionary<uint, MemoryRegister> Registers { get { return registers; } }
     }
 }
