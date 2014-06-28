@@ -33,7 +33,7 @@ namespace ECore.Devices
             const int calibrationSize = 3;
             //Number of possible multiplier/divider combinations
             int modes = validMultipliers.Length * validDividers.Length;
-            public ulong plugCount { get; private set; }
+            public UInt32 plugCount { get; private set; }
             public List<Calibration> calibration { get; private set; }
             ScopeUsbInterface hwInterface;
             public double[] computedMultipliers { get; private set; }
@@ -114,7 +114,7 @@ namespace ECore.Devices
             [StructLayout(LayoutKind.Sequential)]
             unsafe struct Map
             {
-                public ulong plugCount;
+                public UInt32 plugCount;
                 public fixed float calibration[calibrationSize * 3 * 3 * 2]; //calibrationSize * nDivider * nMultiplier * nChannel
             }
 
@@ -147,14 +147,14 @@ namespace ECore.Devices
                 }
                 byte[] b = MapToBytes(m);
 
-                uint bytesWritten = 0;
-                while (bytesWritten < b.Length)
+                uint writeOffset = (uint)Marshal.SizeOf(m.plugCount);
+                while (writeOffset < b.Length)
                 {
-                    uint writeLength=Math.Min(12, (uint)(b.Length - bytesWritten));
+                    uint writeLength=Math.Min(11, (uint)(b.Length - writeOffset));
                     byte[] tmp = new byte[writeLength];
-                    Array.Copy(b, bytesWritten, tmp, 0, writeLength);
-                    hwInterface.SetControllerRegister(ScopeController.ROM, bytesWritten, tmp);
-                    bytesWritten += writeLength;
+                    Array.Copy(b, writeOffset, tmp, 0, writeLength);
+                    hwInterface.SetControllerRegister(ScopeController.FLASH, writeOffset, tmp);
+                    writeOffset += writeLength;
                 }
             }
 #if INTERNAL
@@ -166,12 +166,12 @@ namespace ECore.Devices
             {
                 int size = Marshal.SizeOf(typeof(Map));
                 byte[] romContents = new byte[size];
-                uint maxReadLength = 12;
+                uint maxReadLength = 11;
                 for (uint byteOffset = 0; byteOffset < size; )
                 {
                     uint readLength = (uint)Math.Min(maxReadLength, size - byteOffset);
                     byte[] tmp;
-                    hwInterface.GetControllerRegister(ScopeController.ROM, byteOffset, readLength, out tmp);
+                    hwInterface.GetControllerRegister(ScopeController.FLASH, byteOffset, readLength, out tmp);
                     Array.Copy(tmp, 0, romContents, byteOffset, readLength);
                     byteOffset += readLength;
                 }
