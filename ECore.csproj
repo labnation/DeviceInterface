@@ -65,7 +65,6 @@
     <Compile Include="HardwareInterfaces\IScopeHardwareInterface.cs" />
     <Compile Include="Devices\ScopeChannel.cs" />
     <Compile Include="Devices\Settings.cs" />
-    <Compile Include="ComponentFlashEngines\PIC18LF14K50_Flasher.cs" />
     <Compile Include="Devices\ScopeV2.cs" />
     <Compile Include="DeviceMemories\ScopeConstants_GEN.cs">
       <AutoGen>True</AutoGen>
