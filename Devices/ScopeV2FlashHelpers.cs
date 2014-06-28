@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Diagnostics;
 using Common;
+using ECore.HardwareInterfaces;
 
 namespace ECore.Devices {
 	partial class ScopeV2 {
@@ -84,8 +85,8 @@ namespace ECore.Devices {
 				//PIC: enter FPGA flashing mode
 				byte [] toSend1 = new byte[6];
 				int i = 0;
-				toSend1 [i++] = 123; //message for PIC
-				toSend1 [i++] = 12; //HOST_COMMAND_FLASH_FPGA
+                toSend1[i++] = ScopeUsbInterface.PIC_PREAMBLE; //message for PIC
+                toSend1[i++] = (byte)ScopeUsbInterface.PIC_COMMANDS.FLASH_FPGA; //HOST_COMMAND_FLASH_FPGA
 				toSend1 [i++] = (byte) (commands >> 8);
 				toSend1 [i++] = (byte) (commands);
 				hardwareInterface.WriteControlBytes (toSend1);
@@ -97,9 +98,10 @@ namespace ECore.Devices {
 						commandSize = firmware.Length - bytesSent;
 					byte [] commandBytes = new byte[commandSize];
 					Array.Copy (firmware, bytesSent, commandBytes, 0, commandSize);
-					int sent = hardwareInterface.WriteControlBytes (commandBytes);
+                    int sent = hardwareInterface.WriteControlBytesBulk(commandBytes);
 					if (sent == 0) {
 						Logger.Error("No bytes written - aborting flash operation");
+
 						return;
 					}
 					bytesSent += sent;
@@ -107,7 +109,7 @@ namespace ECore.Devices {
 				}
 				flashStopwatch.Stop ();
 				for (int j = 0; j < killMeNow; j++) {
-					hardwareInterface.WriteControlBytes (dummyData);
+					hardwareInterface.WriteControlBytesBulk(dummyData);
 				}
                 
 				//Send finish flashing command

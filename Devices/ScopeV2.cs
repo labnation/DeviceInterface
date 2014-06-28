@@ -87,10 +87,7 @@ namespace ECore.Devices
 
                 hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
                 byte[] response = hardwareInterface.ReadControlBytes(16);
-                string resultString = "PIC FW Version readout (" + response.Length.ToString() + " bytes): ";
-                foreach (byte b in response)
-                    resultString += b.ToString() + ";";
-                Logger.Debug(resultString);
+                Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(";", response)));
                 
                 //Init ROM
                 this.rom = new Rom(scopeInterface);

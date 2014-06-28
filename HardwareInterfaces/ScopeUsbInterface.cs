@@ -16,7 +16,7 @@ namespace ECore.HardwareInterfaces
 #endif
     class ScopeUsbInterface: EDeviceHWInterface, IScopeHardwareInterface, IDisposable
     {
-        private enum PIC_COMMANDS
+        internal enum PIC_COMMANDS
         {
             PIC_VERSION         =  1,
             PIC_WRITE           =  2,
@@ -32,7 +32,7 @@ namespace ECore.HardwareInterfaces
             FLASH_FPGA          = 12,
             FLASH_FPGA_FINISH   = 13,
         }
-        const byte PIC_PREAMBLE = 123;
+        internal const byte PIC_PREAMBLE = 123;
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
 
         private enum Operation { READ, WRITE };
@@ -77,12 +77,17 @@ namespace ECore.HardwareInterfaces
 
         public override int WriteControlBytes(byte[] message)
         {
-            int bytesWritten;
             if (message.Length > WriteControlMaxLength())
             {
                 Logger.Error("USB message too long for endpoint");
                 return 0;
             }
+            Logger.Info("WriteCtrlBytes: " + String.Join(";", message));
+            return WriteControlBytesBulk(message); ;
+        }
+        public int WriteControlBytesBulk(byte[] message)
+        {
+            int bytesWritten;
             ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             if (code != ErrorCode.Success)
                 Logger.Error("Failed to write control bytes : " + code.ToString("G"));
