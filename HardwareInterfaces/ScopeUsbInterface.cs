@@ -29,10 +29,11 @@ namespace ECore.HardwareInterfaces
             FLASH_ROM_WRITE     =  9,
             I2C_WRITE           = 10,
             I2C_READ		    = 11,
-            FLASH_FPGA          = 12,
-            FLASH_FPGA_FINISH   = 13,
+            PROGRAM_FPGA_START  = 12,
+            PROGRAM_FPGA_END    = 13,
         }
-        internal const byte PIC_PREAMBLE = 123;
+        internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
+        internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
 
         private enum Operation { READ, WRITE };
@@ -106,10 +107,8 @@ namespace ECore.HardwareInterfaces
 
                 //extract required data
                 byte[] returnBuffer = new byte[length];
-                for (int i = 0; i < length; i++)
-                    returnBuffer[i] = readBuffer[i];
+                Array.Copy(readBuffer, returnBuffer, length);
 
-                //return read data
                 return returnBuffer;
             }
             catch (Exception ex)
@@ -211,15 +210,20 @@ namespace ECore.HardwareInterfaces
             WriteControlBytes(toSend);
         }
 
-        private void SendCommand(PIC_COMMANDS cmd)
+        internal void SendCommand(PIC_COMMANDS cmd)
         {
-            byte[] toSend = new byte[2] { PIC_PREAMBLE, (byte)cmd };
+            byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
             WriteControlBytes(toSend);
         }
 
         public void LoadBootLoader()
         {
             this.SendCommand(PIC_COMMANDS.PIC_BOOTLOADER);
+        }
+        
+        public void Reset()
+        {
+            this.SendCommand(PIC_COMMANDS.PIC_RESET);
         }
 
         private static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)
@@ -231,7 +235,7 @@ namespace ECore.HardwareInterfaces
                 if (op == Operation.WRITE)
                 {
                     header = new byte[4] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
                (byte)PIC_COMMANDS.PIC_WRITE, 
                             (byte)(address),
                              (byte)(length)  //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
@@ -240,7 +244,7 @@ namespace ECore.HardwareInterfaces
                 else if (op == Operation.READ)
                 {
                     header = new byte[4] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
                 (byte)PIC_COMMANDS.PIC_READ, 
                             (byte)(address),
                              (byte)(length)  //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
@@ -252,7 +256,7 @@ namespace ECore.HardwareInterfaces
                 if (op == Operation.WRITE)
                 {
                     header = new byte[4] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
             (byte)PIC_COMMANDS.EEPROM_WRITE, 
                             (byte)(address),
                              (byte)(length)
@@ -261,7 +265,7 @@ namespace ECore.HardwareInterfaces
                 else if (op == Operation.READ)
                 {
                     header = new byte[4] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
              (byte)PIC_COMMANDS.EEPROM_READ, 
                             (byte)(address),
                              (byte)(length)
@@ -273,7 +277,7 @@ namespace ECore.HardwareInterfaces
                 if (op == Operation.WRITE)
                 {
                     header = new byte[5] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
          (byte)PIC_COMMANDS.FLASH_ROM_WRITE, 
                             (byte)(address),
                              (byte)(length),
@@ -283,7 +287,7 @@ namespace ECore.HardwareInterfaces
                 else if (op == Operation.READ)
                 {
                     header = new byte[5] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
           (byte)PIC_COMMANDS.FLASH_ROM_READ, 
                             (byte)(address),
                              (byte)(length),
@@ -296,7 +300,7 @@ namespace ECore.HardwareInterfaces
                 if (op == Operation.WRITE)
                 {
                     header = new byte[5] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
                (byte)PIC_COMMANDS.I2C_WRITE,
                          (byte)(length + 2), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
                              (byte)(5 << 1), //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
@@ -306,7 +310,7 @@ namespace ECore.HardwareInterfaces
                 else if (op == Operation.READ)
                 {
                     header = new byte[4] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
                 (byte)PIC_COMMANDS.I2C_READ,
                                   (byte)(5), //this has to be i2c address immediately, not bitshifted or anything!
                              (byte)(length) 
@@ -318,7 +322,7 @@ namespace ECore.HardwareInterfaces
                 if (op == Operation.WRITE)
                 {
                     header = new byte[5] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
                (byte)PIC_COMMANDS.I2C_WRITE,
                          (byte)(length + 2), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
                             //FIXME: should be a different address
@@ -329,7 +333,7 @@ namespace ECore.HardwareInterfaces
                 else if (op == Operation.READ)
                 {
                     header = new byte[4] {
-                               PIC_PREAMBLE,
+                               HEADER_CMD_BYTE,
                 (byte)PIC_COMMANDS.I2C_READ,
                                   (byte)(6), //this has to be i2c address immediately, not bitshifted or anything!
                              (byte)(length) 

@@ -85,7 +85,7 @@ namespace ECore.Devices
                 //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
                 //but there should be when flashing the FPGA.
 
-                hardwareInterface.WriteControlBytes(new byte[] { 123, 1 });
+                hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
                 byte[] response = hardwareInterface.ReadControlBytes(16);
                 Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(";", response)));
                 
@@ -199,6 +199,10 @@ namespace ECore.Devices
         public void LoadBootLoader()
         {
             this.hardwareInterface.LoadBootLoader();
+        }
+        public void Reset()
+        {
+            this.hardwareInterface.Reset();
         }
 
         #endregion
