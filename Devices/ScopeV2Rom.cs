@@ -43,8 +43,6 @@ namespace ECore.Devices
             {
                 this.hwInterface = hwInterface;
                 Download();
-                plugCount++;
-                Upload();
             }
 
             private void computeDividersMultipliers()
