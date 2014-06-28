@@ -58,7 +58,7 @@ namespace ECore.DeviceMemories
             for (uint i = 0; i < length; i++)
             {
                 //first send correct address to FPGA
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address + i);
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set((int)(address + i));
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, send the write value to FPGA

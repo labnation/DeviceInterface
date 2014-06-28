@@ -50,9 +50,9 @@ namespace ECore.DeviceMemories
                 BoolRegister reg = GetRegister(strobeAddress);
 
                 //prepare data te be sent
-                uint valToSend = strobeAddress;
+                int valToSend = (int)strobeAddress;
                 valToSend = valToSend << 1;
-                valToSend += reg.GetBool() ? (uint)1: 0; //set strobe high or low
+                valToSend += reg.GetBool() ? 1: 0; //set strobe high or low
 
                 //now put this in the correct FPGA register
                 writeMemory.GetRegister(REG.STROBE_UPDATE).Set(valToSend);

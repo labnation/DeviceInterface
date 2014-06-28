@@ -78,9 +78,14 @@ namespace ECore.HardwareInterfaces
         public override int WriteControlBytes(byte[] message)
         {
             int bytesWritten;
+            if (message.Length > WriteControlMaxLength())
+            {
+                Logger.Error("USB message too long for endpoint");
+                return 0;
+            }
             ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             if (code != ErrorCode.Success)
-                Logger.Error("Failed to write `ontrol bytes : " + code.ToString("G"));
+                Logger.Error("Failed to write control bytes : " + code.ToString("G"));
             return bytesWritten;
         }
 
@@ -159,7 +164,7 @@ namespace ECore.HardwareInterfaces
             if (ctrl == ScopeController.FPGA || ctrl == ScopeController.FPGA_ROM)
                 SetControllerRegister(ctrl, address, null);
 
-            if (ctrl == ScopeController.FLASH && (address + length) > FLASH_USER_ADDRESS_MASK)
+            if (ctrl == ScopeController.FLASH && (address + length) > (FLASH_USER_ADDRESS_MASK + 1))
             {
                 Logger.Error(String.Format("Can't read flash rom beyond 0x{0:X8}", FLASH_USER_ADDRESS_MASK));
                 data = null;
