@@ -54,7 +54,7 @@ namespace ECore.DataSources
             Logger.Debug("Requested DataFetchThread to stop");
         }
 
-        public void DataFetchThreadStart()
+        private void DataFetchThreadStart()
         {           
             //main starting point for the thread which fetches the data from file
             Logger.Info("DataFetchThread spawn");
