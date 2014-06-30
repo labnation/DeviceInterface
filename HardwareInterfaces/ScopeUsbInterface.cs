@@ -45,6 +45,7 @@ namespace ECore.HardwareInterfaces
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
         private object registerLock = new object();
+        private string serial;
 
         internal ScopeUsbInterface(UsbDevice usbDevice)
         {
@@ -57,6 +58,7 @@ namespace ECore.HardwareInterfaces
                 if (!succes2)
                     throw new Exception("Failed to claim usb interface6");
             }
+            serial = usbDevice.Info.SerialString;
             dataEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
@@ -67,6 +69,11 @@ namespace ECore.HardwareInterfaces
         public void Dispose()
         {
             //cleanup
+        }
+
+        public override string GetSerial()
+        {
+            return serial;
         }
 
         public override int WriteControlMaxLength()
@@ -90,7 +97,9 @@ namespace ECore.HardwareInterfaces
             int bytesWritten;
             ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             if (code != ErrorCode.Success)
-                Logger.Error("Failed to write control bytes : " + code.ToString("G"));
+            {
+                throw new Exception("Failed to read from USB device : " + code.ToString("G"));
+            }
             return bytesWritten;
         }
 
@@ -98,28 +107,20 @@ namespace ECore.HardwareInterfaces
         {
             //try to read data
             ErrorCode errorCode = ErrorCode.None;
-            try
+            //send read command
+            byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
+            int bytesRead;
+            errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
+
+            //extract required data
+            if (errorCode != ErrorCode.Success)
             {
-                //send read command
-                byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
-                int bytesRead;
-                errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-
-                //extract required data
-                byte[] returnBuffer = new byte[length];
-                Array.Copy(readBuffer, returnBuffer, length);
-
-                return returnBuffer;
+                throw new Exception("Failed to read from USB device");
             }
-            catch (Exception ex)
-            {
-                Logger.Error("Reading control bytes failed");
-                Logger.Error("ExceptionMessage: " + ex.Message);
-                Logger.Error("USB ErrorCode: " + errorCode);
-                Logger.Error("requested length: " + length.ToString());
+            byte[] returnBuffer = new byte[length];
+            Array.Copy(readBuffer, returnBuffer, length);
 
-                return new byte[0];
-            }
+            return returnBuffer;
         }
 
         public override byte[] GetData(int numberOfBytes)

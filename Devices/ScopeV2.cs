@@ -43,6 +43,8 @@ namespace ECore.Devices
         private bool acquisitionRunning = false;
         private Calibration[] channelSettings;
         private float triggerLevel = 0f;
+        
+        public string Serial { get { return hardwareInterface.GetSerial(); } }
 
 #if INTERNAL
         public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
@@ -76,40 +78,53 @@ namespace ECore.Devices
         {
             if (connected)
             {
+                try
+                {
 #if INTERNAL
-                resetTestResults("all");
+                    resetTestResults("all");
 #endif
-                ScopeUsbInterface scopeInterface = hwInterface as ScopeUsbInterface;
-                if (scopeInterface == null) return;
-                this.hardwareInterface = scopeInterface;
-                //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
-                //but there should be when flashing the FPGA.
+                    ScopeUsbInterface scopeInterface = hwInterface as ScopeUsbInterface;
+                    if (scopeInterface == null) return;
+                    this.hardwareInterface = scopeInterface;
+                    //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
+                    //but there should be when flashing the FPGA.
 
-                hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
-                byte[] response = hardwareInterface.ReadControlBytes(16);
-                Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(";", response)));
-                
-                //Init ROM
-                this.rom = new Rom(scopeInterface);
+                    hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
+                    byte[] response = hardwareInterface.ReadControlBytes(16);
+                    Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(";", response)));
 
-                //Init FPGA
-                LogWait("Starting fpga flashing...", 0);
-                FlashFpgaInternal();
-                LogWait("FPGA flashed...");
-                InitializeMemories();
-                LogWait("Memories initialized...");
-                Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
+                    //Init ROM
+                    this.rom = new Rom(scopeInterface);
 
-                UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() +
-                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() <<  8) +
-                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
-                                 (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
-                Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GitHash));
+                    //Init FPGA
+                    LogWait("Starting fpga flashing...", 0);
+                    FlashFpgaInternal();
+                    LogWait("FPGA flashed...");
+                    InitializeMemories();
+                    LogWait("Memories initialized...");
+                    Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
+
+                    UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() +
+                                     (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() << 8) +
+                                     (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
+                                     (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
+                    Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GitHash));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Failure while connecting to device: " + e.Message);
+                    connected = false;
+                    this.hardwareInterface = null;
+                    this.flashed = false;
+                }
             }
             else
             {
                 if (this.hardwareInterface == hwInterface)
+                {
                     this.hardwareInterface = null;
+                    this.flashed = false;
+                }
             }
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);

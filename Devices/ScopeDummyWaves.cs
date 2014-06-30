@@ -9,6 +9,7 @@ namespace ECore.Devices
 
     partial class ScopeDummy
     {
+        public string Serial { get { return "DUMMY"; } }
         public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, ScopeDummyChannelConfig config )
         {
             WaveForm waveForm = config.waveform;

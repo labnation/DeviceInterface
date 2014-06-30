@@ -19,6 +19,7 @@ namespace ECore.Devices
         DataPackageScope GetScopeData();
 
         bool Connected { get; }
+        string Serial { get; }
         double GetDefaultTimeRange();
         double GetSamplePeriod();
         int GetNumberOfSamples();

@@ -12,5 +12,6 @@ namespace ECore.HardwareInterfaces
         abstract public int WriteControlBytes(byte[] message);
         abstract public byte[] ReadControlBytes(int length);
         abstract public byte[] GetData(int numberOfBytes);
+        abstract public string GetSerial();
     }
 }
