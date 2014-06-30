@@ -99,6 +99,9 @@
     </None>
     <None Include="i2c_sequence.mat" />
     <None Include="packages.config" />
+    <None Include="SmartScope_latest.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
