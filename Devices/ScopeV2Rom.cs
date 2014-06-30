@@ -119,6 +119,48 @@ namespace ECore.Devices
             }
 
 #if INTERNAL
+            public bool Test(out object result)
+            {
+                int addressSpace = 0x100;
+
+                //Write
+                byte[] data;
+                int writeLength = 27; //32 - 5
+                for (uint i = 0; i < addressSpace; i++)
+                {
+                    data = new byte[writeLength];
+                    for(int j = 0; j < writeLength; j++) 
+                        data[j] = (byte)(~(i + j));
+                    hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
+                }
+                //Read back
+                uint readLength = 11; //16 - 5
+                for (uint i = 0; i < addressSpace; i++)
+                {
+                    hwInterface.GetControllerRegister(ScopeController.FLASH, i, readLength, out data);
+                    for (int j = 0; j < readLength; j++)
+                    {
+                        if (data[j] != (byte)(~(i + j)))
+                        {
+                            result = String.Format("Mismatch at address 0x{0:X4} - read {1}, expected {2}", i + j, data[j], (byte)(~(i + j)));
+                            return false;
+                        }
+                    }
+                }
+
+                //Erase with xFF
+                data = new byte[writeLength];
+                for (int j = 0; j < writeLength; j++)
+                    data[j] = 0xFF;
+                for (uint i = 0; i < addressSpace; i++)
+                    hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
+
+                result = "All OK";
+                return true;
+            }
+#endif
+
+#if INTERNAL
             public
 #else
             private 
