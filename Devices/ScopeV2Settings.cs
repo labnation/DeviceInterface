@@ -331,6 +331,16 @@ namespace ECore.Devices
             return (int)NUMBER_OF_SAMPLES;
         }
 
+        public uint GetFpgaFirmwareVersion()
+        {
+            return
+                (uint)(
+                (FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() <<  0) +
+                (FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() <<  8) +
+                (FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
+                (FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
+        }
+
         #endregion
 
         #region AWG/LA
