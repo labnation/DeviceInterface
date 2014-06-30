@@ -39,7 +39,7 @@ namespace ECore.DeviceMemories
         {
             for (uint i = 0; i < length; i++)
             {
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set(address + i + 128); //for a read, MSB must be 1
+                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set((byte)(address + i + 128)); //for a read, MSB must be 1
                 fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
 
                 //next, trigger rising edge to initiate SPI comm
