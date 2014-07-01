@@ -70,8 +70,18 @@ namespace ECore.HardwareInterfaces
             if(interfaces.ContainsKey(serial))
                 throw new Exception("This device was already registered. This is a bug");
             interfaces.Add(serial, f);
-            if (onConnect != null)
-                onConnect(f, true);
+            try
+            {
+                if (onConnect != null)
+                    onConnect(f, true);
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Error while calling OnConnect event handler: " + e.Message);
+                interfaces.Remove(serial);
+                f.Dispose();
+            }
+
         }
 
         public static void AddConnectHandler(OnDeviceConnect c)

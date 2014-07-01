@@ -116,6 +116,7 @@ namespace ECore.Devices
                     connected = false;
                     this.hardwareInterface = null;
                     this.flashed = false;
+                    throw e;
                 }
             }
             else
