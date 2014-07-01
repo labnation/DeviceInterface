@@ -119,8 +119,9 @@ namespace ECore.Devices
             }
 
 #if INTERNAL
-            public bool Test(out object result)
+            public bool Test(out long failAddress, out string message)
             {
+                failAddress = -1;
                 int addressSpace = 0x100;
 
                 //Write
@@ -142,7 +143,8 @@ namespace ECore.Devices
                     {
                         if (data[j] != (byte)(~(i + j)))
                         {
-                            result = String.Format("Mismatch at address 0x{0:X4} - read {1}, expected {2}", i + j, data[j], (byte)(~(i + j)));
+                            message = String.Format("Mismatch at address 0x{0:X4} - read {1}, expected {2}", i + j, data[j], (byte)(~(i + j)));
+                            failAddress = i + j;
                             return false;
                         }
                     }
@@ -155,7 +157,7 @@ namespace ECore.Devices
                 for (uint i = 0; i < addressSpace; i++)
                     hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
 
-                result = "All OK";
+                message = "All OK";
                 return true;
             }
 #endif
