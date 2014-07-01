@@ -37,7 +37,6 @@ namespace ECore.Devices
         void SetCoupling(int channel, Coupling coupling);
         Coupling GetCoupling(int channel);
         void SetTimeRange(double timeRange);
-        void Configure();
         DataSources.DataSourceScope DataSourceScope { get; }
     }
 }

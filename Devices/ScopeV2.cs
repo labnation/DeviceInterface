@@ -26,6 +26,7 @@ namespace ECore.Devices
 #endif
         Rom rom;
         private bool flashed = false;
+        private bool deviceReady = false;
         private ScopeConnectHandler scopeConnectHandler;
 
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
@@ -56,6 +57,7 @@ namespace ECore.Devices
         public ScopeV2(ScopeConnectHandler handler)
             : base()
         {
+            deviceReady = false;
             channelSettings = new Calibration[2];
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
@@ -109,6 +111,9 @@ namespace ECore.Devices
                                      (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
                                      (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
                     Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GitHash));
+
+                    Configure();
+                    deviceReady = true;
                 }
                 catch (Exception e)
                 {
@@ -121,6 +126,7 @@ namespace ECore.Devices
             }
             else
             {
+                deviceReady = false;
                 if (this.hardwareInterface == hwInterface)
                 {
                     this.hardwareInterface = null;
@@ -177,7 +183,7 @@ namespace ECore.Devices
 			System.Threading.Thread.Sleep(sleep);
         }
 
-        public void Configure()
+        private void Configure()
         {
             //raise global reset
             StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false).Write();
@@ -348,7 +354,7 @@ namespace ECore.Devices
         }
 
         //FIXME: this needs proper handling
-        public override bool Connected { get { return this.hardwareInterface != null && this.flashed; } }
+        public override bool Connected { get { return this.hardwareInterface != null && this.flashed && this.deviceReady; } }
 
         #endregion
     }

@@ -85,16 +85,12 @@ namespace ECore.Devices {
                     waveform = WaveForm.TRIANGLE
                 };
             }
-                
+
+            timeOrigin = DateTime.Now;
 
 			dataSourceScope = new DataSources.DataSourceScope (this);
 			if (handler != null)
 				handler (this, true);
-		}
-
-		public void Configure ()
-		{ 
-			timeOrigin = DateTime.Now;
 		}
 
 		#endregion

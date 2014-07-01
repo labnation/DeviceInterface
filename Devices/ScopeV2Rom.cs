@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore.HardwareInterfaces;
 using System.Runtime.InteropServices;
+using Common;
 
 namespace ECore.Devices
 {
@@ -132,13 +133,33 @@ namespace ECore.Devices
                     data = new byte[writeLength];
                     for(int j = 0; j < writeLength; j++) 
                         data[j] = (byte)(~(i + j));
-                    hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
+                    try
+                    {
+                        hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
+                    }
+                    catch (Exception e)
+                    {
+                        message = "ROM test failed in write phase: " + e.Message;
+                        failAddress = i;
+                        return false;
+                    }
+
                 }
                 //Read back
                 uint readLength = 11; //16 - 5
                 for (uint i = 0; i < addressSpace; i++)
                 {
-                    hwInterface.GetControllerRegister(ScopeController.FLASH, i, readLength, out data);
+                    try
+                    {
+                        hwInterface.GetControllerRegister(ScopeController.FLASH, i, readLength, out data);
+                    }
+                    catch (Exception e)
+                    {
+                        message = "ROM test failed in readback phase: " + e.Message;
+                        failAddress = i;
+                        return false;
+                    }
+
                     for (int j = 0; j < readLength; j++)
                     {
                         if (data[j] != (byte)(~(i + j)))
@@ -155,7 +176,18 @@ namespace ECore.Devices
                 for (int j = 0; j < writeLength; j++)
                     data[j] = 0xFF;
                 for (uint i = 0; i < addressSpace; i++)
-                    hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
+                {
+                    try
+                    {
+                        hwInterface.SetControllerRegister(ScopeController.FLASH, i, data);
+                    }
+                    catch (Exception e)
+                    {
+                        message = "ROM test failed in erase phase: " + e.Message;
+                        failAddress = i;
+                        return false;
+                    }
+                }
 
                 message = "All OK";
                 return true;
