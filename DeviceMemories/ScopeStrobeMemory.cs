@@ -78,5 +78,9 @@ namespace ECore.DeviceMemories
         {
             return (BoolRegister)Registers[a];
         }
+        public BoolRegister this[STR r]
+        {
+            get { return GetRegister((uint)r); }
+        }
     }
 }

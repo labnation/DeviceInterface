@@ -29,6 +29,11 @@ namespace ECore.DeviceMemories
             this.Memory.WriteSingle(this.Address);
         }
 
+        public void Write(object value)
+        {
+            this.Set(value).Write();
+        }
+
         public MemoryRegister Read()
         {
             this.Memory.ReadSingle(this.Address);

@@ -49,5 +49,9 @@ namespace ECore.DeviceMemories
         {
             return GetRegister((uint)r);
         }
+        public ByteRegister this[REG r]
+        {
+            get { return GetRegister((uint)r); }
+        }
     }
 }
