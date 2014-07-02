@@ -104,8 +104,8 @@ namespace ECore.HardwareInterfaces
 
                     UsbDeviceFinder usbFinder = new UsbDeviceFinder(e.Device.IdVendor, e.Device.IdProduct);
                     UsbDevice usbDevice = UsbDevice.OpenUsbDevice(usbFinder);
-                    
-                    DeviceFound(usbDevice);
+                    if(usbDevice != null)
+                        DeviceFound(usbDevice);
                     break;
                 case EventType.DeviceRemoveComplete:
                     if (!interfaces.ContainsKey(e.Device.SerialNumber))
