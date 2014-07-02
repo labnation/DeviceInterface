@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MatlabFileIO;
 using System.IO;
+using Common;
 
 namespace ECore.Devices
 {

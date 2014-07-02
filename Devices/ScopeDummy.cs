@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.DataPackages;
+using Common;
 
 namespace ECore.Devices {
 	public enum WaveSource {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.Devices;
+using Common;
 
 namespace ECore.DataPackages
 {
@@ -63,7 +64,7 @@ namespace ECore.DataPackages
                 bool[] digitalData = new bool[analogData.Length];
                 bool digitalDataPrevious = false;
                 for (int i = 0; i < analogData.Length; i++)
-                    digitalDataPrevious = digitalData[i] = ECore.Utils.Schmitt(analogData[i], digitalDataPrevious, H, L);
+                    digitalDataPrevious = digitalData[i] = Utils.Schmitt(analogData[i], digitalDataPrevious, H, L);
                 return digitalData;
             }
             else if (ch is DigitalChannel)
