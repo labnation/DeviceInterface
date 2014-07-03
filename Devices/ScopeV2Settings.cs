@@ -209,7 +209,7 @@ namespace ECore.Devices
             if (level > 255) level = 255;
 
             Logger.Debug(" Set trigger level to " + voltage + "V (" + level + ")");
-            FpgaSettingsMemory.GetRegister(REG.TRIGGERLEVEL).Set((byte)level).Write();
+            FpgaSettingsMemory[REG.TRIGGERLEVEL].Write((byte)level);
             toggleUpdateStrobe();
         }
         /// <summary>
