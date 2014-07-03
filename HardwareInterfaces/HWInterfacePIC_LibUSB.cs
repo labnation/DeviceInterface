@@ -84,6 +84,14 @@ namespace ECore.HardwareInterfaces
 
         }
 
+        public static void RemoveDevice(ScopeUsbInterface f)
+        {
+            if (onConnect != null)
+                onConnect(f, false);
+            interfaces.Remove(f.GetSerial());
+            f.Dispose();
+        }
+
         public static void AddConnectHandler(OnDeviceConnect c)
         {
             onConnect += c;

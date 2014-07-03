@@ -255,7 +255,17 @@ namespace ECore.Devices
             if (buffer == null) return null;
 
             //Parse header
-            ScopeV2Header header = new ScopeV2Header(buffer);
+            ScopeV2Header header;
+            try
+            {
+                header = new ScopeV2Header(buffer);
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Failed to parse header - disconnecting scope");
+                HWInterfacePIC_LibUSB.RemoveDevice(this.hardwareInterface);
+                return null;
+            }
             acquisitionRunning = header.scopeRunning;
             int payloadOffset = header.bytesPerBurst;
             //FIXME: Get these scope settings from header
