@@ -168,8 +168,6 @@ namespace ECore.Devices
         /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
         /// </summary>
         /// <param name="disable"></param>
-#endif
-#if DEBUG
         public void SetDisableVoltageConversion(bool disable)
         {
             this.disableVoltageConversion = disable;
