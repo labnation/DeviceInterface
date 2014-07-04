@@ -5,6 +5,7 @@ using System.Text;
 using ECore.HardwareInterfaces;
 using System.Runtime.InteropServices;
 using Common;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace ECore.Devices
 {
@@ -78,7 +79,7 @@ namespace ECore.Devices
 #endif
 
 #if INTERNAL
-            public 
+            internal 
 #else
             internal
 #endif
@@ -284,7 +285,31 @@ namespace ECore.Devices
                 }
                 computeDividersMultipliers();
             }
+
+#if INTERNAL
+            public static ScopeV2.Calibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
+            {
+                int rows = adcValue.Length;
+                int cols = 3;
+
+                double[] matrixData = adcValue.Concat(
+                                        yOffset.Concat(
+                                        Enumerable.Repeat(1.0, rows)
+                                        )).ToArray();
+
+                var A = new DenseMatrix(rows, cols, matrixData);
+                var B = new DenseMatrix(rows, 1, inputVoltage);
+                var C = A.QR().Solve(B);
+                return new ScopeV2.Calibration()
+                {
+                    channel = channel,
+                    divider = div,
+                    multiplier = mul,
+                    coefficients = C.ToColumnWiseArray()
+                };
+            }
         }
+#endif
 
     }
 }
