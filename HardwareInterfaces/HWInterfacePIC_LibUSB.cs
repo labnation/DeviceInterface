@@ -84,7 +84,7 @@ namespace ECore.HardwareInterfaces
 
         }
 
-        public static void RemoveDevice(ScopeUsbInterface f)
+        internal static void RemoveDevice(ScopeUsbInterface f)
         {
             if (onConnect != null)
                 onConnect(f, false);
