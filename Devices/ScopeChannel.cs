@@ -14,6 +14,8 @@ namespace ECore.Devices
         private static int order = 0;
         public string Name { get; protected set; }
         public int Value { get; protected set; }
+        public static explicit operator int(Channel ch) { return ch.Value; }
+
         public int Order { get; protected set; }
         public static HashSet<Channel> list = new HashSet<Channel>();
         public Channel(string name, int value)
