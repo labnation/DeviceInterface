@@ -17,6 +17,7 @@ namespace ECore.Devices {
 
 			if (packetSize <= 0)
 				return;
+
 			string fileName = "SmartScope_latest.bin";
 
 			byte [] firmware = null;
@@ -61,8 +62,12 @@ namespace ECore.Devices {
 */
 
 #else
+#if DEBUG
                 firmwareModified = new FileInfo(fileName).LastWriteTime;
                 firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
+#else
+                firmware = Utils.ByteBufferStuffer(Resources.SmartScope_latest, packetSize, 0xff);
+#endif
 #endif
 			} catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
