@@ -216,6 +216,9 @@ namespace ECore.Devices
             StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true).Write();
             StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true).Write();
             StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true).Write();
+
+            SetCoupling(0, Coupling.DC);
+            SetCoupling(1, Coupling.DC);
         }
 
         public void LoadBootLoader()
