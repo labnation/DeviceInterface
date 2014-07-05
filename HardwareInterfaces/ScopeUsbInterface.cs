@@ -123,6 +123,11 @@ namespace ECore.HardwareInterfaces
             return returnBuffer;
         }
 
+        public void FlushDataPipe()
+        {
+            dataEndpoint.ReadFlush();
+        }
+
         public override byte[] GetData(int numberOfBytes)
         {
             //try to read data

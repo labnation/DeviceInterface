@@ -95,6 +95,9 @@ namespace ECore.Devices {
 				toSend1 [i++] = (byte) (commands >> 8);
 				toSend1 [i++] = (byte) (commands);
 				hardwareInterface.WriteControlBytes (toSend1);
+
+                //Flush whatever might be left in the datapipe
+                hardwareInterface.FlushDataPipe();
                 
 				int bytesSent = 0; 
 				int commandSize = packetsPerCommand * packetSize;
