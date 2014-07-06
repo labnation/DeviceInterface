@@ -11,7 +11,7 @@ using Common;
 
 namespace ECore.Devices
 {
-    public partial class ScopeV2 : EDevice, IScope
+    public partial class ScopeV2 : EDevice, IScope, IDisposable
     {
 #if INTERNAL
         public
@@ -60,8 +60,16 @@ namespace ECore.Devices
             deviceReady = false;
             channelSettings = new Calibration[2];
             this.scopeConnectHandler += handler;
-            dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
+            dataSourceScope = new DataSources.DataSourceScope(this);
+        }
+
+        public void Dispose()
+        {
+            dataSourceScope.Stop();
+            HWInterfacePIC_LibUSB.RemoveConnectHandler(OnDeviceConnect);
+            if (hardwareInterface != null)
+                OnDeviceConnect(this.hardwareInterface, false);
         }
 
         #region initializers
@@ -73,6 +81,7 @@ namespace ECore.Devices
 #else
             HWInterfacePIC_LibUSB.AddConnectHandler(OnDeviceConnect);
             HWInterfacePIC_LibUSB.Initialize();
+            HWInterfacePIC_LibUSB.PollDevice();
 #endif
         }
 
@@ -266,7 +275,6 @@ namespace ECore.Devices
             catch (Exception e)
             {
                 Logger.Error("Failed to parse header - disconnecting scope");
-                HWInterfacePIC_LibUSB.RemoveDevice(this.hardwareInterface);
                 return null;
             }
             acquisitionRunning = header.scopeRunning;
