@@ -42,7 +42,7 @@ namespace MatlabFileIO
             return arrayWriter;
         }
 
-        public void Write(Type t, string name, object data)
+        public void Write(string name, object data)
         {
             //first check if there is no array operation ongoing
             if (locker != null)
@@ -50,7 +50,7 @@ namespace MatlabFileIO
                     throw new Exception("Array being written! Cannot write to file until array has been finished.");
 
             //let's write some data
-            if(t.Equals(typeof(String))) {
+            if(data.GetType().Equals(typeof(String))) {
                     //a string is considered an array of chars
                     string dataAsString = data as string;
                     MatLabFileArrayWriter charArrayWriter = OpenArray(typeof(char), name);
@@ -58,11 +58,30 @@ namespace MatlabFileIO
                     charArrayWriter.FinishArray(typeof(char));
             }
             else{
-                    //even singletons are/canBe saved as arrays.
-                    //so let's write an array of 1 element!
-                    MatLabFileArrayWriter arrayWriter = OpenArray(t, name);
+                Type t;
+                MatLabFileArrayWriter arrayWriter;
+                if (data.GetType().IsArray && (data as Array).Rank > 1) //Handle multidimensional array
+                {
+                    Array arr = data as Array;
+                    if (arr.Rank > 2)
+                        throw new Exception("Matlab write doesn't support multidimensional arrays with a rank > 2");
+                    t = arr.GetValue(0, 0).GetType();
+                    arrayWriter = OpenArray(t, name);
+                    for (int i = 0; i < arr.GetLength(0); i++)
+                    {
+                        arrayWriter.AddRow(arr.SliceRow(i));
+                    }
+                }
+                else
+                {
+                    if (data.GetType().IsArray)
+                        t = (data as Array).GetValue(0).GetType();
+                    else
+                        t = data.GetType();
+                    arrayWriter = OpenArray(t, name);
                     arrayWriter.AddRow(data);
-                    arrayWriter.FinishArray(t);
+                }
+                arrayWriter.FinishArray(t);
             }
         }
     }

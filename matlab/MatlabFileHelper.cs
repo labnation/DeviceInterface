@@ -182,5 +182,15 @@ namespace MatlabFileIO
             Buffer.BlockCopy(data, offset, result, 0, length);
             return result;
         }
+
+        public static Array SliceRow(this Array array, int row)
+        {
+            Array output = Array.CreateInstance(array.GetValue(0,0).GetType(), array.GetLength(1));
+            for (var i = 0; i < array.GetLength(1); i++)
+            {
+                output.SetValue(array.GetValue(new int[] { row, i }), i);
+            }
+            return output;
+        }
     }
 }
