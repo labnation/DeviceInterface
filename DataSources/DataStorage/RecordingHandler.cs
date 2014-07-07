@@ -17,6 +17,18 @@ namespace ECore.DataSources
         CSV
     }
 
+    public static class Extension 
+    {
+        public static string GetFileExtension(this StorageFileFormat f) {
+            switch (f)
+            {
+                case StorageFileFormat.MATLAB: return ".mat";
+                case StorageFileFormat.CSV: return ".csv";
+            }
+            throw new Exception("Unknown file format");
+        }
+    }
+
     public struct StorageFile
     {
         public FileInfo info;
