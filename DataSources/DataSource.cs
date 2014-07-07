@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ECore.DataPackages;
 using ECore.Devices;
 
 namespace ECore.DataSources
 {
     public delegate void NewDataAvailableHandler(DataPackageScope dataPackage, EventArgs e);
-    
     
     public abstract class DataSource
     {

@@ -64,7 +64,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataSources\DataStorage\ChannelBuffer.cs" />
+    <Compile Include="DataSources\DataStorage\ChannelBufferTypes.cs" />
     <Compile Include="DataSources\DataPackages\DataPackageScope.cs" />
+    <Compile Include="DataSources\DataStorage\IChannelBuffer.cs" />
+    <Compile Include="DataSources\RecordingScope.cs" />
     <Compile Include="DeviceMemories\ByteMemory.cs" />
     <Compile Include="DeviceMemories\Registers\ByteRegister.cs" />
     <Compile Include="DeviceMemories\Registers\BoolRegister.cs" />

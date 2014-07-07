@@ -5,7 +5,7 @@ using System.Text;
 using ECore.Devices;
 using Common;
 
-namespace ECore.DataPackages
+namespace ECore.DataSources
 {
     public class DataPackageScope
     {

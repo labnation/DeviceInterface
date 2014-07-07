@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using ECore;
-using ECore.DataPackages;
 using ECore.Devices;
 using Common;
 
@@ -14,7 +13,12 @@ namespace ECore.DataSources
     {
         private IScope scope;
         private Thread dataFetchThread;
+        public RecordingScope Recording { get; private set; }
         private bool running = false;
+
+        public bool IsRecording { get; private set; }
+        public bool CanStore { get; private set; }
+        public int AcquisitionsRecorded { get { return Recording.AcquisitionsRecorded; } }
 
         public DataSourceScope(EDevice scope) : base(scope)
         {
@@ -71,5 +75,49 @@ namespace ECore.DataSources
             }
             Logger.Info("Data fetch thread stopped");
         }
+
+        public bool StartRecording()
+        {
+            if (CanStore || IsRecording)
+                return false;
+
+            Recording = new RecordingScope();
+
+            foreach (AnalogChannel ch in AnalogChannel.list)
+                Recording.channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
+
+            foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.list)
+                Recording.channelBuffers.Add(ch, new ChannelBufferByte("LogicAnalyser" + ch.Name));
+
+            OnNewDataAvailable += Recording.Record;
+
+            this.IsRecording = true;
+            return IsRecording;
+        }
+
+        public bool StopRecording()
+        {
+            if (!this.IsRecording)
+                return false;
+
+            OnNewDataAvailable -= Recording.Record;
+            this.IsRecording = false;
+            if (Recording.acqInfo.Count > 0)
+                this.CanStore = true;
+            else
+                this.CanStore = false;
+
+            return true;
+        }
+
+        public void DestroyRecording()
+        {
+            if (IsRecording)
+                StopRecording();
+            Recording.Dispose();
+            Recording = null;
+        }
+
+
     }
 }
