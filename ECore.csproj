@@ -68,7 +68,8 @@
     <Compile Include="DataSources\DataStorage\ChannelBufferTypes.cs" />
     <Compile Include="DataSources\DataPackages\DataPackageScope.cs" />
     <Compile Include="DataSources\DataStorage\IChannelBuffer.cs" />
-    <Compile Include="DataSources\RecordingScope.cs" />
+    <Compile Include="DataSources\DataStorage\RecordingHandler.cs" />
+    <Compile Include="DataSources\DataStorage\RecordingScope.cs" />
     <Compile Include="DeviceMemories\ByteMemory.cs" />
     <Compile Include="DeviceMemories\Registers\ByteRegister.cs" />
     <Compile Include="DeviceMemories\Registers\BoolRegister.cs" />
@@ -124,6 +125,10 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{D119D2F8-3ABA-4C7A-9A8B-FD8C755633BA}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ExcelFileIO\ExcelFileIO.csproj">
+      <Project>{B960D53B-BEBE-4817-B847-1DA49D75593E}</Project>
+      <Name>ExcelFileIO</Name>
     </ProjectReference>
     <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
