@@ -160,7 +160,7 @@ namespace ECore.Devices
         {
             validateChannel(channel);
             REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
-            Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
+            Logger.Debug("Set Y offset for channel " + channel + " to " + offset + " (int value)");
             FpgaSettingsMemory.GetRegister(r).Set(offset).Write();
         }
 
