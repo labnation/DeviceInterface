@@ -61,6 +61,27 @@ namespace ECore.Devices
             return wave;
         }
 
+        public static float[] WaveCosine(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        {
+            return WaveSine(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase + Math.PI / 2);
+        }
+
+        public static float[] MultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double frequency, double amplitude, double phase, float[] harmonics)
+        {
+            return MultiCosine(awgPoints, awgSamplePeriod, timeOffset, harmonics.Select(x => frequency * x).ToArray(), amplitude, phase);
+        }
+
+        public static float[] MultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double[] frequencies, double amplitude, double phase)
+        {
+            List<float[]> components = new List<float[]>();
+            float scaler = frequencies.Length;
+            float[] result = new float[awgPoints];
+            Func<float, float, float> Sum = (x, y) => x + y;
+            foreach (float freq in frequencies)
+                result = Utils.CombineArrays(result, WaveCosine(awgPoints, awgSamplePeriod, timeOffset, freq, amplitude / scaler, 0), ref Sum);
+            return result;
+        }
+
         public static float[] WaveSquare(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave = new float[nSamples];
