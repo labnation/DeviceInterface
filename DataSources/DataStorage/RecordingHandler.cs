@@ -93,7 +93,8 @@ namespace ECore.DataSources
                     offset += acqInfo.samples;
                 }
                 arrayWriter.FinishArray(dataType);
-                progress(.3f);
+                if(progress != null)
+                    progress(.3f);
             }
 
 #if INTERNAL
@@ -108,7 +109,8 @@ namespace ECore.DataSources
             for (int i = 0; i < recording.acqInfo.Count; i++)
                 arrayWriter.AddRow(getTimeAxis(recording, i, 1));
             arrayWriter.FinishArray(dataType);
-            progress(.6f);
+            if (progress != null)
+                progress(.6f);
 
             //Store acquisition times
             dataType = typeof(double);
@@ -116,7 +118,8 @@ namespace ECore.DataSources
             UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
             arrayWriter.AddRow(recording.acqInfo.Select(x => (double)(x.firstSampleTime - timeOrigin) / 1.0e9).ToArray());
             arrayWriter.FinishArray(dataType);
-            progress(.9f);
+            if (progress != null)
+                progress(.9f);
 
             //Store settings
             //FIXME: a struct would be better than just dropping all the variables straight in the top level
@@ -161,7 +164,8 @@ namespace ECore.DataSources
 
                 //Write away
                 csvFileWriter.WriteArrayRows(dataChunk);
-                progress(offset / (float)recording.acqInfo.Count);
+                if (progress != null)
+                    progress(offset / (float)recording.acqInfo.Count);
             } while (offset < recording.acqInfo.Count);
             csvFileWriter.Close();
             return filename;
