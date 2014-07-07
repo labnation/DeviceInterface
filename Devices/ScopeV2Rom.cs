@@ -308,8 +308,7 @@ namespace ECore.Devices
                     coefficients = C.ToColumnWiseArray()
                 };
             }
-        }
 #endif
-
+        }
     }
 }
