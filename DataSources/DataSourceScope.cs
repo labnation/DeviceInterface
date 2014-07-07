@@ -101,17 +101,16 @@ namespace ECore.DataSources
                 return false;
 
             OnNewDataAvailable -= Recording.Record;
+            
+            if (Recording.acqInfo.Count == 0)
+                DestroyRecording();            
             this.IsRecording = false;
-            if (Recording.acqInfo.Count > 0)
-                this.CanStore = true;
-            else
-                this.CanStore = false;
-
             return true;
         }
 
         public void DestroyRecording()
         {
+            CanStore = false;
             if (IsRecording)
                 StopRecording();
             Recording.Dispose();
