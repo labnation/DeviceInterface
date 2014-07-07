@@ -210,6 +210,13 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.TRIGGERLEVEL].Write((byte)level);
             toggleUpdateStrobe();
         }
+#if INTERNAL
+        public void SetTriggerByte(byte level)
+        {
+            FpgaSettingsMemory[REG.TRIGGERLEVEL].Write(level);
+            toggleUpdateStrobe();
+        }
+#endif
         /// <summary>
         /// Choose channel upon which to trigger
         /// </summary>

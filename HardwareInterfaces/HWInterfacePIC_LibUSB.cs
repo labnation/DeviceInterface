@@ -48,6 +48,15 @@ namespace ECore.HardwareInterfaces
 
                 Logger.Debug(sAdd);
             }
+        }
+
+        public static void PollDevice()
+        {
+            if (interfaces.Count > 0 && onConnect != null)
+            {
+                onConnect(interfaces.First().Value, true);
+                return;
+            }
             foreach (int PID in PIDs)
             {
                 UsbDeviceFinder scopeUsbFinder = new UsbDeviceFinder(VID, PID);
@@ -84,17 +93,13 @@ namespace ECore.HardwareInterfaces
 
         }
 
-        internal static void RemoveDevice(ScopeUsbInterface f)
-        {
-            if (onConnect != null)
-                onConnect(f, false);
-            interfaces.Remove(f.GetSerial());
-            f.Dispose();
-        }
-
         public static void AddConnectHandler(OnDeviceConnect c)
         {
             onConnect += c;
+        }
+        public static void RemoveConnectHandler(OnDeviceConnect c)
+        {
+            onConnect -= c;
         }
 
         //called at init, and each time a system event occurs
