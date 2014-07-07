@@ -16,12 +16,24 @@ namespace ECore.Devices
 #else
         private
 #endif
-        struct Calibration
+        struct GainCalibration
         {
             public AnalogChannel channel;
             public double divider;
             public double multiplier;
             public double[] coefficients;
+        }
+#if INTERNAL
+        public
+#else
+        private
+#endif
+        struct FrequencyResponse
+        {
+            public AnalogChannel channel;
+            public double multiplier;
+            public Dictionary<int, float> magnitudes;
+            public Dictionary<int, float> phases;
         }
 
 #if INTERNAL
@@ -32,11 +44,14 @@ namespace ECore.Devices
         class Rom
         {
             //number of coefficients per calibration
-            const int calibrationSize = 3;
+            const int gainCalibrationCoefficients = 3;
+            const int frequencyResponseMagnitudes = 16;
+            const int frequencyResponsePhases = 10;
             //Number of possible multiplier/divider combinations
             int modes = validMultipliers.Length * validDividers.Length;
             public UInt32 plugCount { get; private set; }
-            public List<Calibration> calibration { get; private set; }
+            public List<GainCalibration> gainCalibration { get; private set; }
+            public List<FrequencyResponse> frequencyResponse { get; private set; }
             ScopeUsbInterface hwInterface;
             public double[] computedMultipliers { get; private set; }
             public double[] computedDividers { get; private set; }
@@ -66,15 +81,31 @@ namespace ECore.Devices
 #if INTERNAL
             public void clearCalibration()
             {
-                this.calibration.Clear();
+                this.gainCalibration.Clear();
             }
 
-            public void setCalibration(Calibration c)
+            public void setCalibration(GainCalibration c)
             {
-                if (c.coefficients.Length != calibrationSize)
+                if (c.coefficients.Length != gainCalibrationCoefficients)
                     throw new Exception("Coefficients not of correct length!");
 
-                this.calibration.Add(c);
+                this.gainCalibration.Add(c);
+            }
+
+            public void clearFrequencyResponse()
+            {
+                this.frequencyResponse.Clear();
+            }
+
+            public void setFrequencyResponse(FrequencyResponse f)
+            {
+                if (f.magnitudes.Count != frequencyResponseMagnitudes)
+                    throw new Exception("Frequency response magnitudes not of correct length!");
+
+                if (f.phases.Count != frequencyResponsePhases)
+                    throw new Exception("Frequency response phases not of correct length!");
+
+                this.frequencyResponse.Add(f);
             }
 #endif
 
@@ -83,9 +114,14 @@ namespace ECore.Devices
 #else
             internal
 #endif
-            Calibration getCalibration(AnalogChannel ch, double divider, double multiplier)
+            GainCalibration getCalibration(AnalogChannel ch, double divider, double multiplier)
             {
-                return calibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
+                return gainCalibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
+            }
+
+            FrequencyResponse getFrequencyReponse(AnalogChannel ch, double multiplier)
+            {
+                return frequencyResponse.Where(x => x.channel == ch && x.multiplier == multiplier).First();
             }
 
             private byte[] MapToBytes(Map m)
@@ -117,7 +153,11 @@ namespace ECore.Devices
             unsafe struct Map
             {
                 public UInt32 plugCount;
-                public fixed float calibration[calibrationSize * 3 * 3 * 2]; //calibrationSize * nDivider * nMultiplier * nChannel
+                public fixed float gainCalibration[gainCalibrationCoefficients * 3 * 3 * 2]; //calibrationSize * nDivider * nMultiplier * nChannel
+                public fixed float magnitudes[frequencyResponseMagnitudes * 3 * 2]; //nFrequencyResponseMagnitudes * nMultiplier * nChannel
+                public fixed ushort magnitudesIndices[frequencyResponseMagnitudes * 3 * 2]; //nFrequencyResponseMagnitudes * nMultiplier * nChannel
+                public fixed float phases[frequencyResponsePhases * 3 * 2]; //nfrequencyResponsePhases * nMultiplier * nChannel
+                public fixed ushort phasesIndices[frequencyResponsePhases * 3 * 2]; //nfrequencyResponsePhases * nMultiplier * nChannel
             }
 
 #if INTERNAL
@@ -206,22 +246,58 @@ namespace ECore.Devices
                 Map m = new Map();
                 m.plugCount = plugCount;
                 int offset = 0;
+
+                //FIXME: this code can be cleaner and shorter I suppose
                 foreach (AnalogChannel ch in AnalogChannel.list)
                 {
                     foreach (double divider in ScopeV2.validDividers)
                     {
                         foreach (double multiplier in ScopeV2.validMultipliers)
                         {
-                            double[] coeff = this.calibration.Where(x => x.channel.Value == ch.Value && x.divider == divider && x.multiplier == multiplier).First().coefficients;
+                            double[] coeff = this.gainCalibration.Where(x => x.channel.Value == ch.Value && x.divider == divider && x.multiplier == multiplier).First().coefficients;
                             unsafe
                             {
                                 for (int i = 0; i < coeff.Length; i++)
-                                    m.calibration[offset + i] = (float)coeff[i];
+                                    m.gainCalibration[offset + i] = (float)coeff[i];
                             }
                             offset += coeff.Length;
                         }
                     }
                 }
+                
+                int magnitudesOffset = 0;
+                int phasesOffset = 0;
+                foreach (AnalogChannel ch in AnalogChannel.list)
+                {
+                    foreach (double multiplier in ScopeV2.validMultipliers)
+                    {
+                        try
+                        {
+                            FrequencyResponse f = this.frequencyResponse.Where(x => x.multiplier == multiplier).First();
+                            unsafe
+                            {
+                                foreach (var kvp in f.magnitudes)
+                                {
+                                    m.magnitudesIndices[magnitudesOffset] = (ushort)kvp.Key;
+                                    m.magnitudes[magnitudesOffset] = kvp.Value;
+                                    magnitudesOffset++;
+                                }
+                                foreach (var kvp in f.phases)
+                                {
+                                    m.phasesIndices[phasesOffset] = (ushort)kvp.Key;
+                                    m.phases[phasesOffset] = kvp.Value;
+                                    phasesOffset++;
+                                }
+                            }
+                        }
+                        catch (InvalidOperationException e)
+                        {
+                            Logger.Warn(String.Format("Failed to upload frequency response to ROM for channel {0:G} and multiplier {1}", ch, multiplier));
+                            continue;
+                        }
+                    }
+                }
+
                 byte[] b = MapToBytes(m);
 
                 uint writeOffset = (uint)Marshal.SizeOf(m.plugCount);
@@ -255,7 +331,7 @@ namespace ECore.Devices
                 Map m = BytesToMap(romContents);
                 this.plugCount = m.plugCount;
 
-                this.calibration = new List<Calibration>();
+                this.gainCalibration = new List<GainCalibration>();
                 int offset = 0;
                 foreach (AnalogChannel ch in AnalogChannel.list)
                 {
@@ -263,31 +339,65 @@ namespace ECore.Devices
                     {
                         foreach (double multiplier in ScopeV2.validMultipliers)
                         {
-                            Calibration c = new Calibration()
+                            GainCalibration c = new GainCalibration()
                             {
                                 channel = ch,
                                 divider = divider,
                                 multiplier = multiplier
                             };
-                            double[] coeff = new double[calibrationSize];
+                            double[] coeff = new double[gainCalibrationCoefficients];
 
                             unsafe
                             {
                                 for (int i = 0; i < coeff.Length; i++)
-                                    coeff[i] = (double)m.calibration[offset + i];
+                                    coeff[i] = (double)m.gainCalibration[offset + i];
                             }
                             c.coefficients = coeff;
                             offset += coeff.Length;
 
-                            this.calibration.Add(c);
+                            this.gainCalibration.Add(c);
                         }
                     }
                 }
                 computeDividersMultipliers();
+
+                this.frequencyResponse = new List<FrequencyResponse>();
+                int magnitudesOffset = 0;
+                int phasesOffset = 0;
+                foreach (AnalogChannel ch in AnalogChannel.list)
+                {
+                    foreach (double multiplier in ScopeV2.validMultipliers)
+                    {
+                        try
+                        {
+                            FrequencyResponse f = new FrequencyResponse()
+                            {
+                                channel = ch,
+                                multiplier = multiplier,
+                                phases = new Dictionary<int, float>(),
+                                magnitudes = new Dictionary<int, float>()
+                            };
+                            unsafe
+                            {
+                                for (int i = 0; i < frequencyResponsePhases; i++)
+                                    f.phases.Add(m.phasesIndices[phasesOffset + i], m.phases[phasesOffset + i]);
+                                phasesOffset += frequencyResponsePhases;
+                                for (int i = 0; i < frequencyResponseMagnitudes; i++)
+                                    f.phases.Add(m.magnitudesIndices[magnitudesOffset + i], m.magnitudes[magnitudesOffset + i]);
+                                magnitudesOffset += frequencyResponseMagnitudes;
+                            }
+                            this.frequencyResponse.Add(f);
+                        }
+                        catch (ArgumentException e)
+                        {
+                            Logger.Warn(String.Format("Failed to load frequency response from ROM for channel {0:G} and multiplier {1} [{2}]", ch, multiplier, e.Message));
+                        }
+                    }
+                }
             }
 
 #if INTERNAL
-            public static ScopeV2.Calibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
+            public static ScopeV2.GainCalibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
             {
                 int rows = adcValue.Length;
                 int cols = 3;
@@ -300,7 +410,7 @@ namespace ECore.Devices
                 var A = new DenseMatrix(rows, cols, matrixData);
                 var B = new DenseMatrix(rows, 1, inputVoltage);
                 var C = A.QR().Solve(B);
-                return new ScopeV2.Calibration()
+                return new ScopeV2.GainCalibration()
                 {
                     channel = channel,
                     divider = div,

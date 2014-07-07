@@ -42,7 +42,7 @@ namespace ECore.Devices
         private const double SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
         private bool acquisitionRunning = false;
-        private Calibration[] channelSettings;
+        private GainCalibration[] channelSettings;
         private float triggerLevel = 0f;
         
         public string Serial { get { return hardwareInterface.GetSerial(); } }
@@ -58,7 +58,7 @@ namespace ECore.Devices
             : base()
         {
             deviceReady = false;
-            channelSettings = new Calibration[2];
+            channelSettings = new GainCalibration[2];
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
