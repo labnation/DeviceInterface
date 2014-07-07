@@ -60,8 +60,8 @@ namespace ECore.Devices
             deviceReady = false;
             channelSettings = new Calibration[2];
             this.scopeConnectHandler += handler;
-            InitializeHardwareInterface();
             dataSourceScope = new DataSources.DataSourceScope(this);
+            InitializeHardwareInterface();
         }
 
         public void Dispose()
