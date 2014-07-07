@@ -15,7 +15,7 @@ namespace ECore.DataSources
         private byte[] dataDigital;
         public Dictionary<string, double> Settings { get; private set; }
 
-        public DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime)
+        internal DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime)
         {
             this.TriggerIndex = triggerIndex;
             this.SamplePeriod = samplePeriod;
@@ -25,16 +25,16 @@ namespace ECore.DataSources
             Settings = new Dictionary<string,double>();
         }
 
-        public void SetData(AnalogChannel ch, float[] data)
+        internal void SetData(AnalogChannel ch, float[] data)
         {
             dataAnalog.Remove(ch);
             dataAnalog.Add(ch, data);
         }
-        public void SetDataDigital(byte[] data)
+        internal void SetDataDigital(byte[] data)
         {
             dataDigital = data;
         }
-        public void AddSetting(String setting, double value)
+        internal void AddSetting(String setting, double value)
         {
             this.Settings.Add(setting, value);
         }

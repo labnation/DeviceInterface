@@ -16,7 +16,7 @@ namespace ECore.DataSources
         public event NewDataAvailableHandler OnNewDataAvailable;
         protected EDevice device;
         protected DateTime lastUpdate;
-        protected DataPackageScope latestDataPackage;
+        public DataPackageScope LatestDataPackage { get; protected set; }
 
         public DataSource(EDevice device) { this.device = device; }
         abstract public bool Start();
@@ -27,10 +27,10 @@ namespace ECore.DataSources
             {
 #if INTERNAL
                 if (BeforeNewDataAvailable != null)
-                    BeforeNewDataAvailable(latestDataPackage, new EventArgs());
+                    BeforeNewDataAvailable(LatestDataPackage, new EventArgs());
 #endif
                 if (OnNewDataAvailable != null)
-                    OnNewDataAvailable(latestDataPackage, new EventArgs());
+                    OnNewDataAvailable(LatestDataPackage, new EventArgs());
             }
         }
     }

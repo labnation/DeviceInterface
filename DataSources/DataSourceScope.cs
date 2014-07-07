@@ -69,8 +69,8 @@ namespace ECore.DataSources
             //looping until device is stopped
             while (running && device.Connected)
             {
-                latestDataPackage = scope.GetScopeData();
-                if (latestDataPackage != null)
+                LatestDataPackage = scope.GetScopeData();
+                if (LatestDataPackage != null)
                     this.fireDataAvailableEvents();
             }
             Logger.Info("Data fetch thread stopped");
