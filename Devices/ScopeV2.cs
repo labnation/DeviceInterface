@@ -38,7 +38,7 @@ namespace ECore.Devices
         private DataSources.DataSourceScope dataSourceScope;
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
 
-        private bool disableVoltageConversion;
+        private bool disableVoltageConversion = false;
         private const double SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
         private bool acquisitionRunning = false;
@@ -274,7 +274,7 @@ namespace ECore.Devices
             }
             catch (Exception e)
             {
-                Logger.Error("Failed to parse header - disconnecting scope");
+                Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
                 return null;
             }
             acquisitionRunning = header.scopeRunning;
