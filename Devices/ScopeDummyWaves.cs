@@ -6,7 +6,7 @@ using Common;
 
 namespace ECore.Devices
 {
-    public enum WaveForm { SINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE };
+    public enum WaveForm { SINE, COSINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE, HALF_BIG_HALF_UGLY };
 
     partial class ScopeDummy
     {
@@ -24,6 +24,9 @@ namespace ECore.Devices
                 case WaveForm.SINE:
                     wave = ScopeDummy.WaveSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
+                case WaveForm.COSINE:
+                    wave = ScopeDummy.WaveCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    break;
                 case WaveForm.SQUARE:
                     wave = ScopeDummy.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
@@ -35,6 +38,12 @@ namespace ECore.Devices
                     break;
                 case WaveForm.SAWTOOTH_SINE:
                     wave = ScopeDummy.WaveSawtoothSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    break;
+                case WaveForm.MULTISINE:
+                    wave = ScopeDummy.WaveMultiCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, new float[] {1, 2, 4, 8 });
+                    break;
+                case WaveForm.HALF_BIG_HALF_UGLY:
+                    wave = ScopeDummy.WaveHalfBigHalfUgly(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -66,12 +75,12 @@ namespace ECore.Devices
             return WaveSine(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase + Math.PI / 2);
         }
 
-        public static float[] MultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double frequency, double amplitude, double phase, float[] harmonics)
+        public static float[] WaveMultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double frequency, double amplitude, double phase, float[] harmonics)
         {
-            return MultiCosine(awgPoints, awgSamplePeriod, timeOffset, harmonics.Select(x => frequency * x).ToArray(), amplitude, phase);
+            return WaveMultiCosine(awgPoints, awgSamplePeriod, timeOffset, harmonics.Select(x => frequency * x).ToArray(), amplitude, phase);
         }
 
-        public static float[] MultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double[] frequencies, double amplitude, double phase)
+        public static float[] WaveMultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double[] frequencies, double amplitude, double phase)
         {
             List<float[]> components = new List<float[]>();
             float scaler = frequencies.Length;
@@ -116,6 +125,52 @@ namespace ECore.Devices
             float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency * 7.0, amplitude * 0.1, phase);
             float[] wave = Utils.CombineArrays(wave1, wave2, ref sumFloat);
             return wave;
+        }
+
+        public static float[] WaveHalfBigHalfUgly(uint awgPoints, double awgSamplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        {
+            float[] wave1 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude, phase + 0 * 168);
+            float[] wave2 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude * 0.4f, phase + 0 * 168);
+
+            float[] wave3 = ScopeDummy.WaveSawTooth(awgPoints, awgSamplePeriod, timeOffset, 50f, amplitude * 1f, phase + 0);
+            float[] wave4 = ScopeDummy.WaveSawTooth(awgPoints, awgSamplePeriod, timeOffset, 50f, amplitude * 0.4f, phase + 0);
+
+            float[] wave5 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 31, amplitude, phase + 0 * 912);
+            float[] wave6 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 31f, amplitude * 0.5f, phase + 0 * 912);
+
+            float[] wave7 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 60, amplitude, phase + 0 * 912);
+            float[] wave8 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 60f, amplitude * 0.5f, phase + 0 * 912);
+
+            float[] wave9 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 800f, amplitude, 0 * 168);
+            float[] wave10 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 800f, amplitude * 0.4f, phase + 0 * 168);
+
+            float[] finalWave = new float[wave1.Length];
+
+            for (int i = 0; i < wave1.Length; i++)
+            {
+                if (i < 1 * 1600)
+                    finalWave[i] = wave1[i];
+                else if (i < 2 * 1600)
+                    finalWave[i] = wave2[i];
+                else if (i < 3 * 1600)
+                    finalWave[i] = wave3[i];
+                else if (i < 4 * 1600)
+                    finalWave[i] = wave4[i];
+                else if (i < 5 * 1600)
+                    finalWave[i] = wave5[i];
+                else if (i < 6 * 1600)
+                    finalWave[i] = wave6[i];
+                else if (i < 7 * 1600)
+                    finalWave[i] = wave7[i];
+                else if (i < 8 * 1600)
+                    finalWave[i] = wave8[i];
+                else if (i < 9 * 1600)
+                    finalWave[i] = wave9[i];
+                else if (i < 10 * 1600)
+                    finalWave[i] = wave10[i];
+            }
+
+            return finalWave;
         }
 
         public override bool Connected { get { return true; } }
