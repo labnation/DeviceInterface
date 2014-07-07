@@ -25,16 +25,22 @@ namespace ECore.DataSources
             Settings = new Dictionary<string,double>();
         }
 
-        internal void SetData(AnalogChannel ch, float[] data)
+        public void SetData(AnalogChannel ch, float[] data)
         {
             dataAnalog.Remove(ch);
             dataAnalog.Add(ch, data);
         }
+
         internal void SetDataDigital(byte[] data)
         {
             dataDigital = data;
         }
-        internal void AddSetting(String setting, double value)
+#if INTERNAL
+        public
+#else
+        internal 
+#endif
+        void AddSetting(String setting, double value)
         {
             this.Settings.Add(setting, value);
         }
