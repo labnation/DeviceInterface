@@ -52,9 +52,9 @@ namespace ECore.DataSources
             Action<float> progress = args[2] as Action<float>;
             Action<StorageFile> success = args[3] as Action<StorageFile>;
             Action<Exception> failure = args[4] as Action<Exception>;
-            FinishRecording(recording, format, progress, success, failure);
+            success(FinishRecording(recording, format, progress));
         }
-        public static void FinishRecording(RecordingScope recording, StorageFileFormat format, Action<float> progress, Action<StorageFile> success, Action<Exception> failure)
+        public static StorageFile FinishRecording(RecordingScope recording, StorageFileFormat format, Action<float> progress)
         {
             string filename = null;
             switch (format)
@@ -71,7 +71,7 @@ namespace ECore.DataSources
             //and clean up
             recording.Dispose();
 
-            success(new StorageFile() { info = new FileInfo(filename), format = format });
+            return new StorageFile() { info = new FileInfo(filename), format = format };
         }
 
         private static string StoreMatlab(RecordingScope recording, Action<float> progress)
