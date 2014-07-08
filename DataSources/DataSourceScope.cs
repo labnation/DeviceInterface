@@ -113,8 +113,11 @@ namespace ECore.DataSources
             CanStore = false;
             if (IsRecording)
                 StopRecording();
-            Recording.Dispose();
-            Recording = null;
+            if (Recording != null)
+            {
+                Recording.Dispose();
+                Recording = null;
+            }
         }
 
 
