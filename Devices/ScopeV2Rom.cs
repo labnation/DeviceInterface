@@ -110,7 +110,7 @@ namespace ECore.Devices
 #endif
 
 #if INTERNAL
-            internal 
+            public 
 #else
             internal
 #endif
@@ -119,6 +119,11 @@ namespace ECore.Devices
                 return gainCalibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
             }
 
+#if INTERNAL
+            public
+#else
+            internal
+#endif
             FrequencyResponse getFrequencyReponse(AnalogChannel ch, double multiplier)
             {
                 return frequencyResponse.Where(x => x.channel == ch && x.multiplier == multiplier).First();
@@ -383,7 +388,7 @@ namespace ECore.Devices
                                     f.phases.Add(m.phasesIndices[phasesOffset + i], m.phases[phasesOffset + i]);
                                 phasesOffset += frequencyResponsePhases;
                                 for (int i = 0; i < frequencyResponseMagnitudes; i++)
-                                    f.phases.Add(m.magnitudesIndices[magnitudesOffset + i], m.magnitudes[magnitudesOffset + i]);
+                                    f.magnitudes.Add(m.magnitudesIndices[magnitudesOffset + i], m.magnitudes[magnitudesOffset + i]);
                                 magnitudesOffset += frequencyResponseMagnitudes;
                             }
                             this.frequencyResponse.Add(f);
