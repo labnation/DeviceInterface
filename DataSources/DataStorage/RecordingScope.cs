@@ -19,6 +19,12 @@ namespace ECore.DataSources
             acqInfo = new List<AcquisitionInfo>();
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
+
+            foreach (AnalogChannel ch in AnalogChannel.list)
+                channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
+
+            foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.list)
+                channelBuffers.Add(ch, new ChannelBufferByte("LogicAnalyser" + ch.Name));
         }
 
         ~RecordingScope()
@@ -59,7 +65,7 @@ namespace ECore.DataSources
         }
 #endif
 
-        internal void Record(DataPackageScope ScopeData, EventArgs e)
+        public void Record(DataPackageScope ScopeData, EventArgs e)
         {
             foreach (var kvp in channelBuffers)
             {

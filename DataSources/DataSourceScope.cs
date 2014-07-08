@@ -83,12 +83,6 @@ namespace ECore.DataSources
 
             Recording = new RecordingScope();
 
-            foreach (AnalogChannel ch in AnalogChannel.list)
-                Recording.channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
-
-            foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.list)
-                Recording.channelBuffers.Add(ch, new ChannelBufferByte("LogicAnalyser" + ch.Name));
-
             OnNewDataAvailable += Recording.Record;
 
             this.IsRecording = true;
@@ -101,9 +95,12 @@ namespace ECore.DataSources
                 return false;
 
             OnNewDataAvailable -= Recording.Record;
-            
+
             if (Recording.acqInfo.Count == 0)
-                DestroyRecording();            
+            {
+                Recording.Dispose();
+                Recording = null;
+            }
             this.IsRecording = false;
             return true;
         }
