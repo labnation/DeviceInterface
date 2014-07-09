@@ -239,6 +239,12 @@ namespace ECore.Devices
             this.hardwareInterface.Reset();
         }
 
+        public void SoftReset()
+        {
+            Configure();
+            //hardwareInterface.FlushDataPipe();
+        }
+
         #endregion
 
         #region data_handlers
