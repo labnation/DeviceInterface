@@ -281,6 +281,9 @@ namespace ECore.Devices
             catch (Exception e)
             {
                 Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
+                //FIXME: this error should not occurs in the first place, but at least this way
+                //the user knows to replug his device
+                OnDeviceConnect(this.hardwareInterface, false);
                 return null;
             }
             acquisitionRunning = header.scopeRunning;
