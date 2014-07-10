@@ -125,7 +125,7 @@ namespace ECore.HardwareInterfaces
 
         public void FlushDataPipe()
         {
-            dataEndpoint.ReadFlush();
+            dataEndpoint.Reset();
         }
 
         public override byte[] GetData(int numberOfBytes)
@@ -350,5 +350,10 @@ namespace ECore.HardwareInterfaces
         }
 
         #endregion
+
+        internal void resetDataEndpoint()
+        {
+            dataEndpoint.Reset();
+        }
     }
 }
