@@ -58,6 +58,12 @@ namespace ECore.DataSources
             Logger.Debug("Requested DataFetchThread to stop");
         }
 
+        internal void Reset()
+        {
+            DestroyRecording();
+            Stop();
+        }
+
         private void DataFetchThreadStart()
         {           
             //main starting point for the thread which fetches the data from file
@@ -116,7 +122,5 @@ namespace ECore.DataSources
                 Recording = null;
             }
         }
-
-
     }
 }
