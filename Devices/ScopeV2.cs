@@ -195,7 +195,8 @@ namespace ECore.Devices
         private void Configure()
         {
             //raise global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(false).Write();
+            StrobeMemory[STR.GLOBAL_RESET].Write(true);
+            hardwareInterface.FlushDataPipe();
             LogWait("FPGA reset");
 
             /*********
@@ -215,8 +216,6 @@ namespace ECore.Devices
 
             //Enable scope controller
             StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true).Write();
-            LogWait("Waiting to get device out of reset...");
-            StrobeMemory.GetRegister(STR.GLOBAL_NRESET).Set(true).Write();
             SetVerticalRange(0, -1f, 1f);
             SetVerticalRange(1, -1f, 1f);
             SetYOffset(0, 0f);
@@ -241,8 +240,8 @@ namespace ECore.Devices
 
         public void SoftReset()
         {
+            dataSourceScope.Reset();
             Configure();
-            //hardwareInterface.FlushDataPipe();
         }
 
         #endregion

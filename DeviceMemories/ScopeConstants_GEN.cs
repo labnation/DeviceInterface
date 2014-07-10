@@ -29,7 +29,7 @@ namespace ECore.DeviceMemories
 
     public enum STR
     {
-		GLOBAL_NRESET = 0,
+		GLOBAL_RESET = 0,
 		INIT_SPI_TRANSFER = 1,
 		AWG_ENABLE = 2,
 		LA_ENABLE = 3,
