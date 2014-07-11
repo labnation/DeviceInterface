@@ -11,9 +11,9 @@ namespace ECore.DeviceMemories
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class ScopeFpgaRom : ByteMemory
     {
-        private IScopeHardwareInterface hwInterface;
+        private ScopeUsbInterface hwInterface;
 
-        public ScopeFpgaRom(IScopeHardwareInterface hwInterface)
+        internal ScopeFpgaRom(ScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         

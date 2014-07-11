@@ -15,9 +15,9 @@ namespace ECore.DeviceMemories
 
     public class ScopePicRegisterMemory : ByteMemory
     {
-        protected IScopeHardwareInterface hwInterface;
+        private ScopeUsbInterface hwInterface;
 
-        public ScopePicRegisterMemory(IScopeHardwareInterface hwInterface)
+        internal ScopePicRegisterMemory(ScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         

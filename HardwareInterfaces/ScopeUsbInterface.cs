@@ -9,12 +9,21 @@ using Common;
 
 namespace ECore.HardwareInterfaces
 {
-#if INTERNAL
-	public
-#else
-    internal
-#endif
-    class ScopeUsbInterface: EDeviceHWInterface, IScopeHardwareInterface, IDisposable
+    public class ScopeIOException : Exception
+    {
+        public ScopeIOException(string msg) : base(msg) { }
+    }
+
+    internal enum ScopeController
+    {
+        PIC,
+        ROM,
+        FLASH,
+        FPGA,
+        FPGA_ROM
+    }
+
+    internal class ScopeUsbInterface
     {
         internal enum PIC_COMMANDS
         {
@@ -41,6 +50,7 @@ namespace ECore.HardwareInterfaces
         private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
 
+        private UsbDevice device;
         private UsbEndpointWriter commandWriteEndpoint;
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
@@ -53,11 +63,12 @@ namespace ECore.HardwareInterfaces
             {
                 bool succes1 = (usbDevice as IUsbDevice).SetConfiguration(1);
                 if (!succes1)
-                    throw new Exception("Failed to set usb device configuration");
+                    throw new ScopeIOException("Failed to set usb device configuration");
                 bool succes2 = (usbDevice as IUsbDevice).ClaimInterface(0);
                 if (!succes2)
-                    throw new Exception("Failed to claim usb interface6");
+                    throw new ScopeIOException("Failed to claim usb interface");
             }
+            device = usbDevice;
             serial = usbDevice.Info.SerialString;
             dataEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
@@ -66,44 +77,42 @@ namespace ECore.HardwareInterfaces
             Logger.Debug("Created new ScopeUsbInterface");
         }
 
-        public void Dispose()
-        {
-            //cleanup
-        }
-
-        public override string GetSerial()
+        internal string GetSerial()
         {
             return serial;
         }
 
-        public override int WriteControlMaxLength()
+        internal int WriteControlMaxLength()
         {
             if (commandWriteEndpoint == null)
-                return -1;
+                throw new ScopeIOException("Command write endpoint is null");
             return commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
         }
 
-        public override int WriteControlBytes(byte[] message)
+        internal void WriteControlBytes(byte[] message)
         {
             if (message.Length > WriteControlMaxLength())
             {
-                Logger.Error("USB message too long for endpoint");
-                return 0;
+                throw new ScopeIOException("USB message too long for endpoint");
             }
-            return WriteControlBytesBulk(message); ;
+            WriteControlBytesBulk(message);
         }
-        public int WriteControlBytesBulk(byte[] message)
+        internal void WriteControlBytesBulk(byte[] message)
         {
             int bytesWritten;
             ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
-            if (code != ErrorCode.Success)
+            if(bytesWritten != message.Length)
+                throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", bytesWritten, message.Length));
+            switch (code)
             {
-                throw new Exception("Failed to read from USB device : " + code.ToString("G"));
+                case ErrorCode.Success:
+                    break;
+                default:
+                    throw new ScopeIOException("Failed to read from USB device : " + code.ToString("G"));
             }
-            return bytesWritten;
         }
 
-        public override byte[] ReadControlBytes(int length)
+        internal byte[] ReadControlBytes(int length)
         {
             //try to read data
             ErrorCode errorCode = ErrorCode.None;
@@ -112,10 +121,12 @@ namespace ECore.HardwareInterfaces
             int bytesRead;
             errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
 
-            //extract required data
-            if (errorCode != ErrorCode.Success)
+            switch (errorCode)
             {
-                throw new Exception("Failed to read from USB device");
+                case ErrorCode.Success:
+                    break;
+                default:
+                    throw new ScopeIOException("Failed to read from device: " + errorCode.ToString("G"));
             }
             byte[] returnBuffer = new byte[length];
             Array.Copy(readBuffer, returnBuffer, length);
@@ -123,50 +134,35 @@ namespace ECore.HardwareInterfaces
             return returnBuffer;
         }
 
-        public void FlushDataPipe()
+        internal void FlushDataPipe()
         {
             dataEndpoint.Reset();
         }
 
-        public override byte[] GetData(int numberOfBytes)
+        internal byte[] GetData(int numberOfBytes)
         {
             //try to read data
             ErrorCode errorCode = ErrorCode.None;
-            try
+            //send read command
+            byte[] readBuffer = new byte[numberOfBytes];
+            int bytesRead;
+            errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
+            if (bytesRead != numberOfBytes)
+                throw new ScopeIOException(String.Format("Failed to read the requested amount of bytes, got {0} where {1} were requested", bytesRead, numberOfBytes));
+            switch (errorCode)
             {
-                //send read command
-                byte[] readBuffer = new byte[numberOfBytes];
-                int bytesRead;
-                errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-                // Asynchronously check for data
-                /*
-                UsbTransfer dataReadTransfer;
-                errorCode = dataEndpoint.SubmitAsyncTransfer(readBuffer, 0, 4096, 100, out dataReadTransfer);
-                if(errorCode != ErrorCode.None) throw new Exception("Failed to send async USB transfer");
-                dataReadTransfer.AsyncWaitHandle.WaitOne(200);
-                if (!dataReadTransfer.IsCompleted) dataReadTransfer.Cancel();
-                errorCode = dataReadTransfer.Wait(out bytesRead);
-                dataReadTransfer.Dispose();
-                */
-                if (bytesRead == 0) return null;
-
-                //return read data
-                return readBuffer;
+                case ErrorCode.Success:
+                    break;
+                default:
+                    throw new ScopeIOException("An error occured while fetching scope data: " + errorCode.ToString("G"));
             }
-            catch (Exception ex)
-            {
-                Logger.Error("Streaming data from camera failed");
-                Logger.Error("ExceptionMessage: " + ex.Message);
-                Logger.Error("USB ErrorCode: " + errorCode);
-                Logger.Error("requested length: " + numberOfBytes.ToString());
-
-                return null;
-            }
+            //return read data
+            return readBuffer;
         }
 
-        #region ScopeInterface
+        #region ScopeInterface - the internal interface
 
-        public void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
+        internal void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
@@ -175,22 +171,15 @@ namespace ECore.HardwareInterfaces
 
             if (ctrl == ScopeController.FLASH && (address + length) > (FLASH_USER_ADDRESS_MASK + 1))
             {
-                Logger.Error(String.Format("Can't read flash rom beyond 0x{0:X8}", FLASH_USER_ADDRESS_MASK));
-                data = null;
-                return;
+                throw new ScopeIOException(String.Format("Can't read flash rom beyond 0x{0:X8}", FLASH_USER_ADDRESS_MASK));
             }
 
             byte[] header = UsbCommandHeader(ctrl, Operation.READ, address, length);
             this.WriteControlBytes(header);
-
+            
             //EP3 always contains 16 bytes xxx should be linked to constant
             //FIXME: use endpoint length or so, or don't pass the argument to the function
             byte[] readback = ReadControlBytes(16);
-            if (readback == null)
-            {
-                data = null;
-                return;
-            }
 
             int readHeaderLength;
             if (ctrl == ScopeController.FLASH)
@@ -203,7 +192,7 @@ namespace ECore.HardwareInterfaces
             Array.Copy(readback, readHeaderLength, data, 0, length);
         }
 
-        public void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
+        internal void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
             uint length = data != null ? (uint)data.Length : 0;
             byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);
@@ -222,15 +211,19 @@ namespace ECore.HardwareInterfaces
             WriteControlBytes(toSend);
         }
 
-        public void LoadBootLoader()
+        internal void LoadBootLoader()
         {
             this.SendCommand(PIC_COMMANDS.PIC_BOOTLOADER);
         }
         
-        public void Reset()
+        internal void Reset()
         {
             this.SendCommand(PIC_COMMANDS.PIC_RESET);
         }
+
+        #endregion
+
+        #region helper for header
 
         private static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)
         {
@@ -350,10 +343,5 @@ namespace ECore.HardwareInterfaces
         }
 
         #endregion
-
-        internal void resetDataEndpoint()
-        {
-            dataEndpoint.Reset();
-        }
     }
 }

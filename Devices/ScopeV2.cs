@@ -13,12 +13,7 @@ namespace ECore.Devices
 {
     public partial class ScopeV2 : EDevice, IScope, IDisposable
     {
-#if INTERNAL
-        public
-#else
-        private 
-#endif
-        ScopeUsbInterface hardwareInterface;
+        private ScopeUsbInterface hardwareInterface;
 #if INTERNAL
         public
 #else
@@ -85,7 +80,7 @@ namespace ECore.Devices
 #endif
         }
 
-        private void OnDeviceConnect(EDeviceHWInterface hwInterface, bool connected)
+        private void OnDeviceConnect(ScopeUsbInterface hwInterface, bool connected)
         {
             if (connected)
             {
@@ -94,22 +89,23 @@ namespace ECore.Devices
 #if INTERNAL
                     resetTestResults("all");
 #endif
-                    ScopeUsbInterface scopeInterface = hwInterface as ScopeUsbInterface;
-                    if (scopeInterface == null) return;
-                    this.hardwareInterface = scopeInterface;
+                    this.hardwareInterface = hwInterface;
                     //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
                     //but there should be when flashing the FPGA.
 
                     hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
                     byte[] response = hardwareInterface.ReadControlBytes(16);
+                    if (response == null)
+                        throw new Exception("Failed to read from device");
                     Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(";", response)));
 
                     //Init ROM
-                    this.rom = new Rom(scopeInterface);
+                    this.rom = new Rom(hardwareInterface);
 
                     //Init FPGA
                     LogWait("Starting fpga flashing...", 0);
-                    FlashFpgaInternal();
+                    if (!FlashFpgaInternal())
+                        throw new Exception("failed to flash FPGA");
                     LogWait("FPGA flashed...");
                     InitializeMemories();
                     LogWait("Memories initialized...");
@@ -124,7 +120,7 @@ namespace ECore.Devices
                     Configure();
                     deviceReady = true;
                 }
-                catch (Exception e)
+                catch (ScopeIOException e)
                 {
                     Logger.Error("Failure while connecting to device: " + e.Message);
                     connected = false;
@@ -168,10 +164,9 @@ namespace ECore.Devices
         {
             memories.Clear();
             //Create memories
-            IScopeHardwareInterface scopeInterface = (IScopeHardwareInterface)hardwareInterface;
-            PicMemory = new DeviceMemories.ScopePicRegisterMemory(scopeInterface);
-            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(scopeInterface);
-            FpgaRom = new DeviceMemories.ScopeFpgaRom(scopeInterface);
+            PicMemory = new DeviceMemories.ScopePicRegisterMemory(hardwareInterface);
+            FpgaSettingsMemory = new DeviceMemories.ScopeFpgaSettingsMemory(hardwareInterface);
+            FpgaRom = new DeviceMemories.ScopeFpgaRom(hardwareInterface);
             StrobeMemory = new DeviceMemories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
             AdcMemory = new DeviceMemories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
@@ -194,39 +189,46 @@ namespace ECore.Devices
 
         private void Configure()
         {
-            //raise global reset
-            StrobeMemory[STR.GLOBAL_RESET].Write(true);
-            hardwareInterface.FlushDataPipe();
-            LogWait("FPGA reset");
+            try
+            {
+                //raise global reset
+                StrobeMemory[STR.GLOBAL_RESET].Write(true);
+                hardwareInterface.FlushDataPipe();
+                LogWait("FPGA reset");
 
-            /*********
-             *  ADC  *
-             *********/
+                /*********
+                 *  ADC  *
+                 *********/
 
-            AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90).Write();
-            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4).Write();
-			AdcMemory.GetRegister(MAX19506.OUTPUT_PWR_MNGMNT).Set(1).Write();
-            AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16).Write();
-            AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27).Write();
-            AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(5).Write();
-            AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(3).Write();
-            AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02).Write(); //DDR on chA
+                AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90).Write();
+                AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4).Write();
+                AdcMemory.GetRegister(MAX19506.OUTPUT_PWR_MNGMNT).Set(1).Write();
+                AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16).Write();
+                AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(27).Write();
+                AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(5).Write();
+                AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(3).Write();
+                AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02).Write(); //DDR on chA
 
-            /***************************/
+                /***************************/
 
-            //Enable scope controller
-            StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true).Write();
-            SetVerticalRange(0, -1f, 1f);
-            SetVerticalRange(1, -1f, 1f);
-            SetYOffset(0, 0f);
-            SetYOffset(1, 0f);
+                //Enable scope controller
+                StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true).Write();
+                SetVerticalRange(0, -1f, 1f);
+                SetVerticalRange(1, -1f, 1f);
+                SetYOffset(0, 0f);
+                SetYOffset(1, 0f);
 
-            StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true).Write();
-            StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true).Write();
-            StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true).Write();
+                StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true).Write();
+                StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true).Write();
+                StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true).Write();
 
-            SetCoupling(0, Coupling.DC);
-            SetCoupling(1, Coupling.DC);
+                SetCoupling(0, Coupling.DC);
+                SetCoupling(1, Coupling.DC);
+            } catch (ScopeIOException e) {
+                Logger.Error("Something went wrong while configuring the scope. Try replugging it : " + e.Message);
+                OnDeviceConnect(hardwareInterface, false);
+            }
+
         }
 
         public void LoadBootLoader()
@@ -248,13 +250,6 @@ namespace ECore.Devices
 
         #region data_handlers
 
-        public byte[] GetBytes()
-        {
-            int samplesToFetch = 2048;
-            int bytesToFetch = 64 + samplesToFetch * 2;//64 byte header + 2048 * 2 channels
-            return hardwareInterface.GetData(bytesToFetch);
-        }
-
         private float[] ConvertByteToVoltage(AnalogChannel ch, double divider, double multiplier, byte[] buffer, byte yOffset)
         {
             double[] coefficients = rom.getCalibration(ch, divider, multiplier).coefficients;
@@ -266,10 +261,26 @@ namespace ECore.Devices
             return voltage;
         }
 
+        /// <summary>
+        /// Get a package of scope data
+        /// </summary>
+        /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
         public DataPackageScope GetScopeData()
         {
-            byte[] buffer = this.GetBytes();
-            if (buffer == null) return null;
+            int samplesToFetch = 2048;
+            int bytesToFetch = 64 + samplesToFetch * 2;//64 byte header + 2048 * 2 channels
+            if (hardwareInterface == null)
+                return null;
+
+            byte[] buffer;
+            try
+            {
+                buffer = hardwareInterface.GetData(bytesToFetch);
+            }
+            catch (ScopeIOException sioe)
+            {
+                return null;
+            }
 
             //Parse header
             ScopeV2Header header;

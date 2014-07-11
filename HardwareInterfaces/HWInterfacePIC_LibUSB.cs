@@ -13,20 +13,20 @@ using Common;
 
 namespace ECore.HardwareInterfaces
 {
-    public delegate void OnDeviceConnect(EDeviceHWInterface hardwareInterface, bool connected);
+    delegate void OnDeviceConnect(ScopeUsbInterface hardwareInterface, bool connected);
 
     //class that provides raw HW access to the device
-    public static class HWInterfacePIC_LibUSB
+    internal static class HWInterfacePIC_LibUSB
     {   
         //needed for plug-unplug events
-        public static OnDeviceConnect onConnect;
-        public static IDeviceNotifier UsbDeviceNotifier;
-        private static bool initialized = false;
-        private static int VID = 0x04D8;
-        private static int[] PIDs = new int[] {0x0052, 0xF4B5};
-        private static Dictionary<string, ScopeUsbInterface> interfaces = new Dictionary<string,ScopeUsbInterface>();
+        static OnDeviceConnect onConnect;
+        static IDeviceNotifier UsbDeviceNotifier;
+        static bool initialized = false;
+        static int VID = 0x04D8;
+        static int[] PIDs = new int[] {0x0052, 0xF4B5};
+        static Dictionary<string, ScopeUsbInterface> interfaces = new Dictionary<string,ScopeUsbInterface>();
 
-        public static void Initialize()
+        internal static void Initialize()
         {
             if (initialized) return;
             initialized = true;
@@ -50,7 +50,7 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        public static void PollDevice()
+        internal static void PollDevice()
         {
             if (interfaces.Count > 0 && onConnect != null)
             {
@@ -63,41 +63,49 @@ namespace ECore.HardwareInterfaces
                 UsbDevice scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder);
                 if (scopeUsbDevice != null)
                 {
-                    DeviceFound(scopeUsbDevice);
+                    try
+                    {
+                        DeviceFound(scopeUsbDevice);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("Device was found but failed to register: " + e.Message);
+                    }
                     break;
                 }
             }
         }
 
-        private static void DeviceFound(UsbDevice scopeUsbDevice)
+        internal static void DeviceFound(UsbDevice scopeUsbDevice)
         {
-            ScopeUsbInterface f = new ScopeUsbInterface(scopeUsbDevice);
-            //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
-            string serial = scopeUsbDevice.Info.SerialString;
-            if(serial == "")
-                throw new Exception("This device doesn't have a serial number, can't work with that");
-            if(interfaces.ContainsKey(serial))
-                throw new Exception("This device was already registered. This is a bug");
-            interfaces.Add(serial, f);
+            string serial = null;
             try
             {
+                ScopeUsbInterface f = new ScopeUsbInterface(scopeUsbDevice);
+                //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
+                serial = scopeUsbDevice.Info.SerialString;
+                if (serial == "" || serial == null)
+                    throw new ScopeIOException("This device doesn't have a serial number, can't work with that");
+                if (interfaces.ContainsKey(serial))
+                    throw new ScopeIOException("This device was already registered. This is a bug");
+                interfaces.Add(serial, f);
+
                 if (onConnect != null)
                     onConnect(f, true);
             }
-            catch (Exception e)
+            catch (ScopeIOException e)
             {
-                Logger.Error("Error while calling OnConnect event handler: " + e.Message);
-                interfaces.Remove(serial);
-                f.Dispose();
+                Logger.Error("Error while trying to connect to device event handler: " + e.Message);
+                if (serial != null)
+                    interfaces.Remove(serial);
             }
-
         }
 
-        public static void AddConnectHandler(OnDeviceConnect c)
+        internal static void AddConnectHandler(OnDeviceConnect c)
         {
             onConnect += c;
         }
-        public static void RemoveConnectHandler(OnDeviceConnect c)
+        internal static void RemoveConnectHandler(OnDeviceConnect c)
         {
             onConnect -= c;
         }
@@ -127,8 +135,7 @@ namespace ECore.HardwareInterfaces
                     Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct)); 
                     if (onConnect != null)
                         onConnect(interfaces[e.Device.SerialNumber], false);
-                    
-                    interfaces[e.Device.SerialNumber].Dispose();
+
                     interfaces.Remove(e.Device.SerialNumber);
 
                     break;

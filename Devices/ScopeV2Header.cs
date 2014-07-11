@@ -7,15 +7,15 @@ using Common;
 
 namespace ECore.Devices
 {
-    public class ScopeV2Header
+    internal class ScopeV2Header
     {
         private byte[] raw;
         private byte bursts;
-        public byte bytesPerBurst { get; private set; }
-        public int Samples { get; private set; }
-        public bool scopeRunning { get; private set; }
-        public const int channels = 2;
-        public ScopeV2Header(byte[] data)
+        internal byte bytesPerBurst { get; private set; }
+        internal int Samples { get; private set; }
+        internal bool scopeRunning { get; private set; }
+        internal const int channels = 2;
+        internal ScopeV2Header(byte[] data)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
             raw = new byte[headerSize];
@@ -32,7 +32,7 @@ namespace ECore.Devices
             scopeRunning = Utils.IsBitSet(data[5], 0);
         }
 
-        public byte GetRegister(REG r)
+        internal byte GetRegister(REG r)
         {
             int offset = 0;
             if (!AcquisitionRegisters.Contains(r))
@@ -50,7 +50,7 @@ namespace ECore.Devices
             return raw[offset]; 
         }
 
-        public bool GetStrobe(STR s)
+        internal bool GetStrobe(STR s)
         {
             if(!AcquisitionStrobes.Contains(s))
                 throw new Exception("Strobe  " + s.ToString("G") + " not part of header");
@@ -63,7 +63,7 @@ namespace ECore.Devices
          * TypesConstants.vhd - Make sure that when you change the VHDL, you also
          * update this code
          */
-        public static readonly REG[] AcquisitionRegisters = new REG[]
+        internal static readonly REG[] AcquisitionRegisters = new REG[]
         {
             REG.TRIGGERLEVEL, 
 			REG.TRIGGERHOLDOFF_B0, 
@@ -74,14 +74,14 @@ namespace ECore.Devices
 			REG.SAMPLECLOCKDIVIDER_B0, 
             REG.SAMPLECLOCKDIVIDER_B1
         };
-        public static readonly REG[] DumpRegisters = new REG[]
+        internal static readonly REG[] DumpRegisters = new REG[]
         {
 			REG.VIEW_DECIMATION,
 			REG.VIEW_OFFSET,	
 			REG.VIEW_ACQUISITIONS,
 			REG.VIEW_BURSTS
         };
-        public static readonly STR[] AcquisitionStrobes = new STR[]
+        internal static readonly STR[] AcquisitionStrobes = new STR[]
         {
 			STR.AWG_ENABLE,
 			STR.LA_ENABLE,

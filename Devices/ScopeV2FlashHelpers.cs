@@ -9,14 +9,14 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.Devices {
 	partial class ScopeV2 {
-		private void FlashFpgaInternal ()
+		private bool FlashFpgaInternal ()
 		{
             this.flashed = false;
 			int packetSize = 32;//hardwareInterface.WriteControlMaxLength ();
 			int packetsPerCommand = 64;
 
 			if (packetSize <= 0)
-				return;
+				return false;
 
 			string fileName = "SmartScope_latest.bin";
 
@@ -72,10 +72,11 @@ namespace ECore.Devices {
 			} catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
 				Logger.Error(e.Message);
-				return;
+				return false;
 			}
 			if(firmware == null) {
 				Logger.Error("Failed to read FW");
+                return false;
 			}
 				
 			Logger.Info("Got firmware of length " + firmware.Length);
@@ -94,7 +95,7 @@ namespace ECore.Devices {
                 toSend1[i++] = (byte)ScopeUsbInterface.PIC_COMMANDS.PROGRAM_FPGA_START; //HOST_COMMAND_FLASH_FPGA
 				toSend1 [i++] = (byte) (commands >> 8);
 				toSend1 [i++] = (byte) (commands);
-				hardwareInterface.WriteControlBytes (toSend1);
+                hardwareInterface.WriteControlBytes(toSend1);
 
                 //Flush whatever might be left in the datapipe
                 hardwareInterface.FlushDataPipe();
@@ -106,29 +107,25 @@ namespace ECore.Devices {
 						commandSize = firmware.Length - bytesSent;
 					byte [] commandBytes = new byte[commandSize];
 					Array.Copy (firmware, bytesSent, commandBytes, 0, commandSize);
-                    int sent = hardwareInterface.WriteControlBytesBulk(commandBytes);
-					if (sent == 0) {
-						Logger.Error("No bytes written - aborting flash operation");
-
-						return;
-					}
-					bytesSent += sent;
+                    hardwareInterface.WriteControlBytesBulk(commandBytes);
+					bytesSent += commandBytes.Length;
 					int progress = (int) (bytesSent * 100 / firmware.Length);
 				}
 				flashStopwatch.Stop ();
 				for (int j = 0; j < killMeNow; j++) {
-					hardwareInterface.WriteControlBytesBulk(dummyData);
+                    hardwareInterface.WriteControlBytesBulk(dummyData);
 				}
                 
 				//Send finish flashing command
                 hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PROGRAM_FPGA_END);
                 Logger.Info(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
                 this.flashed = true;
-			} catch (Exception e) {
+			} catch (ScopeIOException e) {
 				Logger.Error("Flashing FPGA failed failed");
                 Logger.Error(e.Message);
-				return;
+				return false;
 			}
+            return true;
 		}
 	}
 }

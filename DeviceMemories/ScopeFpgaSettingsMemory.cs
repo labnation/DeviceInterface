@@ -10,9 +10,9 @@ namespace ECore.DeviceMemories
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
     public class ScopeFpgaSettingsMemory : ByteMemory
     {
-        protected IScopeHardwareInterface hwInterface;
+        internal ScopeUsbInterface hwInterface;
 
-        public ScopeFpgaSettingsMemory(IScopeHardwareInterface hwInterface)
+        internal ScopeFpgaSettingsMemory(ScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
 
