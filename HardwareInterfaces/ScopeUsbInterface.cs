@@ -54,6 +54,9 @@ namespace ECore.HardwareInterfaces
         private UsbEndpointWriter commandWriteEndpoint;
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
+
+        private object endpointAccessLock = new object();
+
         private object registerLock = new object();
         private string serial;
 
@@ -77,6 +80,23 @@ namespace ECore.HardwareInterfaces
             Logger.Debug("Created new ScopeUsbInterface");
         }
 
+        internal void Destroy()
+        {
+            /*
+            lock (endpointAccessLock)
+            {
+                commandWriteEndpoint.Dispose();
+                commandReadEndpoint.Dispose();
+                dataEndpoint.Dispose();
+
+                commandWriteEndpoint = null;
+                commandReadEndpoint = null;
+                dataEndpoint = null;
+            }
+            device.Close();   
+             */
+        }
+
         internal string GetSerial()
         {
             return serial;
@@ -84,9 +104,13 @@ namespace ECore.HardwareInterfaces
 
         internal int WriteControlMaxLength()
         {
-            if (commandWriteEndpoint == null)
-                throw new ScopeIOException("Command write endpoint is null");
-            return commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
+            int length;
+            lock(endpointAccessLock) {
+                if (commandWriteEndpoint == null)
+                    throw new ScopeIOException("Command write endpoint is null");
+                length = commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
+            }
+            return length;
         }
 
         internal void WriteControlBytes(byte[] message)
@@ -100,7 +124,13 @@ namespace ECore.HardwareInterfaces
         internal void WriteControlBytesBulk(byte[] message)
         {
             int bytesWritten;
-            ErrorCode code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
+            ErrorCode code;
+            lock (endpointAccessLock)
+            {
+                if(commandWriteEndpoint == null)
+                    throw new ScopeIOException("Command write endpoint is null");
+                code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
+            }
             if(bytesWritten != message.Length)
                 throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", bytesWritten, message.Length));
             switch (code)
@@ -119,8 +149,12 @@ namespace ECore.HardwareInterfaces
             //send read command
             byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
             int bytesRead;
-            errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-
+            lock (endpointAccessLock)
+            {
+                if (commandReadEndpoint == null)
+                    throw new ScopeIOException("Command read endpoint is null");
+                errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
+            }
             switch (errorCode)
             {
                 case ErrorCode.Success:
@@ -136,7 +170,12 @@ namespace ECore.HardwareInterfaces
 
         internal void FlushDataPipe()
         {
-            dataEndpoint.Reset();
+            lock (endpointAccessLock)
+            {
+                if (dataEndpoint == null)
+                    throw new ScopeIOException("Data endpoint is null");
+                dataEndpoint.Reset();
+            }
         }
 
         internal byte[] GetData(int numberOfBytes)
@@ -146,7 +185,13 @@ namespace ECore.HardwareInterfaces
             //send read command
             byte[] readBuffer = new byte[numberOfBytes];
             int bytesRead;
-            errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
+
+            lock (endpointAccessLock)
+            {
+                if (dataEndpoint == null)
+                    throw new ScopeIOException("Data endpoint is null");
+                errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
+            }
             if (bytesRead != numberOfBytes)
                 throw new ScopeIOException(String.Format("Failed to read the requested amount of bytes, got {0} where {1} were requested", bytesRead, numberOfBytes));
             switch (errorCode)

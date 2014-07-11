@@ -136,6 +136,7 @@ namespace ECore.HardwareInterfaces
                     if (onConnect != null)
                         onConnect(interfaces[e.Device.SerialNumber], false);
 
+                    interfaces[e.Device.SerialNumber].Destroy();
                     interfaces.Remove(e.Device.SerialNumber);
 
                     break;
