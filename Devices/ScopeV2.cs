@@ -243,7 +243,8 @@ namespace ECore.Devices
         public void SoftReset()
         {
             dataSourceScope.Reset();
-            Configure();
+            if(Connected)
+                Configure();
         }
 
         #endregion
