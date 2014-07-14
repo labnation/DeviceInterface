@@ -278,7 +278,7 @@ namespace ECore.Devices
             {
                 buffer = hardwareInterface.GetData(bytesToFetch);
             }
-            catch (ScopeIOException sioe)
+            catch (ScopeIOException)
             {
                 return null;
             }

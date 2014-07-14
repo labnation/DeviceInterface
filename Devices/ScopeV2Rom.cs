@@ -278,7 +278,7 @@ namespace ECore.Devices
                     {
                         try
                         {
-                            FrequencyResponse f = this.frequencyResponse.Where(x => x.multiplier == multiplier).First();
+                            FrequencyResponse f = this.frequencyResponse.Where(x => x.multiplier == multiplier && x.channel == ch).First();
                             unsafe
                             {
                                 foreach (var kvp in f.magnitudes)
@@ -295,7 +295,7 @@ namespace ECore.Devices
                                 }
                             }
                         }
-                        catch (InvalidOperationException e)
+                        catch (InvalidOperationException)
                         {
                             Logger.Warn(String.Format("Failed to upload frequency response to ROM for channel {0:G} and multiplier {1}", ch, multiplier));
                             continue;
