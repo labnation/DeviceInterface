@@ -39,8 +39,16 @@ namespace ECore.Devices
         private bool acquisitionRunning = false;
         private GainCalibration[] channelSettings;
         private float triggerLevel = 0f;
-        
-        public string Serial { get { return hardwareInterface.GetSerial(); } }
+
+        public string Serial
+        {
+            get
+            {
+                if (hardwareInterface == null)
+                    return null;
+                return hardwareInterface.GetSerial();
+            }
+        }
 
 #if INTERNAL
         public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
