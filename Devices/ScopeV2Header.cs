@@ -15,6 +15,7 @@ namespace ECore.Devices
         internal int Samples { get; private set; }
         internal bool scopeRunning { get; private set; }
         internal const int channels = 2;
+        internal int triggerAddress;
         internal ScopeV2Header(byte[] data)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
@@ -27,6 +28,7 @@ namespace ECore.Devices
             
             bytesPerBurst = data[3];
             bursts = data[4];
+            triggerAddress = data[6] + (data[7] << 8) + (data[8] << 16);
             Samples = bursts * bytesPerBurst / channels;
 
             scopeRunning = Utils.IsBitSet(data[5], 0);
