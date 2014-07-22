@@ -16,8 +16,15 @@ namespace ECore.DataSources
         public RecordingScope Recording { get; private set; }
         private bool running = false;
 
-        public bool IsRecording { get; private set; }
-        public bool CanStore { get; private set; }
+        public bool RecordingBusy
+        {
+            get
+            {
+                if (Recording == null) return false;
+                return Recording.Busy;
+            }
+        }
+
         public int AcquisitionsRecorded { get { return Recording.AcquisitionsRecorded; } }
 
         public DataSourceScope(EDevice scope) : base(scope)
@@ -84,40 +91,47 @@ namespace ECore.DataSources
 
         public bool StartRecording()
         {
-            if (CanStore || IsRecording)
+            if (Recording != null)
+            {
+                Logger.Warn("Can't start recording since a previous recording still exists");
                 return false;
+            }
 
             Recording = new RecordingScope();
 
             OnNewDataAvailable += Recording.Record;
-
-            this.IsRecording = true;
-            return IsRecording;
+            return true;
         }
 
         public bool StopRecording()
         {
-            if (!this.IsRecording)
+            if (Recording == null)
+            {
+                Logger.Warn("Can't stop recording since no recording exists");
                 return false;
+            }
+            if (!Recording.Busy)
+            {
+                Logger.Info("Recording was already stopped");
+                return false;
+            }
 
             OnNewDataAvailable -= Recording.Record;
-
+            Recording.SetNotBusy();
             if (Recording.acqInfo.Count == 0)
             {
                 Recording.Dispose();
                 Recording = null;
+                return false;
             }
-            this.IsRecording = false;
             return true;
         }
 
         public void DestroyRecording()
         {
-            CanStore = false;
-            if (IsRecording)
-                StopRecording();
             if (Recording != null)
             {
+                StopRecording();
                 Recording.Dispose();
                 Recording = null;
             }

@@ -14,7 +14,12 @@ namespace ECore.HardwareInterfaces
         public ScopeIOException(string msg) : base(msg) { }
     }
 
-    internal enum ScopeController
+#if INTERNAL
+    public
+#else
+    internal 
+#endif
+    enum ScopeController
     {
         PIC,
         ROM,
@@ -23,7 +28,12 @@ namespace ECore.HardwareInterfaces
         FPGA_ROM
     }
 
-    internal class ScopeUsbInterface
+#if INTERNAL
+    public
+#else
+    internal 
+#endif
+    class ScopeUsbInterface
     {
         internal enum PIC_COMMANDS
         {
@@ -207,7 +217,12 @@ namespace ECore.HardwareInterfaces
 
         #region ScopeInterface - the internal interface
 
-        internal void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
+#if INTERNAL
+    public
+#else
+    internal 
+#endif 
+        void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
@@ -237,7 +252,12 @@ namespace ECore.HardwareInterfaces
             Array.Copy(readback, readHeaderLength, data, 0, length);
         }
 
-        internal void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
+#if INTERNAL
+    public
+#else
+    internal 
+#endif
+        void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
             uint length = data != null ? (uint)data.Length : 0;
             byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);

@@ -14,8 +14,11 @@ namespace ECore.DataSources
         public int AcquisitionsRecorded { get; private set; }
         public long dataStorageSize { get; private set; }
         bool disposed = false;
+        public bool Busy { get; private set; }
+        private object busyLock = new object();
 
         public RecordingScope() {
+            Busy = true;
             acqInfo = new List<AcquisitionInfo>();
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
@@ -64,34 +67,44 @@ namespace ECore.DataSources
             matlabVariables.Add(name, o);
         }
 #endif
+        internal void SetNotBusy()
+        {
+            lock (busyLock)
+            {
+                Busy = false;
+            }
+        }
 
         public void Record(DataPackageScope ScopeData, EventArgs e)
         {
-            foreach (var kvp in channelBuffers)
+            lock (busyLock)
             {
-                if (kvp.Key is AnalogChannel)
-                    kvp.Value.AddData(ScopeData.GetData(kvp.Key as AnalogChannel));
-                if (kvp.Key is LogicAnalyserChannel)
-                    kvp.Value.AddData(ScopeData.GetDataDigital());
-            }
-            dataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
-
-            acqInfo.Add(
-                new AcquisitionInfo()
+                foreach (var kvp in channelBuffers)
                 {
-                    firstSampleTime = ScopeData.FirstSampleTime,
-                    samples = ScopeData.Samples,
-                    samplePeriod = ScopeData.SamplePeriod
-                });
-            foreach (var kvp in ScopeData.Settings)
-            {
-                if (!settings.Keys.Contains(kvp.Key))
-                    settings.Add(kvp.Key, new List<double>());
+                    if (kvp.Key is AnalogChannel)
+                        kvp.Value.AddData(ScopeData.GetData(kvp.Key as AnalogChannel));
+                    if (kvp.Key is LogicAnalyserChannel)
+                        kvp.Value.AddData(ScopeData.GetDataDigital());
+                }
+                dataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
 
-                settings[kvp.Key].Add(kvp.Value);
+                acqInfo.Add(
+                    new AcquisitionInfo()
+                    {
+                        firstSampleTime = ScopeData.FirstSampleTime,
+                        samples = ScopeData.Samples,
+                        samplePeriod = ScopeData.SamplePeriod
+                    });
+                foreach (var kvp in ScopeData.Settings)
+                {
+                    if (!settings.Keys.Contains(kvp.Key))
+                        settings.Add(kvp.Key, new List<double>());
+
+                    settings[kvp.Key].Add(kvp.Value);
+                }
+
+                AcquisitionsRecorded++;
             }
-
-            AcquisitionsRecorded++;
         }
     }
 }

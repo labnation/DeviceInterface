@@ -13,7 +13,12 @@ namespace ECore.Devices
 {
     public partial class ScopeV2 : EDevice, IScope, IDisposable
     {
-        private ScopeUsbInterface hardwareInterface;
+#if INTERNAL
+    public
+#else
+    private
+#endif
+        ScopeUsbInterface hardwareInterface;
 #if INTERNAL
         public
 #else
@@ -367,7 +372,7 @@ namespace ECore.Devices
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
             DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, chA.Length, 0);
-            
+            data.AddSetting("TriggerAddress", header.triggerAddress);
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
             double divA = validDividers[(divMul >> 0) & 0x3];
