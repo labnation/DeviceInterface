@@ -13,7 +13,10 @@ namespace ECore.DeviceMemories
             set { _internalValue = value; }
         }
 
-        internal BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
+        internal BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) 
+        {
+            this.internalValue = false;
+        }
 
 #if INTERNAL
         public

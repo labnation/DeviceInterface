@@ -13,7 +13,10 @@ namespace ECore.DeviceMemories
             set { _internalValue = value; }
         }
 
-        internal ByteRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
+        internal ByteRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) 
+        {
+            this.internalValue = 0;
+        }
 
 #if INTERNAL
         public
