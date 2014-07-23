@@ -206,41 +206,41 @@ namespace ECore.Devices
 
         private void Configure()
         {
+            //Part 1: Just set all desired memory settings
+
+            /*********
+             *  ADC  *
+            *********/
+            AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4);
+            AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1);
+            AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
+            AdcMemory[MAX19506.CHA_TERMINATION].Set(18);
+            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(5);
+            AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
+            AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
+
+            /***************************/
+
+            //Enable scope controller
+            StrobeMemory[STR.SCOPE_ENABLE].Set(true);
+            SetVerticalRange(0, -1f, 1f);
+            SetVerticalRange(1, -1f, 1f);
+            SetYOffset(0, 0f);
+            SetYOffset(1, 0f);
+
+            StrobeMemory[STR.ENABLE_ADC].Set(true);
+            StrobeMemory[STR.ENABLE_RAM].Set(true);
+            StrobeMemory[STR.ENABLE_NEG].Set(true);
+
+            SetCoupling(0, Coupling.DC);
+            SetCoupling(1, Coupling.DC);
+
             try
             {
-                //raise global reset
-                StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
+                //Part 2: perform actual writes                
                 hardwareInterface.FlushDataPipe();
-                LogWait("FPGA reset");
-
-                /*********
-                 *  ADC  *
-                 *********/
-
-                AdcMemory[MAX19506.SOFT_RESET].Set(90);
-                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4);
-                AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1);
-                AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
-                AdcMemory[MAX19506.CHA_TERMINATION].Set(18);
-                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(5);
-                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
-                AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
-
-                /***************************/
-
-                //Enable scope controller
-                StrobeMemory[STR.SCOPE_ENABLE].Set(true);
-                SetVerticalRange(0, -1f, 1f);
-                SetVerticalRange(1, -1f, 1f);
-                SetYOffset(0, 0f);
-                SetYOffset(1, 0f);
-
-                StrobeMemory[STR.ENABLE_ADC].Set(true);
-                StrobeMemory[STR.ENABLE_RAM].Set(true);
-                StrobeMemory[STR.ENABLE_NEG].Set(true);
-
-                SetCoupling(0, Coupling.DC);
-                SetCoupling(1, Coupling.DC);
+                StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
+                AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
                 CommitSettings();
             } catch (ScopeIOException e) {
                 Logger.Error("Something went wrong while configuring the scope. Try replugging it : " + e.Message);
@@ -352,6 +352,9 @@ namespace ECore.Devices
                 chB[i] = buffer[payloadOffset + 2 * i + 1];
             }
 #if INTERNAL
+            this.coupling[0] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
+            this.coupling[1] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
+
             if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM))
             {
                 //Test if data in CHB is correct
