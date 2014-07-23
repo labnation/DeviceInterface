@@ -19,7 +19,7 @@ namespace ECore.HardwareInterfaces
 #else
     internal 
 #endif
-    enum ScopeController
+ enum ScopeController
     {
         PIC,
         ROM,
@@ -33,23 +33,23 @@ namespace ECore.HardwareInterfaces
 #else
     internal 
 #endif
-    class ScopeUsbInterface
+ class ScopeUsbInterface
     {
         internal enum PIC_COMMANDS
         {
-            PIC_VERSION         =  1,
-            PIC_WRITE           =  2,
-            PIC_READ            =  3,
-            PIC_RESET		    =  4,
-            PIC_BOOTLOADER      =  5,
-            EEPROM_READ         =  6,
-            EEPROM_WRITE        =  7,
-            FLASH_ROM_READ      =  8,
-            FLASH_ROM_WRITE     =  9,
-            I2C_WRITE           = 10,
-            I2C_READ		    = 11,
-            PROGRAM_FPGA_START  = 12,
-            PROGRAM_FPGA_END    = 13,
+            PIC_VERSION = 1,
+            PIC_WRITE = 2,
+            PIC_READ = 3,
+            PIC_RESET = 4,
+            PIC_BOOTLOADER = 5,
+            EEPROM_READ = 6,
+            EEPROM_WRITE = 7,
+            FLASH_ROM_READ = 8,
+            FLASH_ROM_WRITE = 9,
+            I2C_WRITE = 10,
+            I2C_READ = 11,
+            PROGRAM_FPGA_START = 12,
+            PROGRAM_FPGA_END = 13,
         }
         internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
         internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
@@ -64,8 +64,6 @@ namespace ECore.HardwareInterfaces
         private UsbEndpointWriter commandWriteEndpoint;
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
-
-        private object endpointAccessLock = new object();
 
         private object registerLock = new object();
         private string serial;
@@ -86,7 +84,7 @@ namespace ECore.HardwareInterfaces
             dataEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
-            
+
             Logger.Debug("Created new ScopeUsbInterface");
         }
 
@@ -115,11 +113,9 @@ namespace ECore.HardwareInterfaces
         internal int WriteControlMaxLength()
         {
             int length;
-            lock(endpointAccessLock) {
-                if (commandWriteEndpoint == null)
-                    throw new ScopeIOException("Command write endpoint is null");
-                length = commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
-            }
+            if (commandWriteEndpoint == null)
+                throw new ScopeIOException("Command write endpoint is null");
+            length = commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
             return length;
         }
 
@@ -135,13 +131,12 @@ namespace ECore.HardwareInterfaces
         {
             int bytesWritten;
             ErrorCode code;
-            lock (endpointAccessLock)
-            {
-                if(commandWriteEndpoint == null)
-                    throw new ScopeIOException("Command write endpoint is null");
-                code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
-            }
-            if(bytesWritten != message.Length)
+
+            if (commandWriteEndpoint == null)
+                throw new ScopeIOException("Command write endpoint is null");
+            code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
+
+            if (bytesWritten != message.Length)
                 throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", bytesWritten, message.Length));
             switch (code)
             {
@@ -159,12 +154,10 @@ namespace ECore.HardwareInterfaces
             //send read command
             byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
             int bytesRead;
-            lock (endpointAccessLock)
-            {
-                if (commandReadEndpoint == null)
-                    throw new ScopeIOException("Command read endpoint is null");
-                errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-            }
+
+            if (commandReadEndpoint == null)
+                throw new ScopeIOException("Command read endpoint is null");
+            errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
             switch (errorCode)
             {
                 case ErrorCode.Success:
@@ -180,12 +173,9 @@ namespace ECore.HardwareInterfaces
 
         internal void FlushDataPipe()
         {
-            lock (endpointAccessLock)
-            {
-                if (dataEndpoint == null)
-                    throw new ScopeIOException("Data endpoint is null");
-                dataEndpoint.Reset();
-            }
+            if (dataEndpoint == null)
+                throw new ScopeIOException("Data endpoint is null");
+            dataEndpoint.Reset();
         }
 
         internal byte[] GetData(int numberOfBytes)
@@ -196,7 +186,6 @@ namespace ECore.HardwareInterfaces
             byte[] readBuffer = new byte[numberOfBytes];
             int bytesRead;
 
-            lock (endpointAccessLock)
             {
                 if (dataEndpoint == null)
                     throw new ScopeIOException("Data endpoint is null");
@@ -218,11 +207,11 @@ namespace ECore.HardwareInterfaces
         #region ScopeInterface - the internal interface
 
 #if INTERNAL
-    public
+        public
 #else
     internal 
-#endif 
-        void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
+#endif
+ void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
@@ -236,7 +225,7 @@ namespace ECore.HardwareInterfaces
 
             byte[] header = UsbCommandHeader(ctrl, Operation.READ, address, length);
             this.WriteControlBytes(header);
-            
+
             //EP3 always contains 16 bytes xxx should be linked to constant
             //FIXME: use endpoint length or so, or don't pass the argument to the function
             byte[] readback = ReadControlBytes(16);
@@ -253,11 +242,11 @@ namespace ECore.HardwareInterfaces
         }
 
 #if INTERNAL
-    public
+        public
 #else
     internal 
 #endif
-        void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
+ void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
             uint length = data != null ? (uint)data.Length : 0;
             byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);
@@ -280,7 +269,7 @@ namespace ECore.HardwareInterfaces
         {
             this.SendCommand(PIC_COMMANDS.PIC_BOOTLOADER);
         }
-        
+
         internal void Reset()
         {
             this.SendCommand(PIC_COMMANDS.PIC_RESET);
