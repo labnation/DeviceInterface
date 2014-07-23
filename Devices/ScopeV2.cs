@@ -209,7 +209,7 @@ namespace ECore.Devices
             try
             {
                 //raise global reset
-                StrobeMemory[STR.GLOBAL_RESET].Write(true);
+                StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
                 hardwareInterface.FlushDataPipe();
                 LogWait("FPGA reset");
 
@@ -217,30 +217,31 @@ namespace ECore.Devices
                  *  ADC  *
                  *********/
 
-                AdcMemory[MAX19506.SOFT_RESET].Set(90).Write();
-                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4).Write();
-                AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1).Write();
-                AdcMemory[MAX19506.FORMAT_PATTERN].Set(16).Write();
-                AdcMemory[MAX19506.CHA_TERMINATION].Set(18).Write();
-                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(5).Write();
-                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3).Write();
-                AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02).Write(); //DDR on chA
+                AdcMemory[MAX19506.SOFT_RESET].Set(90);
+                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4);
+                AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1);
+                AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
+                AdcMemory[MAX19506.CHA_TERMINATION].Set(18);
+                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(5);
+                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
+                AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
 
                 /***************************/
 
                 //Enable scope controller
-                StrobeMemory[STR.SCOPE_ENABLE].Set(true).Write();
+                StrobeMemory[STR.SCOPE_ENABLE].Set(true);
                 SetVerticalRange(0, -1f, 1f);
                 SetVerticalRange(1, -1f, 1f);
                 SetYOffset(0, 0f);
                 SetYOffset(1, 0f);
 
-                StrobeMemory[STR.ENABLE_ADC].Set(true).Write();
-                StrobeMemory[STR.ENABLE_RAM].Set(true).Write();
-                StrobeMemory[STR.ENABLE_NEG].Set(true).Write();
+                StrobeMemory[STR.ENABLE_ADC].Set(true);
+                StrobeMemory[STR.ENABLE_RAM].Set(true);
+                StrobeMemory[STR.ENABLE_NEG].Set(true);
 
                 SetCoupling(0, Coupling.DC);
                 SetCoupling(1, Coupling.DC);
+                CommitSettings();
             } catch (ScopeIOException e) {
                 Logger.Error("Something went wrong while configuring the scope. Try replugging it : " + e.Message);
                 OnDeviceConnect(hardwareInterface, false);

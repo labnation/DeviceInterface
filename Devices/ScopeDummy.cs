@@ -94,6 +94,11 @@ namespace ECore.Devices {
 				handler (this, true);
 		}
 
+        public void CommitSettings()
+        {
+            //Nothign to do here, all settings are updated immediately;
+        }
+
 		#endregion
 
 		#region real scope settings
