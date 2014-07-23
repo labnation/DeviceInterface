@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.HardwareInterfaces;
+using Common;
 
 namespace ECore.DeviceMemories
 {
@@ -20,12 +21,19 @@ namespace ECore.DeviceMemories
         /// <summary>
         /// Writes away all registers with the Dirty flag set
         /// </summary>
-        internal void Commit()
+        internal int Commit()
         {
+            int flushCount = registers.Values.Where(x => x.Dirty).Count();
+            if (flushCount == 0)
+                return flushCount;
+
+            Logger.Debug(String.Format("About to flush {0} / {1} registers in {2}", flushCount, registers.Count, this.GetType()));
+
             foreach (MemoryRegister m in registers.Values.Where(x => x.Dirty))
             {
                 m.WriteImmediate();
             }
+            return flushCount;
         }
         
         public MemoryRegister this[uint address]
