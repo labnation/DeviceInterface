@@ -26,61 +26,38 @@ namespace ECore.DeviceMemories
             return (uint)ROM.STROBES + (uint)Math.Floor((double)strobe / 8.0);
         }
 
-        public override void Read(uint address, uint length)
+        internal override void Read(uint address)
         {
-            if (length < 1) return;
             //Compute range of ROM registers to read from
             uint romStartAddress = StrobeToRomAddress(address);
-            uint romEndAddress = StrobeToRomAddress(address + length - 1);
-            readMemory.Read(romStartAddress, romEndAddress - romStartAddress + 1);
+            readMemory.Read(romStartAddress);
 
-            for (uint i = address; i < address + length; i++)
-            {
-                uint romAddress = StrobeToRomAddress(i);
-                int offset = (int)(i % 8);
-                registers[i].Set( ((readMemory.GetRegister(romAddress).GetByte() >> offset) & 0x01) == 0x01);
-            }
+            uint romAddress = StrobeToRomAddress(address);
+            int offset = (int)(address % 8);
+            registers[address].Set( ((readMemory[romAddress].GetByte() >> offset) & 0x01) == 0x01);
         }
 
-        public override void Write(uint address, uint length)
+        internal override void Write(uint address)
         {
-            for (uint i = 0; i < length; i++)
-            {
-                uint strobeAddress = address+i;
-                BoolRegister reg = GetRegister(strobeAddress);
+            BoolRegister reg = this[address];
 
-                //prepare data te be sent
-                int valToSend = (int)strobeAddress;
-                valToSend = valToSend << 1;
-                valToSend += reg.GetBool() ? 1: 0; //set strobe high or low
+            //prepare data te be sent
+            int valToSend = (int)address;
+            valToSend = valToSend << 1;
+            valToSend += reg.GetBool() ? 1: 0; //set strobe high or low
 
-                //now put this in the correct FPGA register
-                writeMemory.GetRegister(REG.STROBE_UPDATE).Set(valToSend);
-
-                //and send to FPGA
-                writeMemory.WriteSingle(REG.STROBE_UPDATE);
-            }            
+            //now put this in the correct FPGA register
+            writeMemory[REG.STROBE_UPDATE].Write(valToSend);
         }
 
-        public void WriteSingle(STR r)
+        new public BoolRegister this[uint address]
         {
-            this.WriteSingle((uint)r);
+            get { return (BoolRegister)registers[address]; }
         }
-        public void ReadSingle(STR r)
-        {
-            this.ReadSingle((uint)r);
-        }
-        public BoolRegister GetRegister(STR r)
-        {
-            return GetRegister((uint)r);
-        }
-        public BoolRegister GetRegister(uint a)
-        {
-            return (BoolRegister)Registers[a];
-        }
+
         public BoolRegister this[STR r]
         {
-            get { return GetRegister((uint)r); }
+            get { return this[(uint)r]; }
         }
     }
 }

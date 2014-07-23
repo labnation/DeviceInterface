@@ -130,7 +130,7 @@ namespace ECore.Devices
                     LogWait("FPGA flashed...");
                     InitializeMemories();
                     LogWait("Memories initialized...");
-                    Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
+                    Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom[ROM.FW_MSB].Read().GetByte() + ":" + FpgaRom[ROM.FW_LSB].Read().GetByte());
 
                     Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
 
@@ -217,27 +217,27 @@ namespace ECore.Devices
                  *  ADC  *
                  *********/
 
-                AdcMemory.GetRegister(MAX19506.SOFT_RESET).Set(90).Write();
-                AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(4).Write();
-                AdcMemory.GetRegister(MAX19506.OUTPUT_PWR_MNGMNT).Set(1).Write();
-                AdcMemory.GetRegister(MAX19506.FORMAT_PATTERN).Set(16).Write();
-                AdcMemory.GetRegister(MAX19506.CHA_TERMINATION).Set(18).Write();
-                AdcMemory.GetRegister(MAX19506.DATA_CLK_TIMING).Set(5).Write();
-                AdcMemory.GetRegister(MAX19506.POWER_MANAGEMENT).Set(3).Write();
-                AdcMemory.GetRegister(MAX19506.OUTPUT_FORMAT).Set(0x02).Write(); //DDR on chA
+                AdcMemory[MAX19506.SOFT_RESET].Set(90).Write();
+                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4).Write();
+                AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1).Write();
+                AdcMemory[MAX19506.FORMAT_PATTERN].Set(16).Write();
+                AdcMemory[MAX19506.CHA_TERMINATION].Set(18).Write();
+                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(5).Write();
+                AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3).Write();
+                AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02).Write(); //DDR on chA
 
                 /***************************/
 
                 //Enable scope controller
-                StrobeMemory.GetRegister(STR.SCOPE_ENABLE).Set(true).Write();
+                StrobeMemory[STR.SCOPE_ENABLE].Set(true).Write();
                 SetVerticalRange(0, -1f, 1f);
                 SetVerticalRange(1, -1f, 1f);
                 SetYOffset(0, 0f);
                 SetYOffset(1, 0f);
 
-                StrobeMemory.GetRegister(STR.ENABLE_ADC).Set(true).Write();
-                StrobeMemory.GetRegister(STR.ENABLE_RAM).Set(true).Write();
-                StrobeMemory.GetRegister(STR.ENABLE_NEG).Set(true).Write();
+                StrobeMemory[STR.ENABLE_ADC].Set(true).Write();
+                StrobeMemory[STR.ENABLE_RAM].Set(true).Write();
+                StrobeMemory[STR.ENABLE_NEG].Set(true).Write();
 
                 SetCoupling(0, Coupling.DC);
                 SetCoupling(1, Coupling.DC);

@@ -25,37 +25,24 @@ namespace ECore.DeviceMemories
                 registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
         }
 
-        public override void Read(uint address, uint length)
+        internal override void Read(uint address)
         {
             byte[] data = null;
-            hwInterface.GetControllerRegister(ScopeController.FPGA_ROM, address, length, out data);
+            hwInterface.GetControllerRegister(ScopeController.FPGA_ROM, address, 1, out data);
             if (data == null)
                 return;
 
-            for (uint j = 0; j < data.Length; j++)
-                registers[address + j].Set(data[j]);
+            registers[address].Set(data[0]);
         }
 
-        public override void Write(uint address, uint length)
+        internal override void Write(uint address)
         {
             Logger.Error("Can't write to ROM");
         }
 
-        public void WriteSingle(ROM r)
-        {
-            this.WriteSingle((uint)r);
-        }
-        public void ReadSingle(ROM r)
-        {
-            this.ReadSingle((uint)r);
-        }
-        public ByteRegister GetRegister(ROM r)
-        {
-            return GetRegister((uint)r);
-        }
         public ByteRegister this[ROM r]
         {
-            get { return GetRegister((uint)r); }
+            get { return this[(uint)r]; }
         }
     }
 }

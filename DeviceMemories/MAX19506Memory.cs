@@ -25,7 +25,7 @@ namespace ECore.DeviceMemories
         private ScopeStrobeMemory strobeMemory;
         private ScopeFpgaRom fpgaRom;
 
-        public MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
+        internal MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;
@@ -35,57 +35,36 @@ namespace ECore.DeviceMemories
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        public override void Read(uint address, uint length)
+        internal override void Read(uint address)
         {
-            for (uint i = 0; i < length; i++)
-            {
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set((byte)(address + i + 128)); //for a read, MSB must be 1
-                fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
+            fpgaSettings[REG.SPI_ADDRESS].Write((byte)(address + 128)); //for a read, MSB must be 1
 
-                //next, trigger rising edge to initiate SPI comm
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(false).Write();
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(true).Write();
+            //next, trigger rising edge to initiate SPI comm
+            strobeMemory[STR.INIT_SPI_TRANSFER].Write(false);
+            strobeMemory[STR.INIT_SPI_TRANSFER].Write(true);
 
-                //finally read acquired value
-                int acquiredVal = fpgaRom.GetRegister(ROM.SPI_RECEIVED_VALUE).Read().GetByte();
-                Registers[address + i].Set(acquiredVal);
-            }            
-            
+            //finally read acquired value
+            int acquiredVal = fpgaRom[ROM.SPI_RECEIVED_VALUE].Read().GetByte();
+            registers[address].Set(acquiredVal);
         }
 
-        public override void Write(uint address, uint length)
+        internal override void Write(uint address)
         {
-            for (uint i = 0; i < length; i++)
-            {
-                //first send correct address to FPGA
-                fpgaSettings.GetRegister(REG.SPI_ADDRESS).Set((int)(address + i));
-                fpgaSettings.WriteSingle(REG.SPI_ADDRESS);
+            //first send correct address to FPGA
+            fpgaSettings[REG.SPI_ADDRESS].Write((int)(address));
 
-                //next, send the write value to FPGA
-                int valToWrite = GetRegister(address + i).GetByte();
-                fpgaSettings.GetRegister(REG.SPI_WRITE_VALUE).Set(valToWrite);
-                fpgaSettings.WriteSingle(REG.SPI_WRITE_VALUE);
+            //next, send the write value to FPGA
+            int valToWrite = this[address].GetByte();
+            fpgaSettings[REG.SPI_WRITE_VALUE].Write(valToWrite);
 
-                //finally, trigger rising edge
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(false).Write();
-                strobeMemory.GetRegister(STR.INIT_SPI_TRANSFER).Set(true).Write();
-            }
+            //finally, trigger rising edge
+            strobeMemory[STR.INIT_SPI_TRANSFER].Write(false);
+            strobeMemory[STR.INIT_SPI_TRANSFER].Write(true);
         }
-        public void WriteSingle(MAX19506 r)
-        {
-            this.WriteSingle((uint)r);
-        }
-        public void ReadSingle(MAX19506 r)
-        {
-            this.ReadSingle((uint)r);
-        }
-        public ByteRegister GetRegister(MAX19506 r)
-        {
-            return GetRegister((uint)r);
-        }
+
         public ByteRegister this[MAX19506 r]
         {
-            get { return GetRegister((uint)r); }
+            get { return this[(uint)r]; }
         }
     }
 }

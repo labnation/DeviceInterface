@@ -20,38 +20,23 @@ namespace ECore.DeviceMemories
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        public override void Read(uint address, uint length)
+        internal override void Read(uint address)
         {
             byte[] data = null;
-            hwInterface.GetControllerRegister(ScopeController.FPGA, address, length, out data);
+            hwInterface.GetControllerRegister(ScopeController.FPGA, address, 1, out data);
             
-            for (uint j = 0; j < data.Length; j++)
-                registers[address + j].Set(data[j]);
+            registers[address].Set(data[0]);
         }
 
-        public override void Write(uint address, uint length)
+        internal override void Write(uint address)
         {
-            byte[] data = new byte[length];
-            for (uint j = 0; j < length; j++)
-                data[j] = GetRegister(address + j).GetByte();
-
+            byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.FPGA, address, data);
         }
-        public void WriteSingle(REG r)
-        {
-            this.WriteSingle((uint)r);
-        }
-        public void ReadSingle(REG r)
-        {
-            this.ReadSingle((uint)r);
-        }
-        public ByteRegister GetRegister(REG r)
-        {
-            return GetRegister((uint)r);
-        }
+
         public ByteRegister this[REG r]
         {
-            get { return GetRegister((uint)r); }
+            get { return this[(uint)r]; }
         }
     }
 }

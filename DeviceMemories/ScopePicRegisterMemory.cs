@@ -25,38 +25,23 @@ namespace ECore.DeviceMemories
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        public override void Read(uint address, uint length)
+        internal override void Read(uint address)
         {            
             byte[] data;
-            hwInterface.GetControllerRegister(ScopeController.PIC, address, length, out data);
+            hwInterface.GetControllerRegister(ScopeController.PIC, address, 1, out data);
             
             for (uint i = 0; i < data.Length; i++)
                 registers[address + i].Set(data[i]);
         }
 
-        public override void Write(uint address, uint length)
+        internal override void Write(uint address)
         {
-            byte[] data = new byte[length];
-            for (uint i = 0; i < length; i++)
-                data[i] = GetRegister(address + i).GetByte();
-            
+            byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.PIC, address, data);
-        }
-        public void WriteSingle(PIC r)
-        {
-            this.WriteSingle((uint)r);
-        }
-        public void ReadSingle(PIC r)
-        {
-            this.ReadSingle((uint)r);
-        }
-        public ByteRegister GetRegister(PIC r)
-        {
-            return GetRegister((uint)r);
         }
         public ByteRegister this[PIC r]
         {
-            get { return GetRegister((uint)r); }
+            get { return this[(uint)r]; }
         }
     }
 }

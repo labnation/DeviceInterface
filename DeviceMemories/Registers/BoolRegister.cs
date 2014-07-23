@@ -9,18 +9,40 @@ namespace ECore.DeviceMemories
     {
         private bool internalValue;
 
-        public BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
+        internal BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
 
-        public override MemoryRegister Set(object value)
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+        override MemoryRegister Set(object value)
         {
             this.internalValue = (bool)value;
             CallValueChangedCallbacks();
             return this;
         }
+
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+        override object Get() { return this.internalValue; }
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+        bool GetBool() { return this.internalValue; }
+
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+        new BoolRegister Read() { return (BoolRegister)base.Read(); }
         
-        public override object Get() { return this.internalValue; }
-        public bool GetBool() { return this.internalValue; }
-        new public BoolRegister Read() { return (BoolRegister)base.Read(); }
         public override int MaxValue { get { return 1; } }
     }
 }

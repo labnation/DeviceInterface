@@ -9,20 +9,17 @@ namespace ECore.DeviceMemories
     abstract public class DeviceMemory
     {
         protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
-
-        abstract public void Write(uint address, uint length);
-        abstract public void Read(uint address, uint length);
-        
-        virtual public void WriteSingle(uint address)
-        {
-            this.Write(address, 1);
-        }
-
-        virtual public void ReadSingle(uint address)
-        {
-            Read(address, 1);
-        }
-
+#if INTERNAL
         public Dictionary<uint, MemoryRegister> Registers { get { return registers; } }
+#endif
+
+
+        abstract internal void Write(uint address);
+        abstract internal void Read(uint address);
+        
+        public MemoryRegister this[uint address]
+        {
+            get { return registers[address]; }
+        }
     }
 }
