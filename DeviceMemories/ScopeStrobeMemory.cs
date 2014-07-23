@@ -61,7 +61,6 @@ namespace ECore.DeviceMemories
         public BoolRegister this[STR r]
         {
             get { return this[(uint)r]; }
-            set { this[(uint)r] = value; }
         }
     }
 }
