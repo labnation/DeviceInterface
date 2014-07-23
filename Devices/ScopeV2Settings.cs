@@ -12,7 +12,9 @@ namespace ECore.Devices
         public static readonly int[] validChannels = { 0, 1 };
         public static readonly double[] validDividers = { 1, 6, 36 };
         public static readonly double[] validMultipliers = { 1.1, 2, 3 };
-
+        private Dictionary<int, Coupling> coupling = new Dictionary<int, Coupling>() {
+            {0, Coupling.DC}, {1, Coupling.DC}
+        };
 #if INTERNAL
         public 
 #endif
@@ -196,9 +198,7 @@ namespace ECore.Devices
         {
             //FIXME: make this part of the header instead of reading it
             validateChannel(channel);
-            STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
-            bool dcEnabled = StrobeMemory[dc].Read().GetBool();
-            return dcEnabled ? Coupling.DC : Coupling.AC;
+            return this.coupling[channel];
         }
 
         #endregion
