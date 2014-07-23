@@ -9,7 +9,7 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.Devices {
 	partial class ScopeV2 {
-		private bool FlashFpgaInternal ()
+		private bool FlashFpga ()
 		{
             this.flashed = false;
 			int packetSize = 32;//hardwareInterface.WriteControlMaxLength ();
@@ -89,13 +89,13 @@ namespace ECore.Devices {
 				Logger.Debug("Firmware was created " + fwModifiedString);
 				UInt16 commands = (UInt16) (firmware.Length / packetSize + killMeNow);
 				//PIC: enter FPGA flashing mode
-				byte [] toSend1 = new byte[6];
-				int i = 0;
-                toSend1[i++] = ScopeUsbInterface.HEADER_CMD_BYTE; //message for PIC
-                toSend1[i++] = (byte)ScopeUsbInterface.PIC_COMMANDS.PROGRAM_FPGA_START; //HOST_COMMAND_FLASH_FPGA
-				toSend1 [i++] = (byte) (commands >> 8);
-				toSend1 [i++] = (byte) (commands);
-                hardwareInterface.WriteControlBytes(toSend1);
+                byte[] msg = new byte[] {
+				    ScopeUsbInterface.HEADER_CMD_BYTE,
+                    (byte)ScopeUsbInterface.PIC_COMMANDS.PROGRAM_FPGA_START,
+				    (byte) (commands >> 8),
+				    (byte) (commands),
+                };
+                hardwareInterface.WriteControlBytes(msg);
 
                 //Flush whatever might be left in the datapipe
                 hardwareInterface.FlushDataPipe();

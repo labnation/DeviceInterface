@@ -29,11 +29,19 @@ namespace ECore.Devices
         private bool deviceReady = false;
         private ScopeConnectHandler scopeConnectHandler;
 
+#if INTERNAL 
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
         public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
         public DeviceMemories.MAX19506Memory AdcMemory { get; private set; }
         public DeviceMemories.ScopePicRegisterMemory PicMemory { get; private set; }
+#else
+        private DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory;
+        private DeviceMemories.ScopeFpgaRom FpgaRom;
+        private DeviceMemories.ScopeStrobeMemory StrobeMemory;
+        private DeviceMemories.MAX19506Memory AdcMemory;
+        private DeviceMemories.ScopePicRegisterMemory PicMemory;
+#endif
 
         private DataSources.DataSourceScope dataSourceScope;
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
@@ -117,18 +125,14 @@ namespace ECore.Devices
 
                     //Init FPGA
                     LogWait("Starting fpga flashing...", 0);
-                    if (!FlashFpgaInternal())
+                    if (!FlashFpga())
                         throw new Exception("failed to flash FPGA");
                     LogWait("FPGA flashed...");
                     InitializeMemories();
                     LogWait("Memories initialized...");
                     Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom.GetRegister(ROM.FW_MSB).Read().GetByte() + ":" + FpgaRom.GetRegister(ROM.FW_LSB).Read().GetByte());
 
-                    UInt32 GitHash = (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() +
-                                     (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() << 8) +
-                                     (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
-                                     (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
-                    Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GitHash));
+                    Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
 
                     Configure();
                     deviceReady = true;
@@ -244,6 +248,7 @@ namespace ECore.Devices
 
         }
 
+#if INTERNAL
         public void LoadBootLoader()
         {
             this.hardwareInterface.LoadBootLoader();
@@ -252,7 +257,7 @@ namespace ECore.Devices
         {
             this.hardwareInterface.Reset();
         }
-
+#endif
         public void SoftReset()
         {
             dataSourceScope.Reset();

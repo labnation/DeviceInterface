@@ -336,14 +336,12 @@ namespace ECore.Devices
             return (int)NUMBER_OF_SAMPLES;
         }
 
-        public uint GetFpgaFirmwareVersion()
+        private uint GetFpgaFirmwareVersion()
         {
-            return
-                (uint)(
-                (FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() <<  0) +
-                (FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() <<  8) +
-                (FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
-                (FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
+            return (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT0).Read().GetByte() +
+                (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT1).Read().GetByte() << 8) +
+                (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT2).Read().GetByte() << 16) +
+                (UInt32)(FpgaRom.GetRegister(ROM.FW_GIT3).Read().GetByte() << 24));
         }
 
         #endregion
