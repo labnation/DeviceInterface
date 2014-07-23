@@ -44,7 +44,7 @@ namespace ECore.DeviceMemories
             Address = address;
             Name = name;
             Memory = memory;
-            Dirty = true;
+            Dirty = false;
         }
 
 
