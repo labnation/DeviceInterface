@@ -35,6 +35,7 @@ namespace ECore.DeviceMemories
             uint romAddress = StrobeToRomAddress(address);
             int offset = (int)(address % 8);
             registers[address].Set( ((readMemory[romAddress].GetByte() >> offset) & 0x01) == 0x01);
+            registers[address].Dirty = false;
         }
 
         internal override void Write(uint address)
@@ -47,17 +48,20 @@ namespace ECore.DeviceMemories
             valToSend += reg.GetBool() ? 1: 0; //set strobe high or low
 
             //now put this in the correct FPGA register
-            writeMemory[REG.STROBE_UPDATE].Write(valToSend);
+            writeMemory[REG.STROBE_UPDATE].WriteImmediate(valToSend);
+            registers[address].Dirty = false;
         }
 
         new public BoolRegister this[uint address]
         {
             get { return (BoolRegister)registers[address]; }
+            set { ((BoolRegister)registers[address]).Set(value); }
         }
 
         public BoolRegister this[STR r]
         {
             get { return this[(uint)r]; }
+            set { this[(uint)r] = value; }
         }
     }
 }

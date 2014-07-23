@@ -11,6 +11,7 @@ namespace ECore.DeviceMemories
         new public ByteRegister this[uint address]
         {
             get { return (ByteRegister)registers[address]; }
+            set { ((ByteRegister)registers[address]).Set(value); }
         }
     }
 }

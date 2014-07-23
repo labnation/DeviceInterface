@@ -29,19 +29,24 @@ namespace ECore.DeviceMemories
         {            
             byte[] data;
             hwInterface.GetControllerRegister(ScopeController.PIC, address, 1, out data);
-            
+
             for (uint i = 0; i < data.Length; i++)
+            {
                 registers[address + i].Set(data[i]);
+                registers[address + i].Dirty = false;
+            }
         }
 
         internal override void Write(uint address)
         {
             byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.PIC, address, data);
+            registers[address].Dirty = false;
         }
         public ByteRegister this[PIC r]
         {
             get { return this[(uint)r]; }
+            set { this[(uint)r] = value; }
         }
     }
 }

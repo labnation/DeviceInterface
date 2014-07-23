@@ -26,17 +26,20 @@ namespace ECore.DeviceMemories
             hwInterface.GetControllerRegister(ScopeController.FPGA, address, 1, out data);
             
             registers[address].Set(data[0]);
+            registers[address].Dirty = false;
         }
 
         internal override void Write(uint address)
         {
             byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.FPGA, address, data);
+            registers[address].Dirty = false;
         }
 
         public ByteRegister this[REG r]
         {
             get { return this[(uint)r]; }
+            set { this[(uint)r] = value; }
         }
     }
 }

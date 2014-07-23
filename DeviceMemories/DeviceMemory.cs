@@ -16,6 +16,17 @@ namespace ECore.DeviceMemories
 
         abstract internal void Write(uint address);
         abstract internal void Read(uint address);
+
+        /// <summary>
+        /// Writes away all registers with the Dirty flag set
+        /// </summary>
+        internal void Commit()
+        {
+            foreach (MemoryRegister m in registers.Values.Where(x => x.Dirty))
+            {
+                m.WriteImmediate();
+            }
+        }
         
         public MemoryRegister this[uint address]
         {

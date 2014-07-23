@@ -33,16 +33,19 @@ namespace ECore.DeviceMemories
                 return;
 
             registers[address].Set(data[0]);
+            registers[address].Dirty = false;
         }
 
         internal override void Write(uint address)
         {
             Logger.Error("Can't write to ROM");
+            registers[address].Dirty = false;
         }
 
         public ByteRegister this[ROM r]
         {
             get { return this[(uint)r]; }
+            set { this[(uint)r] = value; }
         }
     }
 }

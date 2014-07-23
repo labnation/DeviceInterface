@@ -7,7 +7,11 @@ namespace ECore.DeviceMemories
 {
     public class BoolRegister : MemoryRegister
     {
-        private bool internalValue;
+        private bool internalValue
+        {
+            get { return (bool)_internalValue; }
+            set { _internalValue = value; }
+        }
 
         internal BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
 

@@ -37,34 +37,37 @@ namespace ECore.DeviceMemories
 
         internal override void Read(uint address)
         {
-            fpgaSettings[REG.SPI_ADDRESS].Write((byte)(address + 128)); //for a read, MSB must be 1
+            fpgaSettings[REG.SPI_ADDRESS].WriteImmediate((byte)(address + 128)); //for a read, MSB must be 1
 
             //next, trigger rising edge to initiate SPI comm
-            strobeMemory[STR.INIT_SPI_TRANSFER].Write(false);
-            strobeMemory[STR.INIT_SPI_TRANSFER].Write(true);
+            strobeMemory[STR.INIT_SPI_TRANSFER].WriteImmediate(false);
+            strobeMemory[STR.INIT_SPI_TRANSFER].WriteImmediate(true);
 
             //finally read acquired value
             int acquiredVal = fpgaRom[ROM.SPI_RECEIVED_VALUE].Read().GetByte();
             registers[address].Set(acquiredVal);
+            registers[address].Dirty = false;
         }
 
         internal override void Write(uint address)
         {
             //first send correct address to FPGA
-            fpgaSettings[REG.SPI_ADDRESS].Write((int)(address));
+            fpgaSettings[REG.SPI_ADDRESS].WriteImmediate((int)(address));
 
             //next, send the write value to FPGA
             int valToWrite = this[address].GetByte();
-            fpgaSettings[REG.SPI_WRITE_VALUE].Write(valToWrite);
+            fpgaSettings[REG.SPI_WRITE_VALUE].WriteImmediate(valToWrite);
 
             //finally, trigger rising edge
-            strobeMemory[STR.INIT_SPI_TRANSFER].Write(false);
-            strobeMemory[STR.INIT_SPI_TRANSFER].Write(true);
+            strobeMemory[STR.INIT_SPI_TRANSFER].WriteImmediate(false);
+            strobeMemory[STR.INIT_SPI_TRANSFER].WriteImmediate(true);
+            registers[address].Dirty = false;
         }
 
         public ByteRegister this[MAX19506 r]
         {
             get { return this[(uint)r]; }
+            set { this[(uint)r] = value; }
         }
     }
 }

@@ -7,7 +7,11 @@ namespace ECore.DeviceMemories
 {
     public class ByteRegister : MemoryRegister
     {
-        private byte internalValue;
+        private byte internalValue
+        {
+            get { return (byte)_internalValue; }
+            set { _internalValue = value; }
+        }
 
         internal ByteRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) { }
 

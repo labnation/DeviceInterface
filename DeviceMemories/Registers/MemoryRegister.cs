@@ -12,7 +12,32 @@ namespace ECore.DeviceMemories
         public DeviceMemory Memory { get; private set; }
         public string Name { get; private set; }
         public uint Address { get; private set; }
-        public bool Dirty { get; private set; }
+        
+        private bool _dirty;
+        public bool Dirty
+        {
+            get { return _dirty; }
+            internal set
+            {
+                lock (_internalValueLock)
+                {
+                    _dirty = value;
+                }
+            }
+        }
+        private object __internalValue;
+        protected object _internalValueLock = new object();
+        protected object _internalValue { 
+            get { return __internalValue;}
+            set
+            {
+                lock (_internalValueLock)
+                {
+                    __internalValue = value;
+                    this.Dirty = true;
+                }
+            }
+        }
 
         internal MemoryRegister(DeviceMemory memory, uint address, string name)
         {
@@ -42,7 +67,7 @@ namespace ECore.DeviceMemories
 #else
         internal
 #endif
-        void Write()
+        void WriteImmediate()
         {
             this.Memory.Write(this.Address);
         }
@@ -52,9 +77,9 @@ namespace ECore.DeviceMemories
 #else
         internal
 #endif
-        void Write(object value)
+        void WriteImmediate(object value)
         {
-            this.Set(value).Write();
+            this.Set(value).WriteImmediate();
         }
 
 #if INTERNAL
