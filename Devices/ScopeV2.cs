@@ -92,6 +92,9 @@ namespace ECore.Devices
 
         private void InitializeHardwareInterface()
         {
+            //The memory initialisation is done here so that if no device is detected,
+            //we'll still have deviceMemory objects to play with
+            InitializeMemories();
 #if ANDROID
 		hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
 #else
@@ -143,6 +146,7 @@ namespace ECore.Devices
                     connected = false;
                     this.hardwareInterface = null;
                     this.flashed = false;
+                    InitializeMemories();
                     throw e;
                 }
             }
@@ -154,6 +158,7 @@ namespace ECore.Devices
                     this.hardwareInterface = null;
                     this.flashed = false;
                 }
+                InitializeMemories();
             }
             if (scopeConnectHandler != null)
                 scopeConnectHandler(this, connected);
