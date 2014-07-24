@@ -297,41 +297,56 @@ namespace ECore.Devices
             if (hardwareInterface == null)
                 return null;
 
+            
             byte[] buffer;
-            try
+            ScopeV2Header header;
+            byte[] chA = null, chB = null;
+            int dataOffset = 0;
+            while (true)
             {
-                buffer = hardwareInterface.GetData(bytesToFetch);
-            }
-            catch (ScopeIOException)
-            {
-                return null;
+                // Get data
+                try { buffer = hardwareInterface.GetData(bytesToFetch); }
+                catch (ScopeIOException) { return null; }
+                if (buffer == null) return null;
+                // Parse header
+
+                try { header = new ScopeV2Header(buffer); }
+                catch (Exception e)
+                {
+                    Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
+                    OnDeviceConnect(this.hardwareInterface, false);
+                    return null;
+                }
+
+                // Re-assemble
+                int payloadOffset = header.bytesPerBurst;
+                if (chA == null)
+                {
+                    dataOffset = 0;
+                    int acquisitionLength = header.Samples  * (1 << (header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER)));
+                    chA = new byte[acquisitionLength];
+                    chB = new byte[acquisitionLength];
+                }
+                for (int i = 0; i < header.Samples; i++)
+                {
+                    chA[dataOffset + i] = buffer[payloadOffset + 2 * i];
+                    chB[dataOffset + i] = buffer[payloadOffset + 2 * i + 1];
+                }
+                if (header.dumpSequence >= (1 << header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER)) - 1)
+                    break;
+                dataOffset += header.Samples;
             }
 
-            //Parse header
-            ScopeV2Header header;
-            try
-            {
-                header = new ScopeV2Header(buffer);
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
-                //FIXME: this error should not occurs in the first place, but at least this way
-                //the user knows to replug his device
-                OnDeviceConnect(this.hardwareInterface, false);
-                return null;
-            }
             acquisitionRunning = header.scopeRunning;
-            int payloadOffset = header.bytesPerBurst;
             //FIXME: Get these scope settings from header
             double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
 
 #if INTERNAL
-            if (header.GetStrobe(STR.DEBUG_RAM))
+            if (header.GetStrobe(STR.DEBUG_RAM) && header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) == 0)
             {
                 UInt16[] testData = new UInt16[header.Samples];
-                Buffer.BlockCopy(buffer, payloadOffset, testData, 0, sizeof(UInt16) * testData.Length);
+                Buffer.BlockCopy(buffer, header.bytesPerBurst, testData, 0, sizeof(UInt16) * testData.Length);
                 for (int i = 1; i < testData.Length; i++)
                 {
                     UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
@@ -348,14 +363,6 @@ namespace ECore.Devices
             ram_test_done:
 #endif
 
-            //Split in 2 channels
-            byte[] chA = new byte[header.Samples];
-            byte[] chB = new byte[header.Samples];
-            for (int i = 0; i < chA.Length; i++)
-            {
-                chA[i] = buffer[payloadOffset + 2 * i];
-                chB[i] = buffer[payloadOffset + 2 * i + 1];
-            }
 #if INTERNAL
             this.coupling[0] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
             this.coupling[1] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;

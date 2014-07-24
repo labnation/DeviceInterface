@@ -192,7 +192,7 @@ namespace ECore.HardwareInterfaces
                 errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
             }
             if (bytesRead != numberOfBytes)
-                throw new ScopeIOException(String.Format("Failed to read the requested amount of bytes, got {0} where {1} were requested", bytesRead, numberOfBytes));
+                return null;
             switch (errorCode)
             {
                 case ErrorCode.Success:

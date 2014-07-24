@@ -11,6 +11,7 @@ namespace ECore.Devices
     {
         private byte[] raw;
         private byte bursts;
+        internal byte dumpSequence { get; private set; }
         internal byte bytesPerBurst { get; private set; }
         internal int Samples { get; private set; }
         internal bool scopeRunning { get; private set; }
@@ -29,6 +30,7 @@ namespace ECore.Devices
             bytesPerBurst = data[3];
             bursts = data[4];
             triggerAddress = data[6] + (data[7] << 8) + (data[8] << 16);
+            dumpSequence = data[9];
             Samples = bursts * bytesPerBurst / channels;
 
             scopeRunning = Utils.IsBitSet(data[5], 0);
@@ -74,7 +76,8 @@ namespace ECore.Devices
 			REG.CHB_YOFFSET_VOLTAGE, 
 			REG.DIVIDER_MULTIPLIER,
 			REG.SAMPLECLOCKDIVIDER_B0, 
-            REG.SAMPLECLOCKDIVIDER_B1
+            REG.SAMPLECLOCKDIVIDER_B1,
+            REG.ACQUISITION_MULTIPLE_POWER
         };
         internal static readonly REG[] DumpRegisters = new REG[]
         {
