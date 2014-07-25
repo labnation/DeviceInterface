@@ -323,7 +323,7 @@ namespace ECore.Devices
                 if (chA == null)
                 {
                     dataOffset = 0;
-                    int acquisitionLength = header.Samples  * (1 << (header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER)));
+                    int acquisitionLength = header.Samples  * (1 << (header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)));
                     chA = new byte[acquisitionLength];
                     chB = new byte[acquisitionLength];
                 }
@@ -332,14 +332,13 @@ namespace ECore.Devices
                     chA[dataOffset + i] = buffer[payloadOffset + 2 * i];
                     chB[dataOffset + i] = buffer[payloadOffset + 2 * i + 1];
                 }
-                if (header.dumpSequence >= (1 << header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER)) - 1)
+                if (header.dumpSequence >= (1 << header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)) - 1)
                     break;
                 dataOffset += header.Samples;
             }
 
-            acquisitionRunning = header.scopeRunning;
+            acquisitionRunning = header.ScopeRunning;
             //FIXME: Get these scope settings from header
-            double samplePeriod = 10e-9; //10ns -> 100MHz fixed for now
             int triggerIndex = 0;
 
 #if INTERNAL
@@ -392,8 +391,8 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            DataPackageScope data = new DataPackageScope(samplePeriod, triggerIndex, chA.Length, 0);
-            data.AddSetting("TriggerAddress", header.triggerAddress);
+            DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, 0);
+            data.AddSetting("TriggerAddress", header.TriggerAddress);
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
             double divA = validDividers[(divMul >> 0) & 0x3];

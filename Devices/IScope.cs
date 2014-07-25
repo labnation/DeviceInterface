@@ -21,8 +21,6 @@ namespace ECore.Devices
         bool Connected { get; }
         string Serial { get; }
         double GetDefaultTimeRange();
-        double GetSamplePeriod();
-        int GetNumberOfSamples();
         void SetAcquisitionMode(AcquisitionMode mode);
         void SetAcuisitionRunning(bool running);
         bool GetAcquisitionRunning();

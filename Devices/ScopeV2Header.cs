@@ -11,12 +11,17 @@ namespace ECore.Devices
     {
         private byte[] raw;
         private byte bursts;
-        internal byte dumpSequence { get; private set; }
+
+        internal int dumpSequence { get; private set; }
         internal byte bytesPerBurst { get; private set; }
+        
         internal int Samples { get; private set; }
-        internal bool scopeRunning { get; private set; }
+        internal double SamplePeriod { get; private set; }
+        
+        internal bool ScopeRunning { get; private set; }
         internal const int channels = 2;
-        internal int triggerAddress;
+        internal int TriggerAddress;
+        
         internal ScopeV2Header(byte[] data)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
@@ -29,11 +34,12 @@ namespace ECore.Devices
             
             bytesPerBurst = data[3];
             bursts = data[4];
-            triggerAddress = data[6] + (data[7] << 8) + (data[8] << 16);
-            dumpSequence = data[9];
+            TriggerAddress = data[6] + (data[7] << 8) + (data[8] << 16);
+            dumpSequence = data[9] + (data[10] << 8);
             Samples = bursts * bytesPerBurst / channels;
 
-            scopeRunning = Utils.IsBitSet(data[5], 0);
+            SamplePeriod = 10e-9 *Math.Pow(2, GetRegister(REG.VIEW_DECIMATION));
+            ScopeRunning = Utils.IsBitSet(data[5], 0);
         }
 
         internal byte GetRegister(REG r)
@@ -72,12 +78,15 @@ namespace ECore.Devices
             REG.TRIGGERLEVEL, 
 			REG.TRIGGERHOLDOFF_B0, 
             REG.TRIGGERHOLDOFF_B1, 
+            REG.TRIGGERHOLDOFF_B2, 
+            REG.TRIGGERHOLDOFF_B3, 
 			REG.CHA_YOFFSET_VOLTAGE, 
 			REG.CHB_YOFFSET_VOLTAGE, 
 			REG.DIVIDER_MULTIPLIER,
 			REG.SAMPLECLOCKDIVIDER_B0, 
             REG.SAMPLECLOCKDIVIDER_B1,
-            REG.ACQUISITION_MULTIPLE_POWER
+            REG.ACQUISITION_MULTIPLE_POWER,
+            REG.TRIGGER_THRESHOLD
         };
         internal static readonly REG[] DumpRegisters = new REG[]
         {

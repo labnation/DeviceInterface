@@ -273,7 +273,7 @@ namespace ECore.Devices
 
         public bool GetAcquisitionRunning()
         {
-            return acquisitionRunning;
+            return Connected && acquisitionRunning;
         }
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
@@ -281,23 +281,16 @@ namespace ECore.Devices
             //throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Only store every [decimation]-th sample
-        ///</summary>
-        ///<param name="decimation">Store every [decimation]nt sample</param>
         public void SetTimeRange(double timeRange)
         {
-            //throw new NotImplementedException();
-            /*
-            if (decimation > UInt16.MaxValue)
-                throw new ValidationException("Decimation too large");
-            //FIXME: validate
-            FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B0).Set((byte)(decimation & 0xFF));
-            FpgaSettingsMemory.GetRegister(REG.SAMPLECLOCKDIVIDER_B1).Set((byte)((decimation >> 8) & 0xFF));
-            FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B0);
-            FpgaSettingsMemory.WriteSingle(REG.SAMPLECLOCKDIVIDER_B1);
-            toggleUpdateStrobe();
-             */
+            double defaultTimeRange = GetDefaultTimeRange();
+            double timeScaler = timeRange / defaultTimeRange;
+            byte acquisitionMultiplePower = (byte)Math.Log(timeScaler, 2);
+            FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Set(acquisitionMultiplePower);
+            if(acquisitionMultiplePower > 0)
+                FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(acquisitionMultiplePower - 1);
+            else
+                FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(0);
         }
         ///<summary>
         ///Enable free running (don't wait for trigger)
@@ -313,10 +306,12 @@ namespace ECore.Devices
         ///<param name="samples">Store [samples] before trigger</param>
         public void SetTriggerHoldOff(double time)
         {
-            Int16 samples = (Int16)(time / SAMPLE_PERIOD);
+            Int32 samples = (Int32)(time / SAMPLE_PERIOD);
             Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
+            FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B2].Set((byte)(samples >> 16));
+            FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B3].Set((byte)(samples >> 24));
         }
 
         #endregion
@@ -331,17 +326,7 @@ namespace ECore.Devices
             return SAMPLE_PERIOD * NUMBER_OF_SAMPLES; 
         }
 
-        public double GetSamplePeriod()
-        {
-            return SAMPLE_PERIOD;
-        }
-
-        public int GetNumberOfSamples()
-        {
-            return (int)NUMBER_OF_SAMPLES;
-        }
-
-        private uint GetFpgaFirmwareVersion()
+        public uint GetFpgaFirmwareVersion()
         {
             return (UInt32)(FpgaRom[ROM.FW_GIT0].Read().GetByte() +
                    (UInt32)(FpgaRom[ROM.FW_GIT1].Read().GetByte() << 8) +
