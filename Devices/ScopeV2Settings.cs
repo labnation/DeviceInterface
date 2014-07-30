@@ -285,7 +285,11 @@ namespace ECore.Devices
         {
             double defaultTimeRange = GetDefaultTimeRange();
             double timeScaler = timeRange / defaultTimeRange;
-            byte acquisitionMultiplePower = (byte)Math.Log(timeScaler, 2);
+            byte acquisitionMultiplePower;
+            if (timeScaler > 1)
+                acquisitionMultiplePower = (byte)Math.Ceiling(Math.Log(timeScaler, 2));
+            else
+                acquisitionMultiplePower = 0;
             FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Set(acquisitionMultiplePower);
             if(acquisitionMultiplePower > 0)
                 FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(acquisitionMultiplePower - 1);
