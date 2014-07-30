@@ -54,6 +54,8 @@ namespace ECore.HardwareInterfaces
         internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
         internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
+        const byte FPGA_I2C_ADDRESS_SETTINGS = 0x0C;
+        const byte FPGA_I2C_ADDRESS_ROM = 0x0D;
 
         private enum Operation { READ, WRITE };
 
@@ -356,7 +358,7 @@ namespace ECore.HardwareInterfaces
                                HEADER_CMD_BYTE,
                (byte)PIC_COMMANDS.I2C_WRITE,
                          (byte)(length + 2), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
-                             (byte)(5 << 1), //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
+     (byte)(FPGA_I2C_ADDRESS_SETTINGS << 1), //first I2C byte: FPGA i2c address bit shifted and LSB 0 indicating write
                               (byte)address  //second I2C byte: address of the register inside the FPGA
                     };
                 }
@@ -365,7 +367,7 @@ namespace ECore.HardwareInterfaces
                     header = new byte[4] {
                                HEADER_CMD_BYTE,
                 (byte)PIC_COMMANDS.I2C_READ,
-                                  (byte)(5), //this has to be i2c address immediately, not bitshifted or anything!
+          (byte)(FPGA_I2C_ADDRESS_SETTINGS), //first I2C byte: FPGA i2c address bit shifted and LSB 1 indicating read
                              (byte)(length) 
                     };
                 }
@@ -375,12 +377,11 @@ namespace ECore.HardwareInterfaces
                 if (op == Operation.WRITE)
                 {
                     header = new byte[5] {
-                               HEADER_CMD_BYTE,
+                            HEADER_CMD_BYTE,
                (byte)PIC_COMMANDS.I2C_WRITE,
-                         (byte)(length + 2), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
-                            //FIXME: should be a different address
-                             (byte)(5 << 1), //first I2C byte: FPGA i2c address (5) + '0' as LSB, indicating write operation
-                              (byte)address  //second I2C byte: address of the register inside the FPGA
+                         (byte)(length + 2), 
+    (byte)((FPGA_I2C_ADDRESS_ROM << 1) + 0), //first I2C byte: FPGA i2c address bit shifted and LSB 1 indicating read
+                              (byte)address,
                     };
                 }
                 else if (op == Operation.READ)
@@ -388,7 +389,7 @@ namespace ECore.HardwareInterfaces
                     header = new byte[4] {
                                HEADER_CMD_BYTE,
                 (byte)PIC_COMMANDS.I2C_READ,
-                                  (byte)(6), //this has to be i2c address immediately, not bitshifted or anything!
+                (byte)(FPGA_I2C_ADDRESS_ROM), //first I2C byte: FPGA i2c address, not bitshifted
                              (byte)(length) 
                     };
                 }
