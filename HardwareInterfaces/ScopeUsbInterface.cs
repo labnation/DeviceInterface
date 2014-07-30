@@ -25,7 +25,8 @@ namespace ECore.HardwareInterfaces
         ROM,
         FLASH,
         FPGA,
-        FPGA_ROM
+        FPGA_ROM,
+        AWG
     }
 
 #if INTERNAL
@@ -50,14 +51,21 @@ namespace ECore.HardwareInterfaces
             I2C_READ = 11,
             PROGRAM_FPGA_START = 12,
             PROGRAM_FPGA_END = 13,
+            I2C_WRITE_START = 14,
+            I2C_WRITE_BULK = 15,
+            I2C_WRITE_STOP = 16,
+
         }
         internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
         internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
         const byte FPGA_I2C_ADDRESS_SETTINGS = 0x0C;
         const byte FPGA_I2C_ADDRESS_ROM = 0x0D;
+        const byte FPGA_I2C_ADDRESS_AWG = 0x0E;
+        const int I2C_MAX_WRITE_LENGTH = 27;
+        const int I2C_MAX_WRITE_LENGTH_BULK = 29;
 
-        private enum Operation { READ, WRITE };
+        private enum Operation { READ, WRITE, WRITE_BEGIN, WRITE_BODY, WRITE_END };
 
         private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
@@ -250,15 +258,40 @@ namespace ECore.HardwareInterfaces
 #endif
  void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
-            uint length = data != null ? (uint)data.Length : 0;
-            byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);
+            if (data != null && data.Length > I2C_MAX_WRITE_LENGTH)
+            {
+                if (ctrl != ScopeController.AWG)
+                    throw new Exception(String.Format("Can't do writes of this length ({0}) to controller {1:G}", data.Length, ctrl));
 
-            //Paste header and data together and send it
-            byte[] toSend = new byte[header.Length + length];
-            Array.Copy(header, toSend, header.Length);
-            if (length > 0)
-                Array.Copy(data, 0, toSend, header.Length, data.Length);
-            WriteControlBytes(toSend);
+                int offset = 0;
+                byte[] toSend = new byte[32];
+                
+                //Begin I2C - send start condition
+                WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0));
+
+                while(offset < data.Length)
+                {
+                    int length = Math.Min(data.Length - offset, I2C_MAX_WRITE_LENGTH_BULK);
+                    byte[] header = UsbCommandHeader(ctrl, Operation.WRITE_BODY, address, (uint)length);
+                    Array.Copy(header, toSend, header.Length);
+                    Array.Copy(data, offset, toSend, header.Length, length);
+                    WriteControlBytes(toSend);
+                    offset += length;
+                }
+                WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_END, address, 0));
+            }
+            else
+            {
+                uint length = data != null ? (uint)data.Length : 0;
+                byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);
+
+                //Paste header and data together and send it
+                byte[] toSend = new byte[header.Length + length];
+                Array.Copy(header, toSend, header.Length);
+                if (length > 0)
+                    Array.Copy(data, 0, toSend, header.Length, data.Length);
+                WriteControlBytes(toSend);
+            }
         }
 
         internal void SendCommand(PIC_COMMANDS cmd)
@@ -392,6 +425,49 @@ namespace ECore.HardwareInterfaces
                 (byte)(FPGA_I2C_ADDRESS_ROM), //first I2C byte: FPGA i2c address, not bitshifted
                              (byte)(length) 
                     };
+                }
+            }
+            else if (ctrl == ScopeController.AWG)
+            {
+                if (op == Operation.WRITE)
+                {
+                    header = new byte[5] {
+                               HEADER_CMD_BYTE,
+               (byte)PIC_COMMANDS.I2C_WRITE,
+                         (byte)(length + 2), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
+     (byte)(FPGA_I2C_ADDRESS_AWG << 1), //first I2C byte: FPGA i2c address bit shifted and LSB 0 indicating write
+                              (byte)address  //second I2C byte: address of the register inside the FPGA
+                    };
+                }
+                if (op == Operation.WRITE_BEGIN)
+                {
+                    header = new byte[5] {
+                            HEADER_CMD_BYTE,
+         (byte)PIC_COMMANDS.I2C_WRITE_START,
+                         (byte)(length + 2), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
+          (byte)(FPGA_I2C_ADDRESS_AWG << 1), //first I2C byte: FPGA i2c address bit shifted and LSB 0 indicating write
+                              (byte)address  //second I2C byte: address of the register inside the FPGA
+                    };
+                }
+                if (op == Operation.WRITE_BODY)
+                {
+                    header = new byte[3] {
+                               HEADER_CMD_BYTE,
+             (byte)PIC_COMMANDS.I2C_WRITE_BULK,
+                                (byte)(length), //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
+                    };
+                }
+                if (op == Operation.WRITE_END)
+                {
+                    header = new byte[3] {
+                               HEADER_CMD_BYTE,
+             (byte)PIC_COMMANDS.I2C_WRITE_STOP,
+                             (byte)(length)
+                    };
+                }
+                else if (op == Operation.READ)
+                {
+                    throw new Exception("Can't read out AWG");
                 }
             }
             return header;

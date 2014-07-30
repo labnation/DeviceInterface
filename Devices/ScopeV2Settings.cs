@@ -337,7 +337,7 @@ namespace ECore.Devices
         #endregion
 
         #region AWG/LA
-#if false
+
         /// <summary>
         /// Set the data with which the AWG runs
         /// </summary>
@@ -347,48 +347,13 @@ namespace ECore.Devices
             if (data.Length != 2048)
                 throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
 
-            //raise global reset to reset RAM address counter, and to make sure the RAM switching is safe
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(true);
-            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
-
-            //lower global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
-            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
-
-            //break data up into blocks of 8bytes
-            int blockSize = 8;
-            int fullLength = data.Length;
-            int blockCounter = 0;
-
-            while (blockCounter * blockSize < fullLength) // as long as not all data has been sent
-            {
-
-                ///////////////////////////////////////////////////////////////////////////
-                //////Start sending data
-                byte[] toSend = new byte[5 + blockSize];
-
-                //prep header
-                int i = 0;
-                toSend[i++] = 123; //message for FPGA
-                toSend[i++] = 10; //I2C send
-                toSend[i++] = (byte)(blockSize + 2); //data and 2 more bytes: the FPGA I2C address, and the register address inside the FPGA
-                toSend[i++] = (byte)(7 << 1); //first I2C byte: FPGA i2c address for RAM writing(7) + '0' as LSB, indicating write operation
-                toSend[i++] = (byte)0; //second I2C byte: dummy!
-
-                //append data to be sent
-                for (int c = 0; c < blockSize; c++)
-                    toSend[i++] = data[blockCounter * blockSize + c];
-
-                hardwareInterface.WriteControlBytes(toSend);
-
-                blockCounter++;
-            }
-
-            //lower global reset
-            StrobeMemory.GetRegister(STR.GLOBAL_RESET).Set(false);
-            StrobeMemory.WriteSingle(STR.GLOBAL_RESET);
+            hardwareInterface.SetControllerRegister(HardwareInterfaces.ScopeController.AWG, 0, data);
         }
-#endif
+
+        public void setAwgEnabled(bool enable)
+        {
+            StrobeMemory[STR.AWG_ENABLE].WriteImmediate(enable);
+        }
 
         #endregion
 
