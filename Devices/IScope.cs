@@ -6,10 +6,10 @@ using ECore.DataSources;
 
 namespace ECore.Devices
 {
-    public enum TriggerMode { ANALOG, DIGITAL, FREE_RUNNING };
-    public enum TriggerDirection { RISING, FALLING };
+    public enum TriggerMode { ANALOG, DIGITAL };
+    public enum TriggerDirection { RISING = 0, FALLING = 1 };
     public enum Coupling { AC, DC };
-    public enum AcquisitionMode { SINGLE, CONTINUOUS, SWEEP };
+    public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
     public enum DigitalTriggerValue { O, I, R, F, X };
 
     public delegate void ScopeConnectHandler(IScope scope, bool connected);
@@ -32,6 +32,7 @@ namespace ECore.Devices
         void SetTriggerChannel(int channel);
         void SetTriggerDirection(TriggerDirection direction);
         void SetTriggerMode(TriggerMode mode);
+        void SetForceTrigger();
         void SetCoupling(int channel, Coupling coupling);
         Coupling GetCoupling(int channel);
         void SetTimeRange(double timeRange);

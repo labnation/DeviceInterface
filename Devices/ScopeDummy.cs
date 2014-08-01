@@ -61,7 +61,7 @@ namespace ECore.Devices {
 
 		private uint decimation = 1;
 		private TriggerDirection triggerDirection = TriggerDirection.FALLING;
-        private AcquisitionMode acquisitionMode = AcquisitionMode.CONTINUOUS;
+        private AcquisitionMode acquisitionMode = AcquisitionMode.NORMAL;
         private bool acquisitionRunning = false;
 		//Hack
 		bool regenerate = true;
@@ -158,6 +158,10 @@ namespace ECore.Devices {
 		{
 			this.triggerDirection = direction;
 		}
+        public void SetForceTrigger()
+        {
+            throw new NotImplementedException();
+        }
 
 		public void SetTriggerMode (TriggerMode mode)
 		{
@@ -286,7 +290,7 @@ namespace ECore.Devices {
 					return true;
 				}
 			}
-            if (acqMode == AcquisitionMode.SWEEP)
+            if (acqMode == AcquisitionMode.AUTO)
             {
                 triggerIndex = holdoff;
                 return true;
@@ -374,11 +378,11 @@ namespace ECore.Devices {
                                 break;
                             case TriggerMode.DIGITAL:
                                 triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
-                                break;
-                            case TriggerMode.FREE_RUNNING:
-                                triggerDetected = true;
-                                triggerIndex = 0;
-                                triggerHoldoffInSamples = 0;
+                                if (!triggerDetected && acquisitionMode == AcquisitionMode.AUTO)
+                                {
+                                    triggerDetected = true;
+                                    triggerIndex = 0;
+                                }
                                 break;
                         }
                         if (triggerDetected)

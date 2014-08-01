@@ -194,9 +194,10 @@ namespace ECore.Devices
             //Add them in order we'd like them in the GUI
             memories.Add(PicMemory);
             memories.Add(FpgaRom);
+            memories.Add(StrobeMemory);
             memories.Add(FpgaSettingsMemory);
             memories.Add(AdcMemory);
-            memories.Add(StrobeMemory);
+            
         }
 
         #endregion

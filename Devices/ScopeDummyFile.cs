@@ -42,7 +42,7 @@ namespace ECore.Devices
 
             int triggerHoldoffInSamples = (int)Math.Min(triggerHoldoff / samplePeriod, int.MaxValue);
             int triggerIndex;
-            if (triggerMode == TriggerMode.FREE_RUNNING)
+            if (acqMode == AcquisitionMode.AUTO)
             {
                 //Crop out a random piece of the wave
                 Random r = new Random();

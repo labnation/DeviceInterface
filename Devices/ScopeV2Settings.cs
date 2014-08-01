@@ -211,19 +211,23 @@ namespace ECore.Devices
         public void SetTriggerAnalog(float voltage)
         {
             this.triggerLevel = voltage;
-            double[] coefficients = channelSettings[StrobeMemory[STR.TRIGGER_CHB].GetBool() ? 1 : 0].coefficients;
-            REG offsetRegister = StrobeMemory[STR.TRIGGER_CHB].GetBool() ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+            double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
+            REG offsetRegister = GetTriggerChannel() == 1 ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = (voltage - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
             Logger.Debug(" Set trigger level to " + voltage + "V (" + level + ")");
-            FpgaSettingsMemory[REG.TRIGGERLEVEL].Set((byte)level);
+            FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
+        }
+        public void SetForceTrigger()
+        {
+            throw new NotImplementedException();
         }
 #if INTERNAL
         public void SetTriggerByte(byte level)
         {
-            FpgaSettingsMemory[REG.TRIGGERLEVEL].Set(level);
+            FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set(level);
         }
 #endif
         /// <summary>
@@ -233,10 +237,20 @@ namespace ECore.Devices
         public void SetTriggerChannel(int channel)
         {
             validateChannel(channel);
-            StrobeMemory[STR.TRIGGER_CHB].Set(channel != 0);
+            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                (byte)(
+                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) + 
+                    (channel << 2)
+                )
+            );
             Logger.Debug(" Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
             SetTriggerAnalog(this.triggerLevel);
-            //toggleUpdateStrobe();
+        }
+
+
+        public int GetTriggerChannel()
+        {         
+            return (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2;
         }
 
         /// <summary>
@@ -245,20 +259,28 @@ namespace ECore.Devices
         /// <param name="direction"></param>
         public void SetTriggerDirection(TriggerDirection direction)
         {
-            StrobeMemory[STR.TRIGGER_FALLING].Set(direction == TriggerDirection.FALLING);
+            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                (byte)(
+                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) + 
+                    (((int)direction << 4) & 0x30)
+                    )
+            );
             Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
         }
 
         public void SetTriggerMode(TriggerMode mode)
         {
-            StrobeMemory[STR.FREE_RUNNING].Set(mode == TriggerMode.FREE_RUNNING);
+            //Not implemented
         }
 
         public void SetAcquisitionMode(AcquisitionMode mode)
         {
-            bool single = mode == AcquisitionMode.SINGLE;
-
-            StrobeMemory[STR.ACQ_SINGLE].Set(single);
+            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                (byte)(
+                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x3F) +
+                    (((int)mode << 6) & 0xC0)
+                )
+            );
         }
         public void SetAcuisitionRunning(bool running)
         {
@@ -295,14 +317,6 @@ namespace ECore.Devices
                 FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(acquisitionMultiplePower - 1);
             else
                 FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(0);
-        }
-        ///<summary>
-        ///Enable free running (don't wait for trigger)
-        ///</summary>
-        ///<param name="freerunning">Whether to enable free running mode</param>
-        public void SetEnableFreeRunning(bool freerunning)
-        {
-            StrobeMemory[STR.FREE_RUNNING].Set(freerunning);
         }
         ///<summary>
         ///Scope hold off
