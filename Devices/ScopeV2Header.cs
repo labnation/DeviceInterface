@@ -76,7 +76,8 @@ namespace ECore.Devices
         internal static readonly REG[] AcquisitionRegisters = new REG[]
         {
             REG.TRIGGER_LEVEL, 
-            REG.TRIGGER_MODE, 
+            REG.TRIGGER_MODE,
+            REG.TRIGGER_WIDTH,
 			REG.TRIGGERHOLDOFF_B0, 
             REG.TRIGGERHOLDOFF_B1, 
             REG.TRIGGERHOLDOFF_B2, 

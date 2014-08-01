@@ -168,6 +168,24 @@ namespace ECore.Devices {
 			this.triggerMode = mode;
 		}
 
+        public void SetTriggerWidth(uint width)
+        {
+            throw new NotImplementedException();
+        }
+        public uint GetTriggerWidth()
+        {
+            throw new NotImplementedException();
+        }
+        public void SetTriggerThreshold(uint threshold)
+        {
+            throw new NotImplementedException();
+        }
+
+        public uint GetTriggerThreshold()
+        {
+            throw new NotImplementedException();
+        }
+
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
 		{
             digitalTrigger.triggerCondition = 0x0;

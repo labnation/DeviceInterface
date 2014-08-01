@@ -34,6 +34,11 @@ namespace ECore.Devices
         void SetTriggerMode(TriggerMode mode);
         void SetForceTrigger();
         void SetCoupling(int channel, Coupling coupling);
+        void SetTriggerWidth(uint width);
+        uint GetTriggerWidth();
+        void SetTriggerThreshold(uint threshold);
+        uint GetTriggerThreshold();
+        
         Coupling GetCoupling(int channel);
         void SetTimeRange(double timeRange);
         DataSources.DataSourceScope DataSourceScope { get; }

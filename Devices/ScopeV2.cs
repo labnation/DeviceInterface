@@ -238,7 +238,8 @@ namespace ECore.Devices
             StrobeMemory[STR.ENABLE_RAM].Set(true);
             StrobeMemory[STR.ENABLE_NEG].Set(true);
 
-            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(1);
+            SetTriggerWidth(6);
+            SetTriggerThreshold(1);            
             SetCoupling(0, Coupling.DC);
             SetCoupling(1, Coupling.DC);
 

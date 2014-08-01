@@ -267,6 +267,22 @@ namespace ECore.Devices
             );
             Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
         }
+        public void SetTriggerWidth(uint width)
+        {
+            FpgaSettingsMemory[REG.TRIGGER_WIDTH].Set((byte)width);
+        }
+        public uint GetTriggerWidth()
+        {
+            return (uint)FpgaSettingsMemory[REG.TRIGGER_WIDTH].GetByte();
+        }
+        public void SetTriggerThreshold(uint threshold)
+        {
+            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)threshold);
+        }
+        public uint GetTriggerThreshold()
+        {
+            return (uint)FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte();
+        }
 
         public void SetTriggerMode(TriggerMode mode)
         {
