@@ -5,7 +5,7 @@ using System.Text;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.LibUsb;
-using Common;
+using C=Common;
 
 namespace ECore.HardwareInterfaces
 {
@@ -95,7 +95,7 @@ namespace ECore.HardwareInterfaces
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
-            Logger.Debug("Created new ScopeUsbInterface");
+			C.Logger.Debug("Created new ScopeUsbInterface");
         }
 
         internal void Destroy()

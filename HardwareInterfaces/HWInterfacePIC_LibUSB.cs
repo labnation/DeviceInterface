@@ -8,7 +8,7 @@ using System.Threading;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.DeviceNotify;
-using Common;
+using C=Common;
 //#endif
 
 namespace ECore.HardwareInterfaces
@@ -37,7 +37,7 @@ namespace ECore.HardwareInterfaces
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;            
 #endif
             UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
-            Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
+			C.Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
             foreach (UsbRegistry device in usbDeviceList)
             {
                 string sAdd = string.Format("Vid:0x{0:X4} Pid:0x{1:X4} (rev:{2}) - {3}",
@@ -46,7 +46,7 @@ namespace ECore.HardwareInterfaces
                                             (ushort)device.Rev,
                                             device[SPDRP.DeviceDesc]);
 
-                Logger.Debug(sAdd);
+				C.Logger.Debug(sAdd);
             }
         }
 
@@ -69,14 +69,14 @@ namespace ECore.HardwareInterfaces
                     }
                     catch (Exception e)
                     {
-                        Logger.Error("Device was found but failed to register: " + e.Message);
+						C.Logger.Error("Device was found but failed to register: " + e.Message);
                     }
                     break;
                 }
             }
         }
 
-        internal static void DeviceFound(UsbDevice scopeUsbDevice)
+	internal static void DeviceFound(LibUsbDotNet.UsbDevice scopeUsbDevice)
         {
             string serial = null;
             try
@@ -95,7 +95,7 @@ namespace ECore.HardwareInterfaces
             }
             catch (ScopeIOException e)
             {
-                Logger.Error("Error while trying to connect to device event handler: " + e.Message);
+				C.Logger.Error("Error while trying to connect to device event handler: " + e.Message);
                 if (serial != null)
                     interfaces.Remove(serial);
             }
@@ -116,10 +116,10 @@ namespace ECore.HardwareInterfaces
             switch (e.EventType)
             {
                 case EventType.DeviceArrival:
-                    Logger.Debug("LibUSB device arrival");
+				C.Logger.Debug("LibUSB device arrival");
                     if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains(e.Device.IdProduct))
                     {
-                        Logger.Info("Not taking this device, PID/VID not a smartscope");
+					C.Logger.Info("Not taking this device, PID/VID not a smartscope");
                         return;
                     }
 
@@ -132,7 +132,7 @@ namespace ECore.HardwareInterfaces
                     if (!interfaces.ContainsKey(e.Device.SerialNumber))
                         return;
 
-                    Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct)); 
+				C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct)); 
                     if (onConnect != null)
                         onConnect(interfaces[e.Device.SerialNumber], false);
 
@@ -141,7 +141,7 @@ namespace ECore.HardwareInterfaces
 
                     break;
                 default:
-                    Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
+				C.Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
                     break;
             }
         }
