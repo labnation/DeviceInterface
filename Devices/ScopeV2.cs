@@ -239,7 +239,7 @@ namespace ECore.Devices
             StrobeMemory[STR.ENABLE_NEG].Set(true);
 
             SetTriggerWidth(6);
-            SetTriggerThreshold(1);            
+            SetTriggerThreshold(2);            
             SetCoupling(0, Coupling.DC);
             SetCoupling(1, Coupling.DC);
 

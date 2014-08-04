@@ -213,9 +213,9 @@ namespace ECore.Devices
             this.triggerLevel = voltage;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             REG offsetRegister = GetTriggerChannel() == 1 ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
-		double level = 0;
-			if (coefficients != null)
-				level = (voltage - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+            double level = 0;
+            if(coefficients != null)
+                level = (voltage - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
@@ -331,6 +331,7 @@ namespace ECore.Devices
             else
                 acquisitionMultiplePower = 0;
             FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Set(acquisitionMultiplePower);
+
             if(acquisitionMultiplePower > 0)
                 FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(acquisitionMultiplePower - 1);
             else
