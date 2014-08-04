@@ -181,7 +181,6 @@
   -->
   <ItemGroup>
     <BundleResource Include="i2c_sequence.mat" />
-    <BundleResource Include="Resources.resxold" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SmartScope_latest.bin">
