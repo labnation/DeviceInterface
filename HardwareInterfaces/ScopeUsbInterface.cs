@@ -56,6 +56,7 @@ namespace ECore.HardwareInterfaces
             I2C_WRITE_STOP = 16,
 
         }
+
         internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
         internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
@@ -67,8 +68,9 @@ namespace ECore.HardwareInterfaces
 
         private enum Operation { READ, WRITE, WRITE_BEGIN, WRITE_BODY, WRITE_END };
 
-        private const int USB_TIMEOUT = 1000;
+	private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
+	internal const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
 
         private UsbDevice device;
         private UsbEndpointWriter commandWriteEndpoint;
@@ -98,7 +100,7 @@ namespace ECore.HardwareInterfaces
 			C.Logger.Debug("Created new ScopeUsbInterface");
         }
 
-        internal void Destroy()
+		internal void Destroy()
         {
             /*
             lock (endpointAccessLock)
@@ -120,32 +122,24 @@ namespace ECore.HardwareInterfaces
             return serial;
         }
 
-        internal int WriteControlMaxLength()
-        {
-            int length;
-            if (commandWriteEndpoint == null)
-                throw new ScopeIOException("Command write endpoint is null");
-            length = commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
-            return length;
-        }
-
         internal void WriteControlBytes(byte[] message)
         {
-            if (message.Length > WriteControlMaxLength())
+	    if (message.Length > COMMAND_WRITE_ENDPOINT_SIZE)
             {
                 throw new ScopeIOException("USB message too long for endpoint");
             }
             WriteControlBytesBulk(message);
         }
+
         internal void WriteControlBytesBulk(byte[] message)
         {
             int bytesWritten;
             ErrorCode code;
-
+	
             if (commandWriteEndpoint == null)
                 throw new ScopeIOException("Command write endpoint is null");
-            code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
 
+            code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             if (bytesWritten != message.Length)
                 throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", bytesWritten, message.Length));
             switch (code)
