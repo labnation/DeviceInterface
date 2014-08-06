@@ -332,11 +332,13 @@ namespace ECore.Devices
             else
                 acquisitionMultiplePower = 0;
             FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Set(acquisitionMultiplePower);
-
+            //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
+            /*
             if(acquisitionMultiplePower > 0)
                 FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(acquisitionMultiplePower - 1);
             else
                 FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(0);
+             */
         }
         ///<summary>
         ///Scope hold off

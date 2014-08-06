@@ -328,7 +328,8 @@ namespace ECore.Devices
                 if (chA == null)
                 {
                     dataOffset = 0;
-                    int acquisitionLength = header.Samples  * (1 << (header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)));
+                    //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
+                    int acquisitionLength = header.Samples;// *(1 << (header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)));
                     chA = new byte[acquisitionLength];
                     chB = new byte[acquisitionLength];
                 }
@@ -337,7 +338,8 @@ namespace ECore.Devices
                     chA[dataOffset + i] = buffer[payloadOffset + 2 * i];
                     chB[dataOffset + i] = buffer[payloadOffset + 2 * i + 1];
                 }
-                if (header.dumpSequence >= (1 << header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)) - 1)
+                //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
+                //if (header.dumpSequence >= (1 << header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)) - 1)
                     break;
                 dataOffset += header.Samples;
             }

@@ -38,7 +38,10 @@ namespace ECore.Devices
             dumpSequence = data[9] + (data[10] << 8);
             Samples = bursts * bytesPerBurst / channels;
 
-            SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
+            //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
+            //SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
+            //For now, we hardcoded this case in the FPGA
+            SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.ACQUISITION_MULTIPLE_POWER) + GetRegister(REG.INPUT_DECIMATION));
             ScopeRunning = Utils.IsBitSet(data[5], 0);
         }
 
@@ -91,7 +94,8 @@ namespace ECore.Devices
         };
         internal static readonly REG[] DumpRegisters = new REG[]
         {
-			REG.VIEW_DECIMATION,
+            //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
+			//REG.VIEW_DECIMATION,
 			REG.VIEW_OFFSET,	
 			REG.VIEW_ACQUISITIONS,
 			REG.VIEW_BURSTS
