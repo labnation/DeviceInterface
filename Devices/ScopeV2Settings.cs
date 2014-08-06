@@ -225,7 +225,7 @@ namespace ECore.Devices
         }
         public void SetForceTrigger()
         {
-            throw new NotImplementedException();
+            StrobeMemory[STR.FORCE_TRIGGER].Set(true);
         }
 #if INTERNAL
         public void SetTriggerByte(byte level)
