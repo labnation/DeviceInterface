@@ -38,7 +38,7 @@ namespace ECore.Devices
             dumpSequence = data[9] + (data[10] << 8);
             Samples = bursts * bytesPerBurst / channels;
 
-            SamplePeriod = 10e-9 *Math.Pow(2, GetRegister(REG.VIEW_DECIMATION));
+            SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
             ScopeRunning = Utils.IsBitSet(data[5], 0);
         }
 

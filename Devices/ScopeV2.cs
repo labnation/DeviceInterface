@@ -47,7 +47,7 @@ namespace ECore.Devices
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
 
         private bool disableVoltageConversion = false;
-        private const double SAMPLE_PERIOD = 10e-9;
+        private const double BASE_SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
         private bool acquisitionRunning = false;
         private GainCalibration[] channelSettings;
@@ -397,7 +397,9 @@ namespace ECore.Devices
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
             DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, 0);
+#if INTERNAL
             data.AddSetting("TriggerAddress", header.TriggerAddress);
+#endif
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
             double divA = validDividers[(divMul >> 0) & 0x3];

@@ -15,6 +15,7 @@ namespace ECore.Devices
         private Dictionary<int, Coupling> coupling = new Dictionary<int, Coupling>() {
             {0, Coupling.DC}, {1, Coupling.DC}
         };
+        private double holdoff;
 #if INTERNAL
         public 
 #endif
@@ -343,7 +344,8 @@ namespace ECore.Devices
         ///<param name="samples">Store [samples] before trigger</param>
         public void SetTriggerHoldOff(double time)
         {
-            Int32 samples = (Int32)(time / SAMPLE_PERIOD);
+            holdoff = time;
+            Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) ));
             Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
@@ -360,7 +362,7 @@ namespace ECore.Devices
         /// <returns></returns>
         public double GetDefaultTimeRange() {
             //FIXME: don't hardcode
-            return SAMPLE_PERIOD * NUMBER_OF_SAMPLES; 
+            return BASE_SAMPLE_PERIOD * NUMBER_OF_SAMPLES; 
         }
 
         public uint GetFpgaFirmwareVersion()
