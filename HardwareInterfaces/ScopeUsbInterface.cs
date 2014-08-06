@@ -5,7 +5,7 @@ using System.Text;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.LibUsb;
-using C=Common;
+using C = Common;
 
 namespace ECore.HardwareInterfaces
 {
@@ -56,6 +56,7 @@ namespace ECore.HardwareInterfaces
             I2C_WRITE_STOP = 16,
 
         }
+
         internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
         internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
@@ -69,6 +70,7 @@ namespace ECore.HardwareInterfaces
 
         private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
+        private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
 
         private UsbDevice device;
         private UsbEndpointWriter commandWriteEndpoint;
@@ -95,7 +97,7 @@ namespace ECore.HardwareInterfaces
             commandWriteEndpoint = usbDevice.OpenEndpointWriter(WriteEndpointID.Ep02);
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
-			C.Logger.Debug("Created new ScopeUsbInterface");
+            C.Logger.Debug("Created new ScopeUsbInterface");
         }
 
         internal void Destroy()
@@ -120,23 +122,15 @@ namespace ECore.HardwareInterfaces
             return serial;
         }
 
-        internal int WriteControlMaxLength()
-        {
-            int length;
-            if (commandWriteEndpoint == null)
-                throw new ScopeIOException("Command write endpoint is null");
-            length = commandWriteEndpoint.EndpointInfo.Descriptor.MaxPacketSize;
-            return length;
-        }
-
         internal void WriteControlBytes(byte[] message)
         {
-            if (message.Length > WriteControlMaxLength())
+            if (message.Length > COMMAND_WRITE_ENDPOINT_SIZE)
             {
                 throw new ScopeIOException("USB message too long for endpoint");
             }
             WriteControlBytesBulk(message);
         }
+
         internal void WriteControlBytesBulk(byte[] message)
         {
             int bytesWritten;
@@ -144,8 +138,8 @@ namespace ECore.HardwareInterfaces
 
             if (commandWriteEndpoint == null)
                 throw new ScopeIOException("Command write endpoint is null");
-            code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
 
+            code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
             if (bytesWritten != message.Length)
                 throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", bytesWritten, message.Length));
             switch (code)
@@ -265,11 +259,11 @@ namespace ECore.HardwareInterfaces
 
                 int offset = 0;
                 byte[] toSend = new byte[32];
-                
+
                 //Begin I2C - send start condition
                 WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0));
 
-                while(offset < data.Length)
+                while (offset < data.Length)
                 {
                     int length = Math.Min(data.Length - offset, I2C_MAX_WRITE_LENGTH_BULK);
                     byte[] header = UsbCommandHeader(ctrl, Operation.WRITE_BODY, address, (uint)length);
