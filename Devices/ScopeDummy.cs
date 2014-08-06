@@ -119,7 +119,7 @@ namespace ECore.Devices {
         {
             this.acquisitionMode = mode;
         }
-        public void SetAcuisitionRunning(bool running)
+        public void SetAcquisitionRunning(bool running)
         {
             this.acquisitionRunning = running;
         }

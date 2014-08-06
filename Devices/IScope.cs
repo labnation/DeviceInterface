@@ -22,7 +22,7 @@ namespace ECore.Devices
         string Serial { get; }
         double GetDefaultTimeRange();
         void SetAcquisitionMode(AcquisitionMode mode);
-        void SetAcuisitionRunning(bool running);
+        void SetAcquisitionRunning(bool running);
         bool GetAcquisitionRunning();
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);

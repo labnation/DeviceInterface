@@ -301,7 +301,7 @@ namespace ECore.Devices
                 )
             );
         }
-        public void SetAcuisitionRunning(bool running)
+        public void SetAcquisitionRunning(bool running)
         {
             STR s;
             if (running)
