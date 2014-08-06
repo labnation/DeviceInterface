@@ -367,10 +367,10 @@ namespace ECore.Devices
             ram_test_done:
 #endif
 
-#if INTERNAL
             this.coupling[0] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
             this.coupling[1] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
 
+#if INTERNAL
             if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM))
             {
                 //Test if data in CHB is correct
