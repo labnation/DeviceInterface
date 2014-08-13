@@ -97,6 +97,7 @@
     <Compile Include="DataSources\DataSource.cs" />
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
+    <Compile Include="FrequencyCompensation.cs" />
     <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="HardwareInterfaces\ScopeUsbInterface.cs" />
     <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />
