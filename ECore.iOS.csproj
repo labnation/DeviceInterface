@@ -134,6 +134,7 @@
     <Compile Include="DataSources\DataStorage\IChannelBuffer.cs" />
     <Compile Include="DataSources\DataStorage\RecordingHandler.cs" />
     <Compile Include="DataSources\DataStorage\RecordingScope.cs" />
+    <Compile Include="FrequencyCompensation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DeviceMemories\ScopeConstants_GEN.tt">
