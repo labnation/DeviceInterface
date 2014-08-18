@@ -225,7 +225,7 @@ namespace ECore.Devices
         }
         public void SetForceTrigger()
         {
-            StrobeMemory[STR.FORCE_TRIGGER].Set(true);
+            StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
         }
 #if INTERNAL
         public void SetTriggerByte(byte level)
@@ -309,7 +309,7 @@ namespace ECore.Devices
             else
                 s = STR.ACQ_STOP;
             acquisitionRunning = running;
-            StrobeMemory[s].Set(true);
+            StrobeMemory[s].WriteImmediate(true);
         }
 
         public bool GetAcquisitionRunning()
@@ -393,6 +393,7 @@ namespace ECore.Devices
 
         public void setAwgEnabled(bool enable)
         {
+            StrobeMemory[STR.LA_ENABLE].WriteImmediate(!enable);
             StrobeMemory[STR.AWG_ENABLE].WriteImmediate(enable);
         }
 
