@@ -18,7 +18,8 @@ namespace ECore.Devices {
 			if (packetSize <= 0)
 				return false;
 
-			string fileName = "SmartScope_latest.bin";
+            Common.SerialNumber s = new SerialNumber(this.Serial);
+            string fwName = String.Format("SmartScope_{0}", Base36.Encode((long)s.model, 3).ToUpper());
 
 			byte [] firmware = null;
 			DateTime firmwareModified = DateTime.Now;
@@ -63,13 +64,14 @@ namespace ECore.Devices {
 
 #else
 #if DEBUG
+                string fileName = String.Format("{0}.bin", fwName);
                 firmwareModified = new FileInfo(fileName).LastWriteTime;
                 firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #else
-                firmware = Utils.ByteBufferStuffer(Resources.SmartScope_latest, packetSize, 0xff);
+                firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
 #endif
 #endif
-			} catch (Exception e) {
+            } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
 				Logger.Error(e.Message);
 				return false;

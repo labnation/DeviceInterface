@@ -116,7 +116,7 @@
     </None>
     <None Include="i2c_sequence.mat" />
     <None Include="packages.config" />
-    <None Include="SmartScope_latest.bin">
+    <None Include="SmartScope_A10.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

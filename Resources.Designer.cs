@@ -73,9 +73,9 @@ namespace ECore {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] SmartScope_latest {
+        internal static byte[] SmartScope_A10 {
             get {
-                object obj = ResourceManager.GetObject("SmartScope_latest", resourceCulture);
+                object obj = ResourceManager.GetObject("SmartScope_A10", resourceCulture);
                 return ((byte[])(obj));
             }
         }
