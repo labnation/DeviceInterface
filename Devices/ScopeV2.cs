@@ -246,10 +246,10 @@ namespace ECore.Devices
             try
             {
                 //Part 2: perform actual writes                
-                hardwareInterface.FlushDataPipe();
                 StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
                 AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
                 CommitSettings();
+                hardwareInterface.FlushDataPipe();
             } catch (ScopeIOException e) {
                 Logger.Error("Something went wrong while configuring the scope. Try replugging it : " + e.Message);
                 OnDeviceConnect(hardwareInterface, false);
