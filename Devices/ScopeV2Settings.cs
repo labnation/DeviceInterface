@@ -393,7 +393,9 @@ namespace ECore.Devices
 
         public void setAwgEnabled(bool enable)
         {
-            StrobeMemory[STR.LA_ENABLE].WriteImmediate(!enable);
+            //Disable logic analyser in case AWG is being enabled
+            if(enable)
+                StrobeMemory[STR.LA_ENABLE].WriteImmediate(false);
             StrobeMemory[STR.AWG_ENABLE].WriteImmediate(enable);
         }
 
