@@ -95,13 +95,21 @@ namespace ECore.Devices
             Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
         }
 
+        /// <summary>
+        /// Sets&uploads the divider and multiplier what are optimal for the requested range
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <param name="minimum"></param>
+        /// <param name="maximum"></param>
         public void SetVerticalRange(int channel, float minimum, float maximum)
         {
             //The voltage range for div/mul = 1/1
+            //20140808: these seem to be OK: on div0/mult0 the ADC input range is approx 1.3V
             float baseMin = -0.6345f; //V
             float baseMax = 0.6769f; //V
 
             //Walk through dividers/multipliers till requested range fits
+            //this walk assumes it starts with the smallest range, and that range is only increasing
             int dividerIndex = 0;
             int multIndex = 0;
             for (int i = 0; i < rom.computedDividers.Length * rom.computedMultipliers.Length; i++)
