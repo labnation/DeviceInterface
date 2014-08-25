@@ -217,6 +217,49 @@ namespace ECore
             return TimeDomainCompensation(compensatedData);
         }
 
+        /// <summary>
+        /// Return the subsampled compensation spectrum, needed for compensating waves samples at a sampling speed lower than the max sampling speed
+        /// </summary>
+        /// <param name="origSpectrum"></param>
+        /// <returns></returns>
+        public static Complex[] SubsampleSpectrum(Complex[] origSpectrum)
+        {
+            //separate into reals and imags
+            float[] origReals = new float[origSpectrum.Length];
+            float[] origImags = new float[origSpectrum.Length];
+            for (int i = 0; i < origSpectrum.Length; i++)
+            {
+                origReals[i] = (float)origSpectrum[i].Re;
+                origImags[i] = (float)origSpectrum[i].Im;
+            }
+
+            //subsample left half
+            float[] ssReals = new float[origSpectrum.Length];
+            float[] ssImags = new float[origSpectrum.Length];
+            for (int i = 0; i < origSpectrum.Length / 2; i++)
+            {
+                ssReals[i*2] = origReals[i];
+                ssReals[i*2 + 1] = (origReals[i] + origReals[i + 1]) / 2f;
+
+                ssImags[i * 2] = origImags[i];
+                ssImags[i * 2 + 1] = (origImags[i] + origImags[i + 1]) / 2f;
+            }
+
+            //copy to right half
+            for (int i = 0; i < origSpectrum.Length / 2; i++)
+            {
+                ssReals[origSpectrum.Length - 1 - i] = ssReals[i];
+                ssImags[origSpectrum.Length - 1 - i] = -ssImags[i];
+            }
+
+            //recombine into Complex number and return result
+            Complex[] result = new Complex[origSpectrum.Length];
+            for (int i = 0; i < origSpectrum.Length; i++)
+                result[i] = new Complex(ssReals[i], ssImags[i]);
+
+            return result;
+        }
+
         private static float[] TimeDomainCompensation(float[] spectrallyCompensatedData)
         {
             float[] finalData = new float[spectrallyCompensatedData.Length];
