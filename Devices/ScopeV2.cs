@@ -221,7 +221,7 @@ namespace ECore.Devices
             AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1);
             AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
             AdcMemory[MAX19506.CHA_TERMINATION].Set(18);
-            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(5);
+            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(0);
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
             AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
 
