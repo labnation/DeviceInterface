@@ -55,8 +55,7 @@ namespace ECore.Devices
 
         //Select through: AnalogChannel, multiplier, subsampling
         private Dictionary<AnalogChannel, Dictionary<double, Dictionary<ushort, Complex[]>>> compensationSpectrum;
-        private FrequencyCompensationCPULoad frequencyCompensationCPULoad = FrequencyCompensationCPULoad.Basic;
-        public FrequencyCompensationCPULoad FrequencyCompensationEnabled { get; set; }
+        public FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
 
 #if INTERNAL
         Dictionary<AnalogChannel, float[]> debugSignal = new Dictionary<AnalogChannel, float[]>();
@@ -87,6 +86,7 @@ namespace ECore.Devices
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
+            FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
 #if INTERNAL
             debugSignal.Add(AnalogChannel.Dbg0, new float[2048]);
             for (int i = 0; i < 2048; i++)
@@ -151,7 +151,7 @@ namespace ECore.Devices
                         
                         Dictionary<ushort, Complex[]> subsamplingSpectrum = new Dictionary<ushort, Complex[]>();
                         subsamplingSpectrum.Add(0, artSpectr);
-                        for (ushort subsamplingBase10 = 1; subsamplingBase10 < 10; subsamplingBase10++)
+                        for (ushort subsamplingBase10 = 1; subsamplingBase10 < 20; subsamplingBase10++)
                         {
                             //subsample the reconstruction spectrum
                             artSpectr = FrequencyCompensation.SubsampleSpectrum(artSpectr);
@@ -461,7 +461,7 @@ namespace ECore.Devices
                 byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Get();
 
                 float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-                ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, frequencyCompensationCPULoad);
+                ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
 
                 data.SetData(AnalogChannel.ChA, ChAConverted);
 
@@ -469,7 +469,7 @@ namespace ECore.Devices
                 if (!header.GetStrobe(STR.LA_ENABLE))
                 {
                     float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
-                    ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, frequencyCompensationCPULoad);
+                    ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, FrequencyCompensationMode);
 
                     data.SetData(AnalogChannel.ChB, ChBConverted);
                 }
