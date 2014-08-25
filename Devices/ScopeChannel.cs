@@ -41,6 +41,9 @@ namespace ECore.Devices
 
         public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
         public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
+#if INTERNAL
+        public static readonly AnalogChannel Dbg0 = new AnalogChannel("DBG0", 0);
+#endif
     }
     public sealed class DigitalChannel : Channel {
         new public static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();

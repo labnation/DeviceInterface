@@ -58,6 +58,10 @@ namespace ECore.Devices
         private FrequencyCompensationCPULoad frequencyCompensationCPULoad = FrequencyCompensationCPULoad.Basic;
         public FrequencyCompensationCPULoad FrequencyCompensationEnabled { get; set; }
 
+#if INTERNAL
+        Dictionary<AnalogChannel, float[]> debugSignal = new Dictionary<AnalogChannel, float[]>();
+#endif
+
         public string Serial
         {
             get
@@ -83,6 +87,11 @@ namespace ECore.Devices
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
+#if INTERNAL
+            debugSignal.Add(AnalogChannel.Dbg0, new float[2048]);
+            for (int i = 0; i < 2048; i++)
+                debugSignal[AnalogChannel.Dbg0][i] = (float)((byte)(i / 8));
+#endif
         }
 
         public void Dispose()
@@ -467,6 +476,9 @@ namespace ECore.Devices
                 else
                     data.SetDataDigital(chB);
             }
+#if INTERNAL
+            data.SetData(AnalogChannel.Dbg0, debugSignal[AnalogChannel.Dbg0]);
+#endif
             return data;
         }
 
