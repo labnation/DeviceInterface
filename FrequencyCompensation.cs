@@ -12,12 +12,28 @@ namespace ECore
     {
         public static Complex[] ArtificialSpectrum;
 
-        public static void CreateArtificialSpectrum()
+        public static Complex[] CreateArtificialSpectrum(Dictionary<int, float> magnitudes, Dictionary<int, float> phases)//int[] magnitudeIndices, float[] magnitudeValues, int[] phaseIndices, float[] phaseValues)
         {
-            int[] magnitudeIndices = new int[] { 1023, 1015, 1005, 965, 885, 785, 685, 445, 425, 395, 365, 335, 305, 265, 165, 45 };
-            float[] magnitudeValues = new float[] {  627815040,   643415040,   647075072,   656008448,   651880192,   647894400,   644999744,   635582208,   635468736,   667781888,   672049792,   648512320,   626668544,   584405568,   484322144,   389749024 };
-            int[] phaseIndices = new int[] { 45, 265, 365, 405, 445, 685, 925, 1005, 1015, 1023 };
-            float[] phaseValues = new float[] { 0.2136f,    0.1108f,    0.0527f,    0.0250f,         0f,   -0.0229f,   -0.0085f,   -0.0100f,   -0.0078f,   -0.0025f };
+            //precondition incoming data for easier lookups
+            int[] magnitudeIndices = new int[magnitudes.Count];
+            float[] magnitudeValues = new float[magnitudes.Count];            
+            for (int i = 0; i < magnitudes.Count; i++)
+            {
+                magnitudeIndices[i] = magnitudes.ElementAt(i).Key;
+                magnitudeValues[i] = magnitudes.ElementAt(i).Value;
+            }
+
+            int[] phaseIndices = new int[phases.Count];
+            float[] phaseValues = new float[phases.Count];
+            for (int i = 0; i < phases.Count; i++)
+            {
+                phaseIndices[i] = phases.ElementAt(i).Key;
+                
+                //WHOOHAH!! Dirtiness alert!!!!!!!!
+                //the FFT/IFFT implemented in AForge uses opposite phases compared to matlab!!!
+                //since the spectrum is calibrated in matlab, but compensated with AForge, we need to negate the phase somewhere.
+                phaseValues[i] = -phases.ElementAt(i).Value;
+            }
 
             ///////////////////////////
             // Phase data
@@ -95,21 +111,7 @@ namespace ECore
                 finalImaginary[i] = (float)finalSpectrum[i].Im;
             }
 
-            //save
-            FrequencyCompensation.ArtificialSpectrum = finalSpectrum;
-
-            DumpToCSV(magnitudeValues, "magnitudeValues.csv");
-            DumpToCSV(magnitudeValues_full, "magnitudeValues_full.csv");
-            DumpToCSV(normalizedMagnitudeValues, "normMag.csv");
-            DumpToCSV(phaseValues, "phaseValues.csv");
-            DumpToCSV(phaseValues_full, "phaseValues_full.csv");
-            DumpToCSV(interpolatedPhaseValues, "phases.csv");
-            DumpToCSV(artReal, "reals.csv");
-            DumpToCSV(artImaginary, "imaginaries.csv");
-            DumpToCSV(finalReal, "finalReals.csv");
-            DumpToCSV(finalImaginary, "finalImaginaries.csv");
-            
-            int j = 0;
+            return finalSpectrum;
         }
 
         public static void DumpToCSV(float[] inp, string filename)
@@ -212,7 +214,20 @@ namespace ECore
             for (int i = 0; i < compensatedData.Length; i++)
                 compensatedData[i] = (float)fftd[i].Re +meanValue;
 
-            return compensatedData;
+            return TimeDomainCompensation(compensatedData);
         }
+
+        private static float[] TimeDomainCompensation(float[] spectrallyCompensatedData)
+        {
+            float[] finalData = new float[spectrallyCompensatedData.Length];
+
+            for (int i = 1; i < spectrallyCompensatedData.Length; i++)
+            {
+                finalData[i] = (spectrallyCompensatedData[i] + spectrallyCompensatedData[i - 1]) / 2f;
+            }
+
+            return finalData;
+        }
+
     }
 }

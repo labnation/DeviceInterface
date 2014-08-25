@@ -7,7 +7,7 @@ using System.IO;
 using ECore.DataSources;
 using ECore.HardwareInterfaces;
 using Common;
-
+using AForge.Math;
 
 namespace ECore.Devices
 {
@@ -52,6 +52,8 @@ namespace ECore.Devices
         private bool acquisitionRunning = false;
         private GainCalibration[] channelSettings;
         private float triggerLevel = 0f;
+        private Dictionary<AnalogChannel, Dictionary<double, Complex[]>> compensationSpectrum;
+        public bool FrequencyCompensationEnabled { get; private set; }
 
         public string Serial
         {
@@ -75,6 +77,7 @@ namespace ECore.Devices
         {
             deviceReady = false;
             channelSettings = new GainCalibration[2];
+            FrequencyCompensationEnabled = true;
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
@@ -125,6 +128,17 @@ namespace ECore.Devices
 
                     //Init ROM
                     this.rom = new Rom(hardwareInterface);
+
+                    //precalc compensation spectra
+                    this.compensationSpectrum = new Dictionary<AnalogChannel, Dictionary<double, Complex[]>>() {
+                        { AnalogChannel.ChA, new Dictionary<double, Complex[]>() },
+                        { AnalogChannel.ChB, new Dictionary<double, Complex[]>() },
+                    };
+                    foreach (FrequencyResponse fr in rom.frequencyResponse)
+                    {
+                        Complex[] artSpectr = FrequencyCompensation.CreateArtificialSpectrum(fr.magnitudes, fr.phases);
+                        compensationSpectrum[fr.channel].Add(fr.multiplier, artSpectr);
+                    }
 
                     //Init FPGA
                     LogWait("Starting fpga flashing...", 0);
@@ -423,13 +437,23 @@ namespace ECore.Devices
             }
             else
             {
-                data.SetData(AnalogChannel.ChA,
-                    ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
+                float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
+
+                if (FrequencyCompensationEnabled)
+                    ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA], ChAConverted);
+
+                data.SetData(AnalogChannel.ChA, ChAConverted);
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!header.GetStrobe(STR.LA_ENABLE))
-                    data.SetData(AnalogChannel.ChB,
-                        ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
+                {
+                    float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
+
+                    if (FrequencyCompensationEnabled)
+                        ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB], ChBConverted);
+
+                    data.SetData(AnalogChannel.ChB, ChBConverted);
+                }
                 else
                     data.SetDataDigital(chB);
             }
