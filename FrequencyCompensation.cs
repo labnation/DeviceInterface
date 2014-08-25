@@ -8,6 +8,8 @@ using AForge.Math;
 
 namespace ECore
 {
+    public enum FrequencyCompensationCPULoad { Off, Basic, Full }
+
     public static class FrequencyCompensation
     {
         public static Complex[] ArtificialSpectrum;
@@ -189,8 +191,10 @@ namespace ECore
             return finalValues;
         }*/
 
-        public static float[] Compensate(Complex[] compensationSpectrum, float[] dataToCompensate)
+        public static float[] Compensate(Complex[] compensationSpectrum, float[] dataToCompensate, FrequencyCompensationCPULoad cpuLoad)
         {
+            if (cpuLoad == FrequencyCompensationCPULoad.Off) return dataToCompensate;
+
             //take mean and subtract
             float meanValue = dataToCompensate.Average();
             float[] dcRemoved = new float[dataToCompensate.Length];
@@ -214,7 +218,15 @@ namespace ECore
             for (int i = 0; i < compensatedData.Length; i++)
                 compensatedData[i] = (float)fftd[i].Re +meanValue;
 
-            return TimeDomainCompensation(compensatedData);
+            switch (cpuLoad)
+            {
+                case FrequencyCompensationCPULoad.Basic:
+                    return TimeDomainCompensationSimple(compensatedData);
+                case FrequencyCompensationCPULoad.Full:
+                    return TimeDomainCompensationComplex(compensatedData);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -260,7 +272,7 @@ namespace ECore
             return result;
         }
 
-        private static float[] TimeDomainCompensation(float[] spectrallyCompensatedData)
+        private static float[] TimeDomainCompensationSimple(float[] spectrallyCompensatedData)
         {
             float[] finalData = new float[spectrallyCompensatedData.Length];
 
@@ -268,6 +280,56 @@ namespace ECore
             {
                 finalData[i] = (spectrallyCompensatedData[i] + spectrallyCompensatedData[i - 1]) / 2f;
             }
+
+            return finalData;
+        }
+
+        private static float[] TimeDomainCompensationComplex(float[] spectrallyCompensatedData)
+        {
+            float[] filteredSignal = new float[spectrallyCompensatedData.Length];
+            for (int i = 1; i < spectrallyCompensatedData.Length; i++)
+                filteredSignal[i] = (spectrallyCompensatedData[i] + spectrallyCompensatedData[i - 1]) / 2f;
+            
+            float[] ricoSignal = new float[spectrallyCompensatedData.Length];
+            for (int i = 1; i < spectrallyCompensatedData.Length; i++)
+                ricoSignal[i] = (float)Math.Abs(spectrallyCompensatedData[i]-spectrallyCompensatedData[i-1]);
+
+            float[] smallestVariation = new float[spectrallyCompensatedData.Length];
+            for (int i = 10; i < spectrallyCompensatedData.Length-2; i++)
+			{
+			    float[] section = new float[5];
+                for (int j = 0; j < 5; j++)
+			    {
+			        section[j] = ricoSignal[i+j-2];
+                    smallestVariation[i] = section.Min();
+			    }
+			}
+
+            float[] regionSwing = new float[spectrallyCompensatedData.Length];
+            float[] regionVariation = new float[spectrallyCompensatedData.Length];
+            for (int i = 10; i < regionSwing.Length-10; i++)
+			{
+			    float[] section = new float[20];
+                float[] section2 = new float[20];
+                for (int j = 0; j < 20; j++)
+			    {
+			        section[j] = spectrallyCompensatedData[i+j-10];
+                    section2[j] = smallestVariation[i+j-10];
+			    }
+                regionSwing[i] = section.Max() - section.Min();
+                regionVariation[i] = section2.Average();
+			}
+
+            float[] finalData = new float[spectrallyCompensatedData.Length];
+            for (int i = 0; i < spectrallyCompensatedData.Length; i++)
+			{
+                if (regionVariation[i] > regionSwing[i]/10f)
+                {
+                    finalData[i] = spectrallyCompensatedData[i];
+                }else{
+                    finalData[i] = filteredSignal[i];
+                }
+			}
 
             return finalData;
         }

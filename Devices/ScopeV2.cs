@@ -55,7 +55,8 @@ namespace ECore.Devices
 
         //Select through: AnalogChannel, multiplier, subsampling
         private Dictionary<AnalogChannel, Dictionary<double, Dictionary<ushort, Complex[]>>> compensationSpectrum;
-        public bool FrequencyCompensationEnabled { get; private set; }
+        private FrequencyCompensationCPULoad frequencyCompensationCPULoad = FrequencyCompensationCPULoad.Basic;
+        public FrequencyCompensationCPULoad FrequencyCompensationEnabled { get; set; }
 
         public string Serial
         {
@@ -79,7 +80,6 @@ namespace ECore.Devices
         {
             deviceReady = false;
             channelSettings = new GainCalibration[2];
-            FrequencyCompensationEnabled = true;
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
@@ -452,9 +452,7 @@ namespace ECore.Devices
                 byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Get();
 
                 float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-
-                if (FrequencyCompensationEnabled)
-                    ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted);
+                ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, frequencyCompensationCPULoad);
 
                 data.SetData(AnalogChannel.ChA, ChAConverted);
 
@@ -462,9 +460,7 @@ namespace ECore.Devices
                 if (!header.GetStrobe(STR.LA_ENABLE))
                 {
                     float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
-
-                    if (FrequencyCompensationEnabled)
-                        ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted);
+                    ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, frequencyCompensationCPULoad);
 
                     data.SetData(AnalogChannel.ChB, ChBConverted);
                 }
