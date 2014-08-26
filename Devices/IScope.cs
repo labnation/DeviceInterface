@@ -27,19 +27,19 @@ namespace ECore.Devices
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
-        void SetVerticalRange(int channel, float minimum, float maximum);
-        void SetYOffset(int channel, float offset);
-        void SetTriggerChannel(int channel);
+        void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
+        void SetYOffset(AnalogChannel channel, float offset);
+        void SetTriggerChannel(AnalogChannel channel);
         void SetTriggerDirection(TriggerDirection direction);
         void SetTriggerMode(TriggerMode mode);
         void SetForceTrigger();
-        void SetCoupling(int channel, Coupling coupling);
+        void SetCoupling(AnalogChannel channel, Coupling coupling);
         void SetTriggerWidth(uint width);
         uint GetTriggerWidth();
         void SetTriggerThreshold(uint threshold);
         uint GetTriggerThreshold();
         
-        Coupling GetCoupling(int channel);
+        Coupling GetCoupling(AnalogChannel channel);
         void SetTimeRange(double timeRange);
         DataSources.DataSourceScope DataSourceScope { get; }
 

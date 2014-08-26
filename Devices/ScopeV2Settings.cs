@@ -12,8 +12,9 @@ namespace ECore.Devices
         public static readonly int[] validChannels = { 0, 1 };
         public static readonly double[] validDividers = { 1, 6, 36 };
         public static readonly double[] validMultipliers = { 1.1, 2, 3 };
-        private Dictionary<int, Coupling> coupling = new Dictionary<int, Coupling>() {
-            {0, Coupling.DC}, {1, Coupling.DC}
+        private Dictionary<AnalogChannel, Coupling> coupling = new Dictionary<AnalogChannel, Coupling>() {
+            {AnalogChannel.ChA, Coupling.DC}, 
+            {AnalogChannel.ChB, Coupling.DC}
         };
         private double holdoff;
 #if INTERNAL
@@ -31,14 +32,6 @@ namespace ECore.Devices
         {
             //FIXME: implement this
             return (byte)((int)volt);
-        }
-        private void validateChannel(int ch)
-        {
-            if (!validChannels.Contains(ch))
-                throw new ValidationException(
-                    "Invalid channel, valid values are: " +
-                    String.Join(", ", validChannels.Select(x => x.ToString()).ToArray())
-                    );
         }
         private void validateDivider(double div)
         {
@@ -81,11 +74,12 @@ namespace ECore.Devices
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
-        public void SetYOffset(int channel, float offset)
+        public void SetYOffset(AnalogChannel channel, float offset)
         {
-            validateChannel(channel);
+            if (!channel.Physical)
+                return;
             //FIXME: convert offset to byte value
-            REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
+            REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
             double[] c = channelSettings[channel].coefficients;
@@ -101,8 +95,10 @@ namespace ECore.Devices
         /// <param name="channel"></param>
         /// <param name="minimum"></param>
         /// <param name="maximum"></param>
-        public void SetVerticalRange(int channel, float minimum, float maximum)
+        public void SetVerticalRange(AnalogChannel channel, float minimum, float maximum)
         {
+            if (!channel.Physical)
+                return;
             //The voltage range for div/mul = 1/1
             //20140808: these seem to be OK: on div0/mult0 the ADC input range is approx 1.3V
             float baseMin = -0.6345f; //V
@@ -125,7 +121,7 @@ namespace ECore.Devices
             }
             SetDivider(channel, validDividers[dividerIndex]);
             SetMultiplier(channel, validMultipliers[multIndex]);
-            channelSettings[channel] = rom.getCalibration(AnalogChannel.listPhysical.Where(x => x.Value == channel).First(), validDividers[dividerIndex], validMultipliers[multIndex]);
+            channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
             SetTriggerAnalog(this.triggerLevel);
         }
 
@@ -139,12 +135,13 @@ namespace ECore.Devices
 		#else
 		private
 		#endif
-		void SetDivider(int channel, double divider)
+		void SetDivider(AnalogChannel channel, double divider)
 		{
-			validateChannel(channel);
+            if (!channel.Physical)
+                return;
 			validateDivider(divider);
             byte div = (byte)(Array.IndexOf(validDividers, divider));
-			int bitOffset = channel * 4;
+			int bitOffset = channel.Value * 4;
 			byte mask = (byte)(0x3 << bitOffset);
 
 			byte divMul = FpgaSettingsMemory[REG.DIVIDER_MULTIPLIER].GetByte();
@@ -162,12 +159,13 @@ namespace ECore.Devices
 		#else
 		private
 		#endif
-		void SetMultiplier(int channel, double multiplier)
+		void SetMultiplier(AnalogChannel channel, double multiplier)
 		{
-			validateChannel(channel);
+            if (!channel.Physical)
+                return;
 			validateMultiplier(multiplier);
 
-			int bitOffset = channel * 4;
+			int bitOffset = channel.Value * 4;
 			byte mul = (byte)(Array.IndexOf(validMultipliers, multiplier) << 2);
 			byte mask = (byte)(0xC << bitOffset);
 
@@ -177,10 +175,11 @@ namespace ECore.Devices
 		}
 
 #if INTERNAL
-        public void SetYOffsetByte(int channel, byte offset)
+        public void SetYOffsetByte(AnalogChannel channel, byte offset)
         {
-            validateChannel(channel);
-            REG r = (channel == 0) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
+            if (!channel.Physical)
+                return;
+            REG r = channel == AnalogChannel.ChA ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set Y offset for channel " + channel + " to " + offset + " (int value)");
             FpgaSettingsMemory[r].Set(offset);
         }
@@ -195,18 +194,20 @@ namespace ECore.Devices
         }
 #endif
 
-        public void SetCoupling(int channel, Coupling coupling)
+        public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {
-            validateChannel(channel);
-            STR dc = (channel == 0) ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
+            if (!channel.Physical)
+                return;
+            STR dc = channel == AnalogChannel.ChA ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
             bool enableDc = coupling == Coupling.DC;
             Logger.Debug("Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
             StrobeMemory[dc].Set(enableDc);
         }
-        public Coupling GetCoupling(int channel)
+        public Coupling GetCoupling(AnalogChannel channel)
         {
             //FIXME: make this part of the header instead of reading it
-            validateChannel(channel);
+            if (!channel.Physical)
+                return Coupling.AC;
             return this.coupling[channel];
         }
 
@@ -221,7 +222,7 @@ namespace ECore.Devices
         {
             this.triggerLevel = voltage;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
-            REG offsetRegister = GetTriggerChannel() == 1 ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+            REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
             if(coefficients != null)
                 level = (voltage - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
@@ -245,23 +246,26 @@ namespace ECore.Devices
         /// Choose channel upon which to trigger
         /// </summary>
         /// <param name="channel"></param>
-        public void SetTriggerChannel(int channel)
+        public void SetTriggerChannel(AnalogChannel channel)
         {
-            validateChannel(channel);
+            if (!channel.Physical)
+                return;
+
             FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                 (byte)(
                     (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) + 
-                    (channel << 2)
+                    (channel.Value << 2)
                 )
             );
-            Logger.Debug(" Set trigger channel to " + (channel == 0 ? " CH A" : "CH B"));
+            Logger.Debug(" Set trigger channel to " + (channel == AnalogChannel.ChA ? " CH A" : "CH B"));
             SetTriggerAnalog(this.triggerLevel);
         }
 
 
-        public int GetTriggerChannel()
+        public AnalogChannel GetTriggerChannel()
         {         
-            return (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2;
+            int chNumber = (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2;
+            return AnalogChannel.listPhysical.Single(x => x.Value == chNumber);
         }
 
         /// <summary>

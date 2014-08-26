@@ -50,7 +50,7 @@ namespace ECore.Devices
         private const double BASE_SAMPLE_PERIOD = 10e-9;
         private const uint NUMBER_OF_SAMPLES = 2048;
         private bool acquisitionRunning = false;
-        private GainCalibration[] channelSettings;
+        private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private float triggerLevel = 0f;
 
         //Select through: AnalogChannel, multiplier, subsampling
@@ -82,7 +82,6 @@ namespace ECore.Devices
             : base()
         {
             deviceReady = false;
-            channelSettings = new GainCalibration[2];
             this.scopeConnectHandler += handler;
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
@@ -264,10 +263,12 @@ namespace ECore.Devices
 
             //Enable scope controller
             StrobeMemory[STR.SCOPE_ENABLE].Set(true);
-            SetVerticalRange(0, -1f, 1f);
-            SetVerticalRange(1, -1f, 1f);
-            SetYOffset(0, 0f);
-            SetYOffset(1, 0f);
+            foreach(AnalogChannel ch in AnalogChannel.listPhysical)
+            {
+                SetVerticalRange(ch, -1f, 1f);
+                SetYOffset(ch, 0f);
+                SetCoupling(ch, Coupling.DC);
+            }
 
             StrobeMemory[STR.ENABLE_ADC].Set(true);
             StrobeMemory[STR.ENABLE_RAM].Set(true);
@@ -275,8 +276,6 @@ namespace ECore.Devices
 
             SetTriggerWidth(6);
             SetTriggerThreshold(2);            
-            SetCoupling(0, Coupling.DC);
-            SetCoupling(1, Coupling.DC);
 
             try
             {
@@ -404,8 +403,8 @@ namespace ECore.Devices
             ram_test_done:
 #endif
 
-            this.coupling[0] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
-            this.coupling[1] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
+            this.coupling[AnalogChannel.ChA] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
+            this.coupling[AnalogChannel.ChB] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
 
 #if INTERNAL
             if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM))

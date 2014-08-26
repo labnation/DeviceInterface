@@ -35,10 +35,12 @@ namespace ECore.Devices
     }
     public sealed class AnalogChannel : Channel 
     {
+        public bool Physical { get; private set; }
         new public static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
         public static HashSet<AnalogChannel> listPhysical = new HashSet<AnalogChannel>();
         private AnalogChannel(string name, int value, bool physical) : base(name, value) { 
             list.Add(this);
+            Physical = physical;
             if (physical)
                 listPhysical.Add(this);
         }
@@ -47,7 +49,7 @@ namespace ECore.Devices
         public static readonly AnalogChannel ChA = new AnalogChannel("A", 0, true);
         public static readonly AnalogChannel ChB = new AnalogChannel("B", 1, true);
 #if INTERNAL
-        public static readonly AnalogChannel Dbg0 = new AnalogChannel("DBG0", 0, false);
+        public static readonly AnalogChannel Dbg0 = new AnalogChannel("DBG0", -1, false);
 #endif
     }
     public sealed class DigitalChannel : Channel {
