@@ -36,13 +36,18 @@ namespace ECore.Devices
     public sealed class AnalogChannel : Channel 
     {
         new public static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
-        private AnalogChannel(string name, int value) : base(name, value) { list.Add(this); }
+        public static HashSet<AnalogChannel> listPhysical = new HashSet<AnalogChannel>();
+        private AnalogChannel(string name, int value, bool physical) : base(name, value) { 
+            list.Add(this);
+            if (physical)
+                listPhysical.Add(this);
+        }
         override public void Destroy() { /* indestructable */ }
 
-        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
-        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
+        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0, true);
+        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1, true);
 #if INTERNAL
-        public static readonly AnalogChannel Dbg0 = new AnalogChannel("DBG0", 0);
+        public static readonly AnalogChannel Dbg0 = new AnalogChannel("DBG0", 0, false);
 #endif
     }
     public sealed class DigitalChannel : Channel {

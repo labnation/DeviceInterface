@@ -125,7 +125,7 @@ namespace ECore.Devices
             }
             SetDivider(channel, validDividers[dividerIndex]);
             SetMultiplier(channel, validMultipliers[multIndex]);
-            channelSettings[channel] = rom.getCalibration(AnalogChannel.list.Where(x => x.Value == channel).First(), validDividers[dividerIndex], validMultipliers[multIndex]);
+            channelSettings[channel] = rom.getCalibration(AnalogChannel.listPhysical.Where(x => x.Value == channel).First(), validDividers[dividerIndex], validMultipliers[multIndex]);
             SetTriggerAnalog(this.triggerLevel);
         }
 

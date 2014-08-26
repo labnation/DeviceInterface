@@ -23,7 +23,7 @@ namespace ECore.DataSources
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
 
-            foreach (AnalogChannel ch in AnalogChannel.list)
+            foreach (AnalogChannel ch in AnalogChannel.listPhysical)
                 channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
 
             foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.list)
