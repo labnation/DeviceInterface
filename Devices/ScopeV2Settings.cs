@@ -51,6 +51,7 @@ namespace ECore.Devices
         }
         private void toggleUpdateStrobe()
         {
+            if (!Connected) return;
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(false);
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(true);
         }
@@ -76,8 +77,8 @@ namespace ECore.Devices
         /// <param name="offset">Vertical offset in Volt</param>
         public void SetYOffset(AnalogChannel channel, float offset)
         {
-            if (!channel.Physical)
-                return;
+            if (!Connected) return;
+            if (!channel.Physical) return;
             //FIXME: convert offset to byte value
             REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
@@ -97,8 +98,8 @@ namespace ECore.Devices
         /// <param name="maximum"></param>
         public void SetVerticalRange(AnalogChannel channel, float minimum, float maximum)
         {
-            if (!channel.Physical)
-                return;
+            if (!Connected) return;
+            if (!channel.Physical) return;
             //The voltage range for div/mul = 1/1
             //20140808: these seem to be OK: on div0/mult0 the ADC input range is approx 1.3V
             float baseMin = -0.6345f; //V
@@ -137,8 +138,7 @@ namespace ECore.Devices
 		#endif
 		void SetDivider(AnalogChannel channel, double divider)
 		{
-            if (!channel.Physical)
-                return;
+            if (!channel.Physical) return;
 			validateDivider(divider);
             byte div = (byte)(Array.IndexOf(validDividers, divider));
 			int bitOffset = channel.Value * 4;
@@ -161,8 +161,7 @@ namespace ECore.Devices
 		#endif
 		void SetMultiplier(AnalogChannel channel, double multiplier)
 		{
-            if (!channel.Physical)
-                return;
+            if (!channel.Physical) return;
 			validateMultiplier(multiplier);
 
 			int bitOffset = channel.Value * 4;
@@ -177,8 +176,7 @@ namespace ECore.Devices
 #if INTERNAL
         public void SetYOffsetByte(AnalogChannel channel, byte offset)
         {
-            if (!channel.Physical)
-                return;
+            if (!channel.Physical) return;
             REG r = channel == AnalogChannel.ChA ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set Y offset for channel " + channel + " to " + offset + " (int value)");
             FpgaSettingsMemory[r].Set(offset);
@@ -220,6 +218,7 @@ namespace ECore.Devices
         ///<param name="level">Trigger level in volt</param>
         public void SetTriggerAnalog(float voltage)
         {
+            if (!Connected) return;
             this.triggerLevel = voltage;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
@@ -315,6 +314,7 @@ namespace ECore.Devices
         }
         public void SetAcquisitionRunning(bool running)
         {
+            if (!Connected) return;
             STR s;
             if (running)
                 s = STR.ACQ_START;
@@ -397,6 +397,7 @@ namespace ECore.Devices
         /// <param name="data">AWG data</param>
         public void setAwgData(byte[] data)
         {
+            if (!Connected) return;
             if (data.Length != 2048)
                 throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
 
@@ -406,6 +407,7 @@ namespace ECore.Devices
         public void setAwgEnabled(bool enable)
         {
             //Disable logic analyser in case AWG is being enabled
+            if (!Connected) return;
             if(enable)
                 StrobeMemory[STR.LA_ENABLE].WriteImmediate(false);
             StrobeMemory[STR.AWG_ENABLE].WriteImmediate(enable);
