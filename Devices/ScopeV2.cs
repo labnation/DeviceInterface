@@ -306,7 +306,7 @@ namespace ECore.Devices
         public void SoftReset()
         {
             dataSourceScope.Reset();
-            if(Connected)
+            if(Ready)
                 Configure();
         }
 
@@ -482,7 +482,8 @@ namespace ECore.Devices
         }
 
         //FIXME: this needs proper handling
-        public override bool Connected { get { return this.hardwareInterface != null && this.flashed && this.deviceReady; } }
+        private bool Connected { get { return this.hardwareInterface != null && this.flashed; } }
+        public override bool Ready { get { return this.Connected && this.deviceReady; } }
 
         #endregion
     }

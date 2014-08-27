@@ -18,7 +18,7 @@ namespace ECore.Devices
     {
         DataPackageScope GetScopeData();
 
-        bool Connected { get; }
+        bool Ready { get; }
         string Serial { get; }
         double GetDefaultTimeRange();
         void SetAcquisitionMode(AcquisitionMode mode);

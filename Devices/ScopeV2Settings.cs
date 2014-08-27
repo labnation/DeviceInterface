@@ -326,7 +326,7 @@ namespace ECore.Devices
 
         public bool GetAcquisitionRunning()
         {
-            return Connected && acquisitionRunning;
+            return Ready && acquisitionRunning;
         }
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)

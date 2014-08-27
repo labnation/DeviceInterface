@@ -173,7 +173,7 @@ namespace ECore.Devices
             return finalWave;
         }
 
-        public override bool Connected { get { return true; } }
+        public override bool Ready { get { return true; } }
 
         private static void AddNoise(float[] output, double noiseAmplitude)
         {

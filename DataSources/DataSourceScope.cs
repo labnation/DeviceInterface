@@ -80,7 +80,7 @@ namespace ECore.DataSources
                 Logger.Error("Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
-            while (running && device.Connected)
+            while (running && device.Ready)
             {
                 LatestDataPackage = scope.GetScopeData();
                 if (LatestDataPackage != null)

@@ -18,7 +18,7 @@ namespace ECore.Devices
         private
 #endif
         List<DeviceMemory> Memories { get { return memories; } }
-        public abstract bool Connected { get; }
+        public abstract bool Ready { get; }
 
 		#if ANDROID
 		public static Android.Content.Context ApplicationContext;
