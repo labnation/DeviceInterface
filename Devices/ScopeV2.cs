@@ -86,11 +86,6 @@ namespace ECore.Devices
             dataSourceScope = new DataSources.DataSourceScope(this);
             InitializeHardwareInterface();
             FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
-#if INTERNAL
-            debugSignal.Add(AnalogChannel.Dbg0, new float[2048]);
-            for (int i = 0; i < 2048; i++)
-                debugSignal[AnalogChannel.Dbg0][i] = (float)((byte)(i / 8));
-#endif
         }
 
         public void Dispose()
@@ -475,9 +470,6 @@ namespace ECore.Devices
                 else
                     data.SetDataDigital(chB);
             }
-#if INTERNAL
-            data.SetData(AnalogChannel.Dbg0, debugSignal[AnalogChannel.Dbg0]);
-#endif
             return data;
         }
 
