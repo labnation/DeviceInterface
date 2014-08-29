@@ -343,7 +343,7 @@ namespace ECore.Devices
                 acquisitionMultiplePower = (byte)Math.Ceiling(Math.Log(timeScaler, 2));
             else
                 acquisitionMultiplePower = 0;
-            FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Set(acquisitionMultiplePower);
+            FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(acquisitionMultiplePower);
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
             /*
             if(acquisitionMultiplePower > 0)

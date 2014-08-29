@@ -47,8 +47,13 @@ namespace ECore.Devices
         public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
 
         private bool disableVoltageConversion = false;
-        private const double BASE_SAMPLE_PERIOD = 10e-9;
+        byte[] chA = null, chB = null;
+
+        private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const uint NUMBER_OF_SAMPLES = 2048;
+        private const int BURST_SIZE = 64;
+        private const int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 14;
+
         private bool acquisitionRunning = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private float triggerLevel = 0f;
@@ -326,62 +331,72 @@ namespace ECore.Devices
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
         public DataPackageScope GetScopeData()
         {
-            int samplesToFetch = 2048;
-            int bytesToFetch = 64 + samplesToFetch * 2;//64 byte header + 2048 * 2 channels
             if (hardwareInterface == null)
                 return null;
 
-            
             byte[] buffer;
             ScopeV2Header header;
-            byte[] chA = null, chB = null;
-            int dataOffset = 0;
-            while (true)
+            
+            try { buffer = hardwareInterface.GetData(BURST_SIZE); }
+            catch (ScopeIOException) { return null; }
+            if (buffer == null) return null;
+
+            try { header = new ScopeV2Header(buffer); }
+            catch (Exception e)
             {
-                // Get data
-                try { buffer = hardwareInterface.GetData(bytesToFetch); }
-                catch (ScopeIOException) { return null; }
-                if (buffer == null) return null;
-                // Parse header
-
-                try { header = new ScopeV2Header(buffer); }
-                catch (Exception e)
-                {
-                    Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
-                    OnDeviceConnect(this.hardwareInterface, false);
-                    return null;
-                }
-
-                // Re-assemble
-                int payloadOffset = header.bytesPerBurst;
-                if (chA == null)
-                {
-                    dataOffset = 0;
-                    //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
-                    int acquisitionLength = header.Samples;// *(1 << (header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)));
-                    chA = new byte[acquisitionLength];
-                    chB = new byte[acquisitionLength];
-                }
-                for (int i = 0; i < header.Samples; i++)
-                {
-                    chA[dataOffset + i] = buffer[payloadOffset + 2 * i];
-                    chB[dataOffset + i] = buffer[payloadOffset + 2 * i + 1];
-                }
-                //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
-                //if (header.dumpSequence >= (1 << header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) - header.GetRegister(REG.VIEW_DECIMATION)) - 1)
-                    break;
-                dataOffset += header.Samples;
+                Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
+                OnDeviceConnect(this.hardwareInterface, false);
+                return null;
             }
 
+            try { buffer = hardwareInterface.GetData(BURST_SIZE * header.NumberOfPayloadBursts); }
+            catch (Exception e)
+            {
+                Logger.Error("Failed to fetch payload - disconnecting scope: " + e.Message);
+                OnDeviceConnect(this.hardwareInterface, false);
+                return null;
+            }
+
+            //If it's part of an acquisition of which we already received
+            //samples, add to previously received data
+            int dataOffset = 0;
+            if (header.PackageOffset != 0)
+            {
+                byte[] chANew = new byte[chA.Length + header.Samples];
+                byte[] chBNew = new byte[chB.Length + header.Samples];
+                chA.CopyTo(chANew, 0);
+                chB.CopyTo(chBNew, 0);
+                chA = chANew;
+                chB = chBNew;
+                dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
+            }
+            else //New acquisition, new buffers
+            {
+                chA = new byte[header.Samples];
+                chB = new byte[header.Samples];
+            }
+
+            for (int i = 0; i < header.Samples; i++)
+            {
+                chA[dataOffset + i] = buffer[2 * i];
+                chB[dataOffset + i] = buffer[2 * i + 1];
+            }
             acquisitionRunning = header.ScopeRunning;
             //FIXME: Get these scope settings from header
             int triggerIndex = 0;
 
+            //If we're not decimating a lot don't return partial package
+            if (
+                header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION 
+            && 
+                header.PackageSize * BURST_SIZE / header.Channels > chA.Length
+            )
+              return null;
 #if INTERNAL
             if (header.GetStrobe(STR.DEBUG_RAM) && header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) == 0)
             {
                 UInt16[] testData = new UInt16[header.Samples];
-                Buffer.BlockCopy(buffer, header.bytesPerBurst, testData, 0, sizeof(UInt16) * testData.Length);
+                Buffer.BlockCopy(buffer, header.BytesPerBurst, testData, 0, sizeof(UInt16) * testData.Length);
                 for (int i = 1; i < testData.Length; i++)
                 {
                     UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
@@ -455,7 +470,10 @@ namespace ECore.Devices
                 byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Get();
 
                 float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-                ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
+                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
+                
+                if(performFrequencyCompensation)
+                    ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
 
                 data.SetData(AnalogChannel.ChA, ChAConverted);
 
@@ -463,7 +481,8 @@ namespace ECore.Devices
                 if (!header.GetStrobe(STR.LA_ENABLE))
                 {
                     float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
-                    ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, FrequencyCompensationMode);
+                    if (performFrequencyCompensation)
+                        ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, FrequencyCompensationMode);
 
                     data.SetData(AnalogChannel.ChB, ChBConverted);
                 }

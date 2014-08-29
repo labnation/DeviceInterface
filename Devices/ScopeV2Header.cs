@@ -10,17 +10,17 @@ namespace ECore.Devices
     internal class ScopeV2Header
     {
         private byte[] raw;
-        private byte bursts;
-
-        internal int dumpSequence { get; private set; }
-        internal byte bytesPerBurst { get; private set; }
+        internal int NumberOfPayloadBursts { get; private set; }
+        internal int PackageOffset { get; private set; }
+        internal int PackageSize { get; private set; }
+        internal byte BytesPerBurst { get; private set; }
         
         internal int Samples { get; private set; }
         internal double SamplePeriod { get; private set; }
         
         internal bool ScopeRunning { get; private set; }
-        internal const int channels = 2;
-        internal int TriggerAddress;
+        internal readonly int Channels = 2;
+        internal int TriggerAddress { get; private set; }
         
         internal ScopeV2Header(byte[] data)
         {
@@ -32,17 +32,22 @@ namespace ECore.Devices
             int headerOffset = data[2];
             Array.Copy(data, headerOffset, raw, 0, headerSize);
             
-            bytesPerBurst = data[3];
-            bursts = data[4];
-            TriggerAddress = data[6] + (data[7] << 8) + (data[8] << 16);
-            dumpSequence = data[9] + (data[10] << 8);
-            Samples = bursts * bytesPerBurst / channels;
+            BytesPerBurst = data[3];
+            NumberOfPayloadBursts = data[4] + (data[5] << 8);
+            //FIXME: this should be corrected in FW
+            if (NumberOfPayloadBursts == 0)
+                NumberOfPayloadBursts = 64;
+            PackageOffset = (short)(data[6] + (data[7] << 8));
+            PackageSize = (short)(data[8] + (data[9] << 8));
+            
+            Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
+            ScopeRunning = Utils.IsBitSet(data[10], 0);
 
+            TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
             //SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
             //For now, we hardcoded this case in the FPGA
             SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.ACQUISITION_MULTIPLE_POWER) + GetRegister(REG.INPUT_DECIMATION));
-            ScopeRunning = Utils.IsBitSet(data[5], 0);
         }
 
         internal byte GetRegister(REG r)
@@ -90,7 +95,8 @@ namespace ECore.Devices
 			REG.DIVIDER_MULTIPLIER,
 			REG.INPUT_DECIMATION, 
             REG.ACQUISITION_MULTIPLE_POWER,
-            REG.TRIGGER_THRESHOLD
+            REG.TRIGGER_THRESHOLD,
+            REG.TRIGGER_PWM
         };
         internal static readonly REG[] DumpRegisters = new REG[]
         {
