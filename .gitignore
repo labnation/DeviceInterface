@@ -6,3 +6,4 @@ Release/
 Resource.designer.cs
 *csproj.user
 .DS_Store
+/packages/
