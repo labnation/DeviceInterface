@@ -50,7 +50,7 @@ namespace ECore.Devices
         byte[] chA = null, chB = null;
 
         private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
-        private const uint NUMBER_OF_SAMPLES = 2048;
+        private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
         private const int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 14;
 
@@ -186,6 +186,7 @@ namespace ECore.Devices
             }
             else
             {
+                acquisitionRunning = false;
                 deviceReady = false;
                 if (this.hardwareInterface == hwInterface)
                 {
@@ -300,7 +301,9 @@ namespace ECore.Devices
         public void Reset()
         {
             this.DataSourceScope.Stop();
-            this.hardwareInterface.Reset();
+            try { this.hardwareInterface.Reset(); }
+            catch (ScopeIOException)
+            { OnDeviceConnect(this.hardwareInterface, false); }
         }
 #endif
         public void SoftReset()
@@ -356,30 +359,71 @@ namespace ECore.Devices
                 OnDeviceConnect(this.hardwareInterface, false);
                 return null;
             }
-
-            //If it's part of an acquisition of which we already received
-            //samples, add to previously received data
-            int dataOffset = 0;
-            if (header.PackageOffset != 0)
+                
+            if (buffer == null)
             {
-                byte[] chANew = new byte[chA.Length + header.Samples];
-                byte[] chBNew = new byte[chB.Length + header.Samples];
-                chA.CopyTo(chANew, 0);
-                chB.CopyTo(chBNew, 0);
-                chA = chANew;
-                chB = chBNew;
-                dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
+                Logger.Error("Failed to get payload");
+                OnDeviceConnect(this.hardwareInterface, false);
+                return null;
             }
-            else //New acquisition, new buffers
+
+            int dataOffset;
+            if (header.Rolling)
             {
-                chA = new byte[header.Samples];
-                chB = new byte[header.Samples];
+                if (chA == null)
+                {
+                    chA = new byte[header.Samples];
+                    chB = new byte[header.Samples];
+                    dataOffset = 0;
+                }
+                else //blow up the array
+                {
+                    byte[] chANew = new byte[chA.Length + header.Samples];
+                    byte[] chBNew = new byte[chB.Length + header.Samples];
+                    chA.CopyTo(chANew, 0);
+                    chB.CopyTo(chBNew, 0);
+                    dataOffset = chA.Length;
+                    chA = chANew;
+                    chB = chBNew;
+                }
+            }
+            else
+            {
+                //If it's part of an acquisition of which we already received
+                //samples, add to previously received data
+                dataOffset = 0;
+                if (header.PackageOffset != 0)
+                {
+                    byte[] chANew = new byte[chA.Length + header.Samples];
+                    byte[] chBNew = new byte[chB.Length + header.Samples];
+                    chA.CopyTo(chANew, 0);
+                    chB.CopyTo(chBNew, 0);
+                    chA = chANew;
+                    chB = chBNew;
+                    dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
+                }
+                else //New acquisition, new buffers
+                {
+                    chA = new byte[header.Samples];
+                    chB = new byte[header.Samples];
+                }
             }
 
             for (int i = 0; i < header.Samples; i++)
             {
                 chA[dataOffset + i] = buffer[2 * i];
                 chB[dataOffset + i] = buffer[2 * i + 1];
+            }
+
+            //In rolling mode, crop the channel to the display length
+            if (chA.Length > NUMBER_OF_SAMPLES)
+            {
+                byte[] chANew = new byte[NUMBER_OF_SAMPLES];
+                byte[] chBNew = new byte[NUMBER_OF_SAMPLES];
+                Array.ConstrainedCopy(chA, chA.Length - NUMBER_OF_SAMPLES, chANew, 0, NUMBER_OF_SAMPLES);
+                Array.ConstrainedCopy(chB, chB.Length - NUMBER_OF_SAMPLES, chBNew, 0, NUMBER_OF_SAMPLES);
+                chA = chANew;
+                chB = chBNew;
             }
             acquisitionRunning = header.ScopeRunning;
             //FIXME: Get these scope settings from header
@@ -470,7 +514,7 @@ namespace ECore.Devices
                 byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Get();
 
                 float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
+                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION && !header.Rolling;
                 
                 if(performFrequencyCompensation)
                     ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);

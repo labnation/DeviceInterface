@@ -19,6 +19,7 @@ namespace ECore.Devices
         internal double SamplePeriod { get; private set; }
         
         internal bool ScopeRunning { get; private set; }
+        internal bool Rolling { get; private set; }
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
         
@@ -42,6 +43,7 @@ namespace ECore.Devices
             
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
             ScopeRunning = Utils.IsBitSet(data[10], 0);
+            Rolling = Utils.IsBitSet(data[10], 1);
 
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
@@ -113,7 +115,8 @@ namespace ECore.Devices
 			STR.CHA_DCCOUPLING,
 			STR.CHB_DCCOUPLING,
             STR.DEBUG_RAM,
-            STR.DIGI_DEBUG
+            STR.DIGI_DEBUG,
+            STR.ROLL
         };
     }
 }

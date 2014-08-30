@@ -54,6 +54,7 @@ namespace ECore.DeviceMemories
 		EN_OPAMP_B = 23,
 		AWG_DEBUG = 24,
 		DIGI_DEBUG = 25,
+		ROLL = 26,
     }
 
     public enum ROM
