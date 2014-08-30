@@ -511,7 +511,7 @@ namespace ECore.Devices
             }
             else
             {
-                byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.ACQUISITION_MULTIPLE_POWER].Get();
+                byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.INPUT_DECIMATION].Get();
 
                 float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
                 bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION && !header.Rolling;
