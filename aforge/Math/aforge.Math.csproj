@@ -56,10 +56,6 @@
     <DocumentationFile>AForge.Math.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AForge, Version=2.0.0.0, Culture=neutral, PublicKeyToken=c1db6ff4eaa06aeb, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Release\AForge.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -141,4 +137,10 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <ProjectReference Include="..\Core\aforge.Core.csproj">
+      <Project>{631AC093-430F-45F4-BA0C-AF0F0405918A}</Project>
+      <Name>aforge.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

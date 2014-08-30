@@ -64,7 +64,11 @@ namespace ECore.Devices {
 
 #else
 #if DEBUG
-                string fileName = String.Format("{0}.bin", fwName);
+                string prefix = "";
+                #if OSX
+                prefix = "../MonoBundle/";
+                #endif
+                string fileName = String.Format("{0}{1}.bin", prefix, fwName);
                 firmwareModified = new FileInfo(fileName).LastWriteTime;
                 firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #else
