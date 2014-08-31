@@ -274,11 +274,13 @@ namespace ECore
 
         private static float[] TimeDomainCompensationSimple(float[] spectrallyCompensatedData)
         {
-            float[] finalData = new float[spectrallyCompensatedData.Length];
+            int cutOff = 48;
 
-            for (int i = 1; i < spectrallyCompensatedData.Length; i++)
+            float[] finalData = new float[spectrallyCompensatedData.Length-cutOff];
+
+            for (int i = 0; i < finalData.Length; i++)
             {
-                finalData[i] = (spectrallyCompensatedData[i] + spectrallyCompensatedData[i - 1]) / 2f;
+                finalData[i] = (spectrallyCompensatedData[i+cutOff] + spectrallyCompensatedData[i +cutOff-1]) / 2f;
             }
 
             return finalData;
@@ -320,14 +322,15 @@ namespace ECore
                 regionVariation[i] = section2.Average();
 			}
 
-            float[] finalData = new float[spectrallyCompensatedData.Length];
-            for (int i = 0; i < spectrallyCompensatedData.Length; i++)
+            int cutOff = 48;
+            float[] finalData = new float[spectrallyCompensatedData.Length-cutOff];
+            for (int i = 0; i < finalData.Length; i++)
 			{
-                if (regionVariation[i] > regionSwing[i]/10f)
+                if (regionVariation[i+cutOff] > regionSwing[i+cutOff]/10f)
                 {
-                    finalData[i] = spectrallyCompensatedData[i];
+                    finalData[i] = spectrallyCompensatedData[i+cutOff];
                 }else{
-                    finalData[i] = filteredSignal[i];
+                    finalData[i] = filteredSignal[i+cutOff];
                 }
 			}
 
