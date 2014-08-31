@@ -276,14 +276,19 @@ namespace ECore
         {
             int cutOff = 48;
 
-            float[] finalData = new float[spectrallyCompensatedData.Length-cutOff];
-
-            for (int i = 0; i < finalData.Length; i++)
+            if (cutOff == 0)
             {
-                finalData[i] = (spectrallyCompensatedData[i+cutOff] + spectrallyCompensatedData[i +cutOff-1]) / 2f;
+                return spectrallyCompensatedData;
             }
-
-            return finalData;
+            else
+            {
+                float[] finalData = new float[spectrallyCompensatedData.Length - cutOff];
+                for (int i = 0; i < finalData.Length; i++)
+                {
+                    finalData[i] = (spectrallyCompensatedData[i + cutOff] + spectrallyCompensatedData[i + cutOff - 1]) / 2f;
+                }
+                return finalData;
+            }
         }
 
         private static float[] TimeDomainCompensationComplex(float[] spectrallyCompensatedData)
