@@ -64,7 +64,7 @@ namespace ECore.Devices {
 
 #else
 #if INTERNAL
-                string fileName = String.Format("{1}.bin", fwName);
+                string fileName = String.Format("{0}.bin", fwName);
                 firmwareModified = new FileInfo(fileName).LastWriteTime;
                 firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #else
