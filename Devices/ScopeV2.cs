@@ -275,7 +275,7 @@ namespace ECore.Devices
             StrobeMemory[STR.ENABLE_RAM].Set(true);
             StrobeMemory[STR.ENABLE_NEG].Set(true);
 
-            SetTriggerWidth(6);
+            SetTriggerWidth(2);
             SetTriggerThreshold(2);            
 
             try
