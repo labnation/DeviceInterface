@@ -520,6 +520,8 @@ namespace ECore.Devices
                     ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
 
                 data.SetData(AnalogChannel.ChA, ChAConverted);
+                //FIXME: this is because the frequency compensation changes the data length
+                data.Samples = ChAConverted.Length;
 
                 //Check if we're in LA mode and fill either analog channel B or digital channels
                 if (!header.GetStrobe(STR.LA_ENABLE))

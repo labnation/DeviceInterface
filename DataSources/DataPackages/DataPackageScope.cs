@@ -103,6 +103,7 @@ namespace ECore.DataSources
         /// <summary>
         /// The number of samples stored per channel
         /// </summary>
-        public int Samples { get; private set; }
+        //FIXME: this should be a private set, but is internal since a FIXME in ScopeV2.GetScopeData()
+        public int Samples { get; internal set; }
     }
 }
