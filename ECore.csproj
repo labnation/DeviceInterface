@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;INTERNAL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -38,17 +38,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release Internal|AnyCPU'">
-    <OutputPath>bin\Release Internal\</OutputPath>
-    <DefineConstants>TRACE;INTERNAL</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Development|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Development\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;INTERNAL</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
+    <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-    <WarningLevel>4</WarningLevel>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MathNet.Numerics">
@@ -120,10 +119,10 @@
     </None>
     <None Include="i2c_sequence.mat" />
     <None Include="packages.config" />
-    <None Include="SmartScope_A10.bin">
+    <None Include="SmartScope_A10.bin" Condition=" '$(Configuration)' == 'Development' ">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="SmartScope_A12.bin">
+    <None Include="SmartScope_A12.bin" Condition=" '$(Configuration)' == 'Development' ">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -162,7 +161,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug OSX|AnyCPU' ">
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug OSX</OutputPath>
-    <DefineConstants>TRACE;DEBUG;INTERNAL;OSX</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;OSX</DefineConstants>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
