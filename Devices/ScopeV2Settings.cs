@@ -26,6 +26,8 @@ namespace ECore.Devices
 #endif
         static byte yOffsetMin = 10;
 
+        public bool chunkyAcquisitions { get; private set; }
+
         #region helpers
 
         private byte voltToByte(float volt)
@@ -351,6 +353,7 @@ namespace ECore.Devices
             else
                 acquisitionMultiplePower = 0;
             FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(acquisitionMultiplePower);
+            chunkyAcquisitions = acquisitionMultiplePower >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
             /*
             if(acquisitionMultiplePower > 0)
@@ -447,6 +450,5 @@ namespace ECore.Devices
         }
 
         #endregion
-
     }
 }
