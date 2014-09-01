@@ -52,7 +52,8 @@ namespace ECore.Devices
         private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
-        private const int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 14;
+        //FIXME: this should be automatically parsed from VHDL
+        public const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
 
         private bool acquisitionRunning = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
@@ -63,7 +64,7 @@ namespace ECore.Devices
         public FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
 
 #if INTERNAL
-        Dictionary<AnalogChannel, float[]> debugSignal = new Dictionary<AnalogChannel, float[]>();
+        public bool DebugDigital { get; set; }
 #endif
 
         public string Serial
@@ -431,7 +432,7 @@ namespace ECore.Devices
 
             //If we're not decimating a lot don't return partial package
             if (
-                header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION 
+                header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE 
             && 
                 header.PackageSize * BURST_SIZE / header.Channels > chA.Length
             )
@@ -461,7 +462,7 @@ namespace ECore.Devices
             this.coupling[AnalogChannel.ChB] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
 
 #if INTERNAL
-            if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM))
+            if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM) && DebugDigital)
             {
                 //Test if data in CHB is correct
                 byte[] testVector = new byte[chB.Length];
@@ -513,27 +514,40 @@ namespace ECore.Devices
             {
                 byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.INPUT_DECIMATION].Get();
 
-                float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION && !header.Rolling;
-                
-                if(performFrequencyCompensation)
-                    ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
+                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE && !header.Rolling;
+                bool logicAnalyserOnChannelA = header.GetStrobe(STR.LA_ENABLE) && !header.GetStrobe(STR.LA_CHANNEL);
+                bool logicAnalyserOnChannelB = header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.LA_CHANNEL);
 
-                data.SetData(AnalogChannel.ChA, ChAConverted);
-                //FIXME: this is because the frequency compensation changes the data length
-                data.Samples = ChAConverted.Length;
+                if (logicAnalyserOnChannelA)
+                {
+                    data.SetDataDigital(chA);
+                }
+                else
+                {
+                    float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
 
-                //Check if we're in LA mode and fill either analog channel B or digital channels
-                if (!header.GetStrobe(STR.LA_ENABLE))
+                    if (performFrequencyCompensation)
+                        ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
+
+                    data.SetData(AnalogChannel.ChA, ChAConverted);
+                    //FIXME: this is because the frequency compensation changes the data length
+                    data.Samples = ChAConverted.Length;
+                }
+
+                if (logicAnalyserOnChannelB)
+                {
+                    data.SetDataDigital(chB);
+                }
+                else
                 {
                     float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
                     if (performFrequencyCompensation)
                         ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, FrequencyCompensationMode);
 
                     data.SetData(AnalogChannel.ChB, ChBConverted);
+                    data.Samples = ChBConverted.Length;
                 }
-                else
-                    data.SetDataDigital(chB);
+                    
             }
             return data;
         }

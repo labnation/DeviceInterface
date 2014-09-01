@@ -10,7 +10,7 @@ namespace ECore.Devices
     public enum TriggerDirection { RISING = 0, FALLING = 1 };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
-    public enum DigitalTriggerValue { O, I, R, F, X };
+    public enum DigitalTriggerValue { L, H, R, F, X };
 
     public delegate void ScopeConnectHandler(IScope scope, bool connected);
 
@@ -39,6 +39,12 @@ namespace ECore.Devices
         void SetTriggerThreshold(uint threshold);
         uint GetTriggerThreshold();
         
+        void SetEnableLogicAnalyser(bool enable);
+        void SetLogicAnalyserChannel(AnalogChannel channel);
+
+        void setAwgData(double[] data);
+        void setAwgEnabled(bool enable);
+
         Coupling GetCoupling(AnalogChannel channel);
         void SetTimeRange(double timeRange);
         DataSources.DataSourceScope DataSourceScope { get; }

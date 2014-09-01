@@ -98,7 +98,11 @@ namespace ECore.Devices
 			REG.INPUT_DECIMATION, 
             REG.ACQUISITION_MULTIPLE_POWER,
             REG.TRIGGER_THRESHOLD,
-            REG.TRIGGER_PWM
+            REG.TRIGGER_PWM,
+			REG.DIGITAL_TRIGGER_RISING,
+			REG.DIGITAL_TRIGGER_FALLING,
+			REG.DIGITAL_TRIGGER_HIGH,
+			REG.DIGITAL_TRIGGER_LOW
         };
         internal static readonly REG[] DumpRegisters = new REG[]
         {
@@ -116,7 +120,8 @@ namespace ECore.Devices
 			STR.CHB_DCCOUPLING,
             STR.DEBUG_RAM,
             STR.DIGI_DEBUG,
-            STR.ROLL
+            STR.ROLL,
+            STR.LA_CHANNEL
         };
     }
 }

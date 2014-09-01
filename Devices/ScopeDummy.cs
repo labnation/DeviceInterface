@@ -198,12 +198,12 @@ namespace ECore.Devices {
                     Utils.ClearBit(ref digitalTrigger.triggerMask, bit);
                     Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
                 }
-                if (value == DigitalTriggerValue.I)
+                if (value == DigitalTriggerValue.H)
                 {
                     Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
                     Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
                 }
-                if (value == DigitalTriggerValue.O)
+                if (value == DigitalTriggerValue.L)
                 {
                     Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
                     Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
@@ -307,6 +307,15 @@ namespace ECore.Devices {
             _channelConfig[channel] = config;
 
 		}
+
+        //FIXME: implement this
+        public void SetEnableLogicAnalyser(bool enable) { }
+        //FIXME: implement this
+        public void SetLogicAnalyserChannel(AnalogChannel channel) { }
+        //FIXME: implement this
+        public void setAwgData(double[] data) { }
+        //FIXME: implement this
+        public void setAwgEnabled(bool enable) { }
 
 		#endregion
 

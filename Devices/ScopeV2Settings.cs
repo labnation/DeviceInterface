@@ -331,7 +331,14 @@ namespace ECore.Devices
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
         {
-            //throw new NotImplementedException();
+            int rising  = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R  ? 1 : 0) << x.Key.Value));
+            int falling = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
+            int high    = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H    ? 1 : 0) << x.Key.Value));
+            int low     = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L     ? 1 : 0) << x.Key.Value));
+            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_RISING].Set((byte)rising);
+            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
+            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
+            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_LOW].Set((byte)low);
         }
 
         public void SetTimeRange(double timeRange)
@@ -391,17 +398,27 @@ namespace ECore.Devices
 
         #region AWG/LA
 
+
+        public void SetEnableLogicAnalyser(bool enable)
+        {
+            StrobeMemory[STR.LA_ENABLE].Set(enable);
+        }
+        public void SetLogicAnalyserChannel(AnalogChannel channel)
+        {
+            StrobeMemory[STR.LA_CHANNEL].Set(channel == AnalogChannel.ChB);
+        }
         /// <summary>
         /// Set the data with which the AWG runs
         /// </summary>
         /// <param name="data">AWG data</param>
-        public void setAwgData(byte[] data)
+        public void setAwgData(double[] data)
         {
             if (!Connected) return;
             if (data.Length != 2048)
                 throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
 
-            hardwareInterface.SetControllerRegister(HardwareInterfaces.ScopeController.AWG, 0, data);
+            byte[] converted = data.Select(x => (byte)Math.Min(255, Math.Max(0, (x / 3.3 * 255)))).ToArray();
+            hardwareInterface.SetControllerRegister(HardwareInterfaces.ScopeController.AWG, 0, converted);
         }
 
         public void setAwgEnabled(bool enable)
