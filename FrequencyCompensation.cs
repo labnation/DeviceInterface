@@ -342,5 +342,37 @@ namespace ECore
             return finalData;
         }
 
+        /// <summary>
+        /// Detects patches with variations of max 1 value. Replace those by rolling average to get monotonous increasing or decreasing waves.
+        /// </summary>
+        /// <param name="inVoltages"></param>
+        /// <param name="inBytes"></param>
+        /// <returns></returns>
+        public static float[] TimeDomainSmoothing(float[] inVoltages, byte[] inBytes)
+        {
+            int noDifferenceSampleCounter = 0;
+            float rollingValue = inVoltages[0];
+            float[] outVoltages = inVoltages;
+
+            float smoothness = 0.6f;
+            float invSmoothness = 1f - smoothness;
+            for (int i = 1; i < inVoltages.Length; i++)
+            {
+                rollingValue = smoothness * rollingValue + invSmoothness * inVoltages[i];
+                if (inBytes[i] == inBytes[i - 1])
+                    noDifferenceSampleCounter++;
+                else if (inBytes[i] == inBytes[i - 1] - 1)
+                    noDifferenceSampleCounter++;
+                else if (inBytes[i] == inBytes[i - 1] + 1)
+                    noDifferenceSampleCounter++;
+                else
+                    noDifferenceSampleCounter = 0;
+
+                if (noDifferenceSampleCounter > 15)
+                    outVoltages[i] = rollingValue;
+            }
+
+            return outVoltages;
+        }
     }
 }
