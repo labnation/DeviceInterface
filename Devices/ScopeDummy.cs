@@ -315,6 +315,8 @@ namespace ECore.Devices {
         //FIXME: implement this
         public void setAwgData(double[] data) { }
         //FIXME: implement this
+        public void setAwgStretching(int decimation) { }
+        //FIXME: implement this
         public void setAwgEnabled(bool enable) { }
 
 		#endregion

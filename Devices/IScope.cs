@@ -43,6 +43,7 @@ namespace ECore.Devices
         void SetLogicAnalyserChannel(AnalogChannel channel);
 
         void setAwgData(double[] data);
+        void setAwgStretching(int decimation);
         void setAwgEnabled(bool enable);
 
         Coupling GetCoupling(AnalogChannel channel);

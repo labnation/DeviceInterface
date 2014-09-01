@@ -33,6 +33,9 @@ namespace ECore.DeviceMemories
 		VIEW_ACQUISITIONS = 15,
 		VIEW_BURSTS = 16,
 		AWG_DEBUG = 17,
+		AWG_DECIMATION = 28,
+		AWG_SAMPLES_B0 = 29,
+		AWG_SAMPLES_B1 = 30,
     }
 
     public enum STR

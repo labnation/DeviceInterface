@@ -414,11 +414,27 @@ namespace ECore.Devices
         public void setAwgData(double[] data)
         {
             if (!Connected) return;
-            if (data.Length != 2048)
-                throw new ValidationException("While setting AWG data: data buffer needs to be of length 2048, got " + data.Length);
+            if (data.Length == 0)
+                throw new ValidationException("While setting AWG data: data buffer empty");
+
+            if (data.Length > 2048)
+                throw new ValidationException("While setting AWG data: data buffer can't be longer than 2048 samples, got " + data.Length);
 
             byte[] converted = data.Select(x => (byte)Math.Min(255, Math.Max(0, (x / 3.3 * 255)))).ToArray();
+
+            FpgaSettingsMemory[REG.AWG_SAMPLES_B0].Set((byte)(data.Length - 1));
+            FpgaSettingsMemory[REG.AWG_SAMPLES_B1].Set((byte)((data.Length - 1) >> 8));
+
             hardwareInterface.SetControllerRegister(HardwareInterfaces.ScopeController.AWG, 0, converted);
+        }
+
+        public void setAwgStretching(int decimation) 
+        {
+            if (decimation > 255 || decimation < 0)
+            {
+                throw new ValidationException(String.Format("AWG stretching out of range [0,255] - got {0}", decimation));
+            }
+            FpgaSettingsMemory[REG.AWG_DECIMATION].Set((byte)decimation);
         }
 
         public void setAwgEnabled(bool enable)
