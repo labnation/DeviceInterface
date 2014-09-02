@@ -12,6 +12,7 @@ namespace ECore.Devices
             return a.Order - b.Order;
         }
         private static int order = 0;
+        public bool Destructable { get { return false; } }
         public string Name { get; protected set; }
         public int Value { get; protected set; }
         public static explicit operator int(Channel ch) { return ch.Value; }
@@ -26,6 +27,11 @@ namespace ECore.Devices
             this.Order = order;
             order++;
             list.Add(this);
+        }
+        public static void Destroy(Channel ch)
+        {
+            if (ch.Destructable)
+                list.Remove(ch);
         }
 
         public override string ToString()
