@@ -6,10 +6,7 @@ using System.IO;
 using System.Reflection;
 
 namespace MatlabFileIO
-{ 
-    public enum MatfileVersion { 
-        MATFILE_5
-    };
+{
     public class Variable
     {
         public Type dataType;
@@ -17,20 +14,25 @@ namespace MatlabFileIO
         public object data;
     }
 
-    public class Tag
+    internal enum MatfileVersion
+    {
+        MATFILE_5
+    };
+
+    internal class Tag
     {
         public Type dataType;
         public UInt32 length;
         public object data; //In case of small data format, otherwise null
     }
 
-    public class Header
+    internal class Header
     {
         public String text;
         public MatfileVersion version;
         public Header(byte[] bytes)
         {
-            if(bytes.Length != 128)
+            if (bytes.Length != 128)
                 throw new IOException("Matlab header should be 128 charachters");
 
             char[] textChars = new char[116];
@@ -44,7 +46,7 @@ namespace MatlabFileIO
         }
     }
 
-    public static class MatfileHelper
+    internal static class MatfileHelper
     {
         public const int SZ_TAG = 8; //Tag size in bytes
 

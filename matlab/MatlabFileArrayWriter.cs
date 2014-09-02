@@ -5,7 +5,7 @@ using System.IO;
 
 namespace MatlabFileIO
 {
-    public interface IMatlabFileWriterLocker
+    internal interface IMatlabFileWriterLocker
     {
         bool HasFinished();
     }
