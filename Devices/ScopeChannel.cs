@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.Devices
 {
-    public class Channel
+    public abstract class Channel
     {
         public static int CompareByOrder(Channel a, Channel b)
         {
