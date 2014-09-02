@@ -10,6 +10,7 @@ using ECore.DataSources;
 
 namespace ECore.Devices
 {
+    public enum ProbeDivision { X1, X10 };
     public enum TriggerDirection { RISING = 0, FALLING = 1 };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
@@ -43,6 +44,8 @@ namespace ECore.Devices
         uint GetTriggerWidth();
         void SetTriggerThreshold(uint threshold);
         uint GetTriggerThreshold();
+        void SetProbeDivision(AnalogChannel ch, ProbeDivision division);
+        ProbeDivision GetProbeDivision(AnalogChannel ch);
         
         void SetEnableLogicAnalyser(bool enable);
         void SetLogicAnalyserChannel(AnalogChannel channel);

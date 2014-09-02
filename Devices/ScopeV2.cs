@@ -105,6 +105,15 @@ namespace ECore.Devices
         {
             deviceReady = false;
             this.scopeConnectHandler += handler;
+
+            coupling = new Dictionary<AnalogChannel, Coupling>();
+            probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
+            foreach (AnalogChannel ch in AnalogChannel.List)
+            {
+                coupling[ch] = Coupling.DC;
+                probeSettings[ch] = ProbeDivision.X1;
+            }
+
             dataSourceScope = new DataSources.DataSource(this);
             InitializeHardwareInterface();
             FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
@@ -285,7 +294,7 @@ namespace ECore.Devices
             {
                 SetVerticalRange(ch, -1f, 1f);
                 SetYOffset(ch, 0f);
-                SetCoupling(ch, Coupling.DC);
+                SetCoupling(ch, coupling[ch]);
             }
 
             StrobeMemory[STR.ENABLE_ADC].Set(true);
@@ -337,14 +346,18 @@ namespace ECore.Devices
 
         #region data_handlers
 
-        private float[] ConvertByteToVoltage(AnalogChannel ch, double divider, double multiplier, byte[] buffer, byte yOffset)
+        private float[] ConvertByteToVoltage(AnalogChannel ch, double divider, double multiplier, byte[] buffer, byte yOffset, ProbeDivision division)
         {
             double[] coefficients = rom.getCalibration(ch, divider, multiplier).coefficients;
             float[] voltage = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value
             float totalOffset = (float)(yOffset * coefficients[1] + coefficients[2]);
-            voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset)).ToArray();
+            float gain = 1f;
+            if (division == ProbeDivision.X10)
+                gain = 10f;
+
+            voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * gain).ToArray();
             return voltage;
         }
 
@@ -543,7 +556,7 @@ namespace ECore.Devices
                 }
                 else
                 {
-                    float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
+                    float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]);
 
                     if (TimeSmoothingEnabled)
                         ChAConverted = ECore.FrequencyCompensation.TimeDomainSmoothing(ChAConverted, chA);
@@ -562,7 +575,7 @@ namespace ECore.Devices
                 }
                 else
                 {
-                    float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
+                    float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]);
                     
                     if (TimeSmoothingEnabled)
                         ChBConverted = ECore.FrequencyCompensation.TimeDomainSmoothing(ChBConverted, chB);

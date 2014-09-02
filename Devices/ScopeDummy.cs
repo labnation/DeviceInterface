@@ -52,6 +52,8 @@ namespace ECore.Devices {
         private Dictionary<AnalogChannel, DummyScopeChannelConfig> _channelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
         public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get { return _channelConfig; } }
 
+        private Dictionary<AnalogChannel, ProbeDivision> probeSettings;
+
 		private const int outputWaveLength = 2048;
 		private float triggerLevel = 0;
 		private double triggerHoldoff = 0;
@@ -80,6 +82,7 @@ namespace ECore.Devices {
 		public DummyScope (ScopeConnectHandler handler)
             : base ()
 		{
+            probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 _channelConfig.Add(ch, new DummyScopeChannelConfig()
@@ -92,6 +95,7 @@ namespace ECore.Devices {
                     phase = 0,
                     waveform = WaveForm.TRIANGLE
                 });
+                probeSettings[ch] = ProbeDivision.X1;
             }
 
             timeOrigin = DateTime.Now;
@@ -141,6 +145,16 @@ namespace ECore.Devices {
 
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {
+        }
+
+        public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
+        {
+            probeSettings[ch] = division;
+        }
+
+        public ProbeDivision GetProbeDivision(AnalogChannel ch)
+        {
+            return probeSettings[ch];
         }
 
         public void SetYOffset(AnalogChannel ch, float yOffset)

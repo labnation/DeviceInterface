@@ -18,10 +18,9 @@ namespace ECore.Devices
         public 
 #endif
         static readonly double[] validMultipliers = { 1.1, 2, 3 };
-        private Dictionary<AnalogChannel, Coupling> coupling = new Dictionary<AnalogChannel, Coupling>() {
-            {AnalogChannel.ChA, Coupling.DC}, 
-            {AnalogChannel.ChB, Coupling.DC}
-        };
+        private Dictionary<AnalogChannel, Coupling> coupling;
+        private Dictionary<AnalogChannel, ProbeDivision> probeSettings;
+
         private double holdoff;
 #if INTERNAL
         public 
@@ -130,6 +129,16 @@ namespace ECore.Devices
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
             SetTriggerAnalog(this.triggerLevel);
+        }
+
+        public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
+        {
+            probeSettings[ch] = division;
+        }
+
+        public ProbeDivision GetProbeDivision(AnalogChannel ch)
+        {
+            return probeSettings[ch];
         }
 
 		/// <summary>
