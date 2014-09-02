@@ -8,7 +8,7 @@ using Common;
 using ECore.HardwareInterfaces;
 
 namespace ECore.Devices {
-	partial class ScopeV2 {
+	partial class SmartScope {
 		private bool FlashFpga ()
 		{
             this.flashed = false;

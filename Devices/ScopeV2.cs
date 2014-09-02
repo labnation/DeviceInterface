@@ -11,7 +11,7 @@ using AForge.Math;
 
 namespace ECore.Devices
 {
-    public partial class ScopeV2 : IScope, IDisposable
+    public partial class SmartScope : IScope, IDisposable
     {
 #if INTERNAL
     public
@@ -95,7 +95,7 @@ namespace ECore.Devices
 		public Android.Content.Res.AssetManager Assets;
 #endif
 
-        public ScopeV2(ScopeConnectHandler handler)
+        public SmartScope(ScopeConnectHandler handler)
             : base()
         {
             deviceReady = false;

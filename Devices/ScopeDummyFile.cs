@@ -8,7 +8,7 @@ using Common;
 
 namespace ECore.Devices
 {
-    partial class ScopeDummy
+    partial class DummyScope
     {
         private static float[] readChannelA = null;
         private static float[] readChannelB = null;
@@ -51,19 +51,19 @@ namespace ECore.Devices
                 output = new float[channels][];
                 for (int i = 0; i < channels; i++)
                 {
-                    output[i] = ScopeDummy.CropWave(outputWaveLength, waves[i], triggerIndex, triggerHoldoffInSamples);
+                    output[i] = DummyScope.CropWave(outputWaveLength, waves[i], triggerIndex, triggerHoldoffInSamples);
                     if (output[i] == null) return false;
                 }
                 return true;
             }
             else if (acqMode == AcquisitionMode.NORMAL || acqMode == AcquisitionMode.SINGLE)
             {
-                if (ScopeDummy.TriggerAnalog(acqMode, waves[triggerChannel.Value], triggerDirection, triggerHoldoffInSamples, triggerLevel, 0f, outputWaveLength, out triggerIndex))
+                if (DummyScope.TriggerAnalog(acqMode, waves[triggerChannel.Value], triggerDirection, triggerHoldoffInSamples, triggerLevel, 0f, outputWaveLength, out triggerIndex))
                 {
                     output = new float[channels][];
                     for (int i = 0; i < channels; i++)
                     {
-                        output[i] = ScopeDummy.CropWave(outputWaveLength, waves[i], triggerIndex, triggerHoldoffInSamples);
+                        output[i] = DummyScope.CropWave(outputWaveLength, waves[i], triggerIndex, triggerHoldoffInSamples);
                         if (output[i] == null) return false;
                     }
                     return true;

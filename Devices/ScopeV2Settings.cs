@@ -7,7 +7,7 @@ using Common;
 
 namespace ECore.Devices
 {
-    partial class ScopeV2
+    partial class SmartScope
     {
         public static readonly int[] validChannels = { 0, 1 };
         public static readonly double[] validDividers = { 1, 6, 36 };

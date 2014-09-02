@@ -9,7 +9,7 @@ using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace ECore.Devices
 {
-    partial class ScopeV2
+    partial class SmartScope
     {
 #if INTERNAL
         public
@@ -255,9 +255,9 @@ namespace ECore.Devices
                 //FIXME: this code can be cleaner and shorter I suppose
                 foreach (AnalogChannel ch in AnalogChannel.List)
                 {
-                    foreach (double divider in ScopeV2.validDividers)
+                    foreach (double divider in SmartScope.validDividers)
                     {
-                        foreach (double multiplier in ScopeV2.validMultipliers)
+                        foreach (double multiplier in SmartScope.validMultipliers)
                         {
                             double[] coeff = this.gainCalibration.Where(x => x.channel.Value == ch.Value && x.divider == divider && x.multiplier == multiplier).First().coefficients;
                             unsafe
@@ -274,7 +274,7 @@ namespace ECore.Devices
                 int phasesOffset = 0;
                 foreach (AnalogChannel ch in AnalogChannel.List)
                 {
-                    foreach (double multiplier in ScopeV2.validMultipliers)
+                    foreach (double multiplier in SmartScope.validMultipliers)
                     {
                         try
                         {
@@ -340,9 +340,9 @@ namespace ECore.Devices
                 int offset = 0;
                 foreach (AnalogChannel ch in AnalogChannel.List)
                 {
-                    foreach (double divider in ScopeV2.validDividers)
+                    foreach (double divider in SmartScope.validDividers)
                     {
-                        foreach (double multiplier in ScopeV2.validMultipliers)
+                        foreach (double multiplier in SmartScope.validMultipliers)
                         {
                             GainCalibration c = new GainCalibration()
                             {
@@ -371,7 +371,7 @@ namespace ECore.Devices
                 int phasesOffset = 0;
                 foreach (AnalogChannel ch in AnalogChannel.List)
                 {
-                    foreach (double multiplier in ScopeV2.validMultipliers)
+                    foreach (double multiplier in SmartScope.validMultipliers)
                     {
                         try
                         {

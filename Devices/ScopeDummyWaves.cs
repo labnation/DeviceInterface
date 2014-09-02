@@ -12,7 +12,7 @@ namespace ECore.Devices
 #endif
     };
 
-    partial class ScopeDummy
+    partial class DummyScope
     {
         public string Serial { get { return "DUMMY"; } }
         public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, ScopeDummyChannelConfig config )
@@ -26,25 +26,25 @@ namespace ECore.Devices
             float[] wave = new float[waveLength];
             switch(waveForm) {
                 case WaveForm.SINE:
-                    wave = ScopeDummy.WaveSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.COSINE:
-                    wave = ScopeDummy.WaveCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.SQUARE:
-                    wave = ScopeDummy.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.SAWTOOTH:
-                    wave = ScopeDummy.WaveSawTooth(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveSawTooth(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.TRIANGLE:
-                    wave = ScopeDummy.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.SAWTOOTH_SINE:
-                    wave = ScopeDummy.WaveSawtoothSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveSawtoothSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.MULTISINE:
-                    wave = ScopeDummy.WaveMultiCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, new float[] {1, 2, 4, 8 });
+                    wave = DummyScope.WaveMultiCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, new float[] {1, 2, 4, 8 });
                     break;
 #if INTERNAL
                 case WaveForm.HALF_BIG_HALF_UGLY:
@@ -135,20 +135,20 @@ namespace ECore.Devices
 
         public static float[] WaveHalfBigHalfUgly(uint awgPoints, double awgSamplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
-            float[] wave1 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude, phase + 0 * 168);
-            float[] wave2 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude * 0.4f, phase + 0 * 168);
+            float[] wave1 = DummyScope.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude, phase + 0 * 168);
+            float[] wave2 = DummyScope.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude * 0.4f, phase + 0 * 168);
 
-            float[] wave3 = ScopeDummy.WaveSawTooth(awgPoints, awgSamplePeriod, timeOffset, 50f, amplitude * 1f, phase + 0);
-            float[] wave4 = ScopeDummy.WaveSawTooth(awgPoints, awgSamplePeriod, timeOffset, 50f, amplitude * 0.4f, phase + 0);
+            float[] wave3 = DummyScope.WaveSawTooth(awgPoints, awgSamplePeriod, timeOffset, 50f, amplitude * 1f, phase + 0);
+            float[] wave4 = DummyScope.WaveSawTooth(awgPoints, awgSamplePeriod, timeOffset, 50f, amplitude * 0.4f, phase + 0);
 
-            float[] wave5 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 31, amplitude, phase + 0 * 912);
-            float[] wave6 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 31f, amplitude * 0.5f, phase + 0 * 912);
+            float[] wave5 = DummyScope.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 31, amplitude, phase + 0 * 912);
+            float[] wave6 = DummyScope.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 31f, amplitude * 0.5f, phase + 0 * 912);
 
-            float[] wave7 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 60, amplitude, phase + 0 * 912);
-            float[] wave8 = ScopeDummy.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 60f, amplitude * 0.5f, phase + 0 * 912);
+            float[] wave7 = DummyScope.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 60, amplitude, phase + 0 * 912);
+            float[] wave8 = DummyScope.WaveSquare(awgPoints, awgSamplePeriod, timeOffset, frequency * 60f, amplitude * 0.5f, phase + 0 * 912);
 
-            float[] wave9 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 800f, amplitude, 0 * 168);
-            float[] wave10 = ScopeDummy.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 800f, amplitude * 0.4f, phase + 0 * 168);
+            float[] wave9 = DummyScope.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 800f, amplitude, 0 * 168);
+            float[] wave10 = DummyScope.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 800f, amplitude * 0.4f, phase + 0 * 168);
 
             float[] finalWave = new float[wave1.Length];
 

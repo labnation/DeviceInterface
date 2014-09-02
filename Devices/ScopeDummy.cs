@@ -23,7 +23,7 @@ namespace ECore.Devices {
         public double noise;
     }
 
-	public partial class ScopeDummy : IScope {
+	public partial class DummyScope : IScope {
 #if INTERNAL
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
@@ -77,7 +77,7 @@ namespace ECore.Devices {
 
 		#region constructor / initializer
 
-		public ScopeDummy (ScopeConnectHandler handler)
+		public DummyScope (ScopeConnectHandler handler)
             : base ()
 		{
             foreach (AnalogChannel ch in AnalogChannel.List)
@@ -378,15 +378,15 @@ namespace ECore.Devices {
                         foreach (AnalogChannel channel in AnalogChannel.List)
                         {
                             int i = channel.Value;
-                            waveAnalog[i] = ScopeDummy.GenerateWave(waveLength,
+                            waveAnalog[i] = DummyScope.GenerateWave(waveLength,
                                 SamplePeriod,
                                 timeOffset.TotalSeconds,
                                 _channelConfig[channel]);
                             if (_channelConfig[channel].coupling == Coupling.AC)
-                                ScopeDummy.RemoveDcComponent(ref waveAnalog[i], _channelConfig[channel].frequency, SamplePeriod);
+                                DummyScope.RemoveDcComponent(ref waveAnalog[i], _channelConfig[channel].frequency, SamplePeriod);
                             else
-                                ScopeDummy.AddDcComponent(ref waveAnalog[i], (float)_channelConfig[channel].dcOffset);
-                            ScopeDummy.AddNoise(waveAnalog[i], _channelConfig[channel].noise);
+                                DummyScope.AddDcComponent(ref waveAnalog[i], (float)_channelConfig[channel].dcOffset);
+                            DummyScope.AddNoise(waveAnalog[i], _channelConfig[channel].noise);
                         }
 
                         //Generate some bullshit digital wave
@@ -405,7 +405,7 @@ namespace ECore.Devices {
 
                         //FIXME: properly implement trigger and LA mode and all like in SmartScope
                         //case TriggerMode.ANALOG:
-                            triggerDetected = ScopeDummy.TriggerAnalog(acquisitionMode, waveAnalog[triggerChannel.Value], triggerDirection,
+                            triggerDetected = DummyScope.TriggerAnalog(acquisitionMode, waveAnalog[triggerChannel.Value], triggerDirection,
                                 triggerHoldoffInSamples, triggerLevel, (float)_channelConfig[triggerChannel].noise,
                                 outputWaveLength, out triggerIndex);
                             break;
@@ -427,14 +427,14 @@ namespace ECore.Devices {
 
 					outputAnalog = new float[channels][];
 					for (int i = 0; i < channels; i++) {
-						outputAnalog [i] = ScopeDummy.CropWave (outputWaveLength, waveAnalog [i], triggerIndex, triggerHoldoffInSamples);
+						outputAnalog [i] = DummyScope.CropWave (outputWaveLength, waveAnalog [i], triggerIndex, triggerHoldoffInSamples);
 					}
-					outputDigital = ScopeDummy.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
+					outputDigital = DummyScope.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
 				} else if (waveSource == WaveSource.FILE) {
 					if (!GetWaveFromFile (acquisitionMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
                     foreach (AnalogChannel ch in AnalogChannel.List)
-                        ScopeDummy.AddNoise(outputAnalog[ch.Value], _channelConfig[ch].noise);
+                        DummyScope.AddNoise(outputAnalog[ch.Value], _channelConfig[ch].noise);
 					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
 				}
                 double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
