@@ -72,6 +72,7 @@ namespace ECore.Devices
         private
 #endif
         FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
+        public bool TimeSmoothingEnabled = true;
 
 #if INTERNAL
         public bool DebugDigital { get; set; }
@@ -536,6 +537,9 @@ namespace ECore.Devices
                 {
                     float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
 
+                    if (TimeSmoothingEnabled)
+                        ChAConverted = ECore.FrequencyCompensation.TimeDomainSmoothing(ChAConverted, chA);
+
                     if (performFrequencyCompensation)
                         ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
 
@@ -551,6 +555,10 @@ namespace ECore.Devices
                 else
                 {
                     float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
+                    
+                    if (TimeSmoothingEnabled)
+                        ChBConverted = ECore.FrequencyCompensation.TimeDomainSmoothing(ChBConverted, chB);
+
                     if (performFrequencyCompensation)
                         ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, FrequencyCompensationMode);
 
