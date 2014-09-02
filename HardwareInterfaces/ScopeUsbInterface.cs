@@ -11,7 +11,7 @@ namespace ECore.HardwareInterfaces
 {
     public class ScopeIOException : Exception
     {
-        public ScopeIOException(string msg) : base(msg) { }
+        internal ScopeIOException(string msg) : base(msg) { }
     }
 
 #if INTERNAL
