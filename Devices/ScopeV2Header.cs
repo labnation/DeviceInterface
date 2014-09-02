@@ -7,7 +7,7 @@ using Common;
 
 namespace ECore.Devices
 {
-    internal class ScopeV2Header
+    internal class SmartScopeHeader
     {
         private byte[] raw;
         internal int NumberOfPayloadBursts { get; private set; }
@@ -23,7 +23,7 @@ namespace ECore.Devices
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
         
-        internal ScopeV2Header(byte[] data)
+        internal SmartScopeHeader(byte[] data)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
             raw = new byte[headerSize];

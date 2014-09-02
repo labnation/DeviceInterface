@@ -15,7 +15,7 @@ namespace ECore.Devices
     partial class DummyScope
     {
         public string Serial { get { return "DUMMY"; } }
-        public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, ScopeDummyChannelConfig config )
+        public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, DummyScopeChannelConfig config )
         {
             WaveForm waveForm = config.waveform;
             double frequency = config.frequency;
@@ -48,7 +48,7 @@ namespace ECore.Devices
                     break;
 #if INTERNAL
                 case WaveForm.HALF_BIG_HALF_UGLY:
-                    wave = ScopeDummy.WaveHalfBigHalfUgly(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveHalfBigHalfUgly(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
 #endif
                 default:

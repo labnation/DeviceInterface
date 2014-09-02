@@ -402,7 +402,7 @@ namespace ECore.Devices
             }
 
 #if INTERNAL
-            public static ScopeV2.GainCalibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
+            public static SmartScope.GainCalibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
             {
                 int rows = adcValue.Length;
                 int cols = 3;
@@ -415,7 +415,7 @@ namespace ECore.Devices
                 var A = new DenseMatrix(rows, cols, matrixData);
                 var B = new DenseMatrix(rows, 1, inputVoltage);
                 var C = A.QR().Solve(B);
-                return new ScopeV2.GainCalibration()
+                return new SmartScope.GainCalibration()
                 {
                     channel = channel,
                     divider = div,

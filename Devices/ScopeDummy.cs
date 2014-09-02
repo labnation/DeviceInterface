@@ -12,7 +12,7 @@ namespace ECore.Devices {
 		GENERATOR
 	}
 
-    public struct ScopeDummyChannelConfig
+    public struct DummyScopeChannelConfig
     {
         public WaveForm waveform;
         public double amplitude;
@@ -49,8 +49,8 @@ namespace ECore.Devices {
 		private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
 
         public const uint channels = 2;
-        private Dictionary<AnalogChannel, ScopeDummyChannelConfig> _channelConfig = new Dictionary<AnalogChannel, ScopeDummyChannelConfig>();
-        public Dictionary<AnalogChannel, ScopeDummyChannelConfig> ChannelConfig { get { return _channelConfig; } }
+        private Dictionary<AnalogChannel, DummyScopeChannelConfig> _channelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
+        public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get { return _channelConfig; } }
 
 		private const int outputWaveLength = 2048;
 		private float triggerLevel = 0;
@@ -82,7 +82,7 @@ namespace ECore.Devices {
 		{
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                _channelConfig.Add(ch, new ScopeDummyChannelConfig()
+                _channelConfig.Add(ch, new DummyScopeChannelConfig()
                 {
                     amplitude = 2.0,
                     noise = 0.1,
@@ -227,7 +227,7 @@ namespace ECore.Devices {
 
 		public void SetCoupling (AnalogChannel ch, Coupling coupling)
 		{
-            ScopeDummyChannelConfig config = _channelConfig[ch];
+            DummyScopeChannelConfig config = _channelConfig[ch];
             config.coupling = coupling;
             _channelConfig[ch] = config;
 		}
@@ -253,21 +253,21 @@ namespace ECore.Devices {
 
 		public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
 		{
-            ScopeDummyChannelConfig config = _channelConfig[channel];
+            DummyScopeChannelConfig config = _channelConfig[channel];
             config.amplitude = amplitude;
             _channelConfig[channel] = config;
 		}
 
         public void SetDummyWaveFrequency(AnalogChannel channel, double frequency)
 		{
-            ScopeDummyChannelConfig config = _channelConfig[channel];
+            DummyScopeChannelConfig config = _channelConfig[channel];
             config.frequency = frequency;
             _channelConfig[channel] = config;
 		}
 
         public void SetDummyWavePhase(AnalogChannel channel, double phase)
         {
-            ScopeDummyChannelConfig config = _channelConfig[channel];
+            DummyScopeChannelConfig config = _channelConfig[channel];
             config.phase = phase;
             _channelConfig[channel] = config;
 
@@ -275,7 +275,7 @@ namespace ECore.Devices {
 
         public void SetDummyWaveForm(AnalogChannel channel, WaveForm w)
 		{
-            ScopeDummyChannelConfig config = _channelConfig[channel];
+            DummyScopeChannelConfig config = _channelConfig[channel];
             config.waveform = w;
             _channelConfig[channel] = config;
 
@@ -283,7 +283,7 @@ namespace ECore.Devices {
 
         public void SetDummyWaveDcOffset(AnalogChannel channel, double dcOffset)
         {
-            ScopeDummyChannelConfig config = _channelConfig[channel];
+            DummyScopeChannelConfig config = _channelConfig[channel];
             config.dcOffset = dcOffset;
             _channelConfig[channel] = config;
 
@@ -291,7 +291,7 @@ namespace ECore.Devices {
 
         public void SetNoiseAmplitude(AnalogChannel channel, double noiseAmplitude)
 		{
-            ScopeDummyChannelConfig config = _channelConfig[channel];
+            DummyScopeChannelConfig config = _channelConfig[channel];
             config.noise = noiseAmplitude;
             _channelConfig[channel] = config;
 
@@ -411,7 +411,7 @@ namespace ECore.Devices {
                             break;
                         /*
                             case TriggerMode.DIGITAL:
-                                triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
+                                triggerDetected = DummyScope.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
                                 if (!triggerDetected && acquisitionMode == AcquisitionMode.AUTO)
                                 {
                                     triggerDetected = true;

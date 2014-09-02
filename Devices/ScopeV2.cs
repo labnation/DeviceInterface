@@ -72,7 +72,12 @@ namespace ECore.Devices
         private
 #endif
         FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
-        public bool TimeSmoothingEnabled = true;
+#if INTERNAL
+        public 
+#else
+        private
+#endif
+        bool TimeSmoothingEnabled = true;
 
 #if INTERNAL
         public bool DebugDigital { get; set; }
@@ -350,13 +355,13 @@ namespace ECore.Devices
                 return null;
 
             byte[] buffer;
-            ScopeV2Header header;
+            SmartScopeHeader header;
             
             try { buffer = hardwareInterface.GetData(BURST_SIZE); }
             catch (ScopeIOException) { return null; }
             if (buffer == null) return null;
 
-            try { header = new ScopeV2Header(buffer); }
+            try { header = new SmartScopeHeader(buffer); }
             catch (Exception e)
             {
                 Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);

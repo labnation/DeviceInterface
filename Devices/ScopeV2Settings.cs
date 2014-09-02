@@ -9,9 +9,15 @@ namespace ECore.Devices
 {
     partial class SmartScope
     {
-        public static readonly int[] validChannels = { 0, 1 };
-        public static readonly double[] validDividers = { 1, 6, 36 };
-        public static readonly double[] validMultipliers = { 1.1, 2, 3 };
+
+#if INTERNAL
+        public 
+#endif
+        static readonly double[] validDividers = { 1, 6, 36 };
+#if INTERNAL
+        public 
+#endif
+        static readonly double[] validMultipliers = { 1.1, 2, 3 };
         private Dictionary<AnalogChannel, Coupling> coupling = new Dictionary<AnalogChannel, Coupling>() {
             {AnalogChannel.ChA, Coupling.DC}, 
             {AnalogChannel.ChB, Coupling.DC}
@@ -174,7 +180,6 @@ namespace ECore.Devices
 #if INTERNAL
         public void SetYOffsetByte(AnalogChannel channel, byte offset)
         {
-            if (!channel.Physical) return;
             REG r = channel == AnalogChannel.ChA ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set Y offset for channel " + channel + " to " + offset + " (int value)");
             FpgaSettingsMemory[r].Set(offset);
