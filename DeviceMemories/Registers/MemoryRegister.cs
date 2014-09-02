@@ -4,10 +4,20 @@ using System.Linq;
 using System.Text;
 
 namespace ECore.DeviceMemories
-{    
-    public delegate void RegisterValueChangedHandler(object o, EventArgs e);
+{
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    delegate void RegisterValueChangedHandler(object o, EventArgs e);
 
-    public abstract class MemoryRegister
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    abstract class MemoryRegister
     {
         public DeviceMemory Memory { get; private set; }
         public string Name { get; private set; }
@@ -48,46 +58,21 @@ namespace ECore.DeviceMemories
         }
 
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        abstract object Get();
+        public abstract object Get();
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        abstract MemoryRegister Set(object value);
+        public abstract MemoryRegister Set(object value);
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        void WriteImmediate()
+        public void WriteImmediate()
         {
             this.Memory.Write(this.Address);
         }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        void WriteImmediate(object value)
+        public void WriteImmediate(object value)
         {
             this.Set(value).WriteImmediate();
         }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        MemoryRegister Read()
+        public MemoryRegister Read()
         {
             this.Memory.Read(this.Address);
             return this;

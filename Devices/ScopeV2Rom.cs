@@ -253,7 +253,7 @@ namespace ECore.Devices
                 int offset = 0;
 
                 //FIXME: this code can be cleaner and shorter I suppose
-                foreach (AnalogChannel ch in AnalogChannel.listPhysical)
+                foreach (AnalogChannel ch in AnalogChannel.List)
                 {
                     foreach (double divider in ScopeV2.validDividers)
                     {
@@ -272,7 +272,7 @@ namespace ECore.Devices
                 
                 int magnitudesOffset = 0;
                 int phasesOffset = 0;
-                foreach (AnalogChannel ch in AnalogChannel.listPhysical)
+                foreach (AnalogChannel ch in AnalogChannel.List)
                 {
                     foreach (double multiplier in ScopeV2.validMultipliers)
                     {
@@ -338,7 +338,7 @@ namespace ECore.Devices
 
                 this.gainCalibration = new List<GainCalibration>();
                 int offset = 0;
-                foreach (AnalogChannel ch in AnalogChannel.listPhysical)
+                foreach (AnalogChannel ch in AnalogChannel.List)
                 {
                     foreach (double divider in ScopeV2.validDividers)
                     {
@@ -369,7 +369,7 @@ namespace ECore.Devices
                 this.frequencyResponse = new List<FrequencyResponse>();
                 int magnitudesOffset = 0;
                 int phasesOffset = 0;
-                foreach (AnalogChannel ch in AnalogChannel.listPhysical)
+                foreach (AnalogChannel ch in AnalogChannel.List)
                 {
                     foreach (double multiplier in ScopeV2.validMultipliers)
                     {

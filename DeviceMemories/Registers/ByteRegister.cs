@@ -5,7 +5,12 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-    public class ByteRegister : MemoryRegister
+#if INTERNAL
+    public
+#else
+    internal
+#endif    
+    class ByteRegister : MemoryRegister
     {
         private byte internalValue
         {
@@ -18,12 +23,7 @@ namespace ECore.DeviceMemories
             this.internalValue = 0;
         }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        override MemoryRegister Set(object value)
+        public override MemoryRegister Set(object value)
         {
             byte castValue;
             if(!value.GetType().Equals(typeof(byte))) 
@@ -46,26 +46,11 @@ namespace ECore.DeviceMemories
             return this;
         }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        override object Get() { return this.internalValue; }
+        public override object Get() { return this.internalValue; }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        byte GetByte() { return this.internalValue; }
-        
-#if INTERNAL
-        public
-#else
-        internal
-#endif  
-        new ByteRegister Read() { return (ByteRegister)base.Read(); }
+        public byte GetByte() { return this.internalValue; }
+
+        public new ByteRegister Read() { return (ByteRegister)base.Read(); }
 
         public override int MaxValue { get { return 255; } }
     }

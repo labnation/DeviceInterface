@@ -7,11 +7,11 @@ using System.IO;
 namespace ECore.DataSources
 {
 
-    public class ChannelBufferFloat : ChannelBuffer<float>
+    internal class ChannelBufferFloat : ChannelBuffer<float>
     {
         public ChannelBufferFloat(string name) : base(name) { this.sizeOfType = sizeof(float); }
     }
-    public class ChannelBufferByte : ChannelBuffer<byte>
+    internal class ChannelBufferByte : ChannelBuffer<byte>
     {
         public ChannelBufferByte(string name) : base(name) { this.sizeOfType = sizeof(byte); }
     }

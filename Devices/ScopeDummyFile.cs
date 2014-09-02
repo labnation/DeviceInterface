@@ -14,7 +14,7 @@ namespace ECore.Devices
         private static float[] readChannelB = null;
         private static double[] readTime = null;
 
-        public static bool GetWaveFromFile(AcquisitionMode acqMode, TriggerMode triggerMode, double triggerHoldoff, AnalogChannel triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
+        public static bool GetWaveFromFile(AcquisitionMode acqMode, double triggerHoldoff, AnalogChannel triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
             if(readChannelA == null || readChannelB == null || readTime == null) 
             {
@@ -56,7 +56,7 @@ namespace ECore.Devices
                 }
                 return true;
             }
-            else if (triggerMode == TriggerMode.ANALOG)
+            else if (acqMode == AcquisitionMode.NORMAL || acqMode == AcquisitionMode.SINGLE)
             {
                 if (ScopeDummy.TriggerAnalog(acqMode, waves[triggerChannel.Value], triggerDirection, triggerHoldoffInSamples, triggerLevel, 0f, outputWaveLength, out triggerIndex))
                 {
@@ -72,9 +72,7 @@ namespace ECore.Devices
                     return false;
             }
             else
-            {
                 return false;
-            }
         }
     }
 }

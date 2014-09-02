@@ -8,9 +8,14 @@ using AForge.Math;
 
 namespace ECore
 {
-    public enum FrequencyCompensationCPULoad { Off, Basic, Full }
+#if INTERNAL
+    public
+#else
+    internal
+#endif        
+    enum FrequencyCompensationCPULoad { Off, Basic, Full }
 
-    public static class FrequencyCompensation
+    internal static class FrequencyCompensation
     {
         public static Complex[] ArtificialSpectrum;
 

@@ -9,9 +9,17 @@ using Common;
 
 namespace ECore.DataSources
 {
-    public class DataSourceScope: DataSource
+    public delegate void NewDataAvailableHandler(DataPackageScope dataPackage, EventArgs e);
+
+    public class DataSource
     {
         private IScope scope;
+#if INTERNAL
+        public event NewDataAvailableHandler BeforeNewDataAvailable;
+#endif
+        public event NewDataAvailableHandler OnNewDataAvailable;
+        public DataPackageScope LatestDataPackage { get; protected set; }
+
         private Thread dataFetchThread;
         public RecordingScope Recording { get; private set; }
         private bool running = false;
@@ -26,17 +34,27 @@ namespace ECore.DataSources
         }
 
         public int AcquisitionsRecorded { get { return Recording.AcquisitionsRecorded; } }
-
-        public DataSourceScope(EDevice scope) : base(scope)
+        
+        private void fireDataAvailableEvents()
         {
-            if (scope as IScope == null)
-                throw new Exception("DataSourceScope needs an EDevice implementing the IScope interface to work");
-            this.scope = scope as IScope;
+            {
+#if INTERNAL
+                if (BeforeNewDataAvailable != null)
+                    BeforeNewDataAvailable(LatestDataPackage, new EventArgs());
+#endif
+                if (OnNewDataAvailable != null)
+                    OnNewDataAvailable(LatestDataPackage, new EventArgs());
+            }
+        }
+        
+        internal DataSource(IScope scope)
+        {
+            this.scope = scope;
         }
         
         public bool IsRunning { get { return dataFetchThread != null && dataFetchThread.IsAlive; } }
 
-        public override bool Start()
+        public bool Start()
         {
             if (IsRunning)
             {
@@ -52,7 +70,7 @@ namespace ECore.DataSources
             dataFetchThread.Start();
             return true;
         }
-        public override void Stop()
+        public void Stop()
         {
             if (!IsRunning)
             {
@@ -80,7 +98,7 @@ namespace ECore.DataSources
                 Logger.Error("Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
-            while (running && device.Ready)
+            while (running && scope.Ready)
             {
                 LatestDataPackage = scope.GetScopeData();
                 if (LatestDataPackage != null)

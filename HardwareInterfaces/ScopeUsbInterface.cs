@@ -17,7 +17,7 @@ namespace ECore.HardwareInterfaces
 #if INTERNAL
     public
 #else
-    internal 
+    internal
 #endif
  enum ScopeController
     {
@@ -32,7 +32,7 @@ namespace ECore.HardwareInterfaces
 #if INTERNAL
     public
 #else
-    internal 
+    internal
 #endif
  class ScopeUsbInterface
     {
@@ -58,7 +58,7 @@ namespace ECore.HardwareInterfaces
         }
 
         internal const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
-        internal const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
+        const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
         const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
         const byte FPGA_I2C_ADDRESS_SETTINGS = 0x0C;
         const byte FPGA_I2C_ADDRESS_ROM = 0x0D;
@@ -122,7 +122,7 @@ namespace ECore.HardwareInterfaces
             return serial;
         }
 
-        internal void WriteControlBytes(byte[] message)
+        public void WriteControlBytes(byte[] message)
         {
             if (message.Length > COMMAND_WRITE_ENDPOINT_SIZE)
             {
@@ -131,7 +131,7 @@ namespace ECore.HardwareInterfaces
             WriteControlBytesBulk(message);
         }
 
-        internal void WriteControlBytesBulk(byte[] message)
+        public void WriteControlBytesBulk(byte[] message)
         {
             int bytesWritten;
             ErrorCode code;
@@ -151,7 +151,7 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        internal byte[] ReadControlBytes(int length)
+        public byte[] ReadControlBytes(int length)
         {
             //try to read data
             ErrorCode errorCode = ErrorCode.None;
@@ -213,9 +213,9 @@ namespace ECore.HardwareInterfaces
 #if INTERNAL
         public
 #else
-    internal 
+        internal
 #endif
- void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
+        void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
@@ -248,9 +248,9 @@ namespace ECore.HardwareInterfaces
 #if INTERNAL
         public
 #else
-    internal 
+        internal
 #endif
- void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
+        void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
             if (data != null && data.Length > I2C_MAX_WRITE_LENGTH)
             {

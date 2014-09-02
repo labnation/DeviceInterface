@@ -5,7 +5,12 @@ using System.Text;
 
 namespace ECore.DataSources
 {
-    public interface IChannelBuffer
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IChannelBuffer
     {
         Type GetDataType();
         String GetName();

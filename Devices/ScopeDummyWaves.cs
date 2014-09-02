@@ -6,7 +6,11 @@ using Common;
 
 namespace ECore.Devices
 {
-    public enum WaveForm { SINE, COSINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE, HALF_BIG_HALF_UGLY };
+    public enum WaveForm { SINE, COSINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE,
+#if INTERNAL 
+        HALF_BIG_HALF_UGLY 
+#endif
+    };
 
     partial class ScopeDummy
     {
@@ -42,9 +46,11 @@ namespace ECore.Devices
                 case WaveForm.MULTISINE:
                     wave = ScopeDummy.WaveMultiCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, new float[] {1, 2, 4, 8 });
                     break;
+#if INTERNAL
                 case WaveForm.HALF_BIG_HALF_UGLY:
                     wave = ScopeDummy.WaveHalfBigHalfUgly(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
+#endif
                 default:
                     throw new NotImplementedException();
             }
@@ -173,7 +179,7 @@ namespace ECore.Devices
             return finalWave;
         }
 
-        public override bool Ready { get { return true; } }
+        public bool Ready { get { return true; } }
 
         private static void AddNoise(float[] output, double noiseAmplitude)
         {

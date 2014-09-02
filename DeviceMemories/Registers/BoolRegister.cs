@@ -5,7 +5,12 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-    public class BoolRegister : MemoryRegister
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    class BoolRegister : MemoryRegister
     {
         private bool internalValue
         {
@@ -13,42 +18,23 @@ namespace ECore.DeviceMemories
             set { _internalValue = value; }
         }
 
-        internal BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) 
+        public BoolRegister(DeviceMemory memory, uint address, string name) : base(memory, address, name) 
         {
             this.internalValue = false;
         }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        override MemoryRegister Set(object value)
+        public override MemoryRegister Set(object value)
         {
             this.internalValue = (bool)value;
             CallValueChangedCallbacks();
             return this;
         }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        override object Get() { return this.internalValue; }
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        bool GetBool() { return this.internalValue; }
+        public override object Get() { return this.internalValue; }
 
-#if INTERNAL
-        public
-#else
-        internal
-#endif
-        new BoolRegister Read() { return (BoolRegister)base.Read(); }
+        public bool GetBool() { return this.internalValue; }
+
+        public new BoolRegister Read() { return (BoolRegister)base.Read(); }
         
         public override int MaxValue { get { return 1; } }
     }

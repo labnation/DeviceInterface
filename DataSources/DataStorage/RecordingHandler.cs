@@ -17,7 +17,7 @@ namespace ECore.DataSources
         CSV
     }
 
-    public static class Extension 
+    public static class EnumExtensions
     {
         public static string GetFileExtension(this StorageFileFormat f) {
             switch (f)
@@ -56,6 +56,8 @@ namespace ECore.DataSources
         }
         public static StorageFile FinishRecording(RecordingScope recording, StorageFileFormat format, Action<float> progress)
         {
+            if (recording.Busy)
+                throw new Exception("Recording is still ongoing. Stop the recording before storing it");
             string filename = null;
             switch (format)
             {

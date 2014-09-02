@@ -5,7 +5,12 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-    public enum REG
+#if INTERNAL
+	public
+#else
+	internal
+#endif
+	 enum REG
     {
 		STROBE_UPDATE = 0,
 		SPI_ADDRESS = 1,
@@ -38,7 +43,12 @@ namespace ECore.DeviceMemories
 		AWG_SAMPLES_B1 = 30,
     }
 
-    public enum STR
+#if INTERNAL
+	public
+#else
+	internal
+#endif
+	 enum STR
     {
 		GLOBAL_RESET = 0,
 		INIT_SPI_TRANSFER = 1,
@@ -65,7 +75,12 @@ namespace ECore.DeviceMemories
 		LA_CHANNEL = 27,
     }
 
-    public enum ROM
+#if INTERNAL
+	public
+#else
+	internal
+#endif
+	 enum ROM
     {
 		FW_MSB = 0,
 		FW_LSB = 1,

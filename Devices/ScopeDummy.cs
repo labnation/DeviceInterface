@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore.DataSources;
 using Common;
+using ECore.DeviceMemories;
 
 namespace ECore.Devices {
 	public enum WaveSource {
@@ -22,15 +23,18 @@ namespace ECore.Devices {
         public double noise;
     }
 
-	public partial class ScopeDummy : EDevice, IScope {
-		private DataSources.DataSourceScope dataSourceScope;
+	public partial class ScopeDummy : IScope {
+#if INTERNAL
+        public List<DeviceMemory> GetMemories() { return null; }
+#endif
 
-		public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
+		private DataSources.DataSource dataSourceScope;
+
+		public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
 		private DateTime timeOrigin;
 		//Wave settings
 		private WaveSource waveSource = WaveSource.GENERATOR;
-		private TriggerMode triggerMode = TriggerMode.ANALOG;
 		//Noise mean voltage
 		private int usbLatency = 40;
 		//milliseconds of latency to simulate USB request delay
@@ -76,7 +80,7 @@ namespace ECore.Devices {
 		public ScopeDummy (ScopeConnectHandler handler)
             : base ()
 		{
-            foreach(AnalogChannel ch in AnalogChannel.listPhysical)
+            foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 _channelConfig.Add(ch, new ScopeDummyChannelConfig()
                 {
@@ -92,7 +96,7 @@ namespace ECore.Devices {
 
             timeOrigin = DateTime.Now;
 
-			dataSourceScope = new DataSources.DataSourceScope (this);
+			dataSourceScope = new DataSources.DataSource (this);
 			if (handler != null)
 				handler (this, true);
 		}
@@ -141,13 +145,11 @@ namespace ECore.Devices {
 
         public void SetYOffset(AnalogChannel ch, float yOffset)
 		{
-            if (!ch.Physical) return;
 			this.yOffset [ch] = yOffset;
 		}
 
         public void SetTriggerChannel(AnalogChannel ch)
 		{
-            if (!ch.Physical) return;
 			this.triggerChannel = ch;
 		}
 
@@ -159,11 +161,6 @@ namespace ECore.Devices {
         {
             throw new NotImplementedException();
         }
-
-		public void SetTriggerMode (TriggerMode mode)
-		{
-			this.triggerMode = mode;
-		}
 
         public void SetTriggerWidth(uint width)
         {
@@ -230,7 +227,6 @@ namespace ECore.Devices {
 
 		public void SetCoupling (AnalogChannel ch, Coupling coupling)
 		{
-            if (!ch.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[ch];
             config.coupling = coupling;
             _channelConfig[ch] = config;
@@ -238,7 +234,6 @@ namespace ECore.Devices {
 
 		public Coupling GetCoupling (AnalogChannel ch)
 		{
-            if (!ch.Physical) return Coupling.AC;
             return _channelConfig[ch].coupling;
 		}
 
@@ -258,7 +253,6 @@ namespace ECore.Devices {
 
 		public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
 		{
-            if (!channel.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[channel];
             config.amplitude = amplitude;
             _channelConfig[channel] = config;
@@ -266,7 +260,6 @@ namespace ECore.Devices {
 
         public void SetDummyWaveFrequency(AnalogChannel channel, double frequency)
 		{
-            if (!channel.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[channel];
             config.frequency = frequency;
             _channelConfig[channel] = config;
@@ -274,7 +267,6 @@ namespace ECore.Devices {
 
         public void SetDummyWavePhase(AnalogChannel channel, double phase)
         {
-            if (!channel.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[channel];
             config.phase = phase;
             _channelConfig[channel] = config;
@@ -283,7 +275,6 @@ namespace ECore.Devices {
 
         public void SetDummyWaveForm(AnalogChannel channel, WaveForm w)
 		{
-            if (!channel.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[channel];
             config.waveform = w;
             _channelConfig[channel] = config;
@@ -292,7 +283,6 @@ namespace ECore.Devices {
 
         public void SetDummyWaveDcOffset(AnalogChannel channel, double dcOffset)
         {
-            if (!channel.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[channel];
             config.dcOffset = dcOffset;
             _channelConfig[channel] = config;
@@ -301,7 +291,6 @@ namespace ECore.Devices {
 
         public void SetNoiseAmplitude(AnalogChannel channel, double noiseAmplitude)
 		{
-            if (!channel.Physical) return;
             ScopeDummyChannelConfig config = _channelConfig[channel];
             config.noise = noiseAmplitude;
             _channelConfig[channel] = config;
@@ -384,9 +373,9 @@ namespace ECore.Devices {
                     for (int k = 0; k < maxAttempts; k++)
                     {
                         //Generate analog wave
-                        waveAnalog = new float[AnalogChannel.listPhysical.Count][];
+                        waveAnalog = new float[AnalogChannel.List.Count][];
                         timeOffset = DateTime.Now - timeOrigin;
-                        foreach(AnalogChannel channel in AnalogChannel.listPhysical)
+                        foreach (AnalogChannel channel in AnalogChannel.List)
                         {
                             int i = channel.Value;
                             waveAnalog[i] = ScopeDummy.GenerateWave(waveLength,
@@ -414,13 +403,13 @@ namespace ECore.Devices {
                         triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
 
 
-                        switch (triggerMode)
-                        {
-                            case TriggerMode.ANALOG:
-                                triggerDetected = ScopeDummy.TriggerAnalog(acquisitionMode, waveAnalog[triggerChannel.Value], triggerDirection,
-                                    triggerHoldoffInSamples, triggerLevel, (float)_channelConfig[triggerChannel].noise,
-                                    outputWaveLength, out triggerIndex);
-                                break;
+                        //FIXME: properly implement trigger and LA mode and all like in SmartScope
+                        //case TriggerMode.ANALOG:
+                            triggerDetected = ScopeDummy.TriggerAnalog(acquisitionMode, waveAnalog[triggerChannel.Value], triggerDirection,
+                                triggerHoldoffInSamples, triggerLevel, (float)_channelConfig[triggerChannel].noise,
+                                outputWaveLength, out triggerIndex);
+                            break;
+                        /*
                             case TriggerMode.DIGITAL:
                                 triggerDetected = ScopeDummy.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
                                 if (!triggerDetected && acquisitionMode == AcquisitionMode.AUTO)
@@ -429,7 +418,7 @@ namespace ECore.Devices {
                                     triggerIndex = 0;
                                 }
                                 break;
-                        }
+                        }*/
                         if (triggerDetected)
                             break;
                     }
@@ -442,9 +431,9 @@ namespace ECore.Devices {
 					}
 					outputDigital = ScopeDummy.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
 				} else if (waveSource == WaveSource.FILE) {
-					if (!GetWaveFromFile (acquisitionMode, triggerMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
+					if (!GetWaveFromFile (acquisitionMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
-					foreach(AnalogChannel ch in AnalogChannel.listPhysical)
+                    foreach (AnalogChannel ch in AnalogChannel.List)
                         ScopeDummy.AddNoise(outputAnalog[ch.Value], _channelConfig[ch].noise);
 					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
 				}

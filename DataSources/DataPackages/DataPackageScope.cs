@@ -25,6 +25,7 @@ namespace ECore.DataSources
             Settings = new Dictionary<string,double>();
         }
 
+        //FIXME should be internal but currently used by averaging and inverting processors
         public void SetData(AnalogChannel ch, float[] data)
         {
             dataAnalog.Remove(ch);

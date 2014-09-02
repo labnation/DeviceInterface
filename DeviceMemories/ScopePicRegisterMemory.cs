@@ -8,16 +8,26 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public enum PIC
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    enum PIC
     {
         FORCE_STREAMING = 0,
     }
 
-    public class ScopePicRegisterMemory : ByteMemory
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    class ScopePicRegisterMemory : ByteMemory
     {
         private ScopeUsbInterface hwInterface;
 
-        internal ScopePicRegisterMemory(ScopeUsbInterface hwInterface)
+        public ScopePicRegisterMemory(ScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         
@@ -25,7 +35,7 @@ namespace ECore.DeviceMemories
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        internal override void Read(uint address)
+        public override void Read(uint address)
         {            
             byte[] data;
             hwInterface.GetControllerRegister(ScopeController.PIC, address, 1, out data);
@@ -37,7 +47,7 @@ namespace ECore.DeviceMemories
             }
         }
 
-        internal override void Write(uint address)
+        public override void Write(uint address)
         {
             byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.PIC, address, data);

@@ -26,7 +26,7 @@ namespace ECore.Devices
 #endif
         static byte yOffsetMin = 10;
 
-        public bool chunkyAcquisitions { get; private set; }
+        public bool ChunkyAcquisitions { get; private set; }
 
         #region helpers
 
@@ -80,7 +80,6 @@ namespace ECore.Devices
         public void SetYOffset(AnalogChannel channel, float offset)
         {
             if (!Connected) return;
-            if (!channel.Physical) return;
             //FIXME: convert offset to byte value
             REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
@@ -101,7 +100,6 @@ namespace ECore.Devices
         public void SetVerticalRange(AnalogChannel channel, float minimum, float maximum)
         {
             if (!Connected) return;
-            if (!channel.Physical) return;
             //The voltage range for div/mul = 1/1
             //20140808: these seem to be OK: on div0/mult0 the ADC input range is approx 1.3V
             float baseMin = -0.6345f; //V
@@ -140,7 +138,6 @@ namespace ECore.Devices
 		#endif
 		void SetDivider(AnalogChannel channel, double divider)
 		{
-            if (!channel.Physical) return;
 			validateDivider(divider);
             byte div = (byte)(Array.IndexOf(validDividers, divider));
 			int bitOffset = channel.Value * 4;
@@ -163,7 +160,6 @@ namespace ECore.Devices
 		#endif
 		void SetMultiplier(AnalogChannel channel, double multiplier)
 		{
-            if (!channel.Physical) return;
 			validateMultiplier(multiplier);
 
 			int bitOffset = channel.Value * 4;
@@ -196,8 +192,6 @@ namespace ECore.Devices
 
         public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {
-            if (!channel.Physical)
-                return;
             STR dc = channel == AnalogChannel.ChA ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
             bool enableDc = coupling == Coupling.DC;
             Logger.Debug("Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
@@ -206,8 +200,6 @@ namespace ECore.Devices
         public Coupling GetCoupling(AnalogChannel channel)
         {
             //FIXME: make this part of the header instead of reading it
-            if (!channel.Physical)
-                return Coupling.AC;
             return this.coupling[channel];
         }
 
@@ -249,9 +241,6 @@ namespace ECore.Devices
         /// <param name="channel"></param>
         public void SetTriggerChannel(AnalogChannel channel)
         {
-            if (!channel.Physical)
-                return;
-
             FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                 (byte)(
                     (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) + 
@@ -266,7 +255,7 @@ namespace ECore.Devices
         public AnalogChannel GetTriggerChannel()
         {         
             int chNumber = (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2;
-            return AnalogChannel.listPhysical.Single(x => x.Value == chNumber);
+            return AnalogChannel.List.Single(x => x.Value == chNumber);
         }
 
         /// <summary>
@@ -298,11 +287,6 @@ namespace ECore.Devices
         public uint GetTriggerThreshold()
         {
             return (uint)FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte();
-        }
-
-        public void SetTriggerMode(TriggerMode mode)
-        {
-            //Not implemented
         }
 
         public void SetAcquisitionMode(AcquisitionMode mode)
@@ -353,7 +337,7 @@ namespace ECore.Devices
             else
                 acquisitionMultiplePower = 0;
             FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(acquisitionMultiplePower);
-            chunkyAcquisitions = acquisitionMultiplePower >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+            ChunkyAcquisitions = acquisitionMultiplePower >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
             /*
             if(acquisitionMultiplePower > 0)

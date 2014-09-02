@@ -8,11 +8,26 @@ namespace ECore.DataSources
 {
     public class RecordingScope : IDisposable
     {
-        public Dictionary<Channel, IChannelBuffer> channelBuffers;
-        public List<AcquisitionInfo> acqInfo;
-        public Dictionary<string, List<double>> settings;
+#if INTERNAL
+        public
+#else
+        internal
+#endif            
+        Dictionary<Channel, IChannelBuffer> channelBuffers;
+#if INTERNAL
+        public
+#else
+        internal
+#endif            
+        List<AcquisitionInfo> acqInfo;
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+        Dictionary<string, List<double>> settings;
         public int AcquisitionsRecorded { get; private set; }
-        public long dataStorageSize { get; private set; }
+        public long DataStorageSize { get; private set; }
         bool disposed = false;
         public bool Busy { get; private set; }
         private object busyLock = new object();
@@ -23,10 +38,10 @@ namespace ECore.DataSources
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
 
-            foreach (AnalogChannel ch in AnalogChannel.listPhysical)
+            foreach (AnalogChannel ch in AnalogChannel.List)
                 channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
 
-            foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.list)
+            foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.List)
                 channelBuffers.Add(ch, new ChannelBufferByte("LogicAnalyser" + ch.Name));
         }
 
@@ -34,7 +49,12 @@ namespace ECore.DataSources
         {
             Dispose(false);
         }
-        public struct AcquisitionInfo
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+        struct AcquisitionInfo
         {
             public int samples;
             public double samplePeriod;
@@ -86,7 +106,7 @@ namespace ECore.DataSources
                     if (kvp.Key is LogicAnalyserChannel)
                         kvp.Value.AddData(ScopeData.GetDataDigital());
                 }
-                dataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
+                DataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
 
                 acqInfo.Add(
                     new AcquisitionInfo()

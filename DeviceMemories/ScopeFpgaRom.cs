@@ -9,11 +9,16 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaRom : ByteMemory
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    class ScopeFpgaRom : ByteMemory
     {
         private ScopeUsbInterface hwInterface;
 
-        internal ScopeFpgaRom(ScopeUsbInterface hwInterface)
+        public ScopeFpgaRom(ScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         
@@ -25,7 +30,7 @@ namespace ECore.DeviceMemories
                 registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
         }
 
-        internal override void Read(uint address)
+        public override void Read(uint address)
         {
             byte[] data = null;
             hwInterface.GetControllerRegister(ScopeController.FPGA_ROM, address, 1, out data);
@@ -36,7 +41,7 @@ namespace ECore.DeviceMemories
             registers[address].Dirty = false;
         }
 
-        internal override void Write(uint address)
+        public override void Write(uint address)
         {
             Logger.Error("Can't write to ROM");
             registers[address].Dirty = false;

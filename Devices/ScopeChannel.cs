@@ -17,7 +17,8 @@ namespace ECore.Devices
         public static explicit operator int(Channel ch) { return ch.Value; }
 
         public int Order { get; protected set; }
-        public static HashSet<Channel> list = new HashSet<Channel>();
+        private static HashSet<Channel> list = new HashSet<Channel>();
+        public static IList<Channel> List { get { return list.ToList().AsReadOnly(); } }
         public Channel(string name, int value)
         {
             this.Name = name; 
@@ -27,7 +28,6 @@ namespace ECore.Devices
             list.Add(this);
         }
 
-        public virtual void Destroy() { list.Remove(this); }
         public override string ToString()
         {
             return this.Name;
@@ -35,24 +35,19 @@ namespace ECore.Devices
     }
     public sealed class AnalogChannel : Channel 
     {
-        public bool Physical { get; private set; }
-        new public static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
-        public static HashSet<AnalogChannel> listPhysical = new HashSet<AnalogChannel>();
-        private AnalogChannel(string name, int value, bool physical) : base(name, value) { 
+        private static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
+        new public static IList<AnalogChannel> List { get { return list.ToList().AsReadOnly(); } }
+        private AnalogChannel(string name, int value) : base(name, value) { 
             list.Add(this);
-            Physical = physical;
-            if (physical)
-                listPhysical.Add(this);
         }
-        override public void Destroy() { /* indestructable */ }
 
-        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0, true);
-        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1, true);
+        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
+        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
     }
     public sealed class DigitalChannel : Channel {
-        new public static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
+        private static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
+        new public static IList<DigitalChannel> List { get { return list.ToList().AsReadOnly(); } }
         private DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { /* indestructable */ }
 
         public static readonly DigitalChannel Digi0 = new DigitalChannel("0", 0);
         public static readonly DigitalChannel Digi1 = new DigitalChannel("1", 1);
@@ -65,9 +60,9 @@ namespace ECore.Devices
     }
     public sealed class LogicAnalyserChannel : Channel
     {
-        new public static HashSet<LogicAnalyserChannel> list = new HashSet<LogicAnalyserChannel>();
+        private static HashSet<LogicAnalyserChannel> list = new HashSet<LogicAnalyserChannel>();
+        new public static IList<LogicAnalyserChannel> List { get { return list.ToList().AsReadOnly(); } }
         private LogicAnalyserChannel(string name, int value) : base(name, value) { list.Add(this); }
-        override public void Destroy() { /* indestructable */ }
 
         public static readonly LogicAnalyserChannel LogicAnalyser = new LogicAnalyserChannel("LA", 0);
     }

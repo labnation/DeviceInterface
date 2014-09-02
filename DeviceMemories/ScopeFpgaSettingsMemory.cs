@@ -8,11 +8,16 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeFpgaSettingsMemory : ByteMemory
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    class ScopeFpgaSettingsMemory : ByteMemory
     {
-        internal ScopeUsbInterface hwInterface;
+        public ScopeUsbInterface hwInterface;
 
-        internal ScopeFpgaSettingsMemory(ScopeUsbInterface hwInterface)
+        public ScopeFpgaSettingsMemory(ScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
 
@@ -20,7 +25,7 @@ namespace ECore.DeviceMemories
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        internal override void Read(uint address)
+        public override void Read(uint address)
         {
             byte[] data = null;
             hwInterface.GetControllerRegister(ScopeController.FPGA, address, 1, out data);
@@ -29,7 +34,7 @@ namespace ECore.DeviceMemories
             registers[address].Dirty = false;
         }
 
-        internal override void Write(uint address)
+        public override void Write(uint address)
         {
             byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.FPGA, address, data);

@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+#if INTERNAL
+using ECore.DeviceMemories;
+#endif
 using ECore.DataSources;
+
 
 namespace ECore.Devices
 {
-    public enum TriggerMode { ANALOG, DIGITAL };
     public enum TriggerDirection { RISING = 0, FALLING = 1 };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
@@ -16,6 +19,9 @@ namespace ECore.Devices
 
     public interface IScope
     {
+#if INTERNAL
+        List<DeviceMemory> GetMemories();
+#endif
         DataPackageScope GetScopeData();
 
         bool Ready { get; }
@@ -31,7 +37,6 @@ namespace ECore.Devices
         void SetYOffset(AnalogChannel channel, float offset);
         void SetTriggerChannel(AnalogChannel channel);
         void SetTriggerDirection(TriggerDirection direction);
-        void SetTriggerMode(TriggerMode mode);
         void SetForceTrigger();
         void SetCoupling(AnalogChannel channel, Coupling coupling);
         void SetTriggerWidth(uint width);
@@ -48,8 +53,13 @@ namespace ECore.Devices
 
         Coupling GetCoupling(AnalogChannel channel);
         void SetTimeRange(double timeRange);
-        DataSources.DataSourceScope DataSourceScope { get; }
+        DataSources.DataSource DataSourceScope { get; }
 
         void CommitSettings();
+    }
+
+    public class ValidationException: Exception 
+    {
+        public ValidationException(string message) : base(message) { }
     }
 }

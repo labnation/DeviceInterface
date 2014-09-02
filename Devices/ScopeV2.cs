@@ -11,7 +11,7 @@ using AForge.Math;
 
 namespace ECore.Devices
 {
-    public partial class ScopeV2 : EDevice, IScope, IDisposable
+    public partial class ScopeV2 : IScope, IDisposable
     {
 #if INTERNAL
     public
@@ -29,6 +29,11 @@ namespace ECore.Devices
         private bool deviceReady = false;
         private ScopeConnectHandler scopeConnectHandler;
 
+        private List<DeviceMemory> memories = new List<DeviceMemory>();
+#if INTERNAL
+        public List<DeviceMemory> GetMemories() { return memories; }
+#endif
+
 #if INTERNAL 
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
@@ -43,8 +48,8 @@ namespace ECore.Devices
         private DeviceMemories.ScopePicRegisterMemory PicMemory;
 #endif
 
-        private DataSources.DataSourceScope dataSourceScope;
-        public DataSources.DataSourceScope DataSourceScope { get { return dataSourceScope; } }
+        private DataSources.DataSource dataSourceScope;
+        public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         private bool disableVoltageConversion = false;
         byte[] chA = null, chB = null;
@@ -53,7 +58,7 @@ namespace ECore.Devices
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
         //FIXME: this should be automatically parsed from VHDL
-        public const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
+        private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
 
         private bool acquisitionRunning = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
@@ -61,7 +66,12 @@ namespace ECore.Devices
 
         //Select through: AnalogChannel, multiplier, subsampling
         private Dictionary<AnalogChannel, Dictionary<double, Dictionary<ushort, Complex[]>>> compensationSpectrum;
-        public FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
+#if INTERNAL
+        public 
+#else
+        private
+#endif
+        FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
 
 #if INTERNAL
         public bool DebugDigital { get; set; }
@@ -89,7 +99,7 @@ namespace ECore.Devices
         {
             deviceReady = false;
             this.scopeConnectHandler += handler;
-            dataSourceScope = new DataSources.DataSourceScope(this);
+            dataSourceScope = new DataSources.DataSource(this);
             InitializeHardwareInterface();
             FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
         }
@@ -265,7 +275,7 @@ namespace ECore.Devices
 
             //Enable scope controller
             StrobeMemory[STR.SCOPE_ENABLE].Set(true);
-            foreach(AnalogChannel ch in AnalogChannel.listPhysical)
+            foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 SetVerticalRange(ch, -1f, 1f);
                 SetYOffset(ch, 0f);
@@ -554,7 +564,7 @@ namespace ECore.Devices
 
         //FIXME: this needs proper handling
         private bool Connected { get { return this.hardwareInterface != null && this.flashed; } }
-        public override bool Ready { get { return this.Connected && this.deviceReady; } }
+        public bool Ready { get { return this.Connected && this.deviceReady; } }
 
         #endregion
     }

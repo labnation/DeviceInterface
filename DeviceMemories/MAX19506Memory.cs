@@ -5,7 +5,12 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-    public enum MAX19506
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    enum MAX19506
     {
         POWER_MANAGEMENT = 0,
         OUTPUT_FORMAT = 1,
@@ -19,13 +24,18 @@ namespace ECore.DeviceMemories
     }
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class MAX19506Memory : ByteMemory
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    class MAX19506Memory : ByteMemory
     {
         private ScopeFpgaSettingsMemory fpgaSettings;
         private ScopeStrobeMemory strobeMemory;
         private ScopeFpgaRom fpgaRom;
 
-        internal MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
+        public MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;
@@ -35,7 +45,7 @@ namespace ECore.DeviceMemories
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
-        internal override void Read(uint address)
+        public override void Read(uint address)
         {
             fpgaSettings[REG.SPI_ADDRESS].WriteImmediate((byte)(address + 128)); //for a read, MSB must be 1
 
@@ -49,7 +59,7 @@ namespace ECore.DeviceMemories
             registers[address].Dirty = false;
         }
 
-        internal override void Write(uint address)
+        public override void Write(uint address)
         {
             //first send correct address to FPGA
             fpgaSettings[REG.SPI_ADDRESS].WriteImmediate((int)(address));

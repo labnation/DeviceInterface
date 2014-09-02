@@ -7,21 +7,23 @@ using Common;
 
 namespace ECore.DeviceMemories
 {
-    abstract public class DeviceMemory
+#if INTERNAL
+        public
+#else
+        internal
+#endif
+    abstract class DeviceMemory
     {
         protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
-#if INTERNAL
         public Dictionary<uint, MemoryRegister> Registers { get { return registers; } }
-#endif
 
-
-        abstract internal void Write(uint address);
-        abstract internal void Read(uint address);
+        abstract public void Write(uint address);
+        abstract public void Read(uint address);
 
         /// <summary>
         /// Writes away all registers with the Dirty flag set
         /// </summary>
-        internal int Commit()
+        public int Commit()
         {
             int flushCount = registers.Values.Where(x => x.Dirty).Count();
             if (flushCount == 0)

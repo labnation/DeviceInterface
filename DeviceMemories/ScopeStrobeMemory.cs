@@ -7,7 +7,12 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-    public class ScopeStrobeMemory : DeviceMemory
+#if INTERNAL
+    public
+#else
+    internal
+#endif
+    class ScopeStrobeMemory : DeviceMemory
     {
         private ScopeFpgaSettingsMemory writeMemory;
         private ScopeFpgaRom readMemory;
@@ -26,7 +31,7 @@ namespace ECore.DeviceMemories
             return (uint)ROM.STROBES + (uint)Math.Floor((double)strobe / 8.0);
         }
 
-        internal override void Read(uint address)
+        public override void Read(uint address)
         {
             //Compute range of ROM registers to read from
             uint romStartAddress = StrobeToRomAddress(address);
@@ -38,7 +43,7 @@ namespace ECore.DeviceMemories
             registers[address].Dirty = false;
         }
 
-        internal override void Write(uint address)
+        public override void Write(uint address)
         {
             BoolRegister reg = this[address];
 

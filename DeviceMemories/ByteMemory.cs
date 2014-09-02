@@ -6,9 +6,14 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.DeviceMemories
 {
-    abstract public class ByteMemory : DeviceMemory
+#if INTERNAL
+        public
+#else
+    internal
+#endif
+    abstract class ByteMemory : DeviceMemory
     {
-        new public ByteRegister this[uint address]
+        public new ByteRegister this[uint address]
         {
             get { return (ByteRegister)registers[address]; }
             set { ((ByteRegister)registers[address]).Set(value); }

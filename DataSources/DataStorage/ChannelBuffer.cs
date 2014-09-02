@@ -6,7 +6,7 @@ using System.IO;
 
 namespace ECore.DataSources
 {
-    abstract public class ChannelBuffer<T>:IChannelBuffer
+    abstract internal class ChannelBuffer<T>:IChannelBuffer
     {
         private string name;
         private string filename;
