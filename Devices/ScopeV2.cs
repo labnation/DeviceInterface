@@ -293,7 +293,10 @@ namespace ECore.Devices
             StrobeMemory[STR.ENABLE_NEG].Set(true);
 
             SetTriggerWidth(2);
-            SetTriggerThreshold(2);            
+            SetTriggerThreshold(2);
+
+            SetAwgStretching(0);
+            SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
 
             try
             {

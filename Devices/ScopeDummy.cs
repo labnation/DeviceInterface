@@ -299,14 +299,19 @@ namespace ECore.Devices {
 
         //FIXME: implement this
         public void SetEnableLogicAnalyser(bool enable) { }
-        //FIXME: implement this
         public void SetLogicAnalyserChannel(AnalogChannel channel) { }
-        //FIXME: implement this
-        public void setAwgData(double[] data) { }
-        //FIXME: implement this
-        public void setAwgStretching(int decimation) { }
-        //FIXME: implement this
-        public void setAwgEnabled(bool enable) { }
+        public void SetAwgData(double[] data) { }
+        public void SetAwgEnabled(bool enable) { }
+        public int GetAwgStretcherForFrequency(double frequency) { return -1; }
+        public int GetAwgNumberOfSamplesForFrequency(double frequency) { return -1; }
+        public void SetAwgNumberOfSamples(int n) { }
+        public int GetAwgNumberOfSamples() { return -1; }
+        public void SetAwgStretching(int decimation) { }
+        public int GetAwgStretching() { return -1; }
+        public double GetAwgFrequencyMax() { return -1; }
+        public double GetAwgFrequencyMin() { return -1; }
+        public void SetAwgFrequency(double frequency) { }
+        public double GetAwgFrequency() { return 0; }
 
 		#endregion
 
