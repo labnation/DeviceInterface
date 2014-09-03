@@ -17,6 +17,13 @@ namespace ECore
 
     internal static class FrequencyCompensation
     {
+        public static Dictionary<FrequencyCompensationCPULoad, int> cutOffLength = new Dictionary<FrequencyCompensationCPULoad, int>() 
+        {
+            { FrequencyCompensationCPULoad.Off, 0 },
+            { FrequencyCompensationCPULoad.Basic, 48 },
+            { FrequencyCompensationCPULoad.Full, 48 },
+        };
+
         public static Complex[] ArtificialSpectrum;
 
         public static Complex[] CreateArtificialSpectrum(Dictionary<int, float> magnitudes, Dictionary<int, float> phases)//int[] magnitudeIndices, float[] magnitudeValues, int[] phaseIndices, float[] phaseValues)
@@ -279,7 +286,7 @@ namespace ECore
 
         private static float[] TimeDomainCompensationSimple(float[] spectrallyCompensatedData)
         {
-            int cutOff = 48;
+            int cutOff = cutOffLength[FrequencyCompensationCPULoad.Basic];
 
             if (cutOff == 0)
             {
@@ -332,7 +339,7 @@ namespace ECore
                 regionVariation[i] = section2.Average();
 			}
 
-            int cutOff = 48;
+            int cutOff = cutOffLength[FrequencyCompensationCPULoad.Full];
             float[] finalData = new float[spectrallyCompensatedData.Length-cutOff];
             for (int i = 0; i < finalData.Length; i++)
 			{

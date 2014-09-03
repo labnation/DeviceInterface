@@ -370,6 +370,8 @@ namespace ECore.Devices
         {
             holdoff = time;
             Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) ));
+            //FIXME: this might not be the cleanest way to do this
+            samples += FrequencyCompensation.cutOffLength[FrequencyCompensationMode];
             Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
@@ -385,7 +387,7 @@ namespace ECore.Devices
         /// </summary>
         /// <returns></returns>
         public double GetDefaultTimeRange() {
-            return BASE_SAMPLE_PERIOD * NUMBER_OF_SAMPLES; 
+            return BASE_SAMPLE_PERIOD * (NUMBER_OF_SAMPLES - FrequencyCompensation.cutOffLength[FrequencyCompensationMode]); 
         }
 
         public uint GetFpgaFirmwareVersion()

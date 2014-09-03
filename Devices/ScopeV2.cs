@@ -106,6 +106,7 @@ namespace ECore.Devices
         {
             deviceReady = false;
             this.scopeConnectHandler += handler;
+            FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
 
             coupling = new Dictionary<AnalogChannel, Coupling>();
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
@@ -117,7 +118,6 @@ namespace ECore.Devices
 
             dataSourceScope = new DataSources.DataSource(this);
             InitializeHardwareInterface();
-            FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
         }
 
         public void Dispose()
