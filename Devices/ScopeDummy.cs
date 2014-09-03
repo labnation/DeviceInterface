@@ -173,7 +173,7 @@ namespace ECore.Devices {
 		}
         public void SetForceTrigger()
         {
-            throw new NotImplementedException();
+            
         }
 
         public void SetTriggerWidth(uint width)
