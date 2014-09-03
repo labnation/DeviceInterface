@@ -129,21 +129,27 @@ namespace ECore.HardwareInterfaces
                         DeviceFound(usbDevice);
                     break;
                 case EventType.DeviceRemoveComplete:
-                    if (!interfaces.ContainsKey(e.Device.SerialNumber))
-                        return;
-
-				C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct)); 
-                    if (onConnect != null)
-                        onConnect(interfaces[e.Device.SerialNumber], false);
-
-                    interfaces[e.Device.SerialNumber].Destroy();
-                    interfaces.Remove(e.Device.SerialNumber);
+                    C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct));
+                    RemoveDevice(e.Device.SerialNumber);
 
                     break;
                 default:
 				C.Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
                     break;
             }
+        }
+
+        internal static void RemoveDevice(string serial)
+        {
+            if (!interfaces.ContainsKey(serial))
+                return;
+
+            if (onConnect != null)
+                onConnect(interfaces[serial], false);
+
+            interfaces[serial].Destroy();
+            interfaces.Remove(serial);
+
         }
     }
 }

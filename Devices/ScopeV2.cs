@@ -209,9 +209,14 @@ namespace ECore.Devices
                     InitializeMemories();
                     throw e;
                 }
+                if (scopeConnectHandler != null)
+                    scopeConnectHandler(this, connected);
             }
             else
             {
+                if (scopeConnectHandler != null)
+                    scopeConnectHandler(this, connected);
+
                 acquisitionRunning = false;
                 deviceReady = false;
                 if (this.hardwareInterface == hwInterface)
@@ -221,8 +226,6 @@ namespace ECore.Devices
                 }
                 InitializeMemories();
             }
-            if (scopeConnectHandler != null)
-                scopeConnectHandler(this, connected);
         }
 
 #if INTERNAL
@@ -337,9 +340,14 @@ namespace ECore.Devices
         void Reset()
         {
             this.DataSourceScope.Stop();
-            try { this.hardwareInterface.Reset(); }
+            ScopeUsbInterface hwIfTmp = this.hardwareInterface;
+            OnDeviceConnect(this.hardwareInterface, false);
+            try {
+                hwIfTmp.Reset();
+            }
             catch (ScopeIOException)
-            { OnDeviceConnect(this.hardwareInterface, false); }
+            {  
+            }
         }
 
         public void SoftReset()

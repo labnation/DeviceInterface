@@ -243,7 +243,8 @@ namespace ECore.Devices
         }
         public void SetForceTrigger()
         {
-            StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
+            if(Ready)
+                StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
         }
 #if INTERNAL
         public void SetTriggerByte(byte level)
