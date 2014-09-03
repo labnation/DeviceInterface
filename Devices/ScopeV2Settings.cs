@@ -407,6 +407,7 @@ namespace ECore.Devices
 
         public void SetEnableLogicAnalyser(bool enable)
         {
+            if (!Ready) return;
             StrobeMemory[STR.LA_ENABLE].WriteImmediate(enable);
             if(enable)
                 StrobeMemory[STR.AWG_ENABLE].WriteImmediate(false);

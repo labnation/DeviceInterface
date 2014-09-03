@@ -327,14 +327,21 @@ namespace ECore.Devices
             this.DataSourceScope.Stop();
             this.hardwareInterface.LoadBootLoader();
         }
-        public void Reset()
+#endif
+
+#if INTERNAL
+        public 
+#else
+        private
+#endif
+        void Reset()
         {
             this.DataSourceScope.Stop();
             try { this.hardwareInterface.Reset(); }
             catch (ScopeIOException)
             { OnDeviceConnect(this.hardwareInterface, false); }
         }
-#endif
+
         public void SoftReset()
         {
             dataSourceScope.Reset();
@@ -380,8 +387,8 @@ namespace ECore.Devices
             try { header = new SmartScopeHeader(buffer); }
             catch (Exception e)
             {
-                Logger.Error("Failed to parse header - disconnecting scope: " + e.Message);
-                OnDeviceConnect(this.hardwareInterface, false);
+                Logger.Error("Failed to parse header - resetting scope: " + e.Message);
+                Reset();
                 return null;
             }
 
