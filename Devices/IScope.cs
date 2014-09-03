@@ -28,9 +28,14 @@ namespace ECore.Devices
         bool Ready { get; }
         string Serial { get; }
         double GetDefaultTimeRange();
+
         void SetAcquisitionMode(AcquisitionMode mode);
         void SetAcquisitionRunning(bool running);
+        bool CanRoll { get; }
+        bool Rolling { get; }
+        void SetRolling(bool enable);
         bool GetAcquisitionRunning();
+
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);

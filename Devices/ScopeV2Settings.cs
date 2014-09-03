@@ -327,6 +327,25 @@ namespace ECore.Devices
             StrobeMemory[s].WriteImmediate(true);
         }
 
+        public bool CanRoll
+        {
+            get
+            {
+                return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte() >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+            }
+        }
+        public bool Rolling
+        {
+            get
+            {
+                return CanRoll && StrobeMemory[STR.ROLL].GetBool();
+            }
+        }
+        public void SetRolling(bool enable)
+        {
+            StrobeMemory[STR.ROLL].Set(enable);
+        }
+
         public bool GetAcquisitionRunning()
         {
             return Ready && acquisitionRunning;

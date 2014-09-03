@@ -133,6 +133,10 @@ namespace ECore.Devices {
             return this.acquisitionRunning;
         }
 
+        public bool CanRoll { get { return false; } }
+        public bool Rolling { get { return false; } }
+        public void SetRolling(bool enable) { }
+
 		public void SetTriggerHoldOff (double holdoff)
 		{
 			this.triggerHoldoff = holdoff;

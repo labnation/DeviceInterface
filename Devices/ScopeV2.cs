@@ -562,7 +562,7 @@ namespace ECore.Devices
             else
             {
 #endif
-                byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.INPUT_DECIMATION].Get();
+            byte subSamplingBase10Power = header.GetRegister(REG.INPUT_DECIMATION);
 
                 bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE && !header.Rolling;
                 bool logicAnalyserOnChannelA = header.GetStrobe(STR.LA_ENABLE) && !header.GetStrobe(STR.LA_CHANNEL);
