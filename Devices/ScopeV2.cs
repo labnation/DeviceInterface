@@ -51,7 +51,6 @@ namespace ECore.Devices
         private DataSources.DataSource dataSourceScope;
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
-        private bool disableVoltageConversion = false;
         byte[] chA = null, chB = null;
 
         private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
@@ -530,10 +529,12 @@ namespace ECore.Devices
             double mulA = validMultipliers[(divMul >> 2) & 0x3];
             double divB = validDividers[(divMul >> 4) & 0x3];
             double mulB = validMultipliers[(divMul >> 6) & 0x3];
+#if INTERNAL
             data.AddSetting("DividerA", divA);
             data.AddSetting("DividerB", divB);
             data.AddSetting("MultiplierA", mulA);
             data.AddSetting("MultiplierB", mulB);
+
 
             if (this.disableVoltageConversion)
             {
@@ -545,6 +546,7 @@ namespace ECore.Devices
             }
             else
             {
+#endif
                 byte subSamplingBase10Power = (byte)FpgaSettingsMemory[REG.INPUT_DECIMATION].Get();
 
                 bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE && !header.Rolling;
@@ -587,8 +589,9 @@ namespace ECore.Devices
                     data.SetData(AnalogChannel.ChB, ChBConverted);
                     data.Samples = ChBConverted.Length;
                 }
-                    
+#if INTERNAL                    
             }
+#endif
             return data;
         }
 

@@ -194,6 +194,8 @@ namespace ECore.Devices
             FpgaSettingsMemory[r].Set(offset);
         }
 
+
+        private bool disableVoltageConversion = false;
         /// <summary>
         /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
         /// </summary>
