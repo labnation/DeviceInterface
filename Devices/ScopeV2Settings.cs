@@ -358,6 +358,7 @@ namespace ECore.Devices
 
             FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(inputDecimation);
             ChunkyAcquisitions = inputDecimation >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+            SetTriggerHoldOff(holdoff);
         }
 
         public double GetTimeRange()
@@ -370,10 +371,11 @@ namespace ECore.Devices
         ///<param name="samples">Store [samples] before trigger</param>
         public void SetTriggerHoldOff(double time)
         {
-            holdoff = time;
-            Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) ));
+            byte inputDecimation = FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte();
+            Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2,  inputDecimation)));
             //FIXME: this might not be the cleanest way to do this
-            samples += FrequencyCompensation.cutOffLength[FrequencyCompensationMode];
+            if(inputDecimation < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
+                samples += FrequencyCompensation.cutOffLength[FrequencyCompensationMode];
             Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
