@@ -59,6 +59,7 @@ namespace ECore.Devices
         private const int BURST_SIZE = 64;
         //FIXME: this should be automatically parsed from VHDL
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
+        private const int INPUT_DECIMATION_MAX = 21;
 
         private bool acquisitionRunning = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();

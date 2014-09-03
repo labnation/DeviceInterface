@@ -345,20 +345,22 @@ namespace ECore.Devices
         {
             double defaultTimeRange = GetDefaultTimeRange();
             double timeScaler = timeRange / defaultTimeRange;
-            byte acquisitionMultiplePower;
+            byte inputDecimation;
             if (timeScaler > 1)
-                acquisitionMultiplePower = (byte)Math.Ceiling(Math.Log(timeScaler, 2));
+                inputDecimation = (byte)Math.Ceiling(Math.Log(timeScaler, 2));
             else
-                acquisitionMultiplePower = 0;
-            FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(acquisitionMultiplePower);
-            ChunkyAcquisitions = acquisitionMultiplePower >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
-            //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
-            /*
-            if(acquisitionMultiplePower > 0)
-                FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(acquisitionMultiplePower - 1);
-            else
-                FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(0);
-             */
+                inputDecimation = 0;
+
+            if (inputDecimation > INPUT_DECIMATION_MAX)
+                inputDecimation = INPUT_DECIMATION_MAX;
+
+            FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(inputDecimation);
+            ChunkyAcquisitions = inputDecimation >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+        }
+
+        public double GetTimeRange()
+        {
+            return GetDefaultTimeRange() * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
         }
         ///<summary>
         ///Scope hold off
@@ -383,7 +385,6 @@ namespace ECore.Devices
         /// </summary>
         /// <returns></returns>
         public double GetDefaultTimeRange() {
-            //FIXME: don't hardcode
             return BASE_SAMPLE_PERIOD * NUMBER_OF_SAMPLES; 
         }
 

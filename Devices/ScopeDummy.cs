@@ -238,6 +238,10 @@ namespace ECore.Devices {
 			while (timeRange > decimation * GetDefaultTimeRange ())
 				decimation++;
 		}
+        public double GetTimeRange()
+        {
+            return GetDefaultTimeRange() * Math.Pow(2,decimation - 1);
+        }
 
 		public void SetCoupling (AnalogChannel ch, Coupling coupling)
 		{

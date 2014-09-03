@@ -65,6 +65,7 @@ namespace ECore.Devices
 
         Coupling GetCoupling(AnalogChannel channel);
         void SetTimeRange(double timeRange);
+        double GetTimeRange();
         DataSources.DataSource DataSourceScope { get; }
 
         void CommitSettings();
