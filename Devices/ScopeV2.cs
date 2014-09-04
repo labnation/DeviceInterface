@@ -57,6 +57,7 @@ namespace ECore.Devices
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
         //FIXME: this should be automatically parsed from VHDL
+        private const int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
         private const int INPUT_DECIMATION_MAX = 21;
 
@@ -572,7 +573,7 @@ namespace ECore.Devices
 #endif
             byte subSamplingBase10Power = header.GetRegister(REG.INPUT_DECIMATION);
 
-                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE && !header.Rolling;
+            bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
                 bool logicAnalyserOnChannelA = header.GetStrobe(STR.LA_ENABLE) && !header.GetStrobe(STR.LA_CHANNEL);
                 bool logicAnalyserOnChannelB = header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.LA_CHANNEL);
 

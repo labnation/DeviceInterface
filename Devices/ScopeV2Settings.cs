@@ -399,7 +399,7 @@ namespace ECore.Devices
             byte inputDecimation = FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte();
             Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2,  inputDecimation)));
             //FIXME: this might not be the cleanest way to do this
-            if(inputDecimation < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
+            if (inputDecimation <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION)
                 samples += FrequencyCompensation.cutOffLength[FrequencyCompensationMode];
             Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
