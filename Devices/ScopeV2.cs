@@ -158,11 +158,10 @@ namespace ECore.Devices
                     //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
                     //but there should be when flashing the FPGA.
 
-                    hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
-                    byte[] response = hardwareInterface.ReadControlBytes(16);
+                    byte[] response = GetPicFirmwareVersion();
                     if (response == null)
                         throw new Exception("Failed to read from device");
-                    Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(";", response)));
+                    Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(".", response)));
 
                     //Init ROM
                     this.rom = new Rom(hardwareInterface);

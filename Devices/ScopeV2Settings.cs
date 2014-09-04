@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using ECore.DeviceMemories;
 using Common;
+using ECore.HardwareInterfaces;
 
 namespace ECore.Devices
 {
@@ -422,12 +423,22 @@ namespace ECore.Devices
             return BASE_SAMPLE_PERIOD * (NUMBER_OF_SAMPLES - FrequencyCompensation.cutOffLength[FrequencyCompensationMode]); 
         }
 
+        /// <summary>
+        /// Print me as HEX
+        /// </summary>
+        /// <returns></returns>
         public uint GetFpgaFirmwareVersion()
         {
             return (UInt32)(FpgaRom[ROM.FW_GIT0].Read().GetByte() +
                    (UInt32)(FpgaRom[ROM.FW_GIT1].Read().GetByte() << 8) +
                    (UInt32)(FpgaRom[ROM.FW_GIT2].Read().GetByte() << 16) +
                    (UInt32)(FpgaRom[ROM.FW_GIT3].Read().GetByte() << 24));
+        }
+
+        public byte[] GetPicFirmwareVersion() {
+            hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
+            byte[] response = hardwareInterface.ReadControlBytes(16);
+            return response.Skip(4).Take(3).Reverse().ToArray();
         }
 
         #endregion
