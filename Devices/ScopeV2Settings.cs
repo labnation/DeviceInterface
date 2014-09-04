@@ -215,8 +215,8 @@ namespace ECore.Devices
         }
         public Coupling GetCoupling(AnalogChannel channel)
         {
-            //FIXME: make this part of the header instead of reading it
-            return this.coupling[channel];
+            STR dc = channel == AnalogChannel.ChA ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
+            return StrobeMemory[dc].GetBool() ? Coupling.DC : Coupling.AC;
         }
 
         #endregion
