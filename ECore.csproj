@@ -12,8 +12,7 @@
     <AssemblyName>ECore</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <UseMSBuildEngine>False</UseMSBuildEngine>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
