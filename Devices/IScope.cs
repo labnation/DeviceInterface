@@ -34,7 +34,8 @@ namespace ECore.Devices
         bool CanRoll { get; }
         bool Rolling { get; }
         void SetRolling(bool enable);
-        bool GetAcquisitionRunning();
+        bool Running { get; }
+        bool StopPending { get; }
 
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(float voltage);

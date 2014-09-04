@@ -128,10 +128,8 @@ namespace ECore.Devices {
         {
             this.acquisitionRunning = running;
         }
-        public bool GetAcquisitionRunning()
-        {
-            return this.acquisitionRunning;
-        }
+        public bool Running { get { return this.acquisitionRunning; } }
+        public bool StopPending { get { return false; } }
 
         public bool CanRoll { get { return false; } }
         public bool Rolling { get { return false; } }

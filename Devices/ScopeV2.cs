@@ -60,7 +60,8 @@ namespace ECore.Devices
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
         private const int INPUT_DECIMATION_MAX = 21;
 
-        private bool acquisitionRunning = false;
+        private bool acquiring = false;
+        private bool stopPending = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private float triggerLevel = 0f;
 
@@ -216,9 +217,11 @@ namespace ECore.Devices
             {
                 if (scopeConnectHandler != null)
                     scopeConnectHandler(this, connected);
-
-                acquisitionRunning = false;
+                
+                stopPending = false;
+                acquiring = false;
                 deviceReady = false;
+
                 if (this.hardwareInterface == hwInterface)
                 {
                     this.hardwareInterface = null;
@@ -400,18 +403,24 @@ namespace ECore.Devices
                 return null;
             }
 
+            acquiring = !header.LastAcquisition;
+            stopPending = header.ScopeStopPending;
+
+            if (header.NumberOfPayloadBursts == 0)
+                return null;
+
             try { buffer = hardwareInterface.GetData(BURST_SIZE * header.NumberOfPayloadBursts); }
             catch (Exception e)
             {
                 Logger.Error("Failed to fetch payload - disconnecting scope: " + e.Message);
-                OnDeviceConnect(this.hardwareInterface, false);
+                Reset();
                 return null;
             }
                 
             if (buffer == null)
             {
-                Logger.Error("Failed to get payload");
-                OnDeviceConnect(this.hardwareInterface, false);
+                Logger.Error("Failed to get payload (got null)");
+                Reset();
                 return null;
             }
 
@@ -473,7 +482,6 @@ namespace ECore.Devices
                 chA = chANew;
                 chB = chBNew;
             }
-            acquisitionRunning = header.ScopeRunning;
             //FIXME: Get these scope settings from header
             int triggerIndex = 0;
 

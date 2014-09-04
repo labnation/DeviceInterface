@@ -320,10 +320,17 @@ namespace ECore.Devices
             if (!Connected) return;
             STR s;
             if (running)
+            {
                 s = STR.ACQ_START;
+                acquiring = true;
+                stopPending = false;
+            }
             else
+            {
+                //Don't assume we'll stop immediately
                 s = STR.ACQ_STOP;
-            acquisitionRunning = running;
+            }
+            
             StrobeMemory[s].WriteImmediate(true);
         }
 
@@ -346,10 +353,8 @@ namespace ECore.Devices
             StrobeMemory[STR.ROLL].Set(enable);
         }
 
-        public bool GetAcquisitionRunning()
-        {
-            return Ready && acquisitionRunning;
-        }
+        public bool Running { get { return Ready && acquiring; } }
+        public bool StopPending { get { return Ready && stopPending; } }
 
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
         {

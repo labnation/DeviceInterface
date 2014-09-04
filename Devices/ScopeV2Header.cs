@@ -18,7 +18,8 @@ namespace ECore.Devices
         internal int Samples { get; private set; }
         internal double SamplePeriod { get; private set; }
         
-        internal bool ScopeRunning { get; private set; }
+        internal bool LastAcquisition { get; private set; }
+        internal bool ScopeStopPending { get; private set; }
         internal bool Rolling { get; private set; }
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
@@ -36,14 +37,14 @@ namespace ECore.Devices
             BytesPerBurst = data[3];
             NumberOfPayloadBursts = data[4] + (data[5] << 8);
             //FIXME: this should be corrected in FW
-            if (NumberOfPayloadBursts == 0)
-                NumberOfPayloadBursts = 64;
+
             PackageOffset = (short)(data[6] + (data[7] << 8));
             PackageSize = (short)(data[8] + (data[9] << 8));
             
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
-            ScopeRunning = Utils.IsBitSet(data[10], 0);
-            Rolling = Utils.IsBitSet(data[10], 1);
+            LastAcquisition = Utils.IsBitSet(data[10], 1);
+            ScopeStopPending = !Utils.IsBitSet(data[10], 0);
+            Rolling = Utils.IsBitSet(data[10], 2);
 
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
