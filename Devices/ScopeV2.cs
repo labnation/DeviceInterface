@@ -435,6 +435,9 @@ namespace ECore.Devices
                 }
                 else //blow up the array
                 {
+                    //FIXME: this shouldn't be possible
+                    if (chA == null)
+                        return null;
                     byte[] chANew = new byte[chA.Length + header.Samples];
                     byte[] chBNew = new byte[chB.Length + header.Samples];
                     chA.CopyTo(chANew, 0);
