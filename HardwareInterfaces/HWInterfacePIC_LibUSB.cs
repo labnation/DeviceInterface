@@ -88,6 +88,7 @@ namespace ECore.HardwareInterfaces
                     throw new ScopeIOException("This device doesn't have a serial number, can't work with that");
                 if (interfaces.ContainsKey(serial))
                     throw new ScopeIOException("This device was already registered. This is a bug");
+                C.Logger.Debug("Device found with serial [" + serial + "]");
                 interfaces.Add(serial, f);
 
                 if (onConnect != null)
@@ -130,8 +131,14 @@ namespace ECore.HardwareInterfaces
                     break;
                 case EventType.DeviceRemoveComplete:
                     C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct));
-                    RemoveDevice(e.Device.SerialNumber);
-
+                    if (e.Device != null && e.Device.IdVendor == VID && PIDs.Contains(e.Device.IdProduct))
+                    {
+                        //Cos sometimes we fail to get the serial
+                        if(e.Device.SerialNumber == "" || e.Device.SerialNumber == null)
+                            RemoveDevice(interfaces.First().Key);
+                        else
+                            RemoveDevice(e.Device.SerialNumber);
+                    }
                     break;
                 default:
 				C.Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
@@ -141,6 +148,7 @@ namespace ECore.HardwareInterfaces
 
         internal static void RemoveDevice(string serial)
         {
+            C.Logger.Debug("Removing device with serial [" + serial + "]");
             if (!interfaces.ContainsKey(serial))
                 return;
 
