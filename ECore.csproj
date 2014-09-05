@@ -115,12 +115,8 @@
     </None>
     <None Include="i2c_sequence.mat" />
     <None Include="packages.config" />
-    <None Include="SmartScope_A10.bin" Condition=" '$(Configuration)' == 'Development' ">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="SmartScope_A12.bin" Condition=" '$(Configuration)' == 'Development' ">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="SmartScope_A10.bin" Condition=" '$(Configuration)' == 'Development' " />
+    <None Include="SmartScope_A12.bin" Condition=" '$(Configuration)' == 'Development' " />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
