@@ -6,6 +6,8 @@ using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.LibUsb;
 using C = Common;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace ECore.HardwareInterfaces
 {
@@ -66,8 +68,38 @@ namespace ECore.HardwareInterfaces
         const int I2C_MAX_WRITE_LENGTH = 27;
         const int I2C_MAX_WRITE_LENGTH_BULK = 29;
 
+        private bool destroyed = false;
+        private object usbLock = new object();
+        private ConcurrentQueue<UsbCommand> usbCommandQueue = new ConcurrentQueue<UsbCommand>();
         private enum Operation { READ, WRITE, WRITE_BEGIN, WRITE_BODY, WRITE_END };
+        private enum EndPoint { CMD_WRITE, CMD_READ, DATA };
+        private struct UsbCommand
+        {
+            public UsbEndpointBase endPoint;
+            public byte[] buffer;
+            public int timeout;
+            public byte[] result;
+            public ErrorCode resultCode;
+            public bool executed;
+            public int bytesReadOrWritten;
+            public UsbCommand(UsbEndpointBase ep, byte[] buffer, int timeout)
+            {
+                this.endPoint = ep;
+                this.buffer = buffer;
+                this.timeout = timeout;
+                this.bytesReadOrWritten = -1;
+                this.executed = false;
+                this.resultCode = ErrorCode.None;
+                this.result = null;
+            }
 
+            internal void WaitForCompletion()
+            {
+                while (!executed)
+                    Thread.Sleep(1);
+            }
+        }
+        
         private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
         private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
@@ -77,6 +109,7 @@ namespace ECore.HardwareInterfaces
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
 
+        
         private object registerLock = new object();
         private string serial;
 
@@ -98,23 +131,54 @@ namespace ECore.HardwareInterfaces
             commandReadEndpoint = usbDevice.OpenEndpointReader(ReadEndpointID.Ep03);
 
             C.Logger.Debug("Created new ScopeUsbInterface");
+
+            Thread usbCommandThread = new Thread(new ThreadStart(usbCommandThreadStart));
+            usbCommandThread.Name = "USB command thread (" + serial + ")";
+            usbCommandThread.Start();
+        }
+
+        private void usbCommandThreadStart()
+        {
+            UsbCommand cmd;
+            while (!destroyed)
+            {
+                if (usbCommandQueue.TryDequeue(out cmd))
+                {
+                    if (cmd.endPoint is UsbEndpointWriter)
+                    {
+                        lock (usbLock)
+                        {
+                            cmd.resultCode = ((UsbEndpointWriter)cmd.endPoint).Write(cmd.buffer, cmd.timeout, out cmd.bytesReadOrWritten);
+                        }
+                        cmd.executed = true;
+                    }
+                    else if (cmd.endPoint is UsbEndpointReader)
+                    {
+                        lock (usbLock)
+                        {
+                            cmd.resultCode = ((UsbEndpointReader)cmd.endPoint).Read(cmd.buffer, cmd.timeout, out cmd.bytesReadOrWritten);
+                        }
+                        cmd.executed = true;
+                    }
+                    else
+                    {
+                        throw new ScopeIOException("Unknown endpoint type");
+                    }
+                }
+                else
+                {
+                    Thread.Sleep(1);
+                }
+            }
+            
         }
 
         internal void Destroy()
         {
-            /*
-            lock (endpointAccessLock)
+            lock (usbLock)
             {
-                commandWriteEndpoint.Dispose();
-                commandReadEndpoint.Dispose();
-                dataEndpoint.Dispose();
-
-                commandWriteEndpoint = null;
-                commandReadEndpoint = null;
-                dataEndpoint = null;
+                destroyed = true;
             }
-            device.Close();   
-             */
         }
 
         internal string GetSerial()
@@ -122,90 +186,85 @@ namespace ECore.HardwareInterfaces
             return serial;
         }
 
-        public void WriteControlBytes(byte[] message)
+        public void WriteControlBytes(byte[] message, bool async)
         {
             if (message.Length > COMMAND_WRITE_ENDPOINT_SIZE)
             {
                 throw new ScopeIOException("USB message too long for endpoint");
             }
-            WriteControlBytesBulk(message);
+            WriteControlBytesBulk(message, async);
         }
 
-        public void WriteControlBytesBulk(byte[] message)
+        public void WriteControlBytesBulk(byte[] message, bool async)
         {
-            int bytesWritten;
-            ErrorCode code;
-
             if (commandWriteEndpoint == null)
                 throw new ScopeIOException("Command write endpoint is null");
 
-            code = commandWriteEndpoint.Write(message, USB_TIMEOUT, out bytesWritten);
-            if (bytesWritten != message.Length)
-                throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", bytesWritten, message.Length));
-            switch (code)
+            UsbCommand cmd = new UsbCommand(commandWriteEndpoint, message, USB_TIMEOUT);
+            usbCommandQueue.Enqueue(cmd);
+            if (!async)
             {
-                case ErrorCode.Success:
-                    break;
-                default:
-                    throw new ScopeIOException("Failed to read from USB device : " + code.ToString("G"));
+                cmd.WaitForCompletion();
+
+                if (cmd.bytesReadOrWritten != message.Length)
+                    throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", cmd.bytesReadOrWritten, message.Length));
+                switch (cmd.resultCode)
+                {
+                    case ErrorCode.Success:
+                        break;
+                    default:
+                        throw new ScopeIOException("Failed to read from USB device : " + cmd.resultCode.ToString("G"));
+                }
             }
         }
 
         public byte[] ReadControlBytes(int length)
         {
-            //try to read data
-            ErrorCode errorCode = ErrorCode.None;
-            //send read command
-            byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
-            int bytesRead;
+            UsbCommand cmd = new UsbCommand(commandReadEndpoint, new byte[COMMAND_READ_ENDPOINT_SIZE], USB_TIMEOUT);
+            usbCommandQueue.Enqueue(cmd);
 
-            if (commandReadEndpoint == null)
-                throw new ScopeIOException("Command read endpoint is null");
-            errorCode = commandReadEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-            switch (errorCode)
+            //FIXME: allow async completion
+            cmd.WaitForCompletion();
+
+            switch (cmd.resultCode)
             {
                 case ErrorCode.Success:
                     break;
                 default:
-                    throw new ScopeIOException("Failed to read from device: " + errorCode.ToString("G"));
+                    throw new ScopeIOException("Failed to read from device: " + cmd.resultCode.ToString("G"));
             }
             byte[] returnBuffer = new byte[length];
-            Array.Copy(readBuffer, returnBuffer, length);
+            Array.Copy(cmd.buffer, returnBuffer, length);
 
             return returnBuffer;
         }
 
         internal void FlushDataPipe()
         {
-            if (dataEndpoint == null)
-                throw new ScopeIOException("Data endpoint is null");
-            dataEndpoint.Reset();
+            lock (usbLock)
+            {
+                if (!destroyed)
+                    dataEndpoint.Reset();
+            }
         }
 
         internal byte[] GetData(int numberOfBytes)
         {
-            //try to read data
-            ErrorCode errorCode = ErrorCode.None;
-            //send read command
-            byte[] readBuffer = new byte[numberOfBytes];
-            int bytesRead;
+            UsbCommand cmd = new UsbCommand(dataEndpoint, new byte[numberOfBytes], USB_TIMEOUT);
 
-            {
-                if (dataEndpoint == null)
-                    throw new ScopeIOException("Data endpoint is null");
-                errorCode = dataEndpoint.Read(readBuffer, USB_TIMEOUT, out bytesRead);
-            }
-            if (bytesRead != numberOfBytes)
+            cmd.WaitForCompletion();
+
+            if (cmd.bytesReadOrWritten != numberOfBytes)
                 return null;
-            switch (errorCode)
+            switch (cmd.resultCode)
             {
                 case ErrorCode.Success:
                     break;
                 default:
-                    throw new ScopeIOException("An error occured while fetching scope data: " + errorCode.ToString("G"));
+                    throw new ScopeIOException("An error occured while fetching scope data: " + cmd.resultCode.ToString("G"));
             }
             //return read data
-            return readBuffer;
+            return cmd.buffer;
         }
 
         #region ScopeInterface - the internal interface
@@ -228,7 +287,7 @@ namespace ECore.HardwareInterfaces
             }
 
             byte[] header = UsbCommandHeader(ctrl, Operation.READ, address, length);
-            this.WriteControlBytes(header);
+            this.WriteControlBytes(header, false);
 
             //EP3 always contains 16 bytes xxx should be linked to constant
             //FIXME: use endpoint length or so, or don't pass the argument to the function
@@ -261,7 +320,7 @@ namespace ECore.HardwareInterfaces
                 byte[] toSend = new byte[32];
 
                 //Begin I2C - send start condition
-                WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0));
+                WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0), false);
 
                 while (offset < data.Length)
                 {
@@ -269,10 +328,10 @@ namespace ECore.HardwareInterfaces
                     byte[] header = UsbCommandHeader(ctrl, Operation.WRITE_BODY, address, (uint)length);
                     Array.Copy(header, toSend, header.Length);
                     Array.Copy(data, offset, toSend, header.Length, length);
-                    WriteControlBytes(toSend);
+                    WriteControlBytes(toSend, false);
                     offset += length;
                 }
-                WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_END, address, 0));
+                WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_END, address, 0), false);
             }
             else
             {
@@ -284,14 +343,14 @@ namespace ECore.HardwareInterfaces
                 Array.Copy(header, toSend, header.Length);
                 if (length > 0)
                     Array.Copy(data, 0, toSend, header.Length, data.Length);
-                WriteControlBytes(toSend);
+                WriteControlBytes(toSend, false);
             }
         }
 
         internal void SendCommand(PIC_COMMANDS cmd)
         {
             byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
-            WriteControlBytes(toSend);
+            WriteControlBytes(toSend, false);
         }
 
         internal void LoadBootLoader()

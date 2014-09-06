@@ -97,7 +97,7 @@ namespace ECore.Devices {
 				    (byte) (commands >> 8),
 				    (byte) (commands),
                 };
-                hardwareInterface.WriteControlBytes(msg);
+                hardwareInterface.WriteControlBytes(msg, false);
 
                 //Flush whatever might be left in the datapipe
                 hardwareInterface.FlushDataPipe();
@@ -109,13 +109,13 @@ namespace ECore.Devices {
 						commandSize = firmware.Length - bytesSent;
 					byte [] commandBytes = new byte[commandSize];
 					Array.Copy (firmware, bytesSent, commandBytes, 0, commandSize);
-                    hardwareInterface.WriteControlBytesBulk(commandBytes);
+                    hardwareInterface.WriteControlBytesBulk(commandBytes, false);
 					bytesSent += commandBytes.Length;
 					int progress = (int) (bytesSent * 100 / firmware.Length);
 				}
 				flashStopwatch.Stop ();
 				for (int j = 0; j < killMeNow; j++) {
-                    hardwareInterface.WriteControlBytesBulk(dummyData);
+                    hardwareInterface.WriteControlBytesBulk(dummyData, false);
 				}
                 
 				//Send finish flashing command
