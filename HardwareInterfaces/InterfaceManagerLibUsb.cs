@@ -17,8 +17,6 @@ namespace ECore.HardwareInterfaces
     internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb>
     {   
         IDeviceNotifier UsbDeviceNotifier;
-        int VID = 0x04D8;
-        int[] PIDs = new int[] {0x0052, 0xF4B5};
 
         protected override void Initialize()
         {
