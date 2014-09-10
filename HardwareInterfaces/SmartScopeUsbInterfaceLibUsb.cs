@@ -40,7 +40,7 @@ namespace ECore.HardwareInterfaces
             {
                 if (endPoint is UsbEndpointWriter)
                 {
-                    lock (usbLock)
+                    //lock (usbLock)
                     {
                         resultCode = ((UsbEndpointWriter)endPoint).Write(buffer, timeout, out bytesReadOrWritten);
                     }
@@ -48,7 +48,7 @@ namespace ECore.HardwareInterfaces
                 }
                 else if (endPoint is UsbEndpointReader)
                 {
-                    lock (usbLock)
+                    //lock (usbLock)
                     {
                         resultCode = ((UsbEndpointReader)endPoint).Read(buffer, timeout, out bytesReadOrWritten);
                     }
@@ -102,7 +102,7 @@ namespace ECore.HardwareInterfaces
 
         public void Destroy()
         {
-            lock (usbLock)
+            //lock (usbLock)
             {
                 destroyed = true;
             }
@@ -169,7 +169,7 @@ namespace ECore.HardwareInterfaces
 
         public void FlushDataPipe()
         {
-            lock (usbLock)
+            //lock (usbLock)
             {
                 if (!destroyed)
                     dataEndpoint.Reset();
