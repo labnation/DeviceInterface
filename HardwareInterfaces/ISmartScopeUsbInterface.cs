@@ -36,19 +36,12 @@ namespace ECore.HardwareInterfaces
     {
         string GetSerial();
 
-        void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data);
-        void SetControllerRegister(ScopeController ctrl, uint address, byte[] data);
-
         void WriteControlBytes(byte[] message, bool async);
         void WriteControlBytesBulk(byte[] message, bool async);
         byte[] ReadControlBytes(int length);
         
-        void SendCommand(SmartScopeUsbInterfaceHelpers.PIC_COMMANDS cmd);
-        
         byte[] GetData(int numberOfBytes);
 
         void FlushDataPipe(); 
-        void Reset();
-        void LoadBootLoader();
     }
 }

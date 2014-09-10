@@ -43,6 +43,90 @@ namespace ECore.HardwareInterfaces
 
         public enum Operation { READ, WRITE, WRITE_BEGIN, WRITE_BODY, WRITE_END };
 
+        public static void GetControllerRegister(this ISmartScopeUsbInterface i, ScopeController ctrl, uint address, uint length, out byte[] data)
+        {
+            //In case of FPGA (I2C), first write address we're gonna read from to FPGA
+            //FIXME: this should be handled by the PIC firmware
+            if (ctrl == ScopeController.FPGA || ctrl == ScopeController.FPGA_ROM)
+                i.SetControllerRegister(ctrl, address, null);
+
+            if (ctrl == ScopeController.FLASH && (address + length) > (FLASH_USER_ADDRESS_MASK + 1))
+            {
+                throw new ScopeIOException(String.Format("Can't read flash rom beyond 0x{0:X8}", FLASH_USER_ADDRESS_MASK));
+            }
+
+            byte[] header = UsbCommandHeader(ctrl, Operation.READ, address, length);
+            i.WriteControlBytes(header, false);
+
+            //EP3 always contains 16 bytes xxx should be linked to constant
+            //FIXME: use endpoint length or so, or don't pass the argument to the function
+            byte[] readback = i.ReadControlBytes(16);
+
+            int readHeaderLength;
+            if (ctrl == ScopeController.FLASH)
+                readHeaderLength = 5;
+            else
+                readHeaderLength = 4;
+
+            //strip away first 4 bytes as these are not data
+            data = new byte[length];
+            Array.Copy(readback, readHeaderLength, data, 0, length);
+        }
+
+        public static void SetControllerRegister(this ISmartScopeUsbInterface i, ScopeController ctrl, uint address, byte[] data)
+        {
+            if (data != null && data.Length > I2C_MAX_WRITE_LENGTH)
+            {
+                if (ctrl != ScopeController.AWG)
+                    throw new Exception(String.Format("Can't do writes of this length ({0}) to controller {1:G}", data.Length, ctrl));
+
+                int offset = 0;
+                byte[] toSend = new byte[32];
+
+                //Begin I2C - send start condition
+                i.WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0), false);
+
+                while (offset < data.Length)
+                {
+                    int length = Math.Min(data.Length - offset, I2C_MAX_WRITE_LENGTH_BULK);
+                    byte[] header = UsbCommandHeader(ctrl, Operation.WRITE_BODY, address, (uint)length);
+                    Array.Copy(header, toSend, header.Length);
+                    Array.Copy(data, offset, toSend, header.Length, length);
+                    i.WriteControlBytes(toSend, false);
+                    offset += length;
+                }
+                i.WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_END, address, 0), false);
+            }
+            else
+            {
+                uint length = data != null ? (uint)data.Length : 0;
+                byte[] header = UsbCommandHeader(ctrl, Operation.WRITE, address, length);
+
+                //Paste header and data together and send it
+                byte[] toSend = new byte[header.Length + length];
+                Array.Copy(header, toSend, header.Length);
+                if (length > 0)
+                    Array.Copy(data, 0, toSend, header.Length, data.Length);
+                i.WriteControlBytes(toSend, false);
+            }
+        }
+
+        public static void SendCommand(this ISmartScopeUsbInterface i, PIC_COMMANDS cmd)
+        {
+            byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
+            i.WriteControlBytes(toSend, false);
+        }
+
+        public static void LoadBootLoader(this ISmartScopeUsbInterface i)
+        {
+            SendCommand(i, PIC_COMMANDS.PIC_BOOTLOADER);
+        }
+
+        public static void Reset(this ISmartScopeUsbInterface i)
+        {
+            SendCommand(i, PIC_COMMANDS.PIC_RESET);
+        }
+
         public static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)
         {
             byte[] header = null;
