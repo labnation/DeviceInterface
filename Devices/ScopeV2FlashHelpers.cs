@@ -53,23 +53,8 @@ namespace ECore.Devices {
 					}	
 				}
 
-				//show all assets
-				/*string[] assetList2 = Assets.List("");
-				for (int a=0; a<assetList2.Length; a++) {
-					Logger.AddEntry (this, LogMessageType.Persistent, "Asset: "+assetList2[a]);
-				}
-				//inStream = Assets.Open(fileName, Android.Content.Res.Access.Streaming);
-				//reader = new BinaryReader(inStream);
-*/
-
-#else
-#if INTERNAL
-                string fileName = String.Format("{0}.bin", fwName);
-                firmwareModified = new FileInfo(fileName).LastWriteTime;
-                firmware = Utils.FileToByteArray(fileName, packetSize, 0xff);
 #else
                 firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
-#endif
 #endif
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
