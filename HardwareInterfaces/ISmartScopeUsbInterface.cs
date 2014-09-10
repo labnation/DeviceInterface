@@ -42,6 +42,7 @@ namespace ECore.HardwareInterfaces
         
         byte[] GetData(int numberOfBytes);
 
+        void Destroy();
         void FlushDataPipe(); 
     }
 }

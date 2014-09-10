@@ -126,7 +126,7 @@ namespace ECore.Devices
         public void Dispose()
         {
             dataSourceScope.Stop();
-            HWInterfacePIC_LibUSB.RemoveConnectHandler(OnDeviceConnect);
+            InterfaceManagerLibUsb.Instance.onConnect -= OnDeviceConnect;
             if (hardwareInterface != null)
                 OnDeviceConnect(this.hardwareInterface, false);
         }
@@ -141,9 +141,8 @@ namespace ECore.Devices
 #if ANDROID
 		hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
 #else
-            HWInterfacePIC_LibUSB.AddConnectHandler(OnDeviceConnect);
-            HWInterfacePIC_LibUSB.Initialize();
-            HWInterfacePIC_LibUSB.PollDevice();
+            InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
+            InterfaceManagerLibUsb.Instance.PollDevice();
 #endif
         }
 

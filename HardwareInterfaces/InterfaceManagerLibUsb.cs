@@ -14,26 +14,16 @@ using C=Common;
 namespace ECore.HardwareInterfaces
 {
     //class that provides raw HW access to the device
-    internal static class HWInterfacePIC_LibUSB
+    internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb>
     {   
-        //needed for plug-unplug events
-        static OnDeviceConnect onConnect;
-        static IDeviceNotifier UsbDeviceNotifier;
-        static bool initialized = false;
-        static int VID = 0x04D8;
-        static int[] PIDs = new int[] {0x0052, 0xF4B5};
-        static Dictionary<string, SmartScopeUsbInterfaceLibUsb> interfaces = new Dictionary<string,SmartScopeUsbInterfaceLibUsb>();
+        IDeviceNotifier UsbDeviceNotifier;
+        int VID = 0x04D8;
+        int[] PIDs = new int[] {0x0052, 0xF4B5};
 
-        internal static void Initialize()
+        protected override void Initialize()
         {
-            if (initialized) return;
-            initialized = true;
-
-#if __IOS__ || ANDROID
-#else
             UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;            
-#endif
             UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
 			C.Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
             foreach (UsbRegistry device in usbDeviceList)
@@ -48,7 +38,7 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        internal static void PollDevice()
+        public override void PollDevice()
         {
             if (interfaces.Count > 0 && onConnect != null)
             {
@@ -74,7 +64,7 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-	internal static void DeviceFound(LibUsbDotNet.UsbDevice scopeUsbDevice)
+	    private void DeviceFound(LibUsbDotNet.UsbDevice scopeUsbDevice)
         {
             string serial = null;
             try
@@ -100,17 +90,8 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        internal static void AddConnectHandler(OnDeviceConnect c)
-        {
-            onConnect += c;
-        }
-        internal static void RemoveConnectHandler(OnDeviceConnect c)
-        {
-            onConnect -= c;
-        }
-
         //called at init, and each time a system event occurs
-        private static void OnDeviceNotifyEvent(object sender, DeviceNotifyEventArgs e)
+        private void OnDeviceNotifyEvent(object sender, DeviceNotifyEventArgs e)
         {
             switch (e.EventType)
             {
@@ -144,7 +125,7 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        internal static void RemoveDevice(string serial)
+        private void RemoveDevice(string serial)
         {
             C.Logger.Debug("Removing device with serial [" + serial + "]");
             if (!interfaces.ContainsKey(serial))
