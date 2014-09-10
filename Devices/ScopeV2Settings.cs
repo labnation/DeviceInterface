@@ -436,7 +436,7 @@ namespace ECore.Devices
         }
 
         public byte[] GetPicFirmwareVersion() {
-            hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PIC_VERSION);
+            hardwareInterface.SendCommand(SmartScopeUsbInterfaceHelpers.PIC_COMMANDS.PIC_VERSION);
             byte[] response = hardwareInterface.ReadControlBytes(16);
             return response.Skip(4).Take(3).Reverse().ToArray();
         }

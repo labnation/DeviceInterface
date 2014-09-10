@@ -8,6 +8,8 @@ using ECore.DataSources;
 using ECore.HardwareInterfaces;
 using Common;
 using AForge.Math;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace ECore.Devices
 {
@@ -18,7 +20,7 @@ namespace ECore.Devices
 #else
     private
 #endif
-        ScopeUsbInterface hardwareInterface;
+        ISmartScopeUsbInterface hardwareInterface;
 #if INTERNAL
         public
 #else
@@ -145,7 +147,7 @@ namespace ECore.Devices
 #endif
         }
 
-        private void OnDeviceConnect(ScopeUsbInterface hwInterface, bool connected)
+        private void OnDeviceConnect(ISmartScopeUsbInterface hwInterface, bool connected)
         {
             if (connected)
             {
@@ -215,6 +217,7 @@ namespace ECore.Devices
             }
             else
             {
+                this.dataSourceScope.Stop();
                 if (scopeConnectHandler != null)
                     scopeConnectHandler(this, connected);
                 
@@ -343,7 +346,7 @@ namespace ECore.Devices
         void Reset()
         {
             this.DataSourceScope.Stop();
-            ScopeUsbInterface hwIfTmp = this.hardwareInterface;
+            ISmartScopeUsbInterface hwIfTmp = this.hardwareInterface;
             OnDeviceConnect(this.hardwareInterface, false);
             try {
                 hwIfTmp.Reset();

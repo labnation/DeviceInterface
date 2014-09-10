@@ -16,9 +16,9 @@ namespace ECore.DeviceMemories
 #endif
     class ScopeFpgaRom : ByteMemory
     {
-        private ScopeUsbInterface hwInterface;
+        private ISmartScopeUsbInterface hwInterface;
 
-        public ScopeFpgaRom(ScopeUsbInterface hwInterface)
+        public ScopeFpgaRom(ISmartScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         

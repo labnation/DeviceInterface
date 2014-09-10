@@ -52,11 +52,11 @@ namespace ECore.Devices
             public UInt32 plugCount { get; private set; }
             public List<GainCalibration> gainCalibration { get; private set; }
             public List<FrequencyResponse> frequencyResponse { get; private set; }
-            ScopeUsbInterface hwInterface;
+            ISmartScopeUsbInterface hwInterface;
             public double[] computedMultipliers { get; private set; }
             public double[] computedDividers { get; private set; }
 
-            internal Rom(ScopeUsbInterface hwInterface)
+            internal Rom(ISmartScopeUsbInterface hwInterface)
             {
                 this.hwInterface = hwInterface;
                 Download();

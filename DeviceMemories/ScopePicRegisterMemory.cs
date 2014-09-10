@@ -25,9 +25,9 @@ namespace ECore.DeviceMemories
 #endif
     class ScopePicRegisterMemory : ByteMemory
     {
-        private ScopeUsbInterface hwInterface;
+        private ISmartScopeUsbInterface hwInterface;
 
-        public ScopePicRegisterMemory(ScopeUsbInterface hwInterface)
+        public ScopePicRegisterMemory(ISmartScopeUsbInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         

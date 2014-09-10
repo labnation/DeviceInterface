@@ -13,8 +13,6 @@ using C=Common;
 
 namespace ECore.HardwareInterfaces
 {
-    delegate void OnDeviceConnect(ScopeUsbInterface hardwareInterface, bool connected);
-
     //class that provides raw HW access to the device
     internal static class HWInterfacePIC_LibUSB
     {   
@@ -24,7 +22,7 @@ namespace ECore.HardwareInterfaces
         static bool initialized = false;
         static int VID = 0x04D8;
         static int[] PIDs = new int[] {0x0052, 0xF4B5};
-        static Dictionary<string, ScopeUsbInterface> interfaces = new Dictionary<string,ScopeUsbInterface>();
+        static Dictionary<string, SmartScopeUsbInterfaceLibUsb> interfaces = new Dictionary<string,SmartScopeUsbInterfaceLibUsb>();
 
         internal static void Initialize()
         {
@@ -81,7 +79,7 @@ namespace ECore.HardwareInterfaces
             string serial = null;
             try
             {
-                ScopeUsbInterface f = new ScopeUsbInterface(scopeUsbDevice);
+                SmartScopeUsbInterfaceLibUsb f = new SmartScopeUsbInterfaceLibUsb(scopeUsbDevice);
                 //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
                 serial = scopeUsbDevice.Info.SerialString;
                 if (serial == "" || serial == null)

@@ -77,8 +77,8 @@ namespace ECore.Devices {
 				UInt16 commands = (UInt16) (firmware.Length / packetSize + killMeNow);
 				//PIC: enter FPGA flashing mode
                 byte[] msg = new byte[] {
-				    ScopeUsbInterface.HEADER_CMD_BYTE,
-                    (byte)ScopeUsbInterface.PIC_COMMANDS.PROGRAM_FPGA_START,
+				    SmartScopeUsbInterfaceHelpers.HEADER_CMD_BYTE,
+                    (byte)SmartScopeUsbInterfaceHelpers.PIC_COMMANDS.PROGRAM_FPGA_START,
 				    (byte) (commands >> 8),
 				    (byte) (commands),
                 };
@@ -104,7 +104,7 @@ namespace ECore.Devices {
 				}
                 
 				//Send finish flashing command
-                hardwareInterface.SendCommand(ScopeUsbInterface.PIC_COMMANDS.PROGRAM_FPGA_END);
+                hardwareInterface.SendCommand(SmartScopeUsbInterfaceHelpers.PIC_COMMANDS.PROGRAM_FPGA_END);
                 Logger.Info(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
                 this.flashed = true;
 			} catch (ScopeIOException e) {
