@@ -154,8 +154,9 @@ namespace ECore.Devices
             //we'll still have deviceMemory objects to play with
             InitializeMemories();
 #if ANDROID
+            InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
-            InterfaceManagerXamarin.Instance.context = this.context;
+
             InterfaceManagerXamarin.Instance.PollDevice();
 #else
             InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;

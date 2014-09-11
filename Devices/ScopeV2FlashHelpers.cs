@@ -32,7 +32,19 @@ namespace ECore.Devices {
 
 			//Get FW contents
 			try {
+                #if ANDROID
+                Stream str = context.Assets.Open(String.Format("{0}.bin", fwName));
+                List<byte> fw = new List<byte>();
+                while(true) {    
+                        byte[] buffer = new byte[1024];
+                        int read = str.Read(buffer, 0, buffer.Length);
+                    if(read == 0) break;
+                    fw.AddRange(buffer.Take(read));
+                }
+                firmware = fw.ToArray();
+                #else
                 firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
+                #endif
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
 				Logger.Error(e.Message);

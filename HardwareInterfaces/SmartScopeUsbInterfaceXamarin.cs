@@ -18,7 +18,13 @@ namespace ECore.HardwareInterfaces
         private UsbDeviceConnection usbConnection;
 
         public SmartScopeUsbInterfaceXamarin(Context context, UsbManager usbManager, UsbDevice device)
-        {
+        {               
+            if(!usbManager.HasPermission(device))
+            {
+                Logger.Error("Permission denied");
+                throw new Exception("Device permission not obtained");
+            }
+                
             UsbInterface interf = device.GetInterface(0);
             for (int i = 0; i < interf.EndpointCount; i++)
             {
@@ -29,19 +35,6 @@ namespace ECore.HardwareInterfaces
                 else if (interf.GetEndpoint(i).EndpointNumber == 3)
                     commandReadEndpoint = interf.GetEndpoint(i);
             }
-            if (!usbManager.HasPermission(device))
-            {
-                Android.App.PendingIntent pi = Android.App.PendingIntent.GetBroadcast(context, 0, new Android.Content.Intent("com.android.example.USB_PERMISSION"), 0);
-                usbManager.RequestPermission(device, pi);
-            }
-
-            int deadCounter = 0;
-            while ((deadCounter++ < 10) && (!usbManager.HasPermission(device)))
-            {
-                Logger.Error("Permission denied");
-                System.Threading.Thread.Sleep(500);
-            }
-
             usbConnection = usbManager.OpenDevice(device);
             usbConnection.ClaimInterface(interf, true);
         }

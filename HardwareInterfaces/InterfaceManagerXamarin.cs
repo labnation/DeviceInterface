@@ -5,56 +5,105 @@ using System.Text;
 using Common;
 using Android.Hardware.Usb;
 using Android.Content;
+using Android.App;
 
 namespace ECore.HardwareInterfaces
 {
     class InterfaceManagerXamarin: InterfaceManager<InterfaceManagerXamarin>
     {
+
         UsbManager usbManager;
-        public Context context;
+        private const string ACTION_USB_PERMISSION = "com.lab-nation.smartscope.USB_PERMISSION";
+        public static Context context;
+
+        internal class UsbBroadcastReceiver : BroadcastReceiver {
+
+            public delegate void DeviceDelegate(UsbDevice u);
+            public DeviceDelegate addDevice;
+            public DeviceDelegate removeDevice;
+
+            public override void OnReceive(Context c, Intent i)
+            {
+                if(ACTION_USB_PERMISSION.Equals(i.Action)) 
+                {
+                    UsbDevice device = (UsbDevice)i.GetParcelableExtra(UsbManager.ExtraDevice);
+                    if (i.GetBooleanExtra(UsbManager.ExtraPermissionGranted, false)) {
+                        if(device != null){
+                            //call method to set up device communication
+                            try {
+                                addDevice(device);
+                            } catch(Exception e) {
+                                Logger.Error("Failed to initialize device " + e.Message);
+                            }
+                        }
+                    } 
+                    else {
+                        Logger.Debug("Permission denied");
+                    }
+                } else if(i.Action.Equals(UsbManager.ActionUsbDeviceAttached)) {
+                    UsbDevice device = (UsbDevice)i.GetParcelableExtra(UsbManager.ExtraDevice);
+                    addDevice(device);
+                } else if(i.Action.Equals(UsbManager.ActionUsbDeviceDetached)) {
+                    UsbDevice device = (UsbDevice)i.GetParcelableExtra(UsbManager.ExtraDevice);
+                    removeDevice(device);
+                }
+            }
+        }
+        UsbBroadcastReceiver usbBroadcastReceiver = new UsbBroadcastReceiver();
 
         protected override void Initialize()
         {
+            usbManager = (UsbManager)context.GetSystemService(Android.Content.Context.UsbService);
+            usbBroadcastReceiver = new UsbBroadcastReceiver();
+            usbBroadcastReceiver.addDevice = AddDevice;
+            usbBroadcastReceiver.removeDevice = RemoveDevice;
+
+            IntentFilter f = new IntentFilter(ACTION_USB_PERMISSION);
+            context.RegisterReceiver(usbBroadcastReceiver, f);
+            context.RegisterReceiver(usbBroadcastReceiver, new IntentFilter(UsbManager.ActionUsbDeviceAttached));
+            context.RegisterReceiver(usbBroadcastReceiver, new IntentFilter(UsbManager.ActionUsbDeviceDetached));
+
+        }
+
+        private void AddDevice(UsbDevice d)
+        {
+            SmartScopeUsbInterfaceXamarin i = new SmartScopeUsbInterfaceXamarin(context, usbManager, d);
+            interfaces.Add(d, i);
+            onConnect(i, true);
+        }
+
+        private void FilterDevice(UsbDevice usbDevice)
+        {
+            Logger.Debug(string.Format("Vid:0x{0:X4} Pid:0x{1:X4} - {2}",
+                usbDevice.VendorId,
+                usbDevice.ProductId,
+                usbDevice.DeviceName));
+
+            if ((usbDevice.VendorId == VID) && (PIDs.Contains(usbDevice.ProductId)))
+            {
+                PendingIntent pi = PendingIntent.GetBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+                usbManager.RequestPermission(usbDevice, pi);
+            }
+        }
+
+        private void RemoveDevice(UsbDevice d)
+        {
+            if(interfaces.ContainsKey(d)) {
+                onConnect(interfaces[d], false);
+                interfaces.Remove(d);
+            }
         }
 
         override public void PollDevice()
         {
-            usbManager = (UsbManager)context.GetSystemService(Android.Content.Context.UsbService);
             IDictionary<string, UsbDevice> usbDeviceList = usbManager.DeviceList;
             Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
 
-            UsbDevice smartScope = null;
             for (int i = 0; i < usbDeviceList.Count; i++)
             {
                 UsbDevice usbDevice = usbDeviceList.ElementAt(i).Value;
 
-                Logger.Debug(string.Format("Vid:0x{0:X4} Pid:0x{1:X4} - {2}",
-                    usbDevice.VendorId,
-                    usbDevice.ProductId,
-                    usbDevice.DeviceName));
-
-                if ((usbDevice.VendorId == VID) && (PIDs.Contains(usbDevice.ProductId)))
-                {
-                    Logger.Info("SmartScope connected!");
-                    smartScope = usbDevice;
-                    break;
-                }
-            }
-
-            //if device is attached
-            if (smartScope != null)
-            {
-                Logger.Debug("Device attached to USB port");
-                try {
-                    ISmartScopeUsbInterface i = new SmartScopeUsbInterfaceXamarin(context, usbManager, smartScope);
-                    interfaces.Add(i.GetSerial(), i);
-                } catch (Exception e) {
-                    Logger.Error("Something went wrong initialising the device " + e.Message);
-                }
-            }
-            else
-            {
-                Logger.Debug("No device found");
+                FilterDevice(usbDevice);
             }
         }
 

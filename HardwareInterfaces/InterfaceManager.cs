@@ -10,7 +10,7 @@ namespace ECore.HardwareInterfaces
     {
         protected static int VID = 0x04D8;
         protected static int[] PIDs = new int[] { 0x0052, 0xF4B5 };
-        protected static Dictionary<string, ISmartScopeUsbInterface> interfaces = new Dictionary<string, ISmartScopeUsbInterface>();
+        protected static Dictionary<object, ISmartScopeUsbInterface> interfaces = new Dictionary<object, ISmartScopeUsbInterface>();
 
         private static T instance = new T();
         private static bool initialized = false;
