@@ -32,30 +32,7 @@ namespace ECore.Devices {
 
 			//Get FW contents
 			try {
-#if ANDROID
-				Stream inStream;
-				BinaryReader reader = null;
-				//show all embedded resources
-				System.Reflection.Assembly [] assemblies = AppDomain.CurrentDomain.GetAssemblies ();
-				for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++) {
-					if (reader == null) { //dirty patch! otherwise this loop will crash, as there are some assemblies at the end of the list that don't support the following operations and crash
-						System.Reflection.Assembly assy = assemblies [assyIndex];
-						string [] assetList = assy.GetManifestResourceNames ();
-						for (int a = 0; a < assetList.Length; a++) {
-							Logger.AddEntry (this, LogMessageType.Persistent, "ER: " + assetList [a]);
-							if (assetList [a].Contains (fileName)) {
-								inStream = assy.GetManifestResourceStream (assetList [a]);
-								reader = new BinaryReader (inStream);
-								Logger.AddEntry (this, LogMessageType.Persistent, "Connected to FW Flash file");
-								firmware = Utils.BinaryReaderStuffer(reader, inStream.Length, packetSize, 0xff);
-							}
-						}
-					}	
-				}
-
-#else
                 firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
-#endif
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
 				Logger.Error(e.Message);

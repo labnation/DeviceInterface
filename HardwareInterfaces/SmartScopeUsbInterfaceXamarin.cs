@@ -4,18 +4,20 @@ using System.Linq;
 using System.Text;
 using Common;
 using Android.Hardware.Usb;
+using Android.Content;
 
 namespace ECore.HardwareInterfaces
 {
     class SmartScopeUsbInterfaceXamarin: ISmartScopeUsbInterface
     {
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
+        private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
         private UsbEndpoint dataEndpoint;
         private UsbEndpoint commandReadEndpoint;
         private UsbEndpoint commandWriteEndpoint;
         private UsbDeviceConnection usbConnection;
 
-        public SmartScopeUsbInterfaceXamarin(UsbDevice device)
+        public SmartScopeUsbInterfaceXamarin(Context context, UsbManager usbManager, UsbDevice device)
         {
             UsbInterface interf = device.GetInterface(0);
             for (int i = 0; i < interf.EndpointCount; i++)
@@ -29,7 +31,7 @@ namespace ECore.HardwareInterfaces
             }
             if (!usbManager.HasPermission(device))
             {
-                Android.App.PendingIntent pi = Android.App.PendingIntent.GetBroadcast(applicationContext, 0, new Android.Content.Intent("com.android.example.USB_PERMISSION"), 0);
+                Android.App.PendingIntent pi = Android.App.PendingIntent.GetBroadcast(context, 0, new Android.Content.Intent("com.android.example.USB_PERMISSION"), 0);
                 usbManager.RequestPermission(device, pi);
             }
 
@@ -44,7 +46,16 @@ namespace ECore.HardwareInterfaces
             usbConnection.ClaimInterface(interf, true);
         }
 
-        public override void WriteControlBytesBulk(byte[] message)
+        public void WriteControlBytes(byte[] message, bool async)
+        {
+            if (message.Length > COMMAND_WRITE_ENDPOINT_SIZE)
+            {
+                throw new ScopeIOException("USB message too long for endpoint");
+            }
+            WriteControlBytesBulk(message, async);
+        }
+
+        public void WriteControlBytesBulk(byte[] message, bool async = false)
         {
             //log
             string logString = "";
@@ -63,16 +74,15 @@ namespace ECore.HardwareInterfaces
             //try to send data
             try
             {
-                int bytesWritten;
                 usbConnection.BulkTransfer(commandWriteEndpoint, message, message.Length, 5000);
             }
             catch (Exception ex)
             {
-                Logger.Error("Writing control bytes failed");
+                Logger.Error("Writing control bytes failed" + ex.Message);
             }
         }
 
-        public override byte[] ReadControlBytesBulk(int length)
+        public byte[] ReadControlBytes(int length)
         {
             //see if device is connected properly
             if (commandReadEndpoint == null)
@@ -86,7 +96,6 @@ namespace ECore.HardwareInterfaces
             {
                 //send read command
                 byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
-                int bytesRead;
                 usbConnection.BulkTransfer(commandReadEndpoint, readBuffer, length, 5000);
 
                 //log
@@ -106,13 +115,13 @@ namespace ECore.HardwareInterfaces
             }
             catch (Exception ex)
             {
-                Logger.Error("Reading control bytes failed");
+                Logger.Error("Reading control bytes failed" + ex.Message);
 
                 return new byte[0];
             }
         }
 
-        public override byte[] GetData(int numberOfBytes)
+        public byte[] GetData(int numberOfBytes)
         {
             //see if device is connected properly
             if (dataEndpoint == null)
@@ -126,34 +135,36 @@ namespace ECore.HardwareInterfaces
             {
                 //send read command
                 byte[] readBuffer = new byte[numberOfBytes];
-                int bytesRead;
                 usbConnection.BulkTransfer(dataEndpoint, readBuffer, numberOfBytes, 10000);
-
-                if (tempFrameCounter++ < 10)
-                {
-                    string dataString = "";
-                    for (int i = 0; i < 10; i++)
-                    {
-                        dataString = dataString + readBuffer[i].ToString() + ";";
-                    }
-                }
 
                 //return read data
                 return readBuffer;
             }
             catch (Exception ex)
             {
-                Logger.Error("Streaming data from scope failed");
+                Logger.Error("Streaming data from scope failed " + ex.Message);
 
                 return new byte[0];
             }
         }
-        override public void FlushDataPipe()
+        public void FlushDataPipe()
         {
             if (dataEndpoint == null)
                 throw new ScopeIOException("Data endpoint is null");
 
             //FIXME: needs implementation
         }
+
+        public string GetSerial()
+        {
+            return usbConnection.Serial;
+        }
+
+        public void Destroy()
+        {
+
+        }
+
+
     }
 }

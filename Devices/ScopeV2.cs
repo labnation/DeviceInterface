@@ -10,6 +10,9 @@ using Common;
 using AForge.Math;
 using System.Threading.Tasks;
 using System.Threading;
+#if ANDROID
+using Android.Content;
+#endif
 
 namespace ECore.Devices
 {
@@ -49,6 +52,10 @@ namespace ECore.Devices
         private DeviceMemories.MAX19506Memory AdcMemory;
         private DeviceMemories.ScopePicRegisterMemory PicMemory;
 #endif
+
+        #if ANDROID
+        Context context;
+        #endif
 
         private DataSources.DataSource dataSourceScope;
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
@@ -100,13 +107,17 @@ namespace ECore.Devices
 #if INTERNAL
         public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
 #endif
-#if ANDROID
-		public Android.Content.Res.AssetManager Assets;
-#endif
 
-        public SmartScope(ScopeConnectHandler handler)
+        public SmartScope(
+#if ANDROID
+            Context context,
+#endif
+            ScopeConnectHandler handler)
             : base()
         {
+            #if ANDROID
+            this.context = context;
+            #endif
             deviceReady = false;
             this.scopeConnectHandler += handler;
             FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
@@ -126,7 +137,11 @@ namespace ECore.Devices
         public void Dispose()
         {
             dataSourceScope.Stop();
+            #if ANDROID
+            InterfaceManagerXamarin.Instance.onConnect -= OnDeviceConnect;
+            #else
             InterfaceManagerLibUsb.Instance.onConnect -= OnDeviceConnect;
+            #endif
             if (hardwareInterface != null)
                 OnDeviceConnect(this.hardwareInterface, false);
         }
@@ -139,7 +154,9 @@ namespace ECore.Devices
             //we'll still have deviceMemory objects to play with
             InitializeMemories();
 #if ANDROID
-		hardwareInterface = new HardwareInterfaces.HWInterfacePIC_Xamarin(this);
+            InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
+            InterfaceManagerXamarin.Instance.context = this.context;
+            InterfaceManagerXamarin.Instance.PollDevice();
 #else
             InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
             InterfaceManagerLibUsb.Instance.PollDevice();

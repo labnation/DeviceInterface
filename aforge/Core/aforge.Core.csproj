@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{631AC093-430F-45F4-BA0C-AF0F0405918A}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -50,14 +50,9 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\Release\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

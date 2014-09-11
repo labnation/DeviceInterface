@@ -4,22 +4,22 @@ using System.Linq;
 using System.Text;
 using Common;
 using Android.Hardware.Usb;
+using Android.Content;
 
 namespace ECore.HardwareInterfaces
 {
-    class InterfaceManagerXamarin: InterfaceManager<InterfaceManagerLibUsb>
+    class InterfaceManagerXamarin: InterfaceManager<InterfaceManagerXamarin>
     {
         UsbManager usbManager;
-        Android.Content.Context applicationContext;
+        public Context context;
 
         protected override void Initialize()
         {
-            applicationContext = Devices.EDevice.ApplicationContext;
         }
 
         override public void PollDevice()
         {
-            usbManager = (UsbManager)applicationContext.GetSystemService(Android.Content.Context.UsbService);            
+            usbManager = (UsbManager)context.GetSystemService(Android.Content.Context.UsbService);
             IDictionary<string, UsbDevice> usbDeviceList = usbManager.DeviceList;
             Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
 
@@ -46,7 +46,8 @@ namespace ECore.HardwareInterfaces
             {
                 Logger.Debug("Device attached to USB port");
                 try {
-                    interfaces.Add(smartScope.serial, new SmartScopeUsbInterfaceXamarin(smartScope));
+                    ISmartScopeUsbInterface i = new SmartScopeUsbInterfaceXamarin(context, usbManager, smartScope);
+                    interfaces.Add(i.GetSerial(), i);
                 } catch (Exception e) {
                     Logger.Error("Something went wrong initialising the device " + e.Message);
                 }
