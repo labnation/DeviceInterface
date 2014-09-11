@@ -9,7 +9,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MatlabFileIO</RootNamespace>
     <AssemblyName>MatlabFileIO</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <AndroidUseLatestPlatformSdk>False</AndroidUseLatestPlatformSdk>
