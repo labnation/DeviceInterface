@@ -21,6 +21,7 @@ namespace ECore.HardwareInterfaces
             public delegate void DeviceDelegate(UsbDevice u);
             public DeviceDelegate addDevice;
             public DeviceDelegate removeDevice;
+            public DeviceDelegate filterDevice;
 
             public override void OnReceive(Context c, Intent i)
             {
@@ -42,7 +43,7 @@ namespace ECore.HardwareInterfaces
                     }
                 } else if(i.Action.Equals(UsbManager.ActionUsbDeviceAttached)) {
                     UsbDevice device = (UsbDevice)i.GetParcelableExtra(UsbManager.ExtraDevice);
-                    addDevice(device);
+                    filterDevice(device);
                 } else if(i.Action.Equals(UsbManager.ActionUsbDeviceDetached)) {
                     UsbDevice device = (UsbDevice)i.GetParcelableExtra(UsbManager.ExtraDevice);
                     removeDevice(device);
@@ -56,6 +57,7 @@ namespace ECore.HardwareInterfaces
             usbManager = (UsbManager)context.GetSystemService(Android.Content.Context.UsbService);
             usbBroadcastReceiver = new UsbBroadcastReceiver();
             usbBroadcastReceiver.addDevice = AddDevice;
+            usbBroadcastReceiver.filterDevice = FilterDevice;
             usbBroadcastReceiver.removeDevice = RemoveDevice;
 
             IntentFilter f = new IntentFilter(ACTION_USB_PERMISSION);

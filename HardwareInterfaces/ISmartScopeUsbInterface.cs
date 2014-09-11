@@ -38,6 +38,7 @@ namespace ECore.HardwareInterfaces
 
         void WriteControlBytes(byte[] message, bool async);
         void WriteControlBytesBulk(byte[] message, bool async);
+        void WriteControlBytesBulk(byte[] message, int offset, int length, bool async);
         byte[] ReadControlBytes(int length);
         
         byte[] GetData(int numberOfBytes);

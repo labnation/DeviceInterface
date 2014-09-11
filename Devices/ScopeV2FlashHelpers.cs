@@ -81,11 +81,8 @@ namespace ECore.Devices {
 				while (bytesSent < firmware.Length) {
 					if (bytesSent + commandSize > firmware.Length)
 						commandSize = firmware.Length - bytesSent;
-					byte [] commandBytes = new byte[commandSize];
-					Array.Copy (firmware, bytesSent, commandBytes, 0, commandSize);
-                    hardwareInterface.WriteControlBytesBulk(commandBytes, false);
-					bytesSent += commandBytes.Length;
-					int progress = (int) (bytesSent * 100 / firmware.Length);
+                    hardwareInterface.WriteControlBytesBulk(firmware, bytesSent, commandSize, false);
+					bytesSent += commandSize;
 				}
 				flashStopwatch.Stop ();
 				for (int j = 0; j < killMeNow; j++) {

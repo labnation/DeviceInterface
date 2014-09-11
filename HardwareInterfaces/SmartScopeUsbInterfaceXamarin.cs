@@ -50,24 +50,22 @@ namespace ECore.HardwareInterfaces
 
         public void WriteControlBytesBulk(byte[] message, bool async = false)
         {
-            //log
-            string logString = "";
-            foreach (byte b in message)
-                logString += b.ToString() + ",";
+            WriteControlBytesBulk(message, 0, message.Length, async);
+        }
 
-            //Logger.AddEntry(this, LogMessageType.ECoreInfo, "Request to send command to HW: [" + logString+"]");
-
-            //see if device is connected properly
-            if (commandWriteEndpoint == null)
-            {
-                Logger.Error("Trying to write to device, but commandWriteEndpoint==null");
-                return;
-            }
-
+        public void WriteControlBytesBulk(byte[] message, int offset, int length, bool async = false)
+        {
             //try to send data
             try
             {
-                usbConnection.BulkTransfer(commandWriteEndpoint, message, message.Length, 5000);
+                byte[] buffer;
+                if(offset == 0 && length == message.Length)
+                    buffer = message;
+                else {
+                    buffer = new byte[length];
+                    Array.ConstrainedCopy(message, offset, buffer, 0, length);
+                }
+                usbConnection.BulkTransfer(commandWriteEndpoint, buffer, buffer.Length, 5000);
             }
             catch (Exception ex)
             {
@@ -77,13 +75,6 @@ namespace ECore.HardwareInterfaces
 
         public byte[] ReadControlBytes(int length)
         {
-            //see if device is connected properly
-            if (commandReadEndpoint == null)
-            {
-                Logger.Error("Trying to read from device, but commandReadEndpoint==null");
-                return new byte[0];
-            }
-
             //try to read data
             try
             {
@@ -91,20 +82,8 @@ namespace ECore.HardwareInterfaces
                 byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
                 usbConnection.BulkTransfer(commandReadEndpoint, readBuffer, length, 5000);
 
-                //log
-                string logString = "";
-                foreach (byte b in readBuffer)
-                    logString += b.ToString() + ",";
-
-                //Logger.AddEntry(this, LogMessageType.ECoreInfo, "Answer received from HW: [" + logString + "]");
-
-                //extract required data
-                byte[] returnBuffer = new byte[length];
-                for (int i = 0; i < length; i++)
-                    returnBuffer[i] = readBuffer[i];
-
                 //return read data
-                return returnBuffer;
+                return readBuffer.Take(length).ToArray();
             }
             catch (Exception ex)
             {
@@ -144,7 +123,6 @@ namespace ECore.HardwareInterfaces
         {
             if (dataEndpoint == null)
                 throw new ScopeIOException("Data endpoint is null");
-
             //FIXME: needs implementation
         }
 
