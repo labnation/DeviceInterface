@@ -123,7 +123,7 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        private void RemoveDevice(string serial)
+        private void RemoveDevice(object serial)
         {
             C.Logger.Debug("Removing device with serial [" + serial + "]");
             if (!interfaces.ContainsKey(serial))

@@ -122,20 +122,34 @@ namespace ECore.HardwareInterfaces
             WriteControlBytesBulk(message, async);
         }
 
-        public void WriteControlBytesBulk(byte[] message, bool async)
+        public void WriteControlBytesBulk(byte[] message, bool async = false)
+        {
+            WriteControlBytesBulk(message, 0, message.Length, async);
+        }
+
+        public void WriteControlBytesBulk(byte[] message, int offset, int length, bool async = false)
         {
             if (commandWriteEndpoint == null)
                 throw new ScopeIOException("Command write endpoint is null");
 
-            UsbCommand cmd = new UsbCommand(commandWriteEndpoint, message, USB_TIMEOUT);
+            byte[] buffer;
+            if (offset == 0 && length == message.Length)
+                buffer = message;
+            else
+            {
+                buffer = new byte[length];
+                Array.ConstrainedCopy(message, offset, buffer, 0, length);
+            }
+
+            UsbCommand cmd = new UsbCommand(commandWriteEndpoint, buffer, USB_TIMEOUT);
             cmd.Execute(usbLock);
             
             if (!async)
             {
                 cmd.WaitForCompletion();
 
-                if (cmd.bytesReadOrWritten != message.Length)
-                    throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", cmd.bytesReadOrWritten, message.Length));
+                if (cmd.bytesReadOrWritten != length)
+                    throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", cmd.bytesReadOrWritten, length));
                 switch (cmd.resultCode)
                 {
                     case ErrorCode.Success:
