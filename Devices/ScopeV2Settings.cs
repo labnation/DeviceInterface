@@ -490,8 +490,8 @@ namespace ECore.Devices
             if (n  > AWG_SAMPLES_MAX)
                 throw new ValidationException(String.Format("While setting AWG data: data buffer can't be longer than {0} samples, got {1}", AWG_SAMPLES_MAX, n));
 
-            FpgaSettingsMemory[REG.AWG_SAMPLES_B0].Set((byte)(n - 1));
-            FpgaSettingsMemory[REG.AWG_SAMPLES_B1].Set((byte)((n - 1) >> 8));
+            FpgaSettingsMemory[REG.AWG_SAMPLES_B0].WriteImmediate((byte)(n - 1));
+            FpgaSettingsMemory[REG.AWG_SAMPLES_B1].WriteImmediate((byte)((n - 1) >> 8));
         }
 
         public int GetAwgNumberOfSamples()
