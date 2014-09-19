@@ -464,7 +464,7 @@ namespace ECore.Devices {
 				}
                 double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
                 UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
-				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs);
+				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs, false, false);
 				p.SetData (AnalogChannel.ChA, outputAnalog [0]);
                 p.SetData(AnalogChannel.ChB, outputAnalog[1]);
 

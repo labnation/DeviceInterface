@@ -15,12 +15,14 @@ namespace ECore.DataSources
         private byte[] dataDigital;
         public Dictionary<string, double> Settings { get; private set; }
 
-        internal DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime)
+        internal DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime, bool partial, bool rolling)
         {
             this.TriggerIndex = triggerIndex;
             this.SamplePeriod = samplePeriod;
             this.Samples = samples;
             this.FirstSampleTime = firstSampleTime;
+            this.Partial = partial;
+            this.Rolling = rolling;
             dataAnalog = new Dictionary<AnalogChannel, float[]>();
             Settings = new Dictionary<string,double>();
         }
@@ -106,5 +108,15 @@ namespace ECore.DataSources
         /// </summary>
         //FIXME: this should be a private set, but is internal since a FIXME in SmartScope.GetScopeData()
         public int Samples { get; internal set; }
+
+        /// <summary>
+        /// Indicates whether this is a partial acquisition package
+        /// </summary>
+        public bool Partial { get; internal set; }
+
+        /// <summary>
+        /// True when the scope is in rolling mode
+        /// </summary>
+        public bool Rolling { get; internal set; }
     }
 }

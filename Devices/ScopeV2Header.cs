@@ -10,16 +10,50 @@ namespace ECore.Devices
     internal class SmartScopeHeader
     {
         private byte[] raw;
+        /// <summary>
+        /// The number of bursts of [BytesPerBurst] bytes in this package
+        /// </summary>
         internal int NumberOfPayloadBursts { get; private set; }
+        /// <summary>
+        /// The offset, in bursts, of this package's payload in the
+        /// entire acquisition
+        /// </summary>
         internal int PackageOffset { get; private set; }
-        internal int PackageSize { get; private set; }
+        /// <summary>
+        /// The number of bursts that compose the entire acquisition
+        /// </summary>
+        internal int AcquisitionSize { get; private set; }
+        /// <summary>
+        /// The number of bytes in 1 payload burst
+        /// </summary>
         internal byte BytesPerBurst { get; private set; }
         
+        /// <summary>
+        /// The number of samples in this package
+        /// </summary>
         internal int Samples { get; private set; }
+        /// <summary>
+        /// The time between two samples
+        /// </summary>
         internal double SamplePeriod { get; private set; }
-        
+
+        /// <summary>
+        /// The total number of samples in this acquisition
+        /// </summary>
+        internal int SamplesPerAcquisition { get { return AcquisitionSize * BytesPerBurst / Channels; } }
+
+        /// <summary>
+        /// Wether this is the last package in the acquisition
+        /// </summary>
         internal bool LastAcquisition { get; private set; }
+        /// <summary>
+        /// When true, no new acquisition will be started when this
+        /// one has finished
+        /// </summary>
         internal bool ScopeStopPending { get; private set; }
+        /// <summary>
+        /// Wether the acquisition is in rolling mode
+        /// </summary>
         internal bool Rolling { get; private set; }
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
@@ -39,7 +73,7 @@ namespace ECore.Devices
             //FIXME: this should be corrected in FW
 
             PackageOffset = (short)(data[6] + (data[7] << 8));
-            PackageSize = (short)(data[8] + (data[9] << 8));
+            AcquisitionSize = (short)(data[8] + (data[9] << 8));
             
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
             LastAcquisition = Utils.IsBitSet(data[10], 1);

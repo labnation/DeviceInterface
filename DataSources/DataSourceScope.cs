@@ -135,7 +135,7 @@ namespace ECore.DataSources
             }
 
             OnNewDataAvailable -= Recording.Record;
-            Recording.SetNotBusy();
+            Recording.Busy = false;
             if (Recording.acqInfo.Count == 0)
             {
                 Recording.Dispose();

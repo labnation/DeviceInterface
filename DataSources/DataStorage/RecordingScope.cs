@@ -29,11 +29,25 @@ namespace ECore.DataSources
         public int AcquisitionsRecorded { get; private set; }
         public long DataStorageSize { get; private set; }
         bool disposed = false;
-        public bool Busy { get; private set; }
+        private bool busy;
         private object busyLock = new object();
+        public bool Busy
+        {
+            get { return busy; }
+            set
+            {
+                lock (busyLock)
+                {
+                    if (value == true)
+                        throw new Exception("The Busy flag cannot be set to true, once marked not busy, always not busy");
+                    else
+                        busy = false;
+                }
+            }
+        }
 
         public RecordingScope() {
-            Busy = true;
+            busy = true;
             acqInfo = new List<AcquisitionInfo>();
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
@@ -87,18 +101,15 @@ namespace ECore.DataSources
             matlabVariables.Add(name, o);
         }
 #endif
-        internal void SetNotBusy()
-        {
-            lock (busyLock)
-            {
-                Busy = false;
-            }
-        }
 
         public void Record(DataPackageScope ScopeData, EventArgs e)
         {
             lock (busyLock)
             {
+                if (!Busy)
+                {
+                    throw new Exception("Can't record because the Busy flag is false");
+                }
                 foreach (var kvp in channelBuffers)
                 {
                     if (kvp.Key is AnalogChannel)

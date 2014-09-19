@@ -61,6 +61,9 @@ namespace ECore.Devices
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         byte[] chA = null, chB = null;
+#if INTERNAL
+        byte[] rawBuffer = null;
+#endif
 
         private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
@@ -368,7 +371,7 @@ namespace ECore.Devices
             try {
                 hwIfTmp.Reset();
             }
-            catch (ScopeIOException)
+            catch (Exception)
             {  
             }
         }
@@ -486,13 +489,25 @@ namespace ECore.Devices
                 {
                     chA = new byte[header.Samples];
                     chB = new byte[header.Samples];
+#if INTERNAL
+                    rawBuffer = new byte[header.AcquisitionSize * header.BytesPerBurst];
+#endif
                 }
             }
 
             for (int i = 0; i < header.Samples; i++)
             {
-                chA[dataOffset + i] = buffer[2 * i];
-                chB[dataOffset + i] = buffer[2 * i + 1];
+                chA[dataOffset + i] = buffer[header.Channels * i];
+                chB[dataOffset + i] = buffer[header.Channels * i + 1];
+#if INTERNAL
+                if (rawBuffer != null)
+                {
+                    for (int j = 0; j < header.Channels; j++)
+                    {
+                        rawBuffer[(dataOffset + i) * header.Channels + j] = buffer[i * header.Channels + j];
+                    }
+                }
+#endif
             }
 
             //In rolling mode, crop the channel to the display length
@@ -508,18 +523,26 @@ namespace ECore.Devices
             //FIXME: Get these scope settings from header
             int triggerIndex = 0;
 
-            //If we're not decimating a lot don't return partial package
-            if (
-                header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE 
-            && 
-                header.PackageSize * BURST_SIZE / header.Channels > chA.Length
-            )
-              return null;
+            //If we're not decimating a lot, fetch on till the package is complete
+            if (!header.Rolling && header.SamplesPerAcquisition > chA.Length)
+            {
+                while (true)
+                {
+                    DataPackageScope p = GetScopeData();
+                    if (p == null)
+                    {
+                        Logger.Error("While trying to complete acquisition, failed and got null");
+                        return null;
+                    }
+                    if (p.Partial == false)
+                        return p;
+                }
+            }
 #if INTERNAL
             if (header.GetStrobe(STR.DEBUG_RAM) && header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) == 0)
             {
-                UInt16[] testData = new UInt16[header.Samples];
-                Buffer.BlockCopy(buffer, header.BytesPerBurst, testData, 0, sizeof(UInt16) * testData.Length);
+                UInt16[] testData = new UInt16[rawBuffer.Length / 2];
+                Buffer.BlockCopy(rawBuffer, 0, testData, 0, sizeof(UInt16) * testData.Length);
                 for (int i = 1; i < testData.Length; i++)
                 {
                     UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
@@ -543,14 +566,15 @@ namespace ECore.Devices
             if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM) && DebugDigital)
             {
                 //Test if data in CHB is correct
-                byte[] testVector = new byte[chB.Length];
-                byte nextValue = chB[0];
+                byte[] testVector = new byte[header.SamplesPerAcquisition];
+                byte[] testData = header.GetStrobe(STR.LA_CHANNEL) ? chB : chA;
+                byte nextValue = testData[0];
                 for (int i = 0; i < testVector.Length; i++)
                 {
                     testVector[i] = nextValue;
                     int val = (nextValue >> 4) + 1;
                     nextValue = (byte)((val << 4) + (Utils.ReverseWithLookupTable((byte)val) >> 4));
-                    if (testVector[i] != chB[i])
+                    if (testVector[i] != testData[i])
                     {
                         Logger.Error("Digital mismatch at sample " + i + ". Aborting check");
                         digitalTestFails++;
@@ -565,7 +589,7 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, 0);
+            DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, 0, chA.Length < header.SamplesPerAcquisition, header.Rolling);
 #if INTERNAL
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif
