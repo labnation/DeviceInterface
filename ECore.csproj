@@ -56,6 +56,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -65,6 +66,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="LibUsbDotNet, Version=2.2.8.104, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\LibUsbDotNet.2.2.8\lib\LibUsbDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="WinUSBNet">
+      <HintPath>..\packages\WinUSBNet.1.0\lib\net40\WinUSBNet.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -99,6 +103,8 @@
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="FrequencyCompensation.cs" />
+    <Compile Include="HardwareInterfaces\SmartScopeUsbInterfaceWinUsb.cs" />
+    <Compile Include="HardwareInterfaces\InterfaceManagerWinUsb.cs" />
     <Compile Include="HardwareInterfaces\InterfaceManagerLibUsb.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -162,8 +162,16 @@ namespace ECore.Devices
 
             InterfaceManagerXamarin.Instance.PollDevice();
 #else
-            InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
-            InterfaceManagerLibUsb.Instance.PollDevice();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
+                InterfaceManagerWinUsb.Instance.PollDevice();
+            }
+            else
+            { 
+                InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
+                InterfaceManagerLibUsb.Instance.PollDevice();
+            }
 #endif
         }
 
