@@ -18,8 +18,16 @@ namespace ECore.Devices {
 			if (packetSize <= 0)
 				return false;
 
-            Common.SerialNumber s = new SerialNumber(this.Serial);
-            string fwName = String.Format("SmartScope_{0}", Base36.Encode((long)s.model, 3).ToUpper());
+            string fwName;
+            try
+            {
+                Common.SerialNumber s = new SerialNumber(this.Serial);
+                fwName = String.Format("SmartScope_{0}", Base36.Encode((long)s.model, 3).ToUpper());
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
 
 			byte [] firmware = null;
 			DateTime firmwareModified = DateTime.Now;

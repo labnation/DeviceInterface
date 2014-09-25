@@ -99,7 +99,7 @@ namespace ECore.HardwareInterfaces
             }
         }
         
-        private const int USB_TIMEOUT = 5000;
+        private const int USB_TIMEOUT = 1000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
         private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
 

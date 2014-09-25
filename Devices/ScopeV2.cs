@@ -220,7 +220,7 @@ namespace ECore.Devices
                     //Init FPGA
                     LogWait("Starting fpga flashing...", 0);
                     if (!FlashFpga())
-                        throw new Exception("failed to flash FPGA");
+                        throw new ScopeIOException("failed to flash FPGA");
                     LogWait("FPGA flashed...");
                     InitializeMemories();
                     LogWait("Memories initialized...");
