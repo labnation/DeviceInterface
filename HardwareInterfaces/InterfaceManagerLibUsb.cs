@@ -20,8 +20,12 @@ namespace ECore.HardwareInterfaces
 
         protected override void Initialize()
         {
+	#if __IOS__ || ANDROID
+	#else
             UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
-            UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;            
+            UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;   
+	#endif
+
             UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
 			C.Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
             foreach (UsbRegistry device in usbDeviceList)
