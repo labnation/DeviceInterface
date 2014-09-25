@@ -6,6 +6,7 @@ using System.Threading;
 using MadWizard.WinUSBNet;
 using System.Windows.Forms;
 using C=Common;
+using Common;
 
 namespace ECore.HardwareInterfaces
 {
@@ -56,10 +57,19 @@ namespace ECore.HardwareInterfaces
                     if (PIDs.Contains(dev.PID) && VID == dev.VID)
                     {
                         Thread.Sleep(10);
-                        USBDevice d = new USBDevice(dev);
-
-                        if(DeviceFound(d))
+                        try
+                        {
+                            USBDevice d = new USBDevice(dev);
+                            if (DeviceFound(d))
+                                return;
+                        }
+                        catch (USBException e)
+                        {
+                            Logger.Warn("Though a device was found, we failed to capture it: " + e.Message);
                             return;
+                        }
+
+                        
                     }
                 }
             }

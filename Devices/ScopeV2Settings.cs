@@ -66,13 +66,20 @@ namespace ECore.Devices
 
         public void CommitSettings()
         {
-            int registersWritten = 0;
-            foreach (DeviceMemory mem in memories)
+            try
             {
-                registersWritten += mem.Commit();
+                int registersWritten = 0;
+                foreach (DeviceMemory mem in memories)
+                {
+                    registersWritten += mem.Commit();
+                }
+                if (registersWritten > 0)
+                    toggleUpdateStrobe();
             }
-            if (registersWritten > 0)
-                toggleUpdateStrobe();
+            catch (ScopeIOException e)
+            {
+                Logger.Error("I/O failure while commint scope settings");
+            }
         }
         #endregion
 

@@ -67,9 +67,6 @@
     <Reference Include="LibUsbDotNet, Version=2.2.8.104, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\LibUsbDotNet.2.2.8\lib\LibUsbDotNet.dll</HintPath>
     </Reference>
-    <Reference Include="WinUSBNet">
-      <HintPath>..\packages\WinUSBNet.1.0\lib\net40\WinUSBNet.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataSources\DataStorage\ChannelBuffer.cs" />
@@ -147,6 +144,10 @@
     <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
       <Name>MatlabFileIO</Name>
+    </ProjectReference>
+    <ProjectReference Include="winusb\WinUSBNet\WinUSBNet.csproj">
+      <Project>{CE06C329-287D-4F1E-B62D-B8353F2BAA4A}</Project>
+      <Name>WinUSBNet</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

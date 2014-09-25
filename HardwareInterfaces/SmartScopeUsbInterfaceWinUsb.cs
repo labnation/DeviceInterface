@@ -19,75 +19,87 @@ namespace ECore.HardwareInterfaces
         {
             public USBPipe endPoint;
             public byte[] buffer;
-            public int timeout;
-            public byte[] result;
-            public bool executed;
+            
+            private IAsyncResult asyncResult;
+            public Exception Error;
+            
             public bool success = true;
-            public int bytesReadOrWritten;
-            public UsbCommand(USBPipe ep, byte[] buffer, int timeout)
+            public int bytesTransferred;
+            
+            public UsbCommand(USBPipe ep, byte[] buffer)
             {
                 this.endPoint = ep;
                 this.buffer = buffer;
-                this.timeout = timeout;
-                this.bytesReadOrWritten = -1;
-                this.executed = false;
-                this.result = null;
+                this.bytesTransferred = -1;
             }
 
             public void Execute(object usbLock)
             {
-                if (endPoint.IsOut)
+                try
                 {
-                    try
+                    if (endPoint.IsOut)
                     {
-                        endPoint.Write(buffer);//, 0, buffer.Length, new AsyncCallback(WriteCallback), null);
-                        bytesReadOrWritten = buffer.Length;
+                        asyncResult = endPoint.BeginWrite(buffer, 0, buffer.Length, null, null);
                     }
-                    catch (USBException e)
+                    else if (endPoint.IsIn)
                     {
-                        success = false;
+                        asyncResult = endPoint.BeginRead(buffer, 0, buffer.Length, null, null);
+                    }
+                    else
+                    {
+                        throw new ScopeIOException("Unknown endpoint type");
                     }
                 }
-                else if (endPoint.IsIn)
+                catch (USBException e)
                 {
-                    try
+                    throw new ScopeIOException("I/O with scope failed");
+                }
+            }
+
+            internal void WaitForCompletion()
+            {
+                if (asyncResult == null)
+                    throw new ScopeIOException("Can't wait for command's completion before executing command");
+
+                try
+                {
+                    if (endPoint.IsOut)
                     {
-                        bytesReadOrWritten = endPoint.Read(buffer);//, 0, buffer.Length, new AsyncCallback(ReadCallback), null);
+                        endPoint.EndWrite(asyncResult);
                     }
-                    catch (USBException e)
+                    else if (endPoint.IsIn)
                     {
-                        success = false;
-                        bytesReadOrWritten = 0;
-                        buffer = null;
+                        endPoint.EndRead(asyncResult);
                     }
+                    else
+                    {
+                        throw new ScopeIOException("Unknown endpoint type");
+                    }
+                }
+                catch (USBException e)
+                {
+                    Error = e;
+                    bytesTransferred = 0;
+                    buffer = null;
+                    return;
+                }
+
+                MadWizard.WinUSBNet.USBAsyncResult usbresult = (MadWizard.WinUSBNet.USBAsyncResult)asyncResult;
+                if (usbresult.Error != null)
+                {
+                    Error = usbresult.Error;
+                    success = false;
+                    bytesTransferred = 0;
+                    buffer = null;
                 }
                 else
                 {
-                    throw new ScopeIOException("Unknown endpoint type");
+                    bytesTransferred = usbresult.BytesTransfered;
                 }
-                executed = true;
-            }
-            /*
-            private void WriteCallback(IAsyncResult r)
-            {
-                bytesReadOrWritten = buffer.Length;
-                executed = true;
-            }
-
-            private void ReadCallback(IAsyncResult r)
-            {
-                bytesReadOrWritten = buffer.Length;
-                executed = true;
-            }
-            */
-            internal void WaitForCompletion()
-            {
-                while (!executed)
-                    Thread.Sleep(1);
             }
         }
         
-        private const int USB_TIMEOUT = 1000;
+        private const int USB_TIMEOUT = 5000;
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
         private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
 
@@ -105,12 +117,14 @@ namespace ECore.HardwareInterfaces
             serial = usbDevice.Descriptor.SerialNumber;
             foreach (USBPipe p in device.Pipes)
             {
+                p.Abort();
                 USBPipePolicy pol = p.Policy;
-                pol.PipeTransferTimeout = 1000;
+                pol.PipeTransferTimeout = USB_TIMEOUT;
                 if (p.IsIn)
                 {
-                    pol.AllowPartialReads = false;
-                    pol.IgnoreShortPackets = true;
+                    p.Flush();
+                    pol.AllowPartialReads = true;
+                    pol.IgnoreShortPackets = false;
                 }
             }
             USBPipe[] pipes = device.Pipes.ToArray();
@@ -119,7 +133,7 @@ namespace ECore.HardwareInterfaces
             commandReadEndpoint = pipes[2];
             Common.Logger.Debug("Created new WinUSB ScopeUsbInterface");
         }
-
+        
         public void Destroy()
         {
             //lock (usbLock)
@@ -161,7 +175,7 @@ namespace ECore.HardwareInterfaces
                 Array.ConstrainedCopy(message, offset, buffer, 0, length);
             }
 
-            UsbCommand cmd = new UsbCommand(commandWriteEndpoint, buffer, USB_TIMEOUT);
+            UsbCommand cmd = new UsbCommand(commandWriteEndpoint, buffer);
             cmd.Execute(usbLock);
             
             if (!async)
@@ -171,18 +185,21 @@ namespace ECore.HardwareInterfaces
                 if (!cmd.success)
                     throw new ScopeIOException("Failed to write to scope");
 
-                if (cmd.bytesReadOrWritten != length)
-                    throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", cmd.bytesReadOrWritten, length));
+                if (cmd.bytesTransferred != length)
+                    throw new ScopeIOException(String.Format("Only wrote {0} out of {1} bytes", cmd.bytesTransferred, length));
             }
         }
 
         public byte[] ReadControlBytes(int length)
         {
-            UsbCommand cmd = new UsbCommand(commandReadEndpoint, new byte[COMMAND_READ_ENDPOINT_SIZE], USB_TIMEOUT);
+            UsbCommand cmd = new UsbCommand(commandReadEndpoint, new byte[COMMAND_READ_ENDPOINT_SIZE]);
             cmd.Execute(usbLock);
 
             //FIXME: allow async completion
             cmd.WaitForCompletion();
+
+            if (cmd.buffer == null)
+                throw new ScopeIOException("Failed to read control bytes");
 
             byte[] returnBuffer = new byte[length];
             Array.Copy(cmd.buffer, returnBuffer, length);
@@ -196,19 +213,32 @@ namespace ECore.HardwareInterfaces
             {
                 if (!destroyed)
                 {
-                    dataEndpoint.Abort();
-                    dataEndpoint.Flush();
+                    try
+                    {
+                        dataEndpoint.Policy.PipeTransferTimeout = 10;
+                        dataEndpoint.Read(new byte[dataEndpoint.MaximumPacketSize]);
+                        dataEndpoint.Read(new byte[dataEndpoint.MaximumPacketSize]);
+
+                    }
+                    catch (USBException e)
+                    {
+                    }
+                    finally
+                    {
+                        dataEndpoint.Policy.PipeTransferTimeout = USB_TIMEOUT;
+                    }
+                
                 }
             }
         }
 
         public byte[] GetData(int numberOfBytes)
         {
-            UsbCommand cmd = new UsbCommand(dataEndpoint, new byte[numberOfBytes], USB_TIMEOUT);
+            UsbCommand cmd = new UsbCommand(dataEndpoint, new byte[numberOfBytes]);
             cmd.Execute(usbLock);
             cmd.WaitForCompletion();
 
-            if (cmd.bytesReadOrWritten != numberOfBytes)
+            if (cmd.bytesTransferred != numberOfBytes)
                 return null;
             //return read data
             return cmd.buffer;
