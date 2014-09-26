@@ -162,8 +162,16 @@ namespace ECore.Devices
 
             InterfaceManagerXamarin.Instance.PollDevice();
 #else
-            InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
-            InterfaceManagerLibUsb.Instance.PollDevice();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
+                InterfaceManagerWinUsb.Instance.PollDevice();
+            }
+            else
+            { 
+                InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
+                InterfaceManagerLibUsb.Instance.PollDevice();
+            }
 #endif
         }
 
@@ -212,7 +220,7 @@ namespace ECore.Devices
                     //Init FPGA
                     LogWait("Starting fpga flashing...", 0);
                     if (!FlashFpga())
-                        throw new Exception("failed to flash FPGA");
+                        throw new ScopeIOException("failed to flash FPGA");
                     LogWait("FPGA flashed...");
                     InitializeMemories();
                     LogWait("Memories initialized...");
@@ -347,7 +355,6 @@ namespace ECore.Devices
                 Logger.Error("Something went wrong while configuring the scope. Try replugging it : " + e.Message);
                 OnDeviceConnect(hardwareInterface, false);
             }
-
         }
 
 #if INTERNAL
@@ -524,7 +531,7 @@ namespace ECore.Devices
             int triggerIndex = 0;
 
             //If we're not decimating a lot, fetch on till the package is complete
-            if (!header.Rolling && header.SamplesPerAcquisition > chA.Length)
+            if (!header.Rolling && header.SamplesPerAcquisition > chA.Length && header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
             {
                 while (true)
                 {

@@ -56,6 +56,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -99,6 +100,8 @@
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
     <Compile Include="FrequencyCompensation.cs" />
+    <Compile Include="HardwareInterfaces\SmartScopeUsbInterfaceWinUsb.cs" />
+    <Compile Include="HardwareInterfaces\InterfaceManagerWinUsb.cs" />
     <Compile Include="HardwareInterfaces\InterfaceManagerLibUsb.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -141,6 +144,10 @@
     <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
       <Name>MatlabFileIO</Name>
+    </ProjectReference>
+    <ProjectReference Include="winusb\WinUSBNet\WinUSBNet.csproj">
+      <Project>{CE06C329-287D-4F1E-B62D-B8353F2BAA4A}</Project>
+      <Name>WinUSBNet</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

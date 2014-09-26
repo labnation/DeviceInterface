@@ -18,8 +18,16 @@ namespace ECore.Devices {
 			if (packetSize <= 0)
 				return false;
 
-            Common.SerialNumber s = new SerialNumber(this.Serial);
-            string fwName = String.Format("SmartScope_{0}", Base36.Encode((long)s.model, 3).ToUpper());
+            string fwName;
+            try
+            {
+                Common.SerialNumber s = new SerialNumber(this.Serial);
+                fwName = String.Format("SmartScope_{0}", Base36.Encode((long)s.model, 3).ToUpper());
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
 
 			byte [] firmware = null;
 			DateTime firmwareModified = DateTime.Now;
@@ -73,9 +81,6 @@ namespace ECore.Devices {
                 };
                 hardwareInterface.WriteControlBytes(msg, false);
 
-                //Flush whatever might be left in the datapipe
-                hardwareInterface.FlushDataPipe();
-                
 				int bytesSent = 0; 
 				int commandSize = packetsPerCommand * packetSize;
 				while (bytesSent < firmware.Length) {
@@ -92,6 +97,10 @@ namespace ECore.Devices {
 				//Send finish flashing command
                 hardwareInterface.SendCommand(SmartScopeUsbInterfaceHelpers.PIC_COMMANDS.PROGRAM_FPGA_END);
                 Logger.Info(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
+                Logger.Info("Flushing data pipe");
+                //Flush whatever might be left in the datapipe
+                hardwareInterface.FlushDataPipe();
+                
                 this.flashed = true;
 			} catch (ScopeIOException e) {
 				Logger.Error("Flashing FPGA failed failed");
