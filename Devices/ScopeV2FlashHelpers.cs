@@ -80,6 +80,7 @@ namespace ECore.Devices {
 				    (byte) (commands),
                 };
                 hardwareInterface.WriteControlBytes(msg, false);
+                hardwareInterface.FlushDataPipe();
 
 				int bytesSent = 0; 
 				int commandSize = packetsPerCommand * packetSize;
