@@ -162,6 +162,7 @@ namespace ECore.Devices
 
             InterfaceManagerXamarin.Instance.PollDevice();
 #else
+#if WINUSB
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
@@ -169,9 +170,12 @@ namespace ECore.Devices
             }
             else
             { 
+#endif
                 InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
                 InterfaceManagerLibUsb.Instance.PollDevice();
+#if WINUSB
             }
+#endif
 #endif
         }
 
