@@ -164,8 +164,10 @@ namespace ECore.Devices
 #else
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
+				#if !__IOS__
                 InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
                 InterfaceManagerWinUsb.Instance.PollDevice();
+				#endif
             }
             else
             { 
