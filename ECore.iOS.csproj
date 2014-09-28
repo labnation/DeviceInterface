@@ -182,11 +182,13 @@
   -->
   <ItemGroup>
     <BundleResource Include="i2c_sequence.mat" />
-    <BundleResource Include="SmartScope_A10.bin" />
-    <BundleResource Include="SmartScope_A12.bin" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ComponentFlashEngines\" />
     <Folder Include="DataSources\DataStorage\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SmartScope_A10.bin" />
+    <EmbeddedResource Include="SmartScope_A12.bin" />
   </ItemGroup>
 </Project>
