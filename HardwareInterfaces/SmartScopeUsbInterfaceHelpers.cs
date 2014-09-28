@@ -111,20 +111,20 @@ namespace ECore.HardwareInterfaces
             }
         }
 
-        public static void SendCommand(this ISmartScopeUsbInterface i, PIC_COMMANDS cmd)
+        public static void SendCommand(this ISmartScopeUsbInterface i, PIC_COMMANDS cmd, bool async = false)
         {
             byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
-            i.WriteControlBytes(toSend, false);
+            i.WriteControlBytes(toSend, async);
         }
 
         public static void LoadBootLoader(this ISmartScopeUsbInterface i)
         {
-            SendCommand(i, PIC_COMMANDS.PIC_BOOTLOADER);
+            SendCommand(i, PIC_COMMANDS.PIC_BOOTLOADER, true);
         }
 
         public static void Reset(this ISmartScopeUsbInterface i)
         {
-            SendCommand(i, PIC_COMMANDS.PIC_RESET);
+            SendCommand(i, PIC_COMMANDS.PIC_RESET, true);
         }
 
         public static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)

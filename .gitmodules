@@ -1,0 +1,3 @@
+[submodule "winusb"]
+	path = winusb
+	url = https://github.com/louiecaulfield/winusb.git
