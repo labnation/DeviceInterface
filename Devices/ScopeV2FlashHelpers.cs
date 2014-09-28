@@ -44,6 +44,8 @@ namespace ECore.Devices {
                 firmware = fw.ToArray();
                 #else
 				//iOS-safe: browse through all assemblies until correct resource has been found
+				//firmware = (byte[])Resources.ResourceManager.GetObject(fwName); does NOT work
+
 				System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 				for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++) {
 					try{
