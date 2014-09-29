@@ -88,7 +88,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="MathNet.Numerics">
-      <HintPath>..\ThirdParty\libs\MathNet.Numerics.Mono.dll</HintPath>
+      <HintPath>..\ThirdParty\libs\ios\MathNet.Numerics.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -103,7 +103,6 @@
     <Compile Include="Devices\ScopeV2FlashHelpers.cs" />
     <Compile Include="Devices\ScopeV2Settings.cs" />
     <Compile Include="Devices\ScopeChannel.cs" />
-    <Compile Include="Devices\Settings.cs" />
     <Compile Include="Devices\ScopeV2.cs">
       <DeployService-Deploy>True</DeployService-Deploy>
       <DeployService-TargetDirectoryId>Binaries</DeployService-TargetDirectoryId>
@@ -117,16 +116,12 @@
     <Compile Include="DeviceMemories\MAX19506Memory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaRom.cs" />
     <Compile Include="DataSources\DataSourceScope.cs" />
-    <Compile Include="DataSources\DataSource.cs" />
     <Compile Include="DeviceMemories\ScopeStrobeMemory.cs" />
     <Compile Include="DeviceMemories\ScopeFpgaSettingsMemory.cs" />
-    <Compile Include="HardwareInterfaces\HWInterfacePIC_LibUSB.cs" />
     <Compile Include="DeviceMemories\Registers\MemoryRegister.cs" />
-    <Compile Include="Devices\EDevice.cs" />
     <Compile Include="DeviceMemories\DeviceMemory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.Designer.cs" />
-    <Compile Include="HardwareInterfaces\ScopeUsbInterface.cs" />
     <Compile Include="Devices\ScopeV2Rom.cs" />
     <Compile Include="Devices\ScopeV2Header.cs" />
     <Compile Include="DataSources\DataStorage\ChannelBuffer.cs" />
@@ -135,6 +130,11 @@
     <Compile Include="DataSources\DataStorage\RecordingHandler.cs" />
     <Compile Include="DataSources\DataStorage\RecordingScope.cs" />
     <Compile Include="FrequencyCompensation.cs" />
+    <Compile Include="HardwareInterfaces\ISmartScopeUsbInterface.cs" />
+    <Compile Include="HardwareInterfaces\SmartScopeUsbInterfaceHelpers.cs" />
+    <Compile Include="HardwareInterfaces\SmartScopeUsbInterfaceLibUsb.cs" />
+    <Compile Include="HardwareInterfaces\InterfaceManager.cs" />
+    <Compile Include="HardwareInterfaces\InterfaceManagerLibUsb.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DeviceMemories\ScopeConstants_GEN.tt">
@@ -143,10 +143,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="aforge\Math\Math %28mono%29.csproj">
-      <Project>{1E7E3A00-57A6-48C4-A19E-926BADC501B6}</Project>
-      <Name>Math (mono)</Name>
-    </ProjectReference>
     <ProjectReference Include="..\LUDN2\LUDN2.csproj">
       <Project>{558E1773-40C4-47C9-8D72-4B81E0C99878}</Project>
       <Name>LUDN2</Name>
@@ -162,6 +158,10 @@
     <ProjectReference Include="..\Common\Common.iOS.csproj">
       <Project>{D119D2F8-3ABA-4C7A-9A8B-FD8C755633BA}</Project>
       <Name>Common.iOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="aforge\Math\Math %28mono%29.csproj">
+      <Project>{1E7E3A00-57A6-48C4-A19E-926BADC501B6}</Project>
+      <Name>Math (mono)</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -182,10 +182,13 @@
   -->
   <ItemGroup>
     <BundleResource Include="i2c_sequence.mat" />
-    <BundleResource Include="SmartScope_latest.bin" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ComponentFlashEngines\" />
     <Folder Include="DataSources\DataStorage\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SmartScope_A10.bin" />
+    <EmbeddedResource Include="SmartScope_A12.bin" />
   </ItemGroup>
 </Project>

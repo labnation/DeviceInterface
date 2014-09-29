@@ -51,8 +51,34 @@ namespace ECore.Devices {
                 }
                 firmware = fw.ToArray();
                 #else
+                #if !__IOS__
+				System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+				for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++) {
+					try{
+						System.Reflection.Assembly assy = assemblies[assyIndex];
+						string[] assetList = assy.GetManifestResourceNames();
+						for (int a=0; a<assetList.Length; a++) {
+							try{
+								string unescapedName = assetList[a].Replace("__","_");
+								if (unescapedName.Contains(fwName))
+								{
+									Stream inStream = assy.GetManifestResourceStream(assetList[a]);
+									BinaryReader reader = new BinaryReader(inStream);
+									firmware = reader.ReadBytes((int)reader.BaseStream.Length);
+									Logger.Info ("Connected to FW Flash file");
+								}
+							}catch{
+								Logger.Error("Exception while going through assetlist");
+							}
+						}
+					}	catch{
+						Logger.Error ("Exception while going through assemblylist");
+					}
+				}                
+                #else
                 firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
-                #endif
+                #endif //__IOS__
+                #endif //ANDROID
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
 				Logger.Error(e.Message);
@@ -80,7 +106,6 @@ namespace ECore.Devices {
 				    (byte) (commands),
                 };
                 hardwareInterface.WriteControlBytes(msg, false);
-
                 hardwareInterface.FlushDataPipe();
 
 				int bytesSent = 0; 
