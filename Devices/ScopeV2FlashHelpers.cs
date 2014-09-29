@@ -51,7 +51,7 @@ namespace ECore.Devices {
                 }
                 firmware = fw.ToArray();
                 #else
-                #if !__IOS__
+                #if __IOS__
 				System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 				for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++) {
 					try{
