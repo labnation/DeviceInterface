@@ -122,7 +122,7 @@ namespace ECore.DataSources
                 acqInfo.Add(
                     new AcquisitionInfo()
                     {
-                        firstSampleTime = ScopeData.FirstSampleTime,
+                        firstSampleTime = (ulong)(DateTime.Now.TimeOfDay.TotalMilliseconds*1000000.0),
                         samples = ScopeData.Samples,
                         samplePeriod = ScopeData.SamplePeriod
                     });

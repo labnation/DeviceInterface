@@ -118,7 +118,7 @@ namespace ECore.DataSources
             dataType = typeof(double);
             arrayWriter = matFileWriter.OpenArray(dataType, "acquisitionStartTime");
             UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
-            arrayWriter.AddRow(recording.acqInfo.Select(x => (double)(x.firstSampleTime - timeOrigin) / 1.0e9).ToArray());
+            arrayWriter.AddRow(recording.acqInfo.Select(x => (double)(x.firstSampleTime - timeOrigin) / (double)1.0e9).ToArray());
             arrayWriter.FinishArray(dataType);
             if (progress != null)
                 progress(.9f);
