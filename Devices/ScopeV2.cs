@@ -159,22 +159,14 @@ namespace ECore.Devices
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
-
             InterfaceManagerXamarin.Instance.PollDevice();
-#else
+#else //NOT ANDROID
 #if WINUSB
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
                 InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
                 InterfaceManagerWinUsb.Instance.PollDevice();
-            }
-            else
-            { 
-#endif
+#else
                 InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
                 InterfaceManagerLibUsb.Instance.PollDevice();
-#if WINUSB
-            }
 #endif
 #endif
         }
