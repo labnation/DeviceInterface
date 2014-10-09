@@ -51,6 +51,14 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AForge, Version=2.2.5.0, Culture=neutral, PublicKeyToken=c1db6ff4eaa06aeb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\AForge.2.2.5\lib\AForge.dll</HintPath>
+    </Reference>
+    <Reference Include="AForge.Math, Version=2.2.5.0, Culture=neutral, PublicKeyToken=abba2e25397ee8c9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\AForge.Math.2.2.5\lib\AForge.Math.dll</HintPath>
+    </Reference>
     <Reference Include="MathNet.Numerics">
       <HintPath>..\packages\MathNet.Numerics.3.2.3\lib\net40\MathNet.Numerics.dll</HintPath>
     </Reference>
@@ -136,10 +144,6 @@
     <ProjectReference Include="..\ExcelFileIO\ExcelFileIO.csproj">
       <Project>{B960D53B-BEBE-4817-B847-1DA49D75593E}</Project>
       <Name>ExcelFileIO</Name>
-    </ProjectReference>
-    <ProjectReference Include="aforge\Math\aforge.Math.csproj">
-      <Project>{C0FAF524-72E4-46F7-8C1B-A6B74DEC5EBE}</Project>
-      <Name>aforge.Math</Name>
     </ProjectReference>
     <ProjectReference Include="..\MatlabFileIO\MatlabFileIO.csproj">
       <Project>{28E13C37-54E1-4219-A3E0-EE30247F65FC}</Project>
