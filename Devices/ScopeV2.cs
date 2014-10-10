@@ -142,6 +142,8 @@ namespace ECore.Devices
             dataSourceScope.Stop();
             #if ANDROID
             InterfaceManagerXamarin.Instance.onConnect -= OnDeviceConnect;
+            #elif WINUSB
+            InterfaceManagerWinUsb.Instance.onConnect -= OnDeviceConnect;
             #else
             InterfaceManagerLibUsb.Instance.onConnect -= OnDeviceConnect;
             #endif
@@ -160,14 +162,12 @@ namespace ECore.Devices
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
             InterfaceManagerXamarin.Instance.PollDevice();
-#else //NOT ANDROID
-#if WINUSB
+#elif WINUSB
                 InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
                 InterfaceManagerWinUsb.Instance.PollDevice();
 #else
                 InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
                 InterfaceManagerLibUsb.Instance.PollDevice();
-#endif
 #endif
         }
 

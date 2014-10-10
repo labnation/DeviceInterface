@@ -6,7 +6,6 @@ using System.Threading;
 using ECore.DataSources;
 using System.IO;
 using MatlabFileIO;
-using ExcelFileIO;
 using Common;
 
 namespace ECore.DataSources
@@ -139,38 +138,7 @@ namespace ECore.DataSources
 
         private static string StoreCsv(RecordingScope recording, Action<float> progress)
         {
-            string filename = Utils.GetTempFileName(".csv");
-            ExcelFileWriter csvFileWriter = new ExcelFileWriter(filename);
-            string[] header = new List<string>() { "Time" }.Concat(recording.channelBuffers.Values.Select(x => x.GetName())).ToArray();
-            csvFileWriter.WriteArrayRow(header);
-
-            object[] dataChunk;
-            int offset = 0;
-            int sampleOffset = 0;
-            do
-            {
-                //Add time axis
-                dataChunk = new object[recording.channelBuffers.Count() + 1];
-                dataChunk[0] = getTimeAxis(recording, offset, 1);
-
-                //Add data
-                int samples = recording.acqInfo[offset].samples;
-                int i = 1;
-                foreach (IChannelBuffer b in recording.channelBuffers.Values)
-                {
-                    dataChunk[i] = b.GetData(sampleOffset, samples);
-                    i++;
-                }
-                sampleOffset += samples;
-                offset++;
-
-                //Write away
-                csvFileWriter.WriteArrayRows(dataChunk);
-                if (progress != null)
-                    progress(offset / (float)recording.acqInfo.Count);
-            } while (offset < recording.acqInfo.Count);
-            csvFileWriter.Close();
-            return filename;
+            throw new NotImplementedException("Implement this using CSVHelper");
         }
 
         private static double[] getTimeAxis(RecordingScope r, int offset = 0, int number = -1)
