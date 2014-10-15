@@ -8,9 +8,7 @@ using ECore.DeviceMemories;
 
 namespace ECore.Devices {
 	public enum WaveSource {
-        #if !ANDROID
 		FILE,
-#endif
 		GENERATOR
 	}
 
@@ -458,7 +456,6 @@ namespace ECore.Devices {
 					}
 					outputDigital = DummyScope.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
 				} 
-                #if !ANDROID
                 else if (waveSource == WaveSource.FILE) {
 					if (!GetWaveFromFile (acquisitionMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
 						return null;
@@ -466,7 +463,6 @@ namespace ECore.Devices {
                         DummyScope.AddNoise(outputAnalog[ch.Value], _channelConfig[ch].noise);
 					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
 				}
-                #endif
                 double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
                 UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
 				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs, false, false);

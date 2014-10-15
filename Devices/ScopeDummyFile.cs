@@ -14,14 +14,14 @@ namespace ECore.Devices
         private static float[] readChannelB = null;
         private static double[] readTime = null;
 
-        #if !ANDROID
         public static bool GetWaveFromFile(AcquisitionMode acqMode, double triggerHoldoff, AnalogChannel triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
             if(readChannelA == null || readChannelB == null || readTime == null) 
             {
                 String filename = Path.GetTempFileName();
                 FileStream f = new FileStream(filename, FileMode.Create, FileAccess.Write);
-                f.Write(Resources.i2c_sequence, 0, Resources.i2c_sequence.Length);
+				byte[] i2cSequence = Resources.Load ("i2c_sequence.mat");
+				f.Write(i2cSequence, 0, i2cSequence.Length);
                 f.Close();
 
                 MatfileReader matfileReader = new MatlabFileIO.MatfileReader(filename);
@@ -75,6 +75,5 @@ namespace ECore.Devices
             else
                 return false;
         }
-        #endif
     }
 }

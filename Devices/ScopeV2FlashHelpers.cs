@@ -6,7 +6,6 @@ using System.IO;
 using System.Diagnostics;
 using Common;
 using ECore.HardwareInterfaces;
-using System.Reflection;
 
 namespace ECore.Devices {
 	partial class SmartScope {
@@ -76,11 +75,7 @@ namespace ECore.Devices {
 					}
 				}                
                 #else
-				Assembly ass = Assembly.GetExecutingAssembly();
-
-				using(Stream s = ass.GetManifestResourceStream(String.Format("{0}.{1}", ass.GetName().Name, fwName)))
-				using(BinaryReader r = new BinaryReader(s))
-					firmware = r.ReadBytes((int)s.Length);
+				firmware = Resources.Load(fwName);
                 #endif
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
