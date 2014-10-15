@@ -50,8 +50,7 @@ namespace ECore.Devices {
                     fw.AddRange(buffer.Take(read));
                 }
                 firmware = fw.ToArray();
-                #else
-                #if __IOS__
+                #elif __IOS__
 				System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 				for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++) {
 					try{
@@ -77,8 +76,7 @@ namespace ECore.Devices {
 				}                
                 #else
                 firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
-                #endif //__IOS__
-                #endif //ANDROID
+                #endif
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
 				Logger.Error(e.Message);

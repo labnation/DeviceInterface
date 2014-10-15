@@ -14,6 +14,7 @@ namespace ECore.Devices
         private static float[] readChannelB = null;
         private static double[] readTime = null;
 
+        #if !ANDROID
         public static bool GetWaveFromFile(AcquisitionMode acqMode, double triggerHoldoff, AnalogChannel triggerChannel, TriggerDirection triggerDirection, float triggerLevel, uint decimation, double samplePeriod, ref float[][] output)
         {
             if(readChannelA == null || readChannelB == null || readTime == null) 
@@ -74,5 +75,6 @@ namespace ECore.Devices
             else
                 return false;
         }
+        #endif
     }
 }
