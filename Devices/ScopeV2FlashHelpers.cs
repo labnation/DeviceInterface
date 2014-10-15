@@ -6,6 +6,7 @@ using System.IO;
 using System.Diagnostics;
 using Common;
 using ECore.HardwareInterfaces;
+using System.Reflection;
 
 namespace ECore.Devices {
 	partial class SmartScope {
@@ -22,7 +23,7 @@ namespace ECore.Devices {
             try
             {
                 Common.SerialNumber s = new SerialNumber(this.Serial);
-                fwName = String.Format("SmartScope_{0}", Base36.Encode((long)s.model, 3).ToUpper());
+				fwName = String.Format("SmartScope_{0}.bin", Base36.Encode((long)s.model, 3).ToUpper());
             }
             catch (Exception e)
             {
@@ -41,7 +42,7 @@ namespace ECore.Devices {
 			//Get FW contents
 			try {
                 #if ANDROID
-                Stream str = context.Assets.Open(String.Format("{0}.bin", fwName));
+				Stream str = context.Assets.Open(fwName);
                 List<byte> fw = new List<byte>();
                 while(true) {    
                         byte[] buffer = new byte[1024];
@@ -50,7 +51,7 @@ namespace ECore.Devices {
                     fw.AddRange(buffer.Take(read));
                 }
                 firmware = fw.ToArray();
-                #elif __IOS__
+                #elif IOS
 				System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 				for (int assyIndex = 0; assyIndex < assemblies.Length; assyIndex++) {
 					try{
@@ -75,7 +76,11 @@ namespace ECore.Devices {
 					}
 				}                
                 #else
-                firmware = (byte[])Resources.ResourceManager.GetObject(fwName);
+				Assembly ass = Assembly.GetExecutingAssembly();
+
+				using(Stream s = ass.GetManifestResourceStream(String.Format("{0}.{1}", ass.GetName().Name, fwName)))
+				using(BinaryReader r = new BinaryReader(s))
+					firmware = r.ReadBytes((int)s.Length);
                 #endif
             } catch (Exception e) {
 				Logger.Error("Opening FPGA FW file failed");
