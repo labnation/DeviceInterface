@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-//#if IPHONE
-//#else
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.DeviceNotify;
 using C=Common;
-//#endif
 
 namespace ECore.HardwareInterfaces
 {
