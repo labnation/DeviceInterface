@@ -146,6 +146,7 @@ namespace ECore.Devices
             InterfaceManagerWinUsb.Instance.onConnect -= OnDeviceConnect;
             #else
             InterfaceManagerLibUsb.Instance.onConnect -= OnDeviceConnect;
+			InterfaceManagerLibUsb.Instance.Destroy();
             #endif
             if (hardwareInterface != null)
                 OnDeviceConnect(this.hardwareInterface, false);

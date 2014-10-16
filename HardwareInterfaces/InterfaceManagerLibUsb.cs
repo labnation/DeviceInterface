@@ -62,6 +62,12 @@ namespace ECore.HardwareInterfaces
             }
         }
 
+		public void Destroy()
+		{
+			UsbDeviceNotifier.Enabled = false;
+			UsbDevice.Exit();
+		}
+
 	    private void DeviceFound(LibUsbDotNet.UsbDevice scopeUsbDevice)
         {
             string serial = null;
