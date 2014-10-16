@@ -1,12 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Name="MatlabFileIO" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows">
-  <ProjectGuids>
-    <Platform Name="Android">124A37A3-14A4-4C5F-8759-090B83851CD3</Platform>
-    <Platform Name="iOS">    522B8697-DF30-426A-8362-5D1FB171EB8D</Platform>
-    <Platform Name="Linux">  DFDFBC3A-1E35-4913-BDBD-5B89C36F0426</Platform>
-    <Platform Name="MacOS">  672440F2-E717-45DC-BEA4-7E7130DC2479</Platform>
-    <Platform Name="Windows">537C7B8F-DAA2-4CC2-81A1-DB7A7A9F2EFD</Platform>
-  </ProjectGuids>
   <Properties>
 	<NoWarn>1591</NoWarn>
     <RootNamespace>MatlabFileIO</RootNamespace>
