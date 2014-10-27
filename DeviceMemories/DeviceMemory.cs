@@ -7,7 +7,7 @@ using Common;
 
 namespace ECore.DeviceMemories
 {
-#if INTERNAL
+#if DEBUG
         public
 #else
         internal

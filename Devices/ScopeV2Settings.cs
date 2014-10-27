@@ -11,11 +11,11 @@ namespace ECore.Devices
     partial class SmartScope
     {
 
-#if INTERNAL
+#if DEBUG
         public 
 #endif
         static readonly double[] validDividers = { 1, 6, 36 };
-#if INTERNAL
+#if DEBUG
         public 
 #endif
         static readonly double[] validMultipliers = { 1.1, 2, 3 };
@@ -23,11 +23,11 @@ namespace ECore.Devices
         private Dictionary<AnalogChannel, ProbeDivision> probeSettings;
 
         private double holdoff;
-#if INTERNAL
+#if DEBUG
         public 
 #endif
         static byte yOffsetMax = 200;
-#if INTERNAL
+#if DEBUG
         public 
 #endif
         static byte yOffsetMin = 10;
@@ -154,7 +154,7 @@ namespace ECore.Devices
 		/// </summary>
 		/// <param name="channel">0 or 1 (channel A or B)</param>
 		/// <param name="divider">1, 10 or 100</param>
-		#if INTERNAL
+		#if DEBUG
 		public
 		#else
 		private
@@ -176,7 +176,7 @@ namespace ECore.Devices
 		///</summary>
 		///<param name="channel">0 or 1 (channel A or B)</param>
 		///<param name="multiplier">Set input stage multiplier (?? or ??)</param>
-		#if INTERNAL
+		#if DEBUG
 		public
 		#else
 		private
@@ -194,7 +194,7 @@ namespace ECore.Devices
 			FpgaSettingsMemory[REG.DIVIDER_MULTIPLIER].Set(divMul);
 		}
 
-#if INTERNAL
+#if DEBUG
         public void SetYOffsetByte(AnalogChannel channel, byte offset)
         {
             REG r = channel == AnalogChannel.ChA ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
@@ -254,7 +254,7 @@ namespace ECore.Devices
             if(Ready)
                 StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
         }
-#if INTERNAL
+#if DEBUG
         public void SetTriggerByte(byte level)
         {
             FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set(level);

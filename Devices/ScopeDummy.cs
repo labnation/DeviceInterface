@@ -24,7 +24,7 @@ namespace ECore.Devices {
     }
 
 	public partial class DummyScope : IScope {
-#if INTERNAL
+#if DEBUG
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
 

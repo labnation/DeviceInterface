@@ -12,7 +12,7 @@ namespace ECore.HardwareInterfaces
         internal ScopeIOException(string msg) : base(msg) { }
     }
 
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal
@@ -27,7 +27,7 @@ namespace ECore.HardwareInterfaces
         AWG
     }
 
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal

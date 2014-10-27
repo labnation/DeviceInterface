@@ -11,7 +11,7 @@ namespace ECore.Devices
 {
     partial class SmartScope
     {
-#if INTERNAL
+#if DEBUG
         public
 #else
         private
@@ -23,7 +23,7 @@ namespace ECore.Devices
             public double multiplier;
             public double[] coefficients;
         }
-#if INTERNAL
+#if DEBUG
         public
 #else
         private
@@ -36,7 +36,7 @@ namespace ECore.Devices
             public Dictionary<int, float> phases;
         }
 
-#if INTERNAL
+#if DEBUG
         public
 #else
         private
@@ -78,7 +78,7 @@ namespace ECore.Devices
 
             }
 
-#if INTERNAL
+#if DEBUG
             public void clearCalibration()
             {
                 this.gainCalibration.Clear();
@@ -109,7 +109,7 @@ namespace ECore.Devices
             }
 #endif
 
-#if INTERNAL
+#if DEBUG
             public 
 #else
             internal
@@ -119,7 +119,7 @@ namespace ECore.Devices
                 return gainCalibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
             }
 
-#if INTERNAL
+#if DEBUG
             public
 #else
             internal
@@ -165,7 +165,7 @@ namespace ECore.Devices
                 public fixed ushort phasesIndices[frequencyResponsePhases * 3 * 2]; //nfrequencyResponsePhases * nMultiplier * nChannel
             }
 
-#if INTERNAL
+#if DEBUG
             public bool Test(out long failAddress, out string message)
             {
                 failAddress = -1;
@@ -240,7 +240,7 @@ namespace ECore.Devices
             }
 #endif
 
-#if INTERNAL
+#if DEBUG
             public
 #else
             private 
@@ -315,7 +315,7 @@ namespace ECore.Devices
                     writeOffset += writeLength;
                 }
             }
-#if INTERNAL
+#if DEBUG
             public
 #else
             private 
@@ -401,7 +401,7 @@ namespace ECore.Devices
                 }
             }
 
-#if INTERNAL
+#if DEBUG
             public static SmartScope.GainCalibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
             {
                 int rows = adcValue.Length;

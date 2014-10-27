@@ -5,14 +5,14 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal
 #endif
     delegate void RegisterValueChangedHandler(object o, EventArgs e);
 
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal
@@ -78,12 +78,12 @@ namespace ECore.DeviceMemories
             return this;
         }
 
-#if INTERNAL
+#if DEBUG
         public event RegisterValueChangedHandler OnInternalValueChanged;
 #endif
         protected void CallValueChangedCallbacks()
         {
-#if INTERNAL
+#if DEBUG
             if (OnInternalValueChanged != null)
                 OnInternalValueChanged(this, new EventArgs());
 #endif

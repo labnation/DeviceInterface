@@ -8,19 +8,19 @@ namespace ECore.DataSources
 {
     public class RecordingScope : IDisposable
     {
-#if INTERNAL
+#if DEBUG
         public
 #else
         internal
 #endif            
         Dictionary<Channel, IChannelBuffer> channelBuffers;
-#if INTERNAL
+#if DEBUG
         public
 #else
         internal
 #endif            
         List<AcquisitionInfo> acqInfo;
-#if INTERNAL
+#if DEBUG
         public
 #else
         internal
@@ -75,7 +75,7 @@ namespace ECore.DataSources
         {
             Dispose(false);
         }
-#if INTERNAL
+#if DEBUG
         public
 #else
         internal
@@ -106,7 +106,7 @@ namespace ECore.DataSources
         }
 
         //FIXME: this needs to go
-#if INTERNAL
+#if DEBUG
         public Dictionary<string, object> matlabVariables = new Dictionary<string, object>();
         public void AddMatlabVariable(object o, string name)
         {

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal

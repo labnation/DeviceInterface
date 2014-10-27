@@ -98,7 +98,7 @@ namespace ECore.DataSources
                     progress(.3f);
             }
 
-#if INTERNAL
+#if DEBUG
             //Save dirty dirty matlab variables to disk
             foreach (var kvp in recording.matlabVariables)
                 matFileWriter.Write(kvp.Key, kvp.Value);

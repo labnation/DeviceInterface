@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#if INTERNAL
+#if DEBUG
 using ECore.DeviceMemories;
 #endif
 using ECore.DataSources;
@@ -20,7 +20,7 @@ namespace ECore.Devices
 
     public interface IScope
     {
-#if INTERNAL
+#if DEBUG
         List<DeviceMemory> GetMemories();
 #endif
         DataPackageScope GetScopeData();

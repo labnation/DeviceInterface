@@ -6,7 +6,7 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.DeviceMemories
 {
-#if INTERNAL
+#if DEBUG
         public
 #else
     internal

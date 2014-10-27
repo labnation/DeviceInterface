@@ -8,7 +8,7 @@ using AForge.Math;
 
 namespace ECore
 {
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal

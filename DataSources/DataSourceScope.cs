@@ -14,7 +14,7 @@ namespace ECore.DataSources
     public class DataSource
     {
         private IScope scope;
-#if INTERNAL
+#if DEBUG
         public event NewDataAvailableHandler BeforeNewDataAvailable;
 #endif
         public event NewDataAvailableHandler OnNewDataAvailable;
@@ -38,7 +38,7 @@ namespace ECore.DataSources
         private void fireDataAvailableEvents()
         {
             {
-#if INTERNAL
+#if DEBUG
                 if (BeforeNewDataAvailable != null)
                     BeforeNewDataAvailable(LatestDataPackage, new EventArgs());
 #endif

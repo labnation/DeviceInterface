@@ -18,13 +18,13 @@ namespace ECore.Devices
 {
     public partial class SmartScope : IScope, IDisposable
     {
-#if INTERNAL
+#if DEBUG
     public
 #else
     private
 #endif
         ISmartScopeUsbInterface hardwareInterface;
-#if INTERNAL
+#if DEBUG
         public
 #else
         private
@@ -35,11 +35,11 @@ namespace ECore.Devices
         private ScopeConnectHandler scopeConnectHandler;
 
         private List<DeviceMemory> memories = new List<DeviceMemory>();
-#if INTERNAL
+#if DEBUG
         public List<DeviceMemory> GetMemories() { return memories; }
 #endif
 
-#if INTERNAL 
+#if DEBUG 
         public DeviceMemories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public DeviceMemories.ScopeFpgaRom FpgaRom { get; private set; }
         public DeviceMemories.ScopeStrobeMemory StrobeMemory { get; private set; }
@@ -61,7 +61,7 @@ namespace ECore.Devices
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         byte[] chA = null, chB = null;
-#if INTERNAL
+#if DEBUG
         byte[] rawBuffer = null;
 #endif
 
@@ -80,20 +80,20 @@ namespace ECore.Devices
 
         //Select through: AnalogChannel, multiplier, subsampling
         private Dictionary<AnalogChannel, Dictionary<double, Dictionary<ushort, Complex[]>>> compensationSpectrum;
-#if INTERNAL
+#if DEBUG
         public 
 #else
         private
 #endif
         FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
-#if INTERNAL
+#if DEBUG
         public 
 #else
         private
 #endif
         bool TimeSmoothingEnabled = true;
 
-#if INTERNAL
+#if DEBUG
         public bool DebugDigital { get; set; }
 #endif
 
@@ -107,7 +107,7 @@ namespace ECore.Devices
             }
         }
 
-#if INTERNAL
+#if DEBUG
         public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
 #endif
 
@@ -178,7 +178,7 @@ namespace ECore.Devices
             {
                 try
                 {
-#if INTERNAL
+#if DEBUG
                     resetTestResults("all");
 #endif
                     this.hardwareInterface = hwInterface;
@@ -259,7 +259,7 @@ namespace ECore.Devices
             }
         }
 
-#if INTERNAL
+#if DEBUG
         public void resetTestResults(string test)
         {
             if (test == "ram" || test == "all")
@@ -354,7 +354,7 @@ namespace ECore.Devices
             }
         }
 
-#if INTERNAL
+#if DEBUG
         public void LoadBootLoader()
         {
             this.DataSourceScope.Stop();
@@ -362,7 +362,7 @@ namespace ECore.Devices
         }
 #endif
 
-#if INTERNAL
+#if DEBUG
         public 
 #else
         private
@@ -493,7 +493,7 @@ namespace ECore.Devices
                 {
                     chA = new byte[header.Samples];
                     chB = new byte[header.Samples];
-#if INTERNAL
+#if DEBUG
                     rawBuffer = new byte[header.AcquisitionSize * header.BytesPerBurst];
 #endif
                 }
@@ -503,7 +503,7 @@ namespace ECore.Devices
             {
                 chA[dataOffset + i] = buffer[header.Channels * i];
                 chB[dataOffset + i] = buffer[header.Channels * i + 1];
-#if INTERNAL
+#if DEBUG
                 if (rawBuffer != null)
                 {
                     for (int j = 0; j < header.Channels; j++)
@@ -542,7 +542,7 @@ namespace ECore.Devices
                         return p;
                 }
             }
-#if INTERNAL
+#if DEBUG
             if (header.GetStrobe(STR.DEBUG_RAM) && header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) == 0)
             {
                 UInt16[] testData = new UInt16[rawBuffer.Length / 2];
@@ -566,7 +566,7 @@ namespace ECore.Devices
             this.coupling[AnalogChannel.ChA] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
             this.coupling[AnalogChannel.ChB] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
 
-#if INTERNAL
+#if DEBUG
             if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM) && DebugDigital)
             {
                 //Test if data in CHB is correct
@@ -594,7 +594,7 @@ namespace ECore.Devices
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
             DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, 0, chA.Length < header.SamplesPerAcquisition, header.Rolling);
-#if INTERNAL
+#if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif
             //Parse div_mul
@@ -603,7 +603,7 @@ namespace ECore.Devices
             double mulA = validMultipliers[(divMul >> 2) & 0x3];
             double divB = validDividers[(divMul >> 4) & 0x3];
             double mulB = validMultipliers[(divMul >> 6) & 0x3];
-#if INTERNAL
+#if DEBUG
             data.AddSetting("DividerA", divA);
             data.AddSetting("DividerB", divB);
             data.AddSetting("MultiplierA", mulA);
@@ -663,7 +663,7 @@ namespace ECore.Devices
                     data.SetData(AnalogChannel.ChB, ChBConverted);
                     data.Samples = ChBConverted.Length;
                 }
-#if INTERNAL                    
+#if DEBUG                    
             }
 #endif
             return data;

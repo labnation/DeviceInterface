@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.DeviceMemories
 {
-#if INTERNAL
+#if DEBUG
 	public
 #else
 	internal
@@ -43,7 +43,7 @@ namespace ECore.DeviceMemories
 		AWG_SAMPLES_B1 = 30,
     }
 
-#if INTERNAL
+#if DEBUG
 	public
 #else
 	internal
@@ -75,7 +75,7 @@ namespace ECore.DeviceMemories
 		LA_CHANNEL = 27,
     }
 
-#if INTERNAL
+#if DEBUG
 	public
 #else
 	internal

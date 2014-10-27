@@ -7,7 +7,7 @@ namespace ECore.DeviceMemories
 {
     //this class defines which type of registers it contain, how much of them, and how to access them
     //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal

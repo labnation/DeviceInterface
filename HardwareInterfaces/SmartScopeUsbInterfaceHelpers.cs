@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.HardwareInterfaces
 {
-#if INTERNAL
+#if DEBUG
     public
 #else
     internal

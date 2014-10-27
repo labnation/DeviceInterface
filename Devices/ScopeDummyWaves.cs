@@ -7,7 +7,7 @@ using Common;
 namespace ECore.Devices
 {
     public enum WaveForm { SINE, COSINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE,
-#if INTERNAL 
+#if DEBUG 
         HALF_BIG_HALF_UGLY 
 #endif
     };
@@ -46,7 +46,7 @@ namespace ECore.Devices
                 case WaveForm.MULTISINE:
                     wave = DummyScope.WaveMultiCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, new float[] {1, 2, 4, 8 });
                     break;
-#if INTERNAL
+#if DEBUG
                 case WaveForm.HALF_BIG_HALF_UGLY:
                     wave = DummyScope.WaveHalfBigHalfUgly(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;

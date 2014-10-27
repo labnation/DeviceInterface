@@ -38,7 +38,7 @@ namespace ECore.DataSources
         {
             dataDigital = data;
         }
-#if INTERNAL
+#if DEBUG
         public
 #else
         internal 
