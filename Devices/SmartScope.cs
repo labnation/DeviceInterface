@@ -19,9 +19,9 @@ namespace ECore.Devices
     public partial class SmartScope : IScope, IWaveGenerator, IDisposable
     {
 #if DEBUG
-    public
+        public
 #else
-    private
+        private
 #endif
         ISmartScopeUsbInterface hardwareInterface;
 #if DEBUG
