@@ -75,7 +75,12 @@ namespace ECore.Devices
         private bool acquiring = false;
         private bool stopPending = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
-        private float triggerLevel = 0f;
+        private AnalogTriggerValue triggerLevel = new AnalogTriggerValue
+        {
+            direction = TriggerDirection.RISING,
+            level = 0.0f
+        };
+
 
         //Select through: AnalogChannel, multiplier, subsampling
         private Dictionary<AnalogChannel, Dictionary<double, Dictionary<ushort, Complex[]>>> compensationSpectrum;

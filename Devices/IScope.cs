@@ -12,6 +12,20 @@ namespace ECore.Devices
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
     public enum DigitalTriggerValue { L, H, R, F, X };
+    /// <summary>
+    /// Describes an analog trigger
+    /// </summary>
+    public struct AnalogTriggerValue
+    {
+        /// <summary>
+        /// The direction
+        /// </summary>
+        public TriggerDirection direction;
+        /// <summary>
+        /// Trigger level in volt
+        /// </summary>
+        public float level;
+    }
 
     public interface IScope : IDevice
     {
@@ -27,12 +41,11 @@ namespace ECore.Devices
         bool StopPending { get; }
 
         void SetTriggerHoldOff(double time);
-        void SetTriggerAnalog(float voltage);
+        void SetTriggerAnalog(AnalogTriggerValue trigger);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
         void SetYOffset(AnalogChannel channel, float offset);
         void SetTriggerChannel(AnalogChannel channel);
-        void SetTriggerDirection(TriggerDirection direction);
         void SetForceTrigger();
         void SetCoupling(AnalogChannel channel, Coupling coupling);
         void SetTriggerWidth(uint width);

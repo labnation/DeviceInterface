@@ -233,21 +233,23 @@ namespace ECore.Devices
         ///<summary>
         ///Set scope trigger level
         ///</summary>
-        ///<param name="voltage">Trigger level in volt</param>
-        public void SetTriggerAnalog(float voltage)
+        ///<param name="trigger">Trigger condition</param>
+        public void SetTriggerAnalog(AnalogTriggerValue trigger)
         {
             if (!Connected) return;
-            this.triggerLevel = voltage;
+            this.triggerLevel = trigger;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
             if(coefficients != null)
-                level = (voltage - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                level = (trigger.level - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
-            Logger.Debug(" Set trigger level to " + voltage + "V (" + level + ")");
+            Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
             FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
+
+            SetTriggerDirection(trigger.direction);
         }
         public void SetForceTrigger()
         {
@@ -287,7 +289,7 @@ namespace ECore.Devices
         /// Choose between rising or falling trigger
         /// </summary>
         /// <param name="direction"></param>
-        public void SetTriggerDirection(TriggerDirection direction)
+        private void SetTriggerDirection(TriggerDirection direction)
         {
             FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                 (byte)(

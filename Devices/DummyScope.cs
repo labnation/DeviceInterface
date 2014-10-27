@@ -89,7 +89,7 @@ namespace ECore.Devices {
                     noise = 0.1,
                     coupling = Coupling.DC,
                     dcOffset = 0.0,
-                    frequency = 135e3,
+                    frequency = 1e3,
                     phase = 0,
                     waveform = WaveForm.TRIANGLE
                 });
@@ -136,9 +136,10 @@ namespace ECore.Devices {
 			this.triggerHoldoff = holdoff;
 		}
 
-		public void SetTriggerAnalog (float voltage)
+		public void SetTriggerAnalog (AnalogTriggerValue trigger)
 		{
-			this.triggerLevel = voltage;
+			this.triggerLevel = trigger.level;
+            SetTriggerDirection(trigger.direction);
 		}
 
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
@@ -165,7 +166,7 @@ namespace ECore.Devices {
 			this.triggerChannel = ch;
 		}
 
-		public void SetTriggerDirection (TriggerDirection direction)
+		private void SetTriggerDirection (TriggerDirection direction)
 		{
 			this.triggerDirection = direction;
 		}
