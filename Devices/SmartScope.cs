@@ -32,7 +32,6 @@ namespace ECore.Devices
         Rom rom;
         private bool flashed = false;
         private bool deviceReady = false;
-        private DeviceConnectHandler scopeConnectHandler;
 
         private List<DeviceMemory> memories = new List<DeviceMemory>();
 #if DEBUG
@@ -126,99 +125,91 @@ namespace ECore.Devices
             }
 
             dataSourceScope = new DataSources.DataSource(this);
-            InitializeHardware(true);
+            InitializeHardware();
         }
 
         public void Dispose()
         {
             dataSourceScope.Stop();
-            InitializeHardware(false);
+            DestroyHardware();
         }
 
         #region initializers
 
-        private void InitializeHardware(bool connected)
+        private void InitializeHardware()
         {
-            if (connected)
+            InitializeMemories();
+            try
             {
-                InitializeMemories();
-                try
-                {
 #if DEBUG
-                    resetTestResults("all");
+                resetTestResults("all");
 #endif
-                    //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
-                    //but there should be when flashing the FPGA.
+                //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
+                //but there should be when flashing the FPGA.
 
-                    byte[] response = GetPicFirmwareVersion();
-                    if (response == null)
-                        throw new Exception("Failed to read from device");
-                    Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(".", response)));
+                byte[] response = GetPicFirmwareVersion();
+                if (response == null)
+                    throw new Exception("Failed to read from device");
+                Logger.Debug(String.Format("PIC FW Version readout {0}", String.Join(".", response)));
 
-                    //Init ROM
-                    this.rom = new Rom(hardwareInterface);
+                //Init ROM
+                this.rom = new Rom(hardwareInterface);
 
-                    //precalc compensation spectra
-                    this.compensationSpectrum = new Dictionary<AnalogChannel,Dictionary<double,Dictionary<ushort,Complex[]>>>() {
-                        { AnalogChannel.ChA, new Dictionary<double, Dictionary<ushort,Complex[]>>() },
-                        { AnalogChannel.ChB, new Dictionary<double, Dictionary<ushort,Complex[]>>() },
-                    };
-                    foreach (FrequencyResponse fr in rom.frequencyResponse)
-                    {
-                        Complex[] artSpectr = FrequencyCompensation.CreateArtificialSpectrum(fr.magnitudes, fr.phases);
+                //precalc compensation spectra
+                this.compensationSpectrum = new Dictionary<AnalogChannel,Dictionary<double,Dictionary<ushort,Complex[]>>>() {
+                    { AnalogChannel.ChA, new Dictionary<double, Dictionary<ushort,Complex[]>>() },
+                    { AnalogChannel.ChB, new Dictionary<double, Dictionary<ushort,Complex[]>>() },
+                };
+                foreach (FrequencyResponse fr in rom.frequencyResponse)
+                {
+                    Complex[] artSpectr = FrequencyCompensation.CreateArtificialSpectrum(fr.magnitudes, fr.phases);
                         
-                        Dictionary<ushort, Complex[]> subsamplingSpectrum = new Dictionary<ushort, Complex[]>();
-                        subsamplingSpectrum.Add(0, artSpectr);
-                        for (ushort subsamplingBase10 = 1; subsamplingBase10 < 20; subsamplingBase10++)
-                        {
-                            //subsample the reconstruction spectrum
-                            artSpectr = FrequencyCompensation.SubsampleSpectrum(artSpectr);
-                            subsamplingSpectrum.Add(subsamplingBase10, artSpectr);
-                        }
-
-                        compensationSpectrum[fr.channel].Add(fr.multiplier, subsamplingSpectrum);
+                    Dictionary<ushort, Complex[]> subsamplingSpectrum = new Dictionary<ushort, Complex[]>();
+                    subsamplingSpectrum.Add(0, artSpectr);
+                    for (ushort subsamplingBase10 = 1; subsamplingBase10 < 20; subsamplingBase10++)
+                    {
+                        //subsample the reconstruction spectrum
+                        artSpectr = FrequencyCompensation.SubsampleSpectrum(artSpectr);
+                        subsamplingSpectrum.Add(subsamplingBase10, artSpectr);
                     }
 
-                    //Init FPGA
-                    LogWait("Starting fpga flashing...", 0);
-                    if (!FlashFpga())
-                        throw new ScopeIOException("failed to flash FPGA");
-                    LogWait("FPGA flashed...");
-                    InitializeMemories();
-                    LogWait("Memories initialized...");
-                    Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom[ROM.FW_MSB].Read().GetByte() + ":" + FpgaRom[ROM.FW_LSB].Read().GetByte());
-
-                    Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
-
-                    Configure();
-                    deviceReady = true;
+                    compensationSpectrum[fr.channel].Add(fr.multiplier, subsamplingSpectrum);
                 }
-                catch (ScopeIOException e)
-                {
-                    Logger.Error("Failure while connecting to device: " + e.Message);
-                    connected = false;
-                    this.hardwareInterface = null;
-                    this.flashed = false;
-                    InitializeMemories();
-                    throw e;
-                }
-                if (scopeConnectHandler != null)
-                    scopeConnectHandler(this, connected);
+
+                //Init FPGA
+                LogWait("Starting fpga flashing...", 0);
+                if (!FlashFpga())
+                    throw new ScopeIOException("failed to flash FPGA");
+                LogWait("FPGA flashed...");
+                InitializeMemories();
+                LogWait("Memories initialized...");
+                Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom[ROM.FW_MSB].Read().GetByte() + ":" + FpgaRom[ROM.FW_LSB].Read().GetByte());
+
+                Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
+
+                Configure();
+                deviceReady = true;
             }
-            else
+            catch (ScopeIOException e)
             {
-                this.dataSourceScope.Stop();
-                if (scopeConnectHandler != null)
-                    scopeConnectHandler(this, connected);
-                
-                stopPending = false;
-                acquiring = false;
-                deviceReady = false;
-
+                Logger.Error("Failure while connecting to device: " + e.Message);
                 this.hardwareInterface = null;
                 this.flashed = false;
                 InitializeMemories();
+                throw e;
             }
+        }
+
+        private void DestroyHardware() 
+        {
+            this.dataSourceScope.Stop();
+                
+            stopPending = false;
+            acquiring = false;
+            deviceReady = false;
+
+            this.hardwareInterface = null;
+            this.flashed = false;
         }
 
 #if DEBUG

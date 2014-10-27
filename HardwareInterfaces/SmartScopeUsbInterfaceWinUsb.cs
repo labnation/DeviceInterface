@@ -52,7 +52,7 @@ namespace ECore.HardwareInterfaces
                 }
                 catch (USBException e)
                 {
-                    throw new ScopeIOException("I/O with scope failed");
+                    throw new ScopeIOException("I/O with scope failed (" + e.Message + ")");
                 }
             }
 
@@ -220,7 +220,7 @@ namespace ECore.HardwareInterfaces
                         dataEndpoint.Read(new byte[dataEndpoint.MaximumPacketSize]);
 
                     }
-                    catch (USBException e)
+                    catch (USBException)
                     {
                     }
                     finally

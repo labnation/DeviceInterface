@@ -24,8 +24,6 @@ namespace ECore
             { FrequencyCompensationCPULoad.Full, 48 },
         };
 
-        public static Complex[] ArtificialSpectrum;
-
         public static Complex[] CreateArtificialSpectrum(Dictionary<int, float> magnitudes, Dictionary<int, float> phases)//int[] magnitudeIndices, float[] magnitudeValues, int[] phaseIndices, float[] phaseValues)
         {
             //precondition incoming data for easier lookups

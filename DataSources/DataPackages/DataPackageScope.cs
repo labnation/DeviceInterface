@@ -89,7 +89,7 @@ namespace ECore.DataSources
         /// <summary>
         /// Index at which the data was triggered. WARN: This index is not necessarily within the 
         /// data array's bounds, depending on what trigger holdoff was used
-        /// </remarks>
+        /// </summary>
         public int TriggerIndex { get; private set; }
         /// <summary>
         /// Time between 2 consecutive data array elements. In seconds.

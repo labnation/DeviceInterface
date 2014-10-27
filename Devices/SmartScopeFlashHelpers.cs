@@ -24,7 +24,7 @@ namespace ECore.Devices {
                 Common.SerialNumber s = new SerialNumber(this.Serial);
 				fwName = String.Format("SmartScope_{0}.bin", Base36.Encode((long)s.model, 3).ToUpper());
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }

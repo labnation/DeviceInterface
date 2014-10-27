@@ -78,7 +78,7 @@ namespace ECore.Devices
             }
             catch (ScopeIOException e)
             {
-                Logger.Error("I/O failure while commint scope settings");
+                Logger.Error("I/O failure while commint scope settings (" + e.Message + ")");
             }
         }
         #endregion
@@ -105,7 +105,7 @@ namespace ECore.Devices
         }
 
         /// <summary>
-        /// Sets&uploads the divider and multiplier what are optimal for the requested range
+        /// Sets and uploads the divider and multiplier what are optimal for the requested range
         /// </summary>
         /// <param name="channel"></param>
         /// <param name="minimum"></param>
@@ -233,7 +233,7 @@ namespace ECore.Devices
         ///<summary>
         ///Set scope trigger level
         ///</summary>
-        ///<param name="level">Trigger level in volt</param>
+        ///<param name="voltage">Trigger level in volt</param>
         public void SetTriggerAnalog(float voltage)
         {
             if (!Connected) return;
@@ -401,9 +401,10 @@ namespace ECore.Devices
         ///<summary>
         ///Scope hold off
         ///</summary>
-        ///<param name="samples">Store [samples] before trigger</param>
+        ///<param name="time">Store [time] before trigger</param>
         public void SetTriggerHoldOff(double time)
         {
+            this.holdoff = time;
             byte inputDecimation = FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte();
             Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2,  inputDecimation)));
             //FIXME FPGA bug
