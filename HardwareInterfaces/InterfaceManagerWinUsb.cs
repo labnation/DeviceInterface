@@ -97,10 +97,10 @@ namespace ECore.HardwareInterfaces
                 serial = dev.Descriptor.SerialNumber;
                 if (serial == "" || serial == null)
                     throw new ScopeIOException("This device doesn't have a serial number, can't work with that");
-                if (interfaces.ContainsKey(serial))
+                if (interfaces.ContainsKey(dev.Descriptor.PathName.ToLower()))
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 C.Logger.Debug("Device found with serial [" + serial + "]");
-                interfaces.Add(dev.Descriptor.PathName, f);
+                interfaces.Add(dev.Descriptor.PathName.ToLower(), f);
 
                 if (onConnect != null)
                     onConnect(f, true);
@@ -110,7 +110,7 @@ namespace ECore.HardwareInterfaces
             {
                 C.Logger.Error("Error while trying to connect to device event handler: " + e.Message);
                 if (serial != null)
-                    interfaces.Remove(dev.Descriptor.PathName);
+                    interfaces.Remove(dev.Descriptor.PathName.ToLower());
                 return false;
             }
         }
@@ -118,14 +118,15 @@ namespace ECore.HardwareInterfaces
         private void RemoveDevice(object devicePath)
         {
             C.Logger.Debug("Removing device on path [" + devicePath + "]");
-            if (!interfaces.ContainsKey(devicePath))
+            string devicePathString = ((string)devicePath).ToLower();
+            if(!interfaces.Keys.Contains(devicePathString))
                 return;
 
             if (onConnect != null)
-                onConnect(interfaces[devicePath], false);
+                onConnect(interfaces[devicePathString], false);
 
-            interfaces[devicePath].Destroy();
-            interfaces.Remove(devicePath);
+            interfaces[devicePathString].Destroy();
+            interfaces.Remove(devicePathString);
 
         }
     }
