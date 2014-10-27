@@ -78,7 +78,7 @@ namespace ECore.Devices {
 
 		#region constructor / initializer
 
-		public DummyScope (DeviceConnectHandler handler)
+		public DummyScope ()
             : base ()
 		{
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
@@ -100,8 +100,6 @@ namespace ECore.Devices {
             timeOrigin = DateTime.Now;
 
 			dataSourceScope = new DataSources.DataSource (this);
-			if (handler != null)
-				handler (this, true);
 		}
 
         public void CommitSettings()

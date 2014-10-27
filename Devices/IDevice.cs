@@ -8,7 +8,7 @@ using ECore.DeviceMemories;
 
 namespace ECore.Devices
 {
-    public delegate void DeviceConnectHandler(IDevice scope, bool connected);
+    public delegate void DeviceConnectHandler(IDevice device, bool connected);
 
     public interface IDevice
     {

@@ -111,18 +111,10 @@ namespace ECore.Devices
         public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
 #endif
 
-        public SmartScope(
-#if ANDROID
-            Context context,
-#endif
-            DeviceConnectHandler handler)
-            : base()
+        public SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
-            #if ANDROID
-            this.context = context;
-            #endif
+            this.hardwareInterface = usbInterface;
             deviceReady = false;
-            this.scopeConnectHandler += handler;
             FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
 
             coupling = new Dictionary<AnalogChannel, Coupling>();
@@ -134,54 +126,27 @@ namespace ECore.Devices
             }
 
             dataSourceScope = new DataSources.DataSource(this);
-            InitializeHardwareInterface();
+            InitializeHardware(true);
         }
 
         public void Dispose()
         {
             dataSourceScope.Stop();
-            #if ANDROID
-            InterfaceManagerXamarin.Instance.onConnect -= OnDeviceConnect;
-            #elif WINUSB
-            InterfaceManagerWinUsb.Instance.onConnect -= OnDeviceConnect;
-            #else
-            InterfaceManagerLibUsb.Instance.onConnect -= OnDeviceConnect;
-			InterfaceManagerLibUsb.Instance.Destroy();
-            #endif
-            if (hardwareInterface != null)
-                OnDeviceConnect(this.hardwareInterface, false);
+            InitializeHardware(false);
         }
 
         #region initializers
 
-        private void InitializeHardwareInterface()
-        {
-            //The memory initialisation is done here so that if no device is detected,
-            //we'll still have deviceMemory objects to play with
-            InitializeMemories();
-#if ANDROID
-            InterfaceManagerXamarin.context = this.context;
-            InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
-            InterfaceManagerXamarin.Instance.PollDevice();
-#elif WINUSB
-                InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
-                InterfaceManagerWinUsb.Instance.PollDevice();
-#else
-                InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
-                InterfaceManagerLibUsb.Instance.PollDevice();
-#endif
-        }
-
-        private void OnDeviceConnect(ISmartScopeUsbInterface hwInterface, bool connected)
+        private void InitializeHardware(bool connected)
         {
             if (connected)
             {
+                InitializeMemories();
                 try
                 {
 #if DEBUG
                     resetTestResults("all");
 #endif
-                    this.hardwareInterface = hwInterface;
                     //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
                     //but there should be when flashing the FPGA.
 
@@ -250,11 +215,8 @@ namespace ECore.Devices
                 acquiring = false;
                 deviceReady = false;
 
-                if (this.hardwareInterface == hwInterface)
-                {
-                    this.hardwareInterface = null;
-                    this.flashed = false;
-                }
+                this.hardwareInterface = null;
+                this.flashed = false;
                 InitializeMemories();
             }
         }
@@ -341,17 +303,11 @@ namespace ECore.Devices
             SetAwgStretching(0);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
 
-            try
-            {
-                //Part 2: perform actual writes                
-                StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
-                AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
-                CommitSettings();
-                hardwareInterface.FlushDataPipe();
-            } catch (ScopeIOException e) {
-                Logger.Error("Something went wrong while configuring the scope. Try replugging it : " + e.Message);
-                OnDeviceConnect(hardwareInterface, false);
-            }
+            //Part 2: perform actual writes                
+            StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
+            AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
+            CommitSettings();
+            hardwareInterface.FlushDataPipe();
         }
 
 #if DEBUG
@@ -370,10 +326,8 @@ namespace ECore.Devices
         void Reset()
         {
             this.DataSourceScope.Stop();
-            ISmartScopeUsbInterface hwIfTmp = this.hardwareInterface;
-            OnDeviceConnect(this.hardwareInterface, false);
             try {
-                hwIfTmp.Reset();
+                this.hardwareInterface.Reset();
             }
             catch (Exception)
             {  
