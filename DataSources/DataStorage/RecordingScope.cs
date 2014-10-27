@@ -16,12 +16,6 @@ namespace ECore.DataSources
         bool disposed = false;
         private bool busy;
         private object busyLock = new object();
-        private TimeSpan timeInterval;
-        private int acquisitionsPerInterval;
-        
-        private DateTime lastAcquisitionTimestamp;
-        private int acquisitionsThisInterval;
-
         public bool Busy
         {
             get { return busy; }
@@ -37,13 +31,7 @@ namespace ECore.DataSources
             }
         }
 
-        public RecordingScope() : this(TimeSpan.FromMilliseconds(0), 1) { }
-        public RecordingScope(TimeSpan timeInterval, int acquisitionsPerInterval) 
-        {
-            this.timeInterval = timeInterval;
-            this.acquisitionsPerInterval = acquisitionsPerInterval;
-            this.lastAcquisitionTimestamp = DateTime.Now;
-
+        public RecordingScope() {
             busy = true;
             acqInfo = new List<AcquisitionInfo>();
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
@@ -101,18 +89,6 @@ namespace ECore.DataSources
 
         public void Record(DataPackageScope ScopeData, EventArgs e)
         {
-            //when timer overflows: reset everything
-            DateTime now = DateTime.Now;
-            if (now.Subtract(lastAcquisitionTimestamp) > timeInterval)
-            {
-                acquisitionsThisInterval = 0;
-                lastAcquisitionTimestamp = now;
-            }
-
-            //exit in case enough acquisitions have already been stored this interval
-            if (++acquisitionsThisInterval > acquisitionsPerInterval)
-                return;
-
             lock (busyLock)
             {
                 if (!Busy)

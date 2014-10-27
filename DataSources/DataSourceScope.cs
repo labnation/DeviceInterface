@@ -21,7 +21,14 @@ namespace ECore.DataSources
         public DataPackageScope LatestDataPackage { get; protected set; }
 
         private Thread dataFetchThread;
+
+        // Recording variables
         public RecordingScope Recording { get; private set; }
+        private TimeSpan RecordingInterval;
+        private DateTime RecordingLastAcquisitionTimestamp;
+        private int RecordingAcquisitionsPerInterval;
+        private int RecordingAcquisitionsThisInterval;
+
         private bool running = false;
 
         public bool RecordingBusy
@@ -109,16 +116,48 @@ namespace ECore.DataSources
 
         public bool StartRecording()
         {
+            return StartRecording(TimeSpan.Zero, 0);
+        }
+
+        public bool StartRecording(TimeSpan timeInterval, int acquisitionsPerInterval)
+        {
+
             if (Recording != null)
             {
                 Logger.Warn("Can't start recording since a previous recording still exists");
                 return false;
             }
 
+
+            this.RecordingLastAcquisitionTimestamp = DateTime.Now; 
+            this.RecordingInterval = timeInterval;
+            this.RecordingAcquisitionsPerInterval = acquisitionsPerInterval;
+            this.RecordingAcquisitionsThisInterval = 0;
+            
             Recording = new RecordingScope();
 
-            OnNewDataAvailable += Recording.Record;
+            OnNewDataAvailable += Record;
             return true;
+        }
+
+        private void Record(DataPackageScope dataPackage, EventArgs e)
+        {
+            //Only do the whole acquisitions per interval checking if the interval
+            //and acqs per interval is greater than zero
+            if (RecordingInterval > TimeSpan.Zero && RecordingAcquisitionsPerInterval > 0)
+            {
+                DateTime now = DateTime.Now;
+                if (now.Subtract(RecordingLastAcquisitionTimestamp) > RecordingInterval)
+                {
+                    this.RecordingAcquisitionsThisInterval = 0;
+                    this.RecordingLastAcquisitionTimestamp = now;
+                }
+
+                //exit in case enough acquisitions have already been stored this interval
+                if (++this.RecordingAcquisitionsThisInterval > this.RecordingAcquisitionsPerInterval)
+                    return;
+            }
+            Recording.Record(dataPackage, e);
         }
 
         public bool StopRecording()
