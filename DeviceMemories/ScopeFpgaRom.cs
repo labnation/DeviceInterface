@@ -7,8 +7,6 @@ using Common;
 
 namespace ECore.DeviceMemories
 {
-    //this class defines which type of registers it contain, how much of them, and how to access them
-    //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
 #if DEBUG
     public
 #else
@@ -41,10 +39,9 @@ namespace ECore.DeviceMemories
             registers[address].Dirty = false;
         }
 
-        public override void Write(uint address)
+        public override void Write(uint address) 
         {
-            Logger.Error("Can't write to ROM");
-            registers[address].Dirty = false;
+            Logger.Warn("Attempting to write to ROM");
         }
 
         public ByteRegister this[ROM r]

@@ -452,7 +452,6 @@ namespace ECore.Devices
 
         #region AWG/LA
 
-
         public void SetEnableLogicAnalyser(bool enable)
         {
             if (!Ready) return;

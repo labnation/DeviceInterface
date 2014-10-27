@@ -22,8 +22,6 @@ namespace ECore.DeviceMemories
         COMMON_MODE = 8,
         SOFT_RESET = 10,
     }
-    //this class defines which type of registers it contain, how much of them, and how to access them
-    //actual filling of these registers must be defined by the specific HWImplementation, through the constructor of this class
 #if DEBUG
     public
 #else
@@ -35,7 +33,7 @@ namespace ECore.DeviceMemories
         private ScopeStrobeMemory strobeMemory;
         private ScopeFpgaRom fpgaRom;
 
-        public MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
+        internal MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;

@@ -16,7 +16,7 @@ using Android.Content;
 
 namespace ECore.Devices
 {
-    public partial class SmartScope : IScope, IDisposable
+    public partial class SmartScope : IScope, IWaveGenerator, IDisposable
     {
 #if DEBUG
     public

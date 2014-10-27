@@ -7,6 +7,9 @@ using Common;
 
 namespace ECore.DataSources
 {
+    /// <summary>
+    /// The object containing a scope acquisition's data.
+    /// </summary>
     public class DataPackageScope
     {
         private Dictionary<AnalogChannel, float[]> dataAnalog;
@@ -38,12 +41,8 @@ namespace ECore.DataSources
         {
             dataDigital = data;
         }
-#if DEBUG
-        public
-#else
-        internal 
-#endif
-        void AddSetting(String setting, double value)
+
+        internal void AddSetting(String setting, double value)
         {
             this.Settings.Add(setting, value);
         }

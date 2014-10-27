@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.HardwareInterfaces
 {
-    abstract class InterfaceManager<T> 
+    internal abstract class InterfaceManager<T> 
         where T : InterfaceManager<T>, new()
     {
         protected static int VID = 0x04D8;

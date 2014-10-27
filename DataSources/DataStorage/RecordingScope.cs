@@ -7,25 +7,10 @@ using ECore.Devices;
 namespace ECore.DataSources
 {
     public class RecordingScope : IDisposable
-    {
-#if DEBUG
-        public
-#else
-        internal
-#endif            
-        Dictionary<Channel, IChannelBuffer> channelBuffers;
-#if DEBUG
-        public
-#else
-        internal
-#endif            
-        List<AcquisitionInfo> acqInfo;
-#if DEBUG
-        public
-#else
-        internal
-#endif
-        Dictionary<string, List<double>> settings;
+    { 
+        internal Dictionary<Channel, IChannelBuffer> channelBuffers;
+        internal List<AcquisitionInfo> acqInfo;
+        internal Dictionary<string, List<double>> settings;
         public int AcquisitionsRecorded { get; private set; }
         public long DataStorageSize { get; private set; }
         bool disposed = false;

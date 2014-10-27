@@ -35,9 +35,8 @@ namespace ECore.Devices {
 		private DateTime timeOrigin;
 		//Wave settings
 		private WaveSource waveSource = WaveSource.GENERATOR;
-		//Noise mean voltage
-		private int usbLatency = 40;
-		//milliseconds of latency to simulate USB request delay
+        //milliseconds of latency to simulate USB request delay
+        private int usbLatency = 40;
         private Dictionary<AnalogChannel, float> yOffset = new Dictionary<AnalogChannel, float>() {
             { AnalogChannel.ChA, 0f},
             { AnalogChannel.ChB, 0f}
@@ -205,31 +204,27 @@ namespace ECore.Devices {
             foreach (KeyValuePair<DigitalChannel, DigitalTriggerValue> kvp in condition)
             {
                 int bit = kvp.Key.Value;
-                DigitalTriggerValue value = kvp.Value;
-                if (value == DigitalTriggerValue.X)
-                {
-                    Utils.ClearBit(ref digitalTrigger.triggerMask, bit);
-                    Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
-                }
-                if (value == DigitalTriggerValue.H)
-                {
-                    Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
-                    Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
-                }
-                if (value == DigitalTriggerValue.L)
-                {
-                    Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
-                    Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
-                }
-                if (value == DigitalTriggerValue.R)
-                {
-                    Utils.ClearBit(ref digitalTrigger.preTriggerCondition, bit);
-                    Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
-                }
-                if (value == DigitalTriggerValue.F)
-                {
-                    Utils.SetBit(ref digitalTrigger.preTriggerCondition, bit);
-                    Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                switch(kvp.Value) {
+                    case DigitalTriggerValue.X:
+                        Utils.ClearBit(ref digitalTrigger.triggerMask, bit);
+                        Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                        break;
+                    case DigitalTriggerValue.H:
+                        Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                        Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
+                        break;
+                    case DigitalTriggerValue.L:
+                        Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                        Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                        break;
+                    case DigitalTriggerValue.R:
+                        Utils.ClearBit(ref digitalTrigger.preTriggerCondition, bit);
+                        Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
+                        break;
+                    case DigitalTriggerValue.F:
+                        Utils.SetBit(ref digitalTrigger.preTriggerCondition, bit);
+                        Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                        break;
                 }
             }
 		}
@@ -320,18 +315,6 @@ namespace ECore.Devices {
         //FIXME: implement this
         public void SetEnableLogicAnalyser(bool enable) { }
         public void SetLogicAnalyserChannel(AnalogChannel channel) { }
-        public void SetAwgData(double[] data) { }
-        public void SetAwgEnabled(bool enable) { }
-        public int GetAwgStretcherForFrequency(double frequency) { return -1; }
-        public int GetAwgNumberOfSamplesForFrequency(double frequency) { return -1; }
-        public void SetAwgNumberOfSamples(int n) { }
-        public int GetAwgNumberOfSamples() { return -1; }
-        public void SetAwgStretching(int decimation) { }
-        public int GetAwgStretching() { return -1; }
-        public double GetAwgFrequencyMax() { return -1; }
-        public double GetAwgFrequencyMin() { return -1; }
-        public void SetAwgFrequency(double frequency) { }
-        public double GetAwgFrequency() { return 0; }
 
 		#endregion
 

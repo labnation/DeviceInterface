@@ -109,22 +109,12 @@ namespace ECore.Devices
             }
 #endif
 
-#if DEBUG
-            public 
-#else
-            internal
-#endif
-            GainCalibration getCalibration(AnalogChannel ch, double divider, double multiplier)
+            public GainCalibration getCalibration(AnalogChannel ch, double divider, double multiplier)
             {
                 return gainCalibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
             }
 
-#if DEBUG
-            public
-#else
-            internal
-#endif
-            FrequencyResponse getFrequencyReponse(AnalogChannel ch, double multiplier)
+            public FrequencyResponse getFrequencyReponse(AnalogChannel ch, double multiplier)
             {
                 return frequencyResponse.Where(x => x.channel == ch && x.multiplier == multiplier).First();
             }
