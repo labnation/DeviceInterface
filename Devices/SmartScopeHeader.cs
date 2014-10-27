@@ -70,8 +70,7 @@ namespace ECore.Devices
             
             BytesPerBurst = data[3];
             NumberOfPayloadBursts = data[4] + (data[5] << 8);
-            //FIXME: this should be corrected in FW
-
+            
             PackageOffset = (short)(data[6] + (data[7] << 8));
             AcquisitionSize = (short)(data[8] + (data[9] << 8));
             
