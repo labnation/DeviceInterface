@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#if DEBUG
-using ECore.DeviceMemories;
-#endif
 using ECore.DataSources;
 
 
@@ -16,17 +13,9 @@ namespace ECore.Devices
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
     public enum DigitalTriggerValue { L, H, R, F, X };
 
-    public delegate void ScopeConnectHandler(IScope scope, bool connected);
-
-    public interface IScope
+    public interface IScope : IDevice
     {
-#if DEBUG
-        List<DeviceMemory> GetMemories();
-#endif
         DataPackageScope GetScopeData();
-
-        bool Ready { get; }
-        string Serial { get; }
         double GetDefaultTimeRange();
 
         void SetAcquisitionMode(AcquisitionMode mode);

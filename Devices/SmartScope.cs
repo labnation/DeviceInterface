@@ -32,7 +32,7 @@ namespace ECore.Devices
         Rom rom;
         private bool flashed = false;
         private bool deviceReady = false;
-        private ScopeConnectHandler scopeConnectHandler;
+        private DeviceConnectHandler scopeConnectHandler;
 
         private List<DeviceMemory> memories = new List<DeviceMemory>();
 #if DEBUG
@@ -115,7 +115,7 @@ namespace ECore.Devices
 #if ANDROID
             Context context,
 #endif
-            ScopeConnectHandler handler)
+            DeviceConnectHandler handler)
             : base()
         {
             #if ANDROID

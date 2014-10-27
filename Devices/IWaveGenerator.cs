@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ECore.Devices
 {
-    public interface IWaveGenerator
+    public interface IWaveGenerator : IDevice
     {
         void SetAwgData(double[] data);
         void SetAwgEnabled(bool enable);

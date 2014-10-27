@@ -23,7 +23,7 @@ namespace ECore.Devices {
         public double noise;
     }
 
-	public partial class DummyScope : IScope {
+	public partial class DummyScope : IDevice, IScope {
 #if DEBUG
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
@@ -78,7 +78,7 @@ namespace ECore.Devices {
 
 		#region constructor / initializer
 
-		public DummyScope (ScopeConnectHandler handler)
+		public DummyScope (DeviceConnectHandler handler)
             : base ()
 		{
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
