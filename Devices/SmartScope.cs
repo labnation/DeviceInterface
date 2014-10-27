@@ -111,7 +111,7 @@ namespace ECore.Devices
         public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
 #endif
 
-        public SmartScope(ISmartScopeUsbInterface usbInterface) : base()
+        internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
             this.hardwareInterface = usbInterface;
             deviceReady = false;

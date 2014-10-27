@@ -78,8 +78,7 @@ namespace ECore.Devices {
 
 		#region constructor / initializer
 
-		public DummyScope ()
-            : base ()
+		internal DummyScope () : base ()
 		{
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
             foreach (AnalogChannel ch in AnalogChannel.List)
