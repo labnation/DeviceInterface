@@ -288,9 +288,9 @@ namespace ECore.Devices {
 
                         }
                         if (ChannelConfig[channel].coupling == Coupling.AC)
-                            DummyScope.RemoveDcComponent(wave, ChannelConfig[channel].frequency, SamplePeriodLocal);
+                            DummyScope.RemoveDcComponent(ref wave, ChannelConfig[channel].frequency, SamplePeriodLocal);
                         else
-                            DummyScope.AddDcComponent(wave, (float)ChannelConfig[channel].dcOffset);
+                            DummyScope.AddDcComponent(ref wave, (float)ChannelConfig[channel].dcOffset);
                         DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
                         waveAnalog[channel].AddRange(wave);
                     }
@@ -438,13 +438,13 @@ namespace ECore.Devices {
 			}
 			return false;
 		}
-        private static void AddDcComponent(float[] p, float offset)
+        private static void AddDcComponent(ref float[] p, float offset)
         {
             if (offset == 0f)
                 return;
             p = p.AsParallel().Select(x => x + offset).ToArray();
         }
-        private static void RemoveDcComponent(float[] p, double frequency, double samplePeriod)
+        private static void RemoveDcComponent(ref float[] p, double frequency, double samplePeriod)
         {
             int periodLength = (int)Math.Round(1.0 / (frequency * samplePeriod));
             float mean = p.Take(periodLength).Average();
