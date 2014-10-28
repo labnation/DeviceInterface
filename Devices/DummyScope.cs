@@ -12,7 +12,7 @@ namespace ECore.Devices {
 		GENERATOR
 	}
 
-    public struct DummyScopeChannelConfig
+    public class DummyScopeChannelConfig
     {
         public WaveForm waveform;
         public double amplitude;
@@ -21,6 +21,8 @@ namespace ECore.Devices {
         public double frequency;
         public double phase;
         public double noise;
+        public int bursts;
+        public ProbeDivision probeDivision;
     }
 
 	public partial class DummyScope : IDevice, IScope {
@@ -28,15 +30,17 @@ namespace ECore.Devices {
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
 
-		private DataSources.DataSource dataSourceScope;
-
-		public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
-
+        public DataSources.DataSource DataSourceScope { get; private set; }
 		private DateTime timeOrigin;
 		//Wave settings
+        private int usbLatency = 2;
+        private const int outputWaveLength = 2000;
 		private WaveSource waveSource = WaveSource.GENERATOR;
+        private object resetAcquisitionLock = new object();
+        private bool resetAcquisition = false;
+        private bool forceTrigger = false;
+        
         //milliseconds of latency to simulate USB request delay
-        private int usbLatency = 40;
         private Dictionary<AnalogChannel, float> yOffset = new Dictionary<AnalogChannel, float>() {
             { AnalogChannel.ChA, 0f},
             { AnalogChannel.ChB, 0f}
@@ -45,19 +49,20 @@ namespace ECore.Devices {
 		private const int waveLength = 3 * outputWaveLength;
 		private double samplePeriodMinimum = 10e-9;
 		//ns --> sampleFreq of 100MHz by default
-		private double SamplePeriod { get { return samplePeriodMinimum * decimation; } }
+        private double SamplePeriod { get { return samplePeriodMinimum * Math.Pow(2, decimation); } }
 
-        public const uint channels = 2;
-        private Dictionary<AnalogChannel, DummyScopeChannelConfig> _channelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
-        public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get { return _channelConfig; } }
-
-        private Dictionary<AnalogChannel, ProbeDivision> probeSettings;
-
-		private const int outputWaveLength = 2048;
-		private float triggerLevel = 0;
+        public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get; private set; }
+        AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
+        {
+            channel = AnalogChannel.ChA,
+            level = 0f,
+            direction = TriggerDirection.RISING
+        };
+		
 		private double triggerHoldoff = 0;
 		private AnalogChannel triggerChannel = AnalogChannel.ChA;
-		private static uint triggerWidth = 10;
+		private uint triggerWidth = 10;
+        private float triggerThreshold = 0;
 
         private struct DigitalTrigger {
             public byte triggerCondition;
@@ -66,24 +71,24 @@ namespace ECore.Devices {
             public byte preTriggerMask;
         }
         private DigitalTrigger digitalTrigger;
+        private bool logicAnalyser;
 
 		private uint decimation = 1;
-		private TriggerDirection triggerDirection = TriggerDirection.FALLING;
         private AcquisitionMode acquisitionMode = AcquisitionMode.NORMAL;
         private bool acquisitionRunning = false;
 		//Hack
 		bool regenerate = true;
 		DataPackageScope p;
-        private int maxAttempts = 10;
+        private int maximumGenerationLength = 1024*1024*100; //Don't generate more than this many samples of wave
 
 		#region constructor / initializer
 
 		internal DummyScope () : base ()
 		{
-            probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
+            ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                _channelConfig.Add(ch, new DummyScopeChannelConfig()
+                ChannelConfig.Add(ch, new DummyScopeChannelConfig()
                 {
                     amplitude = 2.0,
                     noise = 0.1,
@@ -91,20 +96,14 @@ namespace ECore.Devices {
                     dcOffset = 0.0,
                     frequency = 1e3,
                     phase = 0,
-                    waveform = WaveForm.TRIANGLE
+                    waveform = WaveForm.TRIANGLE,
+                    probeDivision = ProbeDivision.X1,
                 });
-                probeSettings[ch] = ProbeDivision.X1;
             }
-
             timeOrigin = DateTime.Now;
-
-			dataSourceScope = new DataSources.DataSource (this);
+			DataSourceScope = new DataSources.DataSource (this);
 		}
-
-        public void CommitSettings()
-        {
-            //Nothign to do here, all settings are updated immediately;
-        }
+        public void CommitSettings() { }
 
 		#endregion
 
@@ -115,10 +114,13 @@ namespace ECore.Devices {
 			if (decimation < 1)
 				throw new ValidationException ("Decimation must be larger than 0");
 		}
-
         public void SetAcquisitionMode(AcquisitionMode mode)
         {
-            this.acquisitionMode = mode;
+            lock (resetAcquisitionLock)
+            {
+                this.acquisitionMode = mode;
+                resetAcquisition = true;
+            }
         }
         public void SetAcquisitionRunning(bool running)
         {
@@ -133,66 +135,51 @@ namespace ECore.Devices {
 
 		public void SetTriggerHoldOff (double holdoff)
 		{
-			this.triggerHoldoff = holdoff;
+            lock (resetAcquisitionLock)
+            {
+                this.triggerHoldoff = holdoff;
+                resetAcquisition = true;
+            }
 		}
-
 		public void SetTriggerAnalog (AnalogTriggerValue trigger)
 		{
-			this.triggerLevel = trigger.level;
-            SetTriggerDirection(trigger.direction);
+			this.triggerAnalog = trigger;
 		}
-
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {
         }
-
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
         {
-            probeSettings[ch] = division;
+            ChannelConfig[ch].probeDivision = division;
         }
-
         public ProbeDivision GetProbeDivision(AnalogChannel ch)
         {
-            return probeSettings[ch];
+            return ChannelConfig[ch].probeDivision;
         }
-
         public void SetYOffset(AnalogChannel ch, float yOffset)
 		{
 			this.yOffset [ch] = yOffset;
 		}
-
-        public void SetTriggerChannel(AnalogChannel ch)
-		{
-			this.triggerChannel = ch;
-		}
-
-		private void SetTriggerDirection (TriggerDirection direction)
-		{
-			this.triggerDirection = direction;
-		}
         public void SetForceTrigger()
         {
-            
+            forceTrigger = true;
         }
-
         public void SetTriggerWidth(uint width)
         {
-            throw new NotImplementedException();
+            triggerWidth = width;
         }
         public uint GetTriggerWidth()
         {
-            throw new NotImplementedException();
+            return triggerWidth;
         }
-        public void SetTriggerThreshold(uint threshold)
+        public void SetTriggerThreshold(float threshold)
         {
-            throw new NotImplementedException();
+            triggerThreshold = threshold;
         }
-
-        public uint GetTriggerThreshold()
+        public float GetTriggerThreshold()
         {
-            throw new NotImplementedException();
+            return triggerThreshold;
         }
-
         public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
 		{
             digitalTrigger.triggerCondition = 0x0;
@@ -226,34 +213,150 @@ namespace ECore.Devices {
                 }
             }
 		}
-
 		public void SetTimeRange (double timeRange)
 		{
-			decimation = 1;
-			while (timeRange > decimation * GetDefaultTimeRange ())
-				decimation++;
+            lock (resetAcquisitionLock)
+            {
+                decimation = (uint)Math.Max(0, Math.Ceiling(Math.Log(timeRange / GetDefaultTimeRange(), 2)));
+                resetAcquisition = true;
+            }
 		}
         public double GetTimeRange()
         {
-            return GetDefaultTimeRange() * Math.Pow(2,decimation - 1);
+            return GetDefaultTimeRange() * Math.Pow(2,decimation);
         }
-
 		public void SetCoupling (AnalogChannel ch, Coupling coupling)
 		{
-            DummyScopeChannelConfig config = _channelConfig[ch];
-            config.coupling = coupling;
-            _channelConfig[ch] = config;
+            ChannelConfig[ch].coupling = coupling;
 		}
-
 		public Coupling GetCoupling (AnalogChannel ch)
 		{
-            return _channelConfig[ch].coupling;
+            return ChannelConfig[ch].coupling;
 		}
-
 		public double GetDefaultTimeRange ()
 		{ 
 			return outputWaveLength * samplePeriodMinimum; 
 		}
+        public DataPackageScope GetScopeData()
+        {
+            //Sleep to simulate USB delay
+            System.Threading.Thread.Sleep(usbLatency);
+            Dictionary<AnalogChannel, float[]> outputAnalog = new Dictionary<AnalogChannel, float[]>();
+            byte[] outputDigital = null;
+            int triggerIndex = 0;
+            int triggerHoldoffInSamples = 0;
+            double SamplePeriodLocal;
+            double TriggerHoldoffLocal;
+            AcquisitionMode AcquisitionModeLocal;
+
+
+            if (!acquisitionRunning)
+                return null;
+
+            TimeSpan timeOffset = DateTime.Now - timeOrigin;
+            if (regenerate)
+            {
+                Dictionary<AnalogChannel, List<float>> waveAnalog = new Dictionary<AnalogChannel, List<float>>();
+                foreach(AnalogChannel ch in AnalogChannel.List)
+                    waveAnalog.Add(ch, new List<float>());
+                List<byte> waveDigital = new List<byte>();
+
+                bool triggerDetected = false;
+
+                while(true) {
+                    lock (resetAcquisitionLock)
+                    {
+                        AcquisitionModeLocal = acquisitionMode;
+                        TriggerHoldoffLocal = triggerHoldoff;
+                        SamplePeriodLocal = SamplePeriod;
+                    }
+
+                    foreach (AnalogChannel channel in AnalogChannel.List)
+                    {
+                        float[] wave;
+                        switch(waveSource) {
+                            case WaveSource.GENERATOR:
+                                wave = DummyScope.GenerateWave(waveLength,
+                                    SamplePeriodLocal,
+                                    timeOffset.Ticks / 1e7,
+                                    ChannelConfig[channel]);
+                                break;
+                            case WaveSource.FILE:
+                                wave = GetWaveFromFile(channel, waveLength, SamplePeriodLocal, timeOffset.Ticks / 1e7);
+                                break;
+                            default:
+                                throw new Exception("Unsupported wavesource");
+
+                        }
+                        if (ChannelConfig[channel].coupling == Coupling.AC)
+                            DummyScope.RemoveDcComponent(wave, ChannelConfig[channel].frequency, SamplePeriodLocal);
+                        else
+                            DummyScope.AddDcComponent(wave, (float)ChannelConfig[channel].dcOffset);
+                        DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
+                        waveAnalog[channel].AddRange(wave);
+                    }
+                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLength, SamplePeriodLocal, timeOffset.TotalSeconds));
+
+                    triggerHoldoffInSamples = (int)(TriggerHoldoffLocal / SamplePeriodLocal);
+                    double triggerTimeout = 0.0;
+                    if (AcquisitionModeLocal == AcquisitionMode.AUTO)
+                        triggerTimeout = 0.01; //Give up after 10ms
+
+                    if (logicAnalyser)
+                    {
+                        triggerDetected = DummyScope.TriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
+                    }
+                    else
+                    {
+                        triggerDetected = DummyScope.TriggerAnalog(waveAnalog[triggerChannel].ToArray(), triggerAnalog,
+                            triggerHoldoffInSamples, triggerThreshold, triggerWidth,
+                            outputWaveLength, out triggerIndex);
+                    }
+                    
+                    if(triggerDetected)
+                        break;
+                    if (
+                        forceTrigger || 
+                        (triggerTimeout > 0 && triggerTimeout < waveAnalog[AnalogChannel.ChA].Count * SamplePeriodLocal)
+                        )
+                    {
+                        forceTrigger = false;
+                        triggerIndex = triggerHoldoffInSamples;
+                        break;
+                    }
+                    //Stop trying to find a trigger at some point to avoid running out of memory
+                    if (waveAnalog[AnalogChannel.ChA].Count  > maximumGenerationLength)
+                    {
+                        System.Threading.Thread.Sleep(10);
+                        return null;
+                    }
+
+                    var timePassed = new TimeSpan((long)(waveLength * SamplePeriodLocal * 1e7));
+                    timeOffset = timeOffset.Add(timePassed);
+                }
+                    
+                foreach(AnalogChannel channel in AnalogChannel.List)
+                {
+                    outputAnalog[channel] = DummyScope.CropWave(outputWaveLength, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
+                }
+                outputDigital = DummyScope.CropWave(outputWaveLength, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
+            }                   
+            double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
+            UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
+            p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs, false, false);
+            foreach(AnalogChannel ch in AnalogChannel.List)
+                p.SetData(ch, outputAnalog[ch]);
+
+            p.SetDataDigital(outputDigital);
+#if __IOS__
+			regenerate = true;
+#endif
+
+            if (acquisitionMode == AcquisitionMode.SINGLE)
+                acquisitionRunning = false;
+
+            return p;
+        }
 
 		#endregion
 
@@ -263,81 +366,61 @@ namespace ECore.Devices {
         {
             this.waveSource = source;
         }
-
 		public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
 		{
-            DummyScopeChannelConfig config = _channelConfig[channel];
-            config.amplitude = amplitude;
-            _channelConfig[channel] = config;
+            ChannelConfig[channel].amplitude = amplitude;
 		}
-
         public void SetDummyWaveFrequency(AnalogChannel channel, double frequency)
 		{
-            DummyScopeChannelConfig config = _channelConfig[channel];
-            config.frequency = frequency;
-            _channelConfig[channel] = config;
+            ChannelConfig[channel].frequency = frequency;
 		}
-
         public void SetDummyWavePhase(AnalogChannel channel, double phase)
         {
-            DummyScopeChannelConfig config = _channelConfig[channel];
-            config.phase = phase;
-            _channelConfig[channel] = config;
-
+            ChannelConfig[channel].phase = phase;
         }
-
         public void SetDummyWaveForm(AnalogChannel channel, WaveForm w)
 		{
-            DummyScopeChannelConfig config = _channelConfig[channel];
-            config.waveform = w;
-            _channelConfig[channel] = config;
-
+            ChannelConfig[channel].waveform = w;
 		}
-
         public void SetDummyWaveDcOffset(AnalogChannel channel, double dcOffset)
         {
-            DummyScopeChannelConfig config = _channelConfig[channel];
-            config.dcOffset = dcOffset;
-            _channelConfig[channel] = config;
-
+            ChannelConfig[channel].dcOffset = dcOffset;
         }
-
+        public void SetDummyWaveDcOffset(AnalogChannel channel, int bursts)
+        {
+            ChannelConfig[channel].bursts = bursts;
+        }
         public void SetNoiseAmplitude(AnalogChannel channel, double noiseAmplitude)
 		{
-            DummyScopeChannelConfig config = _channelConfig[channel];
-            config.noise = noiseAmplitude;
-            _channelConfig[channel] = config;
-
+            ChannelConfig[channel].noise = noiseAmplitude;
 		}
 
         //FIXME: implement this
-        public void SetEnableLogicAnalyser(bool enable) { }
+        public void SetEnableLogicAnalyser(bool enable) 
+        {
+            logicAnalyser = enable;
+        }
         public void SetLogicAnalyserChannel(AnalogChannel channel) { }
 
 		#endregion
 
-		private static bool TriggerAnalog (AcquisitionMode acqMode, float [] wave, TriggerDirection direction, int holdoff, float level, float noise, uint outputWaveLength, out int triggerIndex)
+        #region Helpers
+        private static bool TriggerAnalog (float [] wave, AnalogTriggerValue trigger, int holdoff, float threshold, uint width, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
 			// - if negative, start looking at index 0
 			triggerIndex = 0;
-			for (int i = Math.Max (0, holdoff); i < wave.Length - triggerWidth - outputWaveLength; i++) {
-				float invertor = (direction == TriggerDirection.RISING) ? 1f : -1f;
-				if (invertor * wave [i] < invertor * level - noise && invertor * wave [i + triggerWidth] + noise > invertor * level) {
-					triggerIndex = (int) (i + triggerWidth / 2);
+			for (int i = Math.Max (0, holdoff); i < wave.Length - width - outputWaveLength; i++) {
+				float invertor = (trigger.direction == TriggerDirection.RISING) ? 1f : -1f;
+                if (invertor * wave[i] < invertor * trigger.level && invertor * wave[i + width] >= invertor * trigger.level + threshold)
+                {
+					triggerIndex = (int) (i + width / 2);
 					return true;
 				}
 			}
-            if (acqMode == AcquisitionMode.AUTO)
-            {
-                triggerIndex = holdoff;
-                return true;
-            }
-            else
-			    return false;
+			return false;
 		}
-
         private static bool TriggerDigital(byte[] wave, int holdoff, DigitalTrigger trigger, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
@@ -356,126 +439,20 @@ namespace ECore.Devices {
 			}
 			return false;
 		}
-
-		public DataPackageScope GetScopeData ()
-		{
-			//Sleep to simulate USB delay
-			System.Threading.Thread.Sleep (usbLatency);
-			float [][] outputAnalog = null;
-			byte [] outputDigital = null;
-			int triggerIndex = 0;
-			int triggerHoldoffInSamples = 0;
-
-            while (!acquisitionRunning)
-                System.Threading.Thread.Sleep(10);
-
-            TimeSpan timeOffset = DateTime.Now - timeOrigin;
-			if (regenerate) {
-				if (waveSource == WaveSource.GENERATOR) {
-                    byte[] waveDigital = null;
-                    float[][] waveAnalog = null;
-                    bool triggerDetected = false;
-                    
-                    for (int k = 0; k < maxAttempts; k++)
-                    {
-                        //Generate analog wave
-                        waveAnalog = new float[AnalogChannel.List.Count][];
-                        timeOffset = DateTime.Now - timeOrigin;
-                        foreach (AnalogChannel channel in AnalogChannel.List)
-                        {
-                            int i = channel.Value;
-                            waveAnalog[i] = DummyScope.GenerateWave(waveLength,
-                                SamplePeriod,
-                                timeOffset.TotalSeconds,
-                                _channelConfig[channel]);
-                            if (_channelConfig[channel].coupling == Coupling.AC)
-                                DummyScope.RemoveDcComponent(ref waveAnalog[i], _channelConfig[channel].frequency, SamplePeriod);
-                            else
-                                DummyScope.AddDcComponent(ref waveAnalog[i], (float)_channelConfig[channel].dcOffset);
-                            DummyScope.AddNoise(waveAnalog[i], _channelConfig[channel].noise);
-                        }
-
-                        //Generate some bullshit digital wave
-                        waveDigital = new byte[waveLength];
-                        byte value = (byte)(timeOffset.Milliseconds);
-                        for (int i = 0; i < waveDigital.Length; i++)
-                        {
-                            waveDigital[i] = value;
-                            if (i % 10 == 0)
-                                value++;
-                        }
-
-                        //Trigger detection
-                        triggerHoldoffInSamples = (int)(triggerHoldoff / SamplePeriod);
-
-
-                        //FIXME: properly implement trigger and LA mode and all like in SmartScope
-                        //case TriggerMode.ANALOG:
-                            triggerDetected = DummyScope.TriggerAnalog(acquisitionMode, waveAnalog[triggerChannel.Value], triggerDirection,
-                                triggerHoldoffInSamples, triggerLevel, (float)_channelConfig[triggerChannel].noise,
-                                outputWaveLength, out triggerIndex);
-                            break;
-                        /*
-                            case TriggerMode.DIGITAL:
-                                triggerDetected = DummyScope.TriggerDigital(waveDigital, triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
-                                if (!triggerDetected && acquisitionMode == AcquisitionMode.AUTO)
-                                {
-                                    triggerDetected = true;
-                                    triggerIndex = 0;
-                                }
-                                break;
-                        }*/
-                        if (triggerDetected)
-                            break;
-                    }
-                    if (!triggerDetected)
-                        return null;
-
-					outputAnalog = new float[channels][];
-					for (int i = 0; i < channels; i++) {
-						outputAnalog [i] = DummyScope.CropWave (outputWaveLength, waveAnalog [i], triggerIndex, triggerHoldoffInSamples);
-					}
-					outputDigital = DummyScope.CropWave (outputWaveLength, waveDigital, triggerIndex, triggerHoldoffInSamples);
-				} 
-                else if (waveSource == WaveSource.FILE) {
-					if (!GetWaveFromFile (acquisitionMode, triggerHoldoff, triggerChannel, triggerDirection, triggerLevel, decimation, SamplePeriod, ref outputAnalog))
-						return null;
-                    foreach (AnalogChannel ch in AnalogChannel.List)
-                        DummyScope.AddNoise(outputAnalog[ch.Value], _channelConfig[ch].noise);
-					triggerHoldoffInSamples = (int) (triggerHoldoff / SamplePeriod);
-				}
-                double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
-                UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
-				p = new DataPackageScope (SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs, false, false);
-				p.SetData (AnalogChannel.ChA, outputAnalog [0]);
-                p.SetData(AnalogChannel.ChB, outputAnalog[1]);
-
-				p.SetDataDigital (outputDigital);
-			}
-#if __IOS__
-			regenerate = true;
-#endif
-
-            if (acquisitionMode == AcquisitionMode.SINGLE)
-                acquisitionRunning = false;
-
-			return p;
-		}
-
-        private static void AddDcComponent(ref float[] p, float offset)
+        private static void AddDcComponent(float[] p, float offset)
         {
-            if (offset == 0f) 
+            if (offset == 0f)
                 return;
             p = p.AsParallel().Select(x => x + offset).ToArray();
         }
-
-        private static void RemoveDcComponent(ref float[] p, double frequency, double samplePeriod)
+        private static void RemoveDcComponent(float[] p, double frequency, double samplePeriod)
         {
             int periodLength = (int)Math.Round(1.0 / (frequency * samplePeriod));
             float mean = p.Take(periodLength).Average();
-            if (mean == 0f) 
+            if (mean == 0f)
                 return;
             p = p.AsParallel().Select(x => x - mean).ToArray();
         }
+        #endregion
 	}
 }

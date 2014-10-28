@@ -59,6 +59,16 @@ namespace ECore.Devices
             return wave;
         }
 
+        public static byte[] GenerateWaveDigital(uint waveLength, double samplePeriod, double timeOffset)
+        {
+            byte[] output = new byte[waveLength];
+            for (int i = 0; i < waveLength; i++)
+            {
+                output[i] = (byte)(i);
+            }
+            return output;
+        }
+
         public static T[] CropWave<T>(uint outputLength, T[] sourceWave, int triggerIndex, int holdoff)
         {
             if (triggerIndex - holdoff + outputLength > sourceWave.Length) return null;

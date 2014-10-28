@@ -18,6 +18,10 @@ namespace ECore.Devices
     public struct AnalogTriggerValue
     {
         /// <summary>
+        /// Trigger channel
+        /// </summary>
+        public AnalogChannel channel;
+        /// <summary>
         /// The direction
         /// </summary>
         public TriggerDirection direction;
@@ -45,13 +49,12 @@ namespace ECore.Devices
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
         void SetYOffset(AnalogChannel channel, float offset);
-        void SetTriggerChannel(AnalogChannel channel);
         void SetForceTrigger();
         void SetCoupling(AnalogChannel channel, Coupling coupling);
         void SetTriggerWidth(uint width);
         uint GetTriggerWidth();
-        void SetTriggerThreshold(uint threshold);
-        uint GetTriggerThreshold();
+        void SetTriggerThreshold(float threshold);
+        float GetTriggerThreshold();
         void SetProbeDivision(AnalogChannel ch, ProbeDivision division);
         ProbeDivision GetProbeDivision(AnalogChannel ch);
         

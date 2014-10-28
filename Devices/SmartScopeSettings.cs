@@ -32,6 +32,8 @@ namespace ECore.Devices
 #endif
         static byte yOffsetMin = 10;
 
+        float triggerThreshold = 0f;
+
         public bool ChunkyAcquisitions { get; private set; }
 
         #region helpers
@@ -136,7 +138,8 @@ namespace ECore.Devices
             SetDivider(channel, validDividers[dividerIndex]);
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
-            SetTriggerAnalog(this.triggerLevel);
+            SetTriggerAnalog(this.triggerAnalog);
+            SetTriggerThreshold(this.triggerThreshold);
         }
 
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
@@ -237,7 +240,7 @@ namespace ECore.Devices
         public void SetTriggerAnalog(AnalogTriggerValue trigger)
         {
             if (!Connected) return;
-            this.triggerLevel = trigger;
+            this.triggerAnalog = trigger;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
@@ -250,6 +253,7 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
 
             SetTriggerDirection(trigger.direction);
+            SetTriggerChannel(trigger.channel);
         }
         public void SetForceTrigger()
         {
@@ -275,7 +279,7 @@ namespace ECore.Devices
                 )
             );
             Logger.Debug(" Set trigger channel to " + (channel == AnalogChannel.ChA ? " CH A" : "CH B"));
-            SetTriggerAnalog(this.triggerLevel);
+            SetTriggerAnalog(this.triggerAnalog);
         }
 
 
@@ -307,13 +311,20 @@ namespace ECore.Devices
         {
             return (uint)FpgaSettingsMemory[REG.TRIGGER_WIDTH].GetByte();
         }
-        public void SetTriggerThreshold(uint threshold)
+        public void SetTriggerThreshold(float threshold)
         {
-            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)threshold);
+            triggerThreshold = threshold;
+            double level = 0;
+            double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
+            if (coefficients != null)
+                level = (triggerThreshold - coefficients[2]) / coefficients[0];
+            if (level < 0) level = 0;
+            if (level > 255) level = 255;
+            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)level);
         }
-        public uint GetTriggerThreshold()
+        public float GetTriggerThreshold()
         {
-            return (uint)FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte();
+            return triggerThreshold;
         }
 
         public void SetAcquisitionMode(AcquisitionMode mode)

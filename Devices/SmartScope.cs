@@ -75,7 +75,7 @@ namespace ECore.Devices
         private bool acquiring = false;
         private bool stopPending = false;
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
-        private AnalogTriggerValue triggerLevel = new AnalogTriggerValue
+        private AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
         {
             direction = TriggerDirection.RISING,
             level = 0.0f
