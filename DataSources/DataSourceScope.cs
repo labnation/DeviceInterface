@@ -173,7 +173,7 @@ namespace ECore.DataSources
                 return false;
             }
 
-            OnNewDataAvailable -= Recording.Record;
+            OnNewDataAvailable -= Record;
             Recording.Busy = false;
             if (Recording.acqInfo.Count == 0)
             {
