@@ -77,6 +77,7 @@ namespace ECore.Devices
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
         {
+            channel = AnalogChannel.ChA,
             direction = TriggerDirection.RISING,
             level = 0.0f
         };

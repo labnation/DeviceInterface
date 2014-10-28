@@ -241,6 +241,8 @@ namespace ECore.Devices
         {
             if (!Connected) return;
             this.triggerAnalog = trigger;
+
+            /* Set Level */
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
@@ -252,8 +254,23 @@ namespace ECore.Devices
             Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
             FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
 
-            SetTriggerDirection(trigger.direction);
-            SetTriggerChannel(trigger.channel);
+            /* Set Channel */
+            Logger.Debug(" Set trigger channel to " + (triggerAnalog.channel == AnalogChannel.ChA ? " CH A" : "CH B"));
+            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                (byte)(
+                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) +
+                    (triggerAnalog.channel.Value << 2)
+                        ));
+            
+            /* Set Direction */
+            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                (byte)(
+                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) +
+                    (((int)triggerAnalog.direction << 4) & 0x30)
+                    )
+            );
+            Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
+
         }
         public void SetForceTrigger()
         {
@@ -272,13 +289,7 @@ namespace ECore.Devices
         /// <param name="channel"></param>
         public void SetTriggerChannel(AnalogChannel channel)
         {
-            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
-                (byte)(
-                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) + 
-                    (channel.Value << 2)
-                )
-            );
-            Logger.Debug(" Set trigger channel to " + (channel == AnalogChannel.ChA ? " CH A" : "CH B"));
+            this.triggerAnalog.channel = channel;
             SetTriggerAnalog(this.triggerAnalog);
         }
 
@@ -295,13 +306,8 @@ namespace ECore.Devices
         /// <param name="direction"></param>
         private void SetTriggerDirection(TriggerDirection direction)
         {
-            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
-                (byte)(
-                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) + 
-                    (((int)direction << 4) & 0x30)
-                    )
-            );
-            Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), direction));
+            triggerAnalog.direction = direction;
+            SetTriggerAnalog(this.triggerAnalog);
         }
         public void SetTriggerWidth(uint width)
         {
