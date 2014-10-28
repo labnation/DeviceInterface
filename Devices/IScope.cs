@@ -15,7 +15,7 @@ namespace ECore.Devices
     /// <summary>
     /// Describes an analog trigger
     /// </summary>
-    public struct AnalogTriggerValue
+    public class AnalogTriggerValue
     {
         /// <summary>
         /// Trigger channel
