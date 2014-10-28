@@ -60,7 +60,6 @@ namespace ECore.Devices {
         };
 		
 		private double triggerHoldoff = 0;
-		private AnalogChannel triggerChannel = AnalogChannel.ChA;
 		private uint triggerWidth = 10;
         private float triggerThreshold = 0;
 
@@ -308,7 +307,7 @@ namespace ECore.Devices {
                     }
                     else
                     {
-                        triggerDetected = DummyScope.TriggerAnalog(waveAnalog[triggerChannel].ToArray(), triggerAnalog,
+                        triggerDetected = DummyScope.TriggerAnalog(waveAnalog[triggerAnalog.channel].ToArray(), triggerAnalog,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
                             outputWaveLength, out triggerIndex);
                     }
