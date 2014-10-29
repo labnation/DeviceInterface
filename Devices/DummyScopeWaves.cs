@@ -103,7 +103,7 @@ namespace ECore.Devices
             float[] result = new float[awgPoints];
             Func<float, float, float> Sum = (x, y) => x + y;
             foreach (float freq in frequencies)
-                result = Utils.CombineArrays(result, WaveCosine(awgPoints, awgSamplePeriod, timeOffset, freq, amplitude / scaler, 0), ref Sum);
+                result = Utils.CombineArrays(result, WaveCosine(awgPoints, awgSamplePeriod, timeOffset, freq, amplitude / scaler, 0), Sum);
             return result;
         }
 
@@ -139,7 +139,7 @@ namespace ECore.Devices
             Func<float, float, float> sumFloat = (x, y) => (x + y);
             float[] wave1 = WaveSawTooth(nSamples, samplePeriod, timeOffset, frequency, amplitude, phase);
             float[] wave2 = WaveSine(nSamples, samplePeriod, timeOffset, frequency * 7.0, amplitude * 0.1, phase);
-            float[] wave = Utils.CombineArrays(wave1, wave2, ref sumFloat);
+            float[] wave = Utils.CombineArrays(wave1, wave2, sumFloat);
             return wave;
         }
 
