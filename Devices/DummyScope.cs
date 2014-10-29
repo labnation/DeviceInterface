@@ -35,7 +35,6 @@ namespace ECore.Devices {
 		//Wave settings
         private int usbLatency = 2;
         private const int outputWaveLength = 2000;
-		private WaveSource waveSource = WaveSource.GENERATOR;
         private object resetAcquisitionLock = new object();
         private bool resetAcquisition = false;
         private bool forceTrigger = false;
@@ -84,6 +83,7 @@ namespace ECore.Devices {
 
 		internal DummyScope () : base ()
 		{
+            waveSource = WaveSource.GENERATOR;
             ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
@@ -361,11 +361,9 @@ namespace ECore.Devices {
 
 		#region dummy scope settings
 
-        public void SetDummyWaveSource(WaveSource source)
-        {
-            this.waveSource = source;
-        }
-		public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
+        public WaveSource waveSource { get ; set; }
+
+        public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
 		{
             ChannelConfig[channel].amplitude = amplitude;
 		}
