@@ -64,7 +64,7 @@ namespace ECore.Devices
             byte[] output = new byte[waveLength];
             for (int i = 0; i < waveLength; i++)
             {
-                output[i] = (byte)(i);
+                output[i] = (byte)(i / 10);
             }
             return output;
         }
