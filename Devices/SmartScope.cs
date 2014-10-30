@@ -33,6 +33,12 @@ namespace ECore.Devices
         private bool flashed = false;
         private bool deviceReady = false;
 
+        private Dictionary<ProbeDivision, float> ProbeScaleFactors = new Dictionary<ProbeDivision, float>()
+        {
+            { ProbeDivision.X1,   1f },
+            { ProbeDivision.X10, 10f },
+        };
+
         private List<DeviceMemory> memories = new List<DeviceMemory>();
 #if DEBUG
         public List<DeviceMemory> GetMemories() { return memories; }
@@ -124,10 +130,13 @@ namespace ECore.Devices
 
             coupling = new Dictionary<AnalogChannel, Coupling>();
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
+            yOffset = new Dictionary<AnalogChannel, float>();
+            verticalRanges = new Dictionary<AnalogChannel, Range>();
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 coupling[ch] = Coupling.DC;
                 probeSettings[ch] = ProbeDivision.X1;
+                yOffset[ch] = 0f;
             }
 
             dataSourceScope = new DataSources.DataSource(this);
@@ -286,7 +295,6 @@ namespace ECore.Devices
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 SetVerticalRange(ch, -1f, 1f);
-                SetYOffset(ch, 0f);
                 SetCoupling(ch, coupling[ch]);
             }
 
@@ -349,9 +357,7 @@ namespace ECore.Devices
 
             //this section converts twos complement to a physical voltage value
             float totalOffset = (float)(yOffset * coefficients[1] + coefficients[2]);
-            float gain = 1f;
-            if (division == ProbeDivision.X10)
-                gain = 10f;
+            float gain = ProbeScaleFactors[division];
 
             voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * gain).ToArray();
             return voltage;

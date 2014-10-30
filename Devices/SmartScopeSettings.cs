@@ -19,8 +19,22 @@ namespace ECore.Devices
         public 
 #endif
         static readonly double[] validMultipliers = { 1.1, 2, 3 };
+
+        private class Range
+        {
+            public Range(float minimum, float maximum)
+            {
+                this.minimum = minimum;
+                this.maximum = maximum;
+            }
+            public float minimum;
+            public float maximum;
+        }
+
         private Dictionary<AnalogChannel, Coupling> coupling;
         private Dictionary<AnalogChannel, ProbeDivision> probeSettings;
+        private Dictionary<AnalogChannel, Range> verticalRanges;
+        private Dictionary<AnalogChannel, float> yOffset;
 
         private double holdoff;
 #if DEBUG
@@ -38,11 +52,6 @@ namespace ECore.Devices
 
         #region helpers
 
-        private byte voltToByte(float volt)
-        {
-            //FIXME: implement this
-            return (byte)((int)volt);
-        }
         private void validateDivider(double div)
         {
             if (!validDividers.Contains(div))
@@ -65,7 +74,10 @@ namespace ECore.Devices
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(false);
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(true);
         }
-
+        private float ProbeScale(AnalogChannel ch, float volt)
+        {
+            return volt / ProbeScaleFactors[probeSettings[ch]];
+        }
         public void CommitSettings()
         {
             try
@@ -94,14 +106,16 @@ namespace ECore.Devices
         /// <param name="offset">Vertical offset in Volt</param>
         public void SetYOffset(AnalogChannel channel, float offset)
         {
+            yOffset[channel] = offset;
             if (!Connected) return;
             //FIXME: convert offset to byte value
             REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
-            double[] c = channelSettings[channel].coefficients;
+            
             //Let ADC output of 127 be the zero point of the Yoffset
-            byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(offset + c[2] + c[0]*127)/c[1]));
+            double[] c = channelSettings[channel].coefficients;
+            byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(ProbeScale(channel, offset) + c[2] + c[0] * 127) / c[1] ));
             FpgaSettingsMemory[r].Set(offsetByte);
             Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
         }
@@ -124,27 +138,35 @@ namespace ECore.Devices
             //this walk assumes it starts with the smallest range, and that range is only increasing
             int dividerIndex = 0;
             int multIndex = 0;
+
+            verticalRanges[channel] = new Range(minimum, maximum);
+
             for (int i = 0; i < rom.computedDividers.Length * rom.computedMultipliers.Length; i++)
             {
                 dividerIndex= i / rom.computedMultipliers.Length;
                 multIndex = rom.computedMultipliers.Length - (i % rom.computedMultipliers.Length) - 1;
                 if (
-                    (maximum < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    (ProbeScale(channel, maximum) < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
                     &&
-                    (minimum > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    (ProbeScale(channel, minimum) > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
                     )
                     break;
             }
             SetDivider(channel, validDividers[dividerIndex]);
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
-            SetTriggerAnalog(this.triggerAnalog);
-            SetTriggerThreshold(this.triggerThreshold);
+            SetYOffset(channel, yOffset[channel]);
+            if (channel == triggerAnalog.channel)
+            {
+                SetTriggerAnalog(this.triggerAnalog);
+                SetTriggerThreshold(this.triggerThreshold);
+            }
         }
 
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
         {
             probeSettings[ch] = division;
+            SetVerticalRange(ch, verticalRanges[ch].minimum, verticalRanges[ch].maximum);
         }
 
         public ProbeDivision GetProbeDivision(AnalogChannel ch)
@@ -247,7 +269,7 @@ namespace ECore.Devices
             REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
             if(coefficients != null)
-                level = (trigger.level - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                level = (ProbeScale(trigger.channel, trigger.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
@@ -323,7 +345,7 @@ namespace ECore.Devices
             double level = 0;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             if (coefficients != null)
-                level = (triggerThreshold - coefficients[2]) / coefficients[0];
+                level = (ProbeScale(triggerAnalog.channel, triggerThreshold) - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)level);
