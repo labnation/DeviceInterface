@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ECore.HardwareInterfaces;
+#if ANDROID
+using Android.Content;
+#endif
 
 namespace ECore.Devices
 {
@@ -11,6 +14,9 @@ namespace ECore.Devices
         DeviceConnectHandler connectHandler;
         IDevice device;
         IDevice fallbackDevice;
+#if ANDROID
+        Context context;
+#endif
 
         public DeviceManager(
 #if ANDROID
