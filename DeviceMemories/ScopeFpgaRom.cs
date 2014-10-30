@@ -41,6 +41,7 @@ namespace ECore.DeviceMemories
 
         public override void Write(uint address) 
         {
+            Read(address);
             Logger.Warn("Attempting to write to ROM");
         }
 
