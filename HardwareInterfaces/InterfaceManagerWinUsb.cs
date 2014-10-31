@@ -28,6 +28,7 @@ namespace ECore.HardwareInterfaces
             winUsbForm.ShowInTaskbar = false;
             winUsbForm.Enabled = false;
             winUsbForm.Show();
+            winUsbForm.Visible = false;
             USBDeviceInfo[] usbDeviceList = USBDevice.GetDevices(guid);
 			C.Logger.Debug("Total number of Win USB devices attached: " + usbDeviceList.Length.ToString());
             foreach (USBDeviceInfo device in usbDeviceList)
