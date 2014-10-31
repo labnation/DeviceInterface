@@ -146,6 +146,7 @@ namespace ECore.Devices
         public void Dispose()
         {
             dataSourceScope.Stop();
+            Deconfigure();
             DestroyHardware();
         }
 
@@ -314,6 +315,14 @@ namespace ECore.Devices
             CommitSettings();
             hardwareInterface.FlushDataPipe();
         }
+
+        private void Deconfigure()
+        {
+            StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
+            AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
+            hardwareInterface.FlushDataPipe();
+        }
+
 
 #if DEBUG
         public void LoadBootLoader()
