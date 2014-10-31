@@ -146,7 +146,11 @@ namespace ECore.Devices
         public void Dispose()
         {
             dataSourceScope.Stop();
-            Deconfigure();
+            try
+            {
+                Deconfigure();
+            }
+            catch (ScopeIOException) { }
             DestroyHardware();
         }
 
@@ -318,8 +322,9 @@ namespace ECore.Devices
 
         private void Deconfigure()
         {
+            AdcMemory[MAX19506.POWER_MANAGEMENT].WriteImmediate(0x00);
             StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
-            AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
+            //FIXME: reset FPGA
             hardwareInterface.FlushDataPipe();
         }
 
