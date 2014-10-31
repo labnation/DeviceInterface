@@ -70,7 +70,7 @@ namespace ECore.HardwareInterfaces
         private void AddDevice(UsbDevice d)
         {
             SmartScopeUsbInterfaceXamarin i = new SmartScopeUsbInterfaceXamarin(context, usbManager, d);
-            interfaces.Add(d, i);
+            interfaces.Add(d.DeviceName, i);
             onConnect(i, true);
         }
 
@@ -90,9 +90,9 @@ namespace ECore.HardwareInterfaces
 
         private void RemoveDevice(UsbDevice d)
         {
-            if(interfaces.ContainsKey(d)) {
-                onConnect(interfaces[d], false);
-                interfaces.Remove(d);
+            if(interfaces.ContainsKey(d.DeviceName)) {
+                onConnect(interfaces[d.DeviceName], false);
+                interfaces.Remove(d.DeviceName);
             }
         }
 
