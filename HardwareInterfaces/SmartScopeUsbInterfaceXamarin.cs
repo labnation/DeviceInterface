@@ -12,6 +12,7 @@ namespace ECore.HardwareInterfaces
     {
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
         private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
+        private const int TIMEOUT = 1000;
         private UsbEndpoint dataEndpoint;
         private UsbEndpoint commandReadEndpoint;
         private UsbEndpoint commandWriteEndpoint;
@@ -65,7 +66,9 @@ namespace ECore.HardwareInterfaces
                     buffer = new byte[length];
                     Array.ConstrainedCopy(message, offset, buffer, 0, length);
                 }
-                usbConnection.BulkTransfer(commandWriteEndpoint, buffer, buffer.Length, 5000);
+                int bytesWritten = usbConnection.BulkTransfer(commandWriteEndpoint, buffer, buffer.Length, TIMEOUT);
+                if(bytesWritten != buffer.Length)
+                    Logger.Error(String.Format("Writing control bytes failed - wrote {0} out of {1} bytes", bytesWritten, buffer.Length));
             }
             catch (Exception ex)
             {
@@ -80,16 +83,19 @@ namespace ECore.HardwareInterfaces
             {
                 //send read command
                 byte[] readBuffer = new byte[COMMAND_READ_ENDPOINT_SIZE];
-                usbConnection.BulkTransfer(commandReadEndpoint, readBuffer, length, 5000);
+                int bytesRead = usbConnection.BulkTransfer(commandReadEndpoint, readBuffer, length, TIMEOUT);
 
-                //return read data
+                if(bytesRead != length) {
+                    Logger.Error(String.Format("Reading control bytes failed - read {0} out of {1} bytes", bytesRead, length));
+                    return null;
+                }
+
                 return readBuffer.Take(length).ToArray();
             }
             catch (Exception ex)
             {
                 Logger.Error("Reading control bytes failed" + ex.Message);
-
-                return new byte[0];
+                return null;
             }
         }
 
@@ -99,7 +105,7 @@ namespace ECore.HardwareInterfaces
             if (dataEndpoint == null)
             {
                 Logger.Error("Trying to stream data from device, but dataEndpoint==null");
-                return new byte[0];
+                return null;
             }
 
             //try to read data
@@ -107,7 +113,9 @@ namespace ECore.HardwareInterfaces
             {
                 //send read command
                 byte[] readBuffer = new byte[numberOfBytes];
-                usbConnection.BulkTransfer(dataEndpoint, readBuffer, numberOfBytes, 10000);
+                int readBytes = usbConnection.BulkTransfer(dataEndpoint, readBuffer, numberOfBytes, TIMEOUT);
+                if(readBytes != numberOfBytes)
+                    return null;
 
                 //return read data
                 return readBuffer;
@@ -115,8 +123,7 @@ namespace ECore.HardwareInterfaces
             catch (Exception ex)
             {
                 Logger.Error("Streaming data from scope failed " + ex.Message);
-
-                return new byte[0];
+                return null;
             }
         }
         public void FlushDataPipe()
