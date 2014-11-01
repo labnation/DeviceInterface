@@ -9,6 +9,7 @@ using ECore.HardwareInterfaces;
 
 namespace ECore.Devices {
 	partial class SmartScope {
+        private uint FPGA_VERSION_UNFLASHED = 0xffffffff;
 		private bool FlashFpga ()
 		{
             this.flashed = false;
@@ -68,6 +69,19 @@ namespace ECore.Devices {
 				    (byte) (commands),
                 };
                 hardwareInterface.WriteControlBytes(msg, false);
+
+                //FIXME: this sleep is found necessary on android tablets.
+                /* The problem occurs when a scope is initialised the *2nd*
+                 * time after the app starts, i.e. after replugging it.
+                 * A possible explanation is that in the second run, caches
+                 * are hit and the time between the PROGRAM_FPGA_START command
+                 * and the first bitstream bytes is smaller than on the first run.
+                 * 
+                 * Indeed, if this time is smaller than the time for the INIT bit
+                 * (see spartan 6 ug380 fig 2.4) to rise, the first bitstream data
+                 * is missed and the configuration fails.
+                 */
+                System.Threading.Thread.Sleep(10);
                 hardwareInterface.FlushDataPipe();
 
 				int bytesSent = 0; 
@@ -85,11 +99,14 @@ namespace ECore.Devices {
                 
 				//Send finish flashing command
                 hardwareInterface.SendCommand(SmartScopeUsbInterfaceHelpers.PIC_COMMANDS.PROGRAM_FPGA_END);
-                Logger.Info(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
-                Logger.Info("Flushing data pipe");
+                Logger.Debug(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
+                Logger.Debug("Flushing data pipe");
                 //Flush whatever might be left in the datapipe
                 hardwareInterface.FlushDataPipe();
-                
+                if(GetFpgaFirmwareVersion() == FPGA_VERSION_UNFLASHED) {
+                    Logger.Error("Got firmware version of unflashed FPGA");
+                    return false;
+                }
                 this.flashed = true;
 			} catch (ScopeIOException e) {
 				Logger.Error("Flashing FPGA failed failed");
