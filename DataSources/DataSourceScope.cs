@@ -81,7 +81,7 @@ namespace ECore.DataSources
         {
             if (!IsRunning)
             {
-                Logger.Info("Not stopping device since it's not running");
+                Logger.Info("Datasource stop requested, but not stopping device since it's not running");
                 return;
             }            
             //stop thread
@@ -99,7 +99,7 @@ namespace ECore.DataSources
         private void DataFetchThreadStart()
         {           
             //main starting point for the thread which fetches the data from file
-            Logger.Info("DataFetchThread spawn");
+            Logger.Debug("DataFetchThread spawn");
 
             if (!running)
                 Logger.Error("Device not started as device.Start() didn't return true");
@@ -111,7 +111,7 @@ namespace ECore.DataSources
                 if (LatestDataPackage != null)
                     this.fireDataAvailableEvents();
             }
-            Logger.Info("Data fetch thread stopped");
+            Logger.Debug("Data fetch thread stopped");
         }
 
         public bool StartRecording()
@@ -169,7 +169,7 @@ namespace ECore.DataSources
             }
             if (!Recording.Busy)
             {
-                Logger.Info("Recording was already stopped");
+                Logger.Info("Recording stop requested but was already stopped");
                 return false;
             }
 

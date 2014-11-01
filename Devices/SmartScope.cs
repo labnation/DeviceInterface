@@ -205,7 +205,7 @@ namespace ECore.Devices
                 LogWait("Memories initialized...");
                 Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom[ROM.FW_MSB].Read().GetByte() + ":" + FpgaRom[ROM.FW_LSB].Read().GetByte());
 
-                Logger.Info(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
+                Logger.Debug(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
 
                 Configure();
                 deviceReady = true;
