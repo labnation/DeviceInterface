@@ -113,7 +113,7 @@ namespace ECore.DataSources
             }            
             //stop thread
             running = false;
-
+            dataFetchThread.Join(1000);
             Logger.Debug("Requested DataFetchThread to stop");
         }
 
