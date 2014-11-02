@@ -43,6 +43,8 @@ namespace ECore.Devices
         void SetRolling(bool enable);
         bool Running { get; }
         bool StopPending { get; }
+        void Pause();
+        void Resume();
 
         void SetTriggerHoldOff(double time);
         void SetTriggerAnalog(AnalogTriggerValue trigger);

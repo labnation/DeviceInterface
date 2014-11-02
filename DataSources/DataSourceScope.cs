@@ -30,6 +30,7 @@ namespace ECore.DataSources
         private int RecordingAcquisitionsThisInterval;
 
         private bool running = false;
+        private bool paused = false;
 
         public bool RecordingBusy
         {
@@ -70,6 +71,7 @@ namespace ECore.DataSources
             }
 
             running = true;
+            paused = false;
             //create and start thread, operating on dataGeneratorNode
             dataFetchThread = new Thread(DataFetchThreadStart);
             dataFetchThread.Name = "Scope data source";
@@ -77,6 +79,31 @@ namespace ECore.DataSources
             dataFetchThread.Start();
             return true;
         }
+
+        public void Pause()
+        {
+            if(paused) {
+                Logger.Warn("Not pausing datasource since it's already paused");
+                return;
+            }
+            if(!IsRunning)
+            {
+                Logger.Warn("Not pausing datasource since it's not running");
+                return;
+            }
+            paused = true;
+            Stop();
+        }
+
+        public void Resume()
+        {
+            if(!paused) {
+                Logger.Warn("Not resuming datasource since it ain't paused");
+                return;
+            }
+            Start();
+        }
+
         public void Stop()
         {
             if (!IsRunning)

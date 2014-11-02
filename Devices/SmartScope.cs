@@ -80,6 +80,8 @@ namespace ECore.Devices
 
         private bool acquiring = false;
         private bool stopPending = false;
+        private bool paused = false;
+
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
         {
@@ -141,6 +143,31 @@ namespace ECore.Devices
 
             dataSourceScope = new DataSources.DataSource(this);
             InitializeHardware();
+        }
+
+        public void Pause() 
+        {
+            //Pause fetch thread
+            this.DataSourceScope.Pause();
+
+            DeconfigureAdc();
+            EnableEssentials(false);
+
+            paused = true;
+        }
+
+        public void Resume() 
+        {
+            if(!paused) {
+                Logger.Warn("Not resuming scope since it wasn't paused");
+            }
+            paused = false;
+            Logger.Debug("Resuming SmartScope");
+
+            EnableEssentials(true);
+            ConfigureAdc();
+
+            this.DataSourceScope.Resume();
         }
 
         public void Dispose()
@@ -278,13 +305,9 @@ namespace ECore.Devices
 			System.Threading.Thread.Sleep(sleep);
         }
 
-        private void Configure()
+        private void ConfigureAdc()
         {
-            //Part 1: Just set all desired memory settings
-
-            /*********
-             *  ADC  *
-            *********/
+            AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4);
             AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1);
             AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
@@ -292,21 +315,39 @@ namespace ECore.Devices
             AdcMemory[MAX19506.DATA_CLK_TIMING].Set(0);
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
             AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
+        }
+        private void DeconfigureAdc()
+        {
+            AdcMemory[MAX19506.POWER_MANAGEMENT].Set(0);
+        }
+
+        private void EnableEssentials(bool enable)
+        {
+            StrobeMemory[STR.ENABLE_ADC].Set(enable);
+            StrobeMemory[STR.ENABLE_RAM].Set(enable);
+            StrobeMemory[STR.ENABLE_NEG].Set(enable);
+            StrobeMemory[STR.SCOPE_ENABLE].Set(enable);
+        }
+
+        private void Configure()
+        {
+            //Part 1: Just set all desired memory settings
+
+            /*********
+             *  ADC  *
+            *********/
+            ConfigureAdc();
 
             /***************************/
 
             //Enable scope controller
-            StrobeMemory[STR.SCOPE_ENABLE].Set(true);
+            EnableEssentials(true);
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 SetVerticalRange(ch, -1f, 1f);
                 SetCoupling(ch, coupling[ch]);
             }
-
-            StrobeMemory[STR.ENABLE_ADC].Set(true);
-            StrobeMemory[STR.ENABLE_RAM].Set(true);
-            StrobeMemory[STR.ENABLE_NEG].Set(true);
-
+                
             SetTriggerWidth(2);
             SetTriggerThreshold(2);
 
@@ -315,14 +356,13 @@ namespace ECore.Devices
 
             //Part 2: perform actual writes                
             StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
-            AdcMemory[MAX19506.SOFT_RESET].WriteImmediate(90);
             CommitSettings();
             hardwareInterface.FlushDataPipe();
         }
 
         private void Deconfigure()
         {
-            AdcMemory[MAX19506.POWER_MANAGEMENT].WriteImmediate(0x00);
+            DeconfigureAdc();
             StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
             //FIXME: reset FPGA
             hardwareInterface.FlushDataPipe();

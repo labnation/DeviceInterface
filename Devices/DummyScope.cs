@@ -104,6 +104,16 @@ namespace ECore.Devices {
 		}
         public void CommitSettings() { }
 
+        public void Pause() 
+        {
+            this.DataSourceScope.Pause();
+        }
+
+        public void Resume() 
+        {
+            this.DataSourceScope.Resume();
+        }
+
 		#endregion
 
 		#region real scope settings
