@@ -69,6 +69,8 @@ namespace ECore.HardwareInterfaces
 
         private void AddDevice(UsbDevice d)
         {
+            if(!usbManager.HasPermission(d))
+                return;
             SmartScopeUsbInterfaceXamarin i = new SmartScopeUsbInterfaceXamarin(context, usbManager, d);
             interfaces.Add(d.DeviceName, i);
             onConnect(i, true);
@@ -83,8 +85,12 @@ namespace ECore.HardwareInterfaces
 
             if ((usbDevice.VendorId == VID) && (PIDs.Contains(usbDevice.ProductId)))
             {
-                PendingIntent pi = PendingIntent.GetBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
-                usbManager.RequestPermission(usbDevice, pi);
+                if (usbManager.HasPermission(usbDevice)) {
+                    AddDevice(usbDevice);
+                } else {
+                    PendingIntent pi = PendingIntent.GetBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
+                    usbManager.RequestPermission(usbDevice, pi);
+                }
             }
         }
 
