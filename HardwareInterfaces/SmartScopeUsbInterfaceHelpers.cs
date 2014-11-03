@@ -61,6 +61,13 @@ namespace ECore.HardwareInterfaces
             //EP3 always contains 16 bytes xxx should be linked to constant
             //FIXME: use endpoint length or so, or don't pass the argument to the function
             byte[] readback = i.ReadControlBytes(16);
+            if(readback == null)
+            {
+                data = null;
+                Common.Logger.Error("Failde to read back bytes");
+                return;
+            }
+
 
             int readHeaderLength;
             if (ctrl == ScopeController.FLASH)

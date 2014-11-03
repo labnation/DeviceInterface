@@ -81,6 +81,7 @@ namespace ECore.Devices
         private bool acquiring = false;
         private bool stopPending = false;
         private bool paused = false;
+        private bool acquiringWhenPaused = false;
 
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
@@ -153,7 +154,9 @@ namespace ECore.Devices
             DeconfigureAdc();
             EnableEssentials(false);
             CommitSettings();
+            hardwareInterface.FlushDataPipe();
             paused = true;
+            acquiringWhenPaused = this.acquiring;
         }
 
         public void Resume() 
@@ -168,6 +171,7 @@ namespace ECore.Devices
             ConfigureAdc();
             CommitSettings();
             this.DataSourceScope.Resume();
+            this.SetAcquisitionRunning(this.acquiringWhenPaused);
         }
 
         public void Dispose()

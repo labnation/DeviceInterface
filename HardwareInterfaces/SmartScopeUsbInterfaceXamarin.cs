@@ -130,7 +130,13 @@ namespace ECore.HardwareInterfaces
         {
             if (dataEndpoint == null)
                 throw new ScopeIOException("Data endpoint is null");
-            //FIXME: needs implementation
+
+            int length =dataEndpoint.MaxPacketSize;
+            byte[] readBuffer = new byte[length];
+            int bytesRead = 0;
+            bytesRead = usbConnection.BulkTransfer(dataEndpoint, readBuffer, length, 10);
+            bytesRead = usbConnection.BulkTransfer(dataEndpoint, readBuffer, length, 10);
+            bytesRead = usbConnection.BulkTransfer(dataEndpoint, readBuffer, length, 10);
         }
 
         public string GetSerial()
@@ -140,7 +146,6 @@ namespace ECore.HardwareInterfaces
 
         public void Destroy()
         {
-
         }
 
 
