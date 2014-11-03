@@ -152,7 +152,7 @@ namespace ECore.Devices
 
             DeconfigureAdc();
             EnableEssentials(false);
-
+            CommitSettings();
             paused = true;
         }
 
@@ -166,7 +166,7 @@ namespace ECore.Devices
 
             EnableEssentials(true);
             ConfigureAdc();
-
+            CommitSettings();
             this.DataSourceScope.Resume();
         }
 
