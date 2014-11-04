@@ -30,7 +30,7 @@ namespace DriverInstaller
                 string workPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "driver");
                 string inf = Path.Combine(workPath, "SmartScope.inf");
                 
-                retCode = Common.Utils.RunProcess(dpinstPath, "/SW /C /SA /SH /F /LM", workPath, 0, out output, out error, true);
+                retCode = Common.Utils.RunProcess(dpinstPath, "/SW /C /SA /SH /F /LM", workPath, 0, out output, out error);
                 //Silent mode - done here
                 if (args.Contains("/S"))
                     return 0;
@@ -59,7 +59,7 @@ namespace DriverInstaller
                         msg += "\n\nA restart is required to complete the installation";
 
                     if (msg == "")
-                        msg = String.Format("It seems all went well, but I can't be sure. The exit code is (0x{0:X})", retCode);
+                        msg = String.Format("It seems all went well, but I'm not quite sure. The exit code is (0x{0:X})", retCode);
                     TopMostMessageBox.Show(msg, "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     running = false;
                 }
