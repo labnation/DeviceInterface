@@ -40,7 +40,7 @@ namespace DriverInstaller
                 byte driversInstalledToDriverStore = (byte)(retCode >> 8);
                 if ((status & 0x80) != 0)
                 {
-                    var r = TopMostMessageBox.Show(String.Format("Failed to install driver ({0:X}). Try again?", retCode), "", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                    var r = TopMostMessageBox.Show(String.Format("Failed to install driver (0x{0:X}). Try again?", retCode), "", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
                     if (r == DialogResult.No)
                     {
                         TopMostMessageBox.Show("Find the driver in " + workPath, "", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -57,6 +57,9 @@ namespace DriverInstaller
 
                     if ((status & 0x40) != 0)
                         msg += "\n\nA restart is required to complete the installation";
+
+                    if (msg == "")
+                        msg = String.Format("It seems all went well, but I can't be sure. The exit code is (0x{0:X})", retCode);
                     TopMostMessageBox.Show(msg, "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     running = false;
                 }
