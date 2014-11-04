@@ -30,7 +30,7 @@ namespace DriverInstaller
                 string workPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "driver");
                 string inf = Path.Combine(workPath, "SmartScope.inf");
                 
-                retCode = Common.Utils.RunProcess(dpinstPath, "/SW /C /SA /SH /F /LM", workPath, 0, out output, out error);
+                retCode = Common.Utils.RunProcess(dpinstPath, "/SW /C /SA /SH /F /LM", workPath, 0, out output, out error, true);
                 //Silent mode - done here
                 if (args.Contains("/S"))
                     return 0;
