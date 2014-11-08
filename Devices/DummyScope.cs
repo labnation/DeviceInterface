@@ -85,20 +85,31 @@ namespace ECore.Devices {
 		{
             waveSource = WaveSource.GENERATOR;
             ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
-            foreach (AnalogChannel ch in AnalogChannel.List)
+            
+            ChannelConfig.Add(AnalogChannel.ChA, new DummyScopeChannelConfig()
             {
-                ChannelConfig.Add(ch, new DummyScopeChannelConfig()
-                {
-                    amplitude = 2.0,
-                    noise = 0.1,
-                    coupling = Coupling.DC,
-                    dcOffset = 0.0,
-                    frequency = 1e3,
-                    phase = 0,
-                    waveform = WaveForm.TRIANGLE,
-                    probeDivision = ProbeDivision.X1,
-                });
-            }
+                amplitude = 2,
+                noise = 0.1,
+                coupling = Coupling.DC,
+                dcOffset = 0.0,
+                frequency = 1e3,
+                phase = 0,
+                waveform = WaveForm.TRIANGLE,
+                probeDivision = ProbeDivision.X1,
+            });
+
+            ChannelConfig.Add(AnalogChannel.ChB, new DummyScopeChannelConfig()
+            {
+                amplitude = 1,
+                noise = 0.1,
+                coupling = Coupling.DC,
+                dcOffset = 0.0,
+                frequency = 1e3,
+                phase = 0,
+                waveform = WaveForm.SINE,
+                probeDivision = ProbeDivision.X1,
+            });
+            
             timeOrigin = DateTime.Now;
 			DataSourceScope = new DataSources.DataSource (this);
 		}
