@@ -13,14 +13,23 @@ namespace ECore.HardwareInterfaces
     //class that provides raw HW access to the device
     internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb>
     {   
+        #if IOS
+        object pollLock = new object();
+        bool pollThreadRunning;
+        Thread pollThread;
+        const int POLL_INTERVAL=1000;
+        #else
         IDeviceNotifier UsbDeviceNotifier;
+        #endif
 
         protected override void Initialize()
         {
-	#if !__IOS__
+            #if IOS
+            startPollThread();
+            #else
             UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;   
-	#endif
+            #endif
 
             UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
 			C.Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
@@ -35,6 +44,57 @@ namespace ECore.HardwareInterfaces
 				C.Logger.Debug(sAdd);
             }
         }
+
+        #if IOS
+        private void startPollThread()
+        {
+            pollThread = new Thread(new ThreadStart(pollThreadStart));
+            pollThread.Name = "USB poll thread";
+            pollThreadRunning = true;
+            pollThread.Start();
+        }
+
+        private void pollThreadStart()
+        {
+            while(pollThreadRunning)
+            {
+                Common.Logger.Warn("Polling USB");
+
+                UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
+                var r = usbDeviceList.Where(x=> VID == x.Vid && PIDs.Contains(x.Pid));
+
+                C.Logger.Warn("Filtered list conatins " + r.Count() + " devs");
+                if(r.Count() > 0 && interfaces.Count() == 0)
+                    PollDevice();
+
+                if(interfaces.Count() > 0) 
+                {
+                    C.Logger.Warn("Checking if the device is alive!");
+                    var kvp = interfaces.First();
+                    SmartScopeUsbInterfaceLibUsb interf = (SmartScopeUsbInterfaceLibUsb)(kvp.Value);
+                    if(!(interf.Alive()))
+                    {
+                        C.Logger.Warn("Device not alive!");
+                        RemoveDevice(kvp.Key);
+                    }
+                }
+
+                Thread.Sleep(POLL_INTERVAL);
+            }
+        }
+
+        private void RemoveAllDevices()
+        {
+            Common.Logger.Warn("Removing all devices");
+            object[] ifKeys = interfaces.Keys.ToArray();
+
+            for(int i = 0; i < ifKeys.Length; i++)
+            {
+                RemoveDevice(ifKeys[i]);
+            }
+        }
+
+        #endif
 
         public override void PollDevice()
         {
@@ -64,7 +124,12 @@ namespace ECore.HardwareInterfaces
 
 		public void Destroy()
 		{
+            #if IOS
+            pollThreadRunning = false;
+            pollThread.Join(1000);
+            #else
 			UsbDeviceNotifier.Enabled = false;
+            #endif
 			UsbDevice.Exit();
 		}
 
@@ -78,8 +143,10 @@ namespace ECore.HardwareInterfaces
                 serial = scopeUsbDevice.Info.SerialString;
                 if (serial == "" || serial == null)
                     throw new ScopeIOException("This device doesn't have a serial number, can't work with that");
-                if (interfaces.ContainsKey(serial))
+                if (interfaces.ContainsKey(serial)) {
+                    Common.Logger.Warn("Can't re-register device with this serial " + serial);
                     throw new ScopeIOException("This device was already registered. This is a bug");
+                }
                 C.Logger.Debug("Device found with serial [" + serial + "]");
                 interfaces.Add(serial, f);
 
@@ -131,9 +198,11 @@ namespace ECore.HardwareInterfaces
 
         private void RemoveDevice(object serial)
         {
-            C.Logger.Debug("Removing device with serial [" + serial + "]");
-            if (!interfaces.ContainsKey(serial))
+            C.Logger.Warn("Removing device with serial [" + serial + "]");
+            if (!interfaces.ContainsKey(serial)) {
+                C.Logger.Warn("OMG this device is not registered?!");
                 return;
+            }
 
             if (onConnect != null)
                 onConnect(interfaces[serial], false);

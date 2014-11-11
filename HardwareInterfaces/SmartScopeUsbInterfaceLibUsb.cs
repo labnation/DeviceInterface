@@ -292,5 +292,13 @@ namespace ECore.HardwareInterfaces
         {
             this.SendCommand(H.PIC_COMMANDS.PIC_RESET);
         }
+
+        public bool Alive()
+        {
+            SendCommand(SmartScopeUsbInterfaceHelpers.PIC_COMMANDS.PIC_VERSION);
+            byte[] response = ReadControlBytes(16);
+            Common.Logger.Warn("Read PIC FW" + String.Join(".", response));
+            return true;
+        }
     }
 }
