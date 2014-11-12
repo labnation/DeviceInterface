@@ -86,7 +86,7 @@ namespace ECore.DataSources
             foreach (var pair in recording.channelBuffers)
             {
                 dataType = pair.Value.GetDataType();
-                arrayWriter = matFileWriter.OpenArray(dataType, pair.Value.GetName());
+                arrayWriter = matFileWriter.OpenArray(dataType, pair.Value.GetName(), true);
                 int offset = 0;
                 foreach (RecordingScope.AcquisitionInfo acqInfo in recording.acqInfo)
                 {
@@ -104,18 +104,20 @@ namespace ECore.DataSources
                 matFileWriter.Write(kvp.Key, kvp.Value);
 #endif
 
+            #if false
             //Store time axis
             dataType = typeof(double);
-            arrayWriter = matFileWriter.OpenArray(dataType, "time");
+            arrayWriter = matFileWriter.OpenArray(dataType, "time", true);
             for (int i = 0; i < recording.acqInfo.Count; i++)
                 arrayWriter.AddRow(getTimeAxis(recording, i, 1));
             arrayWriter.FinishArray(dataType);
+            #endif
             if (progress != null)
                 progress(.6f);
 
             //Store acquisition times
             dataType = typeof(double);
-            arrayWriter = matFileWriter.OpenArray(dataType, "acquisitionStartTime");
+            arrayWriter = matFileWriter.OpenArray(dataType, "acquisitionStartTime", true);
             UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
             arrayWriter.AddRow(recording.acqInfo.Select(x => (double)(x.firstSampleTime - timeOrigin) / (double)1.0e9).ToArray());
             arrayWriter.FinishArray(dataType);
@@ -127,7 +129,7 @@ namespace ECore.DataSources
             foreach (var kvp in recording.settings)
             {
                 dataType = typeof(double);
-                arrayWriter = matFileWriter.OpenArray(dataType, kvp.Key);
+                arrayWriter = matFileWriter.OpenArray(dataType, kvp.Key, true);
                 arrayWriter.AddRow(kvp.Value.ToArray());
                 arrayWriter.FinishArray(dataType);
             }
