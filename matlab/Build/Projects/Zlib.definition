@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ExternalProject Name="Zlib">
+  <Binary
+    Name="Zlib.Portable"
+    Path="packages/Zlib.Portable.1.10.0/lib/portable-net4+sl5+wp8+win8+wpa81+MonoTouch+MonoAndroid/Zlib.Portable.dll" />
+</ExternalProject>
