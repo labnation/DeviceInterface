@@ -116,6 +116,7 @@ namespace MatlabFileIO
                 Array linearData = Array.CreateInstance(vi.dataType, readBytes.Length);
                 Array.Copy(readBytes, linearData, readBytes.Length);
                 Buffer.BlockCopy(linearData, 0, reshapedData, 0, linearData.Length * MatfileHelper.MatlabBytesPerType(vi.dataType));
+                vi.dataType = t.dataType;
             }
             else //Readbytes is already in the correct type
                 Buffer.BlockCopy(readBytes, 0, reshapedData, 0, readBytes.Length * MatfileHelper.MatlabBytesPerType(vi.dataType));
