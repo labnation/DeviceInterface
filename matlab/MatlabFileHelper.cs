@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using Ionic.Zlib;
 using System.Reflection;
 
 namespace MatlabFileIO
@@ -67,13 +68,13 @@ namespace MatlabFileIO
             typeof(Int64),  //12
             typeof(UInt64), //13
             typeof(Array),  //14 MiMatrix
-            null,           //15 Compressed data - not supported
+            typeof(ZlibStream), //15 Compressed Zlib data
             null,           //16 UTF-8  - not supported
             null,           //17 UTF-16 - not supported
             null            //18 UTF-32 - not supported
         };
 
-        public static Tag ReadTag(BinaryReader reader)
+        public static Tag ReadTag(this BinaryReader reader)
         {
 
             byte[] bytes = reader.ReadBytes(SZ_TAG);
@@ -92,13 +93,21 @@ namespace MatlabFileIO
             return t;
         }
 
-        public static void AdvanceTo8ByteBoundary(BinaryReader r)
+        public static void AdvanceTo8ByteBoundary(this BinaryReader r)
         {
             long offset = (8 - (r.BaseStream.Position % 8)) % 8;
             r.BaseStream.Seek(offset, SeekOrigin.Current);
         }
 
-        public static void WriteHeader(BinaryWriter writeStream)
+        public static int AdvanceTo8ByteBoundary(this BinaryWriter w, byte stuffing = 0x00)
+        {
+            long offset = (8 - (w.BaseStream.Position % 8)) % 8;
+            for(int i =0; i < offset; i ++)
+                w.Write(stuffing);
+            return (int)offset;
+        }
+
+        public static void WriteMatlabHeader(this BinaryWriter writeStream)
         {
             string descriptiveText = "MATLAB MAT-file v4, Platform: " + Environment.OSVersion.Platform + ", CREATED on: " + DateTime.Now.ToString();
 
@@ -168,7 +177,16 @@ namespace MatlabFileIO
             throw new Exception("Content of array not supported");
         }
 
-        public static int MatlabTypeNumber(Type t)
+        public static int MatlabDataTypeNumber(Type t)
+        {
+            if(t == null)
+                throw new Exception("Matlab data type can't be null");
+            int i = Array.IndexOf(DataType, t);
+            if (i > 0) return i;
+            throw new NotImplementedException("Arrays of " + t.ToString() + " to .mat file not implemented");
+        }
+
+        public static int MatlabArrayTypeNumber(Type t)
         {
             int i = Array.IndexOf(ArrayTypes, t);
             if (i > 0) return i;

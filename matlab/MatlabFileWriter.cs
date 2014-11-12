@@ -3,57 +3,80 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using Ionic.Zlib;
 
 namespace MatlabFileIO
 {
     public class MatlabFileWriter
     {
-        BinaryWriter writeStream;
+        BinaryWriter fileWriter;
+        MemoryStream uncompressedStream;
+        long arrayStartPosition;
         IMatlabFileWriterLocker locker;
 
         public MatlabFileWriter(string fileName)
         {
             //create stream from filename
             FileStream fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write);
-            this.writeStream = new BinaryWriter(fileStream);
+            this.fileWriter = new BinaryWriter(fileStream);
 
             //write .mat file header (128 bytes)
-            MatfileHelper.WriteHeader(writeStream);
+            fileWriter.WriteMatlabHeader();
         }
 
         public void Close()
         {
-            writeStream.Close();
+            Flush();
+            fileWriter.Close();
         }
 
-        public MatLabFileArrayWriter OpenArray(Type t, string varName)
+        private void Flush()
+        {
+            if(uncompressedStream == null)
+                return;
+
+            fileWriter.Write(MatfileHelper.MatlabDataTypeNumber(typeof(ZlibStream)));
+            byte[] compressedBuffer = ZlibStream.CompressBuffer(uncompressedStream.ToArray());
+            fileWriter.Write((UInt32)compressedBuffer.Length);
+            fileWriter.Write(compressedBuffer);
+
+            uncompressedStream = null;
+        }
+
+        public MatLabFileArrayWriter OpenArray(Type t, string varName, bool compress)
         {
             //first check if there is no array operation ongoing
             if (locker != null)
-                if (!locker.HasFinished())
+            {
+                if(!locker.HasFinished())
                     throw new Exception("Previous array still open!");
+                Flush();
+            }
 
             //check whether type is not a string, as this is not supported for now
             if (t.Equals(typeof(String)))
                 throw new NotImplementedException("Writing arrays of strings is not supported (as strings are arrays already)");
+                
+            MatLabFileArrayWriter arrayWriter;
+            if(compress) {
+                uncompressedStream = new MemoryStream();
+                arrayWriter = new MatLabFileArrayWriter(t, varName, new BinaryWriter(uncompressedStream));
+            } else {
+                arrayWriter = new MatLabFileArrayWriter(t, varName, fileWriter);
+            }
 
-            MatLabFileArrayWriter arrayWriter = new MatLabFileArrayWriter(t, varName, writeStream);
             locker = (IMatlabFileWriterLocker)arrayWriter;
             return arrayWriter;
         }
 
-        public void Write(string name, object data)
+        public void Write(string name, object data, bool compress = true)
         {
-            //first check if there is no array operation ongoing
-            if (locker != null)
-                if (!locker.HasFinished())
-                    throw new Exception("Array being written! Cannot write to file until array has been finished.");
-
             //let's write some data
-            if(data.GetType().Equals(typeof(String))) {
+            if(data.GetType().Equals
+                (typeof(String))) {
                     //a string is considered an array of chars
                     string dataAsString = data as string;
-                    MatLabFileArrayWriter charArrayWriter = OpenArray(typeof(char), name);
+                    MatLabFileArrayWriter charArrayWriter = OpenArray(typeof(char), name, compress);
                     charArrayWriter.AddRow(dataAsString.ToCharArray());
                     charArrayWriter.FinishArray(typeof(char));
             }
@@ -66,7 +89,7 @@ namespace MatlabFileIO
                     if (arr.Rank > 2)
                         throw new Exception("Matlab write doesn't support multidimensional arrays with a rank > 2");
                     t = arr.GetValue(0, 0).GetType();
-                    arrayWriter = OpenArray(t, name);
+                    arrayWriter = OpenArray(t, name, compress);
                     for (int i = 0; i < arr.GetLength(0); i++)
                     {
                         arrayWriter.AddRow(arr.SliceRow(i));
@@ -78,7 +101,7 @@ namespace MatlabFileIO
                         t = (data as Array).GetValue(0).GetType();
                     else
                         t = data.GetType();
-                    arrayWriter = OpenArray(t, name);
+                    arrayWriter = OpenArray(t, name, compress);
                     arrayWriter.AddRow(data);
                 }
                 arrayWriter.FinishArray(t);

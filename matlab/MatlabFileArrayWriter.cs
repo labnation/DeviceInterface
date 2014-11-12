@@ -19,30 +19,33 @@ namespace MatlabFileIO
         private long totalLengthStartPosition;
         private long dataLengthStartPosition;
         private long dimensionsStartPosition;
-        private int firstDim = 0;
-        private int secondDim = 0;
+
+        int[] dimensions = new int[2] { 0, 0 };
+        int numberOfDimensions { get { return dimensions.Length; } }
         private long dataLength = 0;
         private long headerLength = 0;
         private int totalPaddingAdded = 0;
 
         public MatLabFileArrayWriter(Type t, string varName, BinaryWriter writeStream)
         {
+            if(t == typeof(Int64) || t == typeof(UInt64))
+                throw new Exception("64 bit integer arrays are not supported by matlab file format");
             this.writeStream = writeStream;
             this.hasFinished = false;
 
             long beginPosition = writeStream.BaseStream.Position;
 
             //array header
-            WriteArrayHeaderRG();
+            WriteArrayTag();
 
             //flags
-            WriteFlagsRG(t);
+            WriteFlags(t);
 
             //dimensions            
-            WriteDimensionsPlaceholderRG();
+            WriteDimensionsPlaceholder();
 
             // array  name
-            WriteNameRG(varName);
+            WriteName(varName);
 
             //keep track of how many bytes were already consumed for this header
             headerLength = writeStream.BaseStream.Position - beginPosition;            
@@ -58,7 +61,7 @@ namespace MatlabFileIO
         private void WriteDataHeader(Type t)
         {
             //type of contents
-            writeStream.Write(MatfileHelper.MatlabTypeNumber(t));
+            writeStream.Write(MatfileHelper.MatlabArrayTypeNumber(t));
             
             //store position, so we can later overwrite this placeholder
             dataLengthStartPosition = writeStream.BaseStream.Position;
@@ -71,65 +74,84 @@ namespace MatlabFileIO
         public void AddRow(object dataToAppend)
         {
             Array data = dataToAppend as Array;
+            if(data == null) 
+            {
+                data = Array.CreateInstance(dataToAppend.GetType(), 1);
+                data.SetValue(dataToAppend, 0);
+            }
             //store this dimension size, and check if it is the same as any previous data stored
-            if (secondDim == 0) //first data
-                secondDim = data.Length;
+            if (dimensions[1] == 0) //first data
+                dimensions[1] = data.Length;
             else //not first data
-                if (secondDim != data.Length) //different size!
+                if (dimensions[1] != data.Length) //different size!
                     throw new Exception("Data to be appended has a different size than previously appended data!");
             
             //dump data in stream
             int size = 0;
             if (data.GetType().Equals(typeof(byte[])))
             {
-                byte[] castedDataByte = dataToAppend as byte[];
+                byte[] castedDataByte = data as byte[];
                 for (int i = 0; i < data.Length; i++)
                     writeStream.Write(castedDataByte[i]);
                 size = sizeof(byte);
             }
             else if (data.GetType().Equals(typeof(double[]))) {
-                    double[] castedDataDouble = dataToAppend as double[];
+                    double[] castedDataDouble = data as double[];
                     for (int i = 0; i < data.Length; i++)
                         writeStream.Write(castedDataDouble[i]);
                     size = sizeof(double);
             }
             else if (data.GetType().Equals(typeof(float[])))
             {
-                    float[] castedDataSingle = dataToAppend as float[];
+                    float[] castedDataSingle = data as float[];
                     for (int i = 0; i < data.Length; i++)
                         writeStream.Write(castedDataSingle[i]);
                     size = sizeof(float);
             }
             else if (data.GetType().Equals(typeof(Int16[])))
             {
-                    Int16[] castedDataI16 = dataToAppend as Int16[];
+                    Int16[] castedDataI16 = data as Int16[];
                     for (int i = 0; i < data.Length; i++)
                         writeStream.Write(castedDataI16[i]);
                     size = sizeof(Int16);
             }
             else if (data.GetType().Equals(typeof(UInt16[])))
             {
-                    UInt16[] castedDataUI16 = dataToAppend as UInt16[];
+                    UInt16[] castedDataUI16 = data as UInt16[];
                     for (int i = 0; i < data.Length; i++)
                         writeStream.Write(castedDataUI16[i]);
                     size = sizeof(UInt16);
             }
             else if (data.GetType().Equals(typeof(Int32[])))
             {
-                    Int32[] castedDataI32 = dataToAppend as Int32[];
+                    Int32[] castedDataI32 = data as Int32[];
                     for (int i = 0; i < data.Length; i++)
                         writeStream.Write(castedDataI32[i]);
                     size = sizeof(Int32);
             }
             else if (data.GetType().Equals(typeof(UInt32[])))
             {
-                    UInt32[] castedDataUI32 = dataToAppend as UInt32[];
+                    UInt32[] castedDataUI32 = data as UInt32[];
                     for (int i = 0; i < data.Length; i++)
                         writeStream.Write(castedDataUI32[i]);
                     size = sizeof(UInt32);
             }
+            else if (data.GetType().Equals(typeof(Int64[])))
+            {
+                Int64[] castedDataI64 = data as Int64[];
+                for (int i = 0; i < data.Length; i++)
+                    writeStream.Write(castedDataI64[i]);
+                size = sizeof(Int64);
+            }
+            else if (data.GetType().Equals(typeof(UInt64[])))
+            {
+                UInt64[] castedDataUI64 = data as UInt64[];
+                for (int i = 0; i < data.Length; i++)
+                    writeStream.Write(castedDataUI64[i]);
+                size = sizeof(UInt64);
+            }
             else if (data.GetType().Equals(typeof(sbyte[]))) {
-                    sbyte[] castedDataChar = dataToAppend as sbyte[];
+                    sbyte[] castedDataChar = data as sbyte[];
                     for (int i = 0; i < data.Length; i++)
                     {
                         writeStream.Write(castedDataChar[i]);
@@ -138,7 +160,7 @@ namespace MatlabFileIO
             }
             else if (data.GetType().Equals(typeof(char[]))) //Char is internally sbyte
             {
-                char[] castedDataChar = dataToAppend as char[];
+                char[] castedDataChar = data as char[];
                 for (int i = 0; i < data.Length; i++)
                 {
                     writeStream.Write(castedDataChar[i]);
@@ -153,25 +175,25 @@ namespace MatlabFileIO
             dataLength += data.Length * size;
 
             //needed for array dimensions
-            firstDim++;
+            dimensions[0]++;
         }        
 
         public void FinishArray(Type t)
         {
-            AddPadding(dataLength);
+            totalPaddingAdded += writeStream.AdvanceTo8ByteBoundary();
             
             //now need to overwrite the dimensions with the correct value
             writeStream.Seek((int)dimensionsStartPosition, SeekOrigin.Begin);
             //silly matlab format dimension definition wasn't made for realtime streaming... without the following, strings would need to be transposed in matlab to be readable
             if (t.Equals(typeof(char)))
             {                
-                writeStream.Write((int)firstDim);
-                writeStream.Write((int)secondDim);
+                writeStream.Write(dimensions[0]);
+                writeStream.Write(dimensions[1]);
             }
             else
             {
-                writeStream.Write((int)secondDim);
-                writeStream.Write((int)firstDim);
+                writeStream.Write(dimensions[1]);
+                writeStream.Write(dimensions[0]);
             }
 
             //and the full size of the array
@@ -189,9 +211,9 @@ namespace MatlabFileIO
             this.hasFinished = true;
         }
 
-        private void WriteArrayHeaderRG()
+        private void WriteArrayTag()
         {
-            //data array type (always 14)
+            //miMatrix type (always 14)
             writeStream.Write((int)14);
 
             //store position, so we can later overwrite this placeholder
@@ -202,27 +224,27 @@ namespace MatlabFileIO
                 writeStream.Write((byte)0xff);
         }
 
-        private void WriteFlagsRG(Type t)
+        private void WriteFlags(Type arrayElementDataType)
         {
             //write 4 values for flag block
 
-            //data type contained in flag block (always 6)
-            writeStream.Write((int)6);
+            //Array flags use uint32 data type
+            writeStream.Write(MatfileHelper.MatlabDataTypeNumber(typeof(UInt32)));
 
             //flag block length (always 8)
             writeStream.Write((int)8);
 
             //array class
-            writeStream.Write(MatfileHelper.MatlabTypeNumber(t));
+            writeStream.Write(MatfileHelper.MatlabArrayTypeNumber(arrayElementDataType));
 
             //padding (always 0)
             writeStream.Write((int)0);            
         }
 
-        private void WriteDimensionsPlaceholderRG()
+        private void WriteDimensionsPlaceholder()
         {            
-            //data type contained in name block (always 5)
-            writeStream.Write((int)5);
+            //data type contained in dimensions subelement: Int32
+            writeStream.Write(MatfileHelper.MatlabDataTypeNumber(typeof(Int32)));
 
             //always 8 bytes long
             writeStream.Write((int)8);
@@ -231,20 +253,18 @@ namespace MatlabFileIO
             dimensionsStartPosition = writeStream.BaseStream.Position;
 
             //placeholder for first dimension
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < dimensions.Length * MatfileHelper.MatlabBytesPerType(typeof(Int32)); i++)
                 writeStream.Write((byte)0xee);
 
-            //placeholder for second dimension
-            for (int i = 0; i < 4; i++)
-                writeStream.Write((byte)0xdd);
+            totalPaddingAdded += writeStream.AdvanceTo8ByteBoundary();
         }
 
-        private void WriteNameRG(string name)
+        private void WriteName(string name)
         {
             //write 4 values for name block
 
             //data type contained in name block (always 1)
-            writeStream.Write((int)1);
+            writeStream.Write(MatfileHelper.MatlabDataTypeNumber(typeof(SByte)));
 
             //size (without padding!)
             int nameLength = name.Length;
@@ -253,27 +273,10 @@ namespace MatlabFileIO
             //write name itself
             for (int i = 0; i < nameLength; i++)
                 writeStream.Write((byte)name[i]);
-
-            //pad if needed
-            AddPadding(nameLength);
+                
+            totalPaddingAdded += writeStream.AdvanceTo8ByteBoundary();
         }        
-
-        private void AddPadding(long lastWrittenBlockLength)
-        {
-            //pad block to multiple of 8
-            int mod8 = (int)(lastWrittenBlockLength % 8);
-            int requiredPadding = 8 - mod8;
-
-            if (requiredPadding == 8) requiredPadding = 0;
-
-            //add 0s
-            for (int i = 0; i < requiredPadding; i++)
-                writeStream.Write((byte)0);
-
-            //keep track of this
-            totalPaddingAdded += requiredPadding;
-        }
-
+            
         public bool HasFinished() {  return this.hasFinished; }
     }
 }
