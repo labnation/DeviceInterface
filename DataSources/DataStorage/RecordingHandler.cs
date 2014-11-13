@@ -4,16 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using ECore.DataSources;
+using ECore.Devices;
 using System.IO;
 using MatlabFileIO;
 using Common;
+using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace ECore.DataSources
 {
     public enum StorageFileFormat
     {
         MATLAB,
-        CSV
+        CSV,
+        CSV_ZIP
     }
 
     public static class EnumExtensions
@@ -138,9 +142,75 @@ namespace ECore.DataSources
             return filename;
         }
 
+        public class RecordingRecord
+        {
+            public RecordingRecord() {}
+            public RecordingRecord(double sampleTime)
+            {
+                this.sampleTime = sampleTime;
+            }
+
+            public double? sampleTime{get;set;}
+            public float? chA {get; set;}
+            public float? chB {get; set;}
+            public byte? logicAnalyser {get; set;}
+        }
+
+        public sealed class RecordingRecordMapper : CsvClassMap<RecordingRecord>
+        {
+            public RecordingRecordMapper()
+            {
+                Map(x=>x.sampleTime).Name("SampleTime");
+                Map(x => x.chA).Name("Channel A");
+                Map(x => x.chB).Name("Channel B");
+                Map(x => x.logicAnalyser).Name("Logic Analyser");
+            }
+        }
+
         private static string StoreCsv(RecordingScope recording, Action<float> progress)
         {
-            throw new NotImplementedException("Implement this using CSVHelper");
+            string filename = Utils.GetTempFileName(".csv");
+            StreamWriter textWriter = File.CreateText(filename);
+            CsvWriter csvFileWriter = new CsvWriter(textWriter);
+
+            //Construct records
+            List<RecordingRecord> records = new List<RecordingRecord>();
+            int nSamples = 0;
+            UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
+            for(int i =0; i< recording.acqInfo.Count(); i++)
+            {
+                var acqInfo = recording.acqInfo[i];
+                records.Add(new RecordingRecord((double)(acqInfo.firstSampleTime - timeOrigin) / (double)1.0e9));
+                for(int j = 1; j < acqInfo.samples; j++)
+                    records.Add(new RecordingRecord());
+                nSamples += acqInfo.samples;
+            }
+
+
+            foreach (var pair in recording.channelBuffers)
+            {
+                object data = pair.Value.GetData(0, nSamples);
+                float[] floatData = null;
+                byte[] byteData = null;
+                if(data.GetType() == typeof(float[]))
+                    floatData = (float[])data;
+                if(data.GetType() == typeof(byte[]))
+                    byteData = (byte[])data;
+
+                for(int i = 0; i < nSamples; i++)
+                {
+                    if(pair.Key == AnalogChannel.ChA)
+                        records[i].chA = floatData[i];
+                    else if(pair.Key == AnalogChannel.ChB)
+                        records[i].chB = floatData[i];
+                    else if(pair.Key == LogicAnalyserChannel.LogicAnalyser)
+                        records[i].logicAnalyser = byteData[i];
+                }
+            }
+            csvFileWriter.Configuration.RegisterClassMap<RecordingRecordMapper>();
+            csvFileWriter.WriteRecords(records);
+            textWriter.Close();
+            return filename;
         }
 
         private static double[] getTimeAxis(RecordingScope r, int offset = 0, int number = -1)
