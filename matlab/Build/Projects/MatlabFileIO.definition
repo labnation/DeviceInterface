@@ -4,6 +4,11 @@
     <NoWarn>1591</NoWarn>
     <RootNamespace>MatlabFileIO</RootNamespace>
     <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
+    <FrameworkVersions>
+      <Platform Name="Android">
+        <Version>v4.0</Version>
+      </Platform>
+    </FrameworkVersions>
     <CustomDefinitions>
       <Platform Name="Android">TRACE;ANDROID</Platform>
       <Platform Name="iOS">IOS</Platform>
@@ -18,7 +23,6 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Zlib" />
   </References>
   <Files>
     <Compile Include="MatlabFileArrayWriter.cs" />

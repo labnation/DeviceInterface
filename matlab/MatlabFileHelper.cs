@@ -109,7 +109,7 @@ namespace MatlabFileIO
 
         public static void WriteMatlabHeader(this BinaryWriter writeStream)
         {
-            string descriptiveText = "MATLAB MAT-file v4, Platform: " + Environment.OSVersion.Platform + ", CREATED on: " + DateTime.Now.ToString();
+            string descriptiveText = "MATLAB MAT-file v5, Platform: " + Environment.OSVersion.Platform + ", CREATED on: " + DateTime.Now.ToString();
 
             //write text
             for (int i = 0; i < descriptiveText.Length; i++)
