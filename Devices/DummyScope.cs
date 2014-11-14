@@ -84,31 +84,33 @@ namespace ECore.Devices {
 		internal DummyScope () : base ()
 		{
             waveSource = WaveSource.GENERATOR;
-            ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>();
-            
-            ChannelConfig.Add(AnalogChannel.ChA, new DummyScopeChannelConfig()
+            ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>() 
             {
-                amplitude = 2,
-                noise = 0.1,
-                coupling = Coupling.DC,
-                dcOffset = 0.0,
-                frequency = 1e3,
-                phase = 0,
-                waveform = WaveForm.TRIANGLE,
-                probeDivision = ProbeDivision.X1,
-            });
-
-            ChannelConfig.Add(AnalogChannel.ChB, new DummyScopeChannelConfig()
-            {
-                amplitude = 1,
-                noise = 0.1,
-                coupling = Coupling.DC,
-                dcOffset = 0.0,
-                frequency = 1e3,
-                phase = 0,
-                waveform = WaveForm.SINE,
-                probeDivision = ProbeDivision.X1,
-            });
+                { AnalogChannel.ChA, new DummyScopeChannelConfig()
+                    {
+                        amplitude = 2,
+                        noise = 0.1,
+                        coupling = Coupling.DC,
+                        dcOffset = 0.0,
+                        frequency = 1e3,
+                        phase = 0,
+                        waveform = WaveForm.TRIANGLE,
+                        probeDivision = ProbeDivision.X1,
+                    }
+                },
+                { AnalogChannel.ChB, new DummyScopeChannelConfig() 
+                    {
+                        amplitude = 1,
+                        noise = 0.1,
+                        coupling = Coupling.DC,
+                        dcOffset = 0.0,
+                        frequency = 1e3,
+                        phase = 0,
+                        waveform = WaveForm.SINE,
+                        probeDivision = ProbeDivision.X1,
+                    }
+                }
+            };
             
             timeOrigin = DateTime.Now;
 			DataSourceScope = new DataSources.DataSource (this);
