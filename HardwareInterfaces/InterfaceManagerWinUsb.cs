@@ -15,6 +15,7 @@ namespace ECore.HardwareInterfaces
     {
         Form winUsbForm;
         USBNotifier notifier;
+        object interfaceLock = new object();
 
         protected override void Initialize()
         {
@@ -44,33 +45,34 @@ namespace ECore.HardwareInterfaces
 
         public override void PollDevice()
         {
-            if (interfaces.Count > 0 && onConnect != null)
+            lock (interfaceLock)
             {
-                onConnect(interfaces.First().Value, true);
-                return;
-            }
-
-            foreach (int PID in PIDs)
-            {
-                USBDeviceInfo[] devs = USBDevice.GetDevices(guid);
-                foreach(var dev in devs)
+                if (interfaces.Count > 0 && onConnect != null)
                 {
-                    if (PIDs.Contains(dev.PID) && VID == dev.VID)
-                    {
-                        Thread.Sleep(10);
-                        try
-                        {
-                            USBDevice d = new USBDevice(dev);
-                            if (DeviceFound(d))
-                                return;
-                        }
-                        catch (USBException e)
-                        {
-                            Logger.Warn("Though a device was found, we failed to capture it: " + e.Message);
-                            return;
-                        }
+                    onConnect(interfaces.First().Value, true);
+                    return;
+                }
 
-                        
+                foreach (int PID in PIDs)
+                {
+                    USBDeviceInfo[] devs = USBDevice.GetDevices(guid);
+                    foreach (var dev in devs)
+                    {
+                        if (PIDs.Contains(dev.PID) && VID == dev.VID)
+                        {
+                            Thread.Sleep(10);
+                            try
+                            {
+                                USBDevice d = new USBDevice(dev);
+                                if (DeviceFound(d))
+                                    return;
+                            }
+                            catch (USBException e)
+                            {
+                                Logger.Warn("Though a device was found, we failed to capture it: " + e.Message);
+                                return;
+                            }
+                        }
                     }
                 }
             }
@@ -79,11 +81,16 @@ namespace ECore.HardwareInterfaces
         //called at init, and each time a system event occurs
         private void OnDeviceArrival(Object sender, USBEvent e)
         {
-            if(interfaces.Keys.Contains(e.DevicePath.ToLower())) {
-                Logger.Info("Ignoring WINUSB device arrival since device already registered");
+            lock (interfaceLock)
+            {
+                if (interfaces.Keys.Contains(e.DevicePath.ToLower()))
+                {
+                    Logger.Info("Ignoring WINUSB device arrival since device already registered");
+                    return;
+                }
+                USBDevice d = new USBDevice(e.DevicePath);
+                DeviceFound(d);
             }
-            USBDevice d = new USBDevice(e.DevicePath);
-            DeviceFound(d);
         }
 
         private void OnDeviceRemoval(Object sender, USBEvent e)
