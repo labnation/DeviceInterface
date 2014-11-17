@@ -59,7 +59,7 @@ namespace DriverInstaller
                         msg += "\n\nA restart is required to complete the installation";
 
                     if (msg == "")
-                        msg = String.Format("It seems all went well, but I'm not quite sure. The exit code is (0x{0:X})", retCode);
+                        msg = String.Format("It seems you first need to remove the driver currenly used\nby the SmartScope using the windows device manager", retCode);
                     TopMostMessageBox.Show(msg, "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     running = false;
                 }
