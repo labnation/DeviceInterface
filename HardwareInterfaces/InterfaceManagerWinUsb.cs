@@ -79,6 +79,9 @@ namespace ECore.HardwareInterfaces
         //called at init, and each time a system event occurs
         private void OnDeviceArrival(Object sender, USBEvent e)
         {
+            if(interfaces.Keys.Contains(e.DevicePath.ToLower())) {
+                Logger.Info("Ignoring WINUSB device arrival since device already registered");
+            }
             USBDevice d = new USBDevice(e.DevicePath);
             DeviceFound(d);
         }
