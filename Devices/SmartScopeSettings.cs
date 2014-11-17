@@ -226,7 +226,7 @@ namespace ECore.Devices
             Logger.Debug("Set Y offset for channel " + channel + " to " + offset + " (int value)");
             FpgaSettingsMemory[r].Set(offset);
         }
-
+#endif
 
         private bool disableVoltageConversion = false;
         /// <summary>
@@ -237,7 +237,6 @@ namespace ECore.Devices
         {
             this.disableVoltageConversion = disable;
         }
-#endif
 
         public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {
