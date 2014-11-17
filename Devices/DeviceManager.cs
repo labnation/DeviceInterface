@@ -79,8 +79,10 @@ namespace ECore.Devices
                 {
                     device = new SmartScope(hardwareInterface);
                     connectHandler(fallbackDevice, false);
+					#if WINDOWS
                     lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
                     Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
+					#endif
                     connectHandler(device, true);
                 }
             }
@@ -91,7 +93,9 @@ namespace ECore.Devices
                     connectHandler(device, false);
                     (device as SmartScope).Dispose();
                     device = null;
+					#if WINDOWS
                     lastSmartScopeDetectedThroughWinUsb = null;
+					#endif
                     connectHandler(fallbackDevice, true);
                 }
             }
