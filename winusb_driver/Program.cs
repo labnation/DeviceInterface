@@ -26,7 +26,7 @@ namespace DriverInstaller
                 string serial;
                 if(!Common.Utils.TestUsbDeviceFound(VID, PID, out serial))
                 {
-                    DialogResult r = TopMostMessageBox.Show("Please make sure the smartscope is connected " + PID + " " + VID, "Connect the smartscope", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                    DialogResult r = TopMostMessageBox.Show("Please make sure the smartscope is connected", "Connect the smartscope", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                     if (r == DialogResult.Cancel)
                         break;
                     continue;
