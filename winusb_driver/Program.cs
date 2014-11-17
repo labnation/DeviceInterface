@@ -12,6 +12,9 @@ namespace DriverInstaller
 {
     class Program
     {
+        static int VID = 0x04D8;
+        static int PID = 0xF4B5;
+
         static int Main(string[] args)
         {
             int retCode = 0;
@@ -19,6 +22,17 @@ namespace DriverInstaller
             string output, error;
             do
             {   
+                //Check if USB device is connected
+                string serial;
+                if(!Common.Utils.TestUsbDeviceFound(VID, PID, out serial))
+                {
+                    DialogResult r = TopMostMessageBox.Show("Please make sure the smartscope is connected " + PID + " " + VID, "Connect the smartscope", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                    if (r == DialogResult.Cancel)
+                        break;
+                    continue;
+                }
+
+
                 //Install our new inf
                 string dpinstExe;
                 if (Environment.Is64BitOperatingSystem)
