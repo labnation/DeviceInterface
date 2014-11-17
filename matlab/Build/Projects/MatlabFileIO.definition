@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="MatlabFileIO" Path="." Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows">
+<Project Name="MatlabFileIO" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows">
   <Properties>
     <NoWarn>1591</NoWarn>
     <RootNamespace>MatlabFileIO</RootNamespace>
