@@ -67,6 +67,7 @@ namespace ECore.Devices
         public void Stop()
         {
 #if WINDOWS
+            BadDriver = false;
             running = false;
             badDriverDetectionThread.Join(100);
 #endif
@@ -116,6 +117,7 @@ namespace ECore.Devices
                 if (lastSmartScopeDetectedThroughWinUsb != null)
                 {
                     Logger.Debug("Good winusb driver!");
+                    BadDriver = false;
                     running = false;
                     return;
                 }
