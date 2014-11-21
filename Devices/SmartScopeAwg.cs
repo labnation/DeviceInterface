@@ -14,6 +14,7 @@ namespace ECore.Devices
         const int AWG_SAMPLES_MAX = 2048;
         const int AWG_SAMPLES_MIN = 128;
         const int AWG_STRETCHER_MAX = 255;
+        public bool AwgOutOfRange { get; private set; }
 
         /// <summary>
         /// Set the data with which the AWG runs
@@ -28,10 +29,12 @@ namespace ECore.Devices
             if (data.Length > AWG_SAMPLES_MAX)
                 throw new ValidationException(String.Format("While setting AWG data: data buffer can't be longer than {0} samples, got {1}", AWG_SAMPLES_MAX, data.Length));
 
-            byte[] converted = data.Select(x => (byte)Math.Min(255, Math.Max(0, (x / 3.3 * 255)))).ToArray();
+            int[] converted = data.Select(x => (int)(x / 3.3 * 255)).ToArray();
+            AwgOutOfRange = converted.Where(x => x > byte.MaxValue || x < byte.MinValue).Count() > 0;
+            byte[] convertedBytes = converted.Select(x => (byte)Math.Min(255, Math.Max(0, x))).ToArray();
 
             SetAwgNumberOfSamples(data.Length);
-            hardwareInterface.SetControllerRegister(HardwareInterfaces.ScopeController.AWG, 0, converted);
+            hardwareInterface.SetControllerRegister(HardwareInterfaces.ScopeController.AWG, 0, convertedBytes);
         }
 
         public void SetAwgNumberOfSamples(int n)

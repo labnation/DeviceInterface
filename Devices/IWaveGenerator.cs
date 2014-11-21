@@ -7,6 +7,7 @@ namespace ECore.Devices
 {
     public interface IWaveGenerator : IDevice
     {
+        bool AwgOutOfRange { get; }
         void SetAwgData(double[] data);
         void SetAwgEnabled(bool enable);
         int GetAwgStretcherForFrequency(double frequency);

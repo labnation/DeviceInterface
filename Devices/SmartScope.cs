@@ -128,6 +128,7 @@ namespace ECore.Devices
         internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
             this.hardwareInterface = usbInterface;
+            AwgOutOfRange = false;
             deviceReady = false;
             FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
 
