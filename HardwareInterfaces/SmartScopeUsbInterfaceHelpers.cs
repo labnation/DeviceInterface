@@ -132,6 +132,10 @@ namespace ECore.HardwareInterfaces
         public static void Reset(this ISmartScopeUsbInterface i)
         {
             SendCommand(i, PIC_COMMANDS.PIC_RESET, true);
+			#if IOS
+			Common.Logger.Debug("Destroying interface after reset for ios");
+            i.Destroy();
+            #endif
         }
 
         public static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)

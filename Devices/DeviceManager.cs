@@ -60,7 +60,9 @@ namespace ECore.Devices
             badDriverDetectionThread.Start();
 #else
             InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
+            #if !IOS
             InterfaceManagerLibUsb.Instance.PollDevice();
+            #endif
 #endif
         }
 
@@ -91,12 +93,15 @@ namespace ECore.Devices
             {
                 if (device is SmartScope)
                 {
+                	Logger.Debug("DeviceManager: Calling connect handler");
                     connectHandler(device, false);
+					Logger.Debug("DeviceManager: disposing device");
                     (device as SmartScope).Dispose();
                     device = null;
 					#if WINDOWS
                     lastSmartScopeDetectedThroughWinUsb = null;
 					#endif
+					Logger.Debug("DeviceManager: calling connect for fallback device");
                     connectHandler(fallbackDevice, true);
                 }
             }

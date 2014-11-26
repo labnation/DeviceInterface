@@ -117,7 +117,7 @@ namespace ECore.Devices
             {
                 if (hardwareInterface == null)
                     return null;
-                return hardwareInterface.GetSerial();
+                return hardwareInterface.Serial;
             }
         }
 
@@ -394,7 +394,9 @@ namespace ECore.Devices
                 this.hardwareInterface.Reset();
             }
             catch (Exception)
-            {  
+            {
+            	Logger.Warn("Reset incomplete - destroying hardware interface");
+            	hardwareInterface.Destroy();
             }
         }
 
@@ -455,14 +457,14 @@ namespace ECore.Devices
             try { buffer = hardwareInterface.GetData(BURST_SIZE * header.NumberOfPayloadBursts); }
             catch (Exception e)
             {
-                Logger.Error("Failed to fetch payload - disconnecting scope: " + e.Message);
+                Logger.Error("Failed to fetch payload - resetting scope: " + e.Message);
                 Reset();
                 return null;
             }
                 
             if (buffer == null)
             {
-                Logger.Error("Failed to get payload (got null)");
+				Logger.Error("Failed to get payload - resetting");
                 Reset();
                 return null;
             }
@@ -551,7 +553,8 @@ namespace ECore.Devices
                     DataPackageScope p = GetScopeData();
                     if (p == null)
                     {
-                        Logger.Error("While trying to complete acquisition, failed and got null");
+                        Logger.Error("While trying to complete acquisition, failed and got null. resetting");
+                        Reset();
                         return null;
                     }
                     if (p.Partial == false)
@@ -686,8 +689,8 @@ namespace ECore.Devices
         }
 
         //FIXME: this needs proper handling
-        private bool Connected { get { return this.hardwareInterface != null && this.flashed; } }
-        public bool Ready { get { return this.Connected && this.deviceReady; } }
+        private bool Connected { get { return this.hardwareInterface != null && !this.hardwareInterface.Destroyed && this.flashed; } }
+        public bool Ready { get { return this.Connected && this.deviceReady && !(this.hardwareInterface == null || this.hardwareInterface.Destroyed); } }
 
         #endregion
     }

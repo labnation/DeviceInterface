@@ -34,7 +34,7 @@ namespace ECore.HardwareInterfaces
 #endif
     interface ISmartScopeUsbInterface
     {
-        string GetSerial();
+        string Serial { get; }
 
         void WriteControlBytes(byte[] message, bool async);
         void WriteControlBytesBulk(byte[] message, bool async);
@@ -43,6 +43,7 @@ namespace ECore.HardwareInterfaces
         
         byte[] GetData(int numberOfBytes);
 
+		bool Destroyed { get; }
         void Destroy();
         void FlushDataPipe(); 
     }

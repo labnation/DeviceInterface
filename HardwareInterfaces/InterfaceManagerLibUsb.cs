@@ -30,19 +30,6 @@ namespace ECore.HardwareInterfaces
             UsbDeviceNotifier = DeviceNotifier.OpenDeviceNotifier();
             UsbDeviceNotifier.OnDeviceNotify += OnDeviceNotifyEvent;   
             #endif
-
-            UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
-			C.Logger.Debug("Total number of USB devices attached: " + usbDeviceList.Count.ToString());
-            foreach (UsbRegistry device in usbDeviceList)
-            {
-                string sAdd = string.Format("Vid:0x{0:X4} Pid:0x{1:X4} (rev:{2}) - {3}",
-                                            device.Vid,
-                                            device.Pid,
-                                            (ushort)device.Rev,
-                                            device[SPDRP.DeviceDesc]);
-
-				C.Logger.Debug(sAdd);
-            }
         }
 
         #if IOS
@@ -54,31 +41,30 @@ namespace ECore.HardwareInterfaces
             pollThread.Start();
         }
 
-        private void pollThreadStart()
-        {
-            while(pollThreadRunning)
-            {
-                Common.Logger.Warn("Polling USB");
+        private void pollThreadStart ()
+		{
+			while (pollThreadRunning) {
+				Common.Logger.Warn ("Polling USB");
 
-                UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
-                var r = usbDeviceList.Where(x=> VID == x.Vid && PIDs.Contains(x.Pid));
+				UsbRegDeviceList usbDeviceList = UsbDevice.AllDevices;
+				var r = usbDeviceList.Where (x => VID == x.Vid && PIDs.Contains (x.Pid));
 
-                C.Logger.Warn("Filtered list conatins " + r.Count() + " devs");
-                if(r.Count() > 0 && interfaces.Count() == 0)
-                    PollDevice();
+				foreach (var inti in interfaces) {
+					if (inti.Value.Destroyed) {
+						Common.Logger.Debug("Found a interface (" + inti.Key + ") which was destroyed");
+						RemoveDevice (inti.Key);
+					}
+				}
 
-                if(interfaces.Count() > 0) 
-                {
-                    C.Logger.Warn("Checking if the device is alive!");
-                    var kvp = interfaces.First();
-                    SmartScopeUsbInterfaceLibUsb interf = (SmartScopeUsbInterfaceLibUsb)(kvp.Value);
-                    if(!(interf.Alive()))
-                    {
-                        C.Logger.Warn("Device not alive!");
-                        RemoveDevice(kvp.Key);
-                    }
-                }
-
+				C.Logger.Warn ("Filtered list conatins " + r.Count () + " devs - got " + interfaces.Count + " ifs so far");
+				if (r.Count () > 0) 
+				{
+					C.Logger.Warn("Removing all devices");
+					RemoveAllDevices();
+					C.Logger.Warn("Calling poll");
+					PollDevice ();
+					C.Logger.Warn("Done");
+				}
                 Thread.Sleep(POLL_INTERVAL);
             }
         }
@@ -147,7 +133,7 @@ namespace ECore.HardwareInterfaces
                     Common.Logger.Warn("Can't re-register device with this serial " + serial);
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 }
-                C.Logger.Debug("Device found with serial [" + serial + "]");
+                C.Logger.Warn("Device found with serial [" + serial + "]");
                 interfaces.Add(serial, f);
 
                 if (onConnect != null)
@@ -155,7 +141,7 @@ namespace ECore.HardwareInterfaces
             }
             catch (ScopeIOException e)
             {
-				C.Logger.Error("Error while trying to connect to device event handler: " + e.Message);
+				C.Logger.Error("Error while opening device: " + e.Message);
                 if (serial != null)
                     interfaces.Remove(serial);
             }
