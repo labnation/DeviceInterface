@@ -496,9 +496,9 @@ namespace ECore.Devices
         public void SetEnableLogicAnalyser(bool enable)
         {
             if (!Ready) return;
-            StrobeMemory[STR.LA_ENABLE].WriteImmediate(enable);
+            StrobeMemory[STR.LA_ENABLE].Set(enable);
             if(enable)
-                StrobeMemory[STR.AWG_ENABLE].WriteImmediate(false);
+                StrobeMemory[STR.AWG_ENABLE].Set(false);
         }
         public void SetLogicAnalyserChannel(AnalogChannel channel)
         {

@@ -396,7 +396,8 @@ namespace ECore.Devices
             catch (Exception)
             {
             	Logger.Warn("Reset incomplete - destroying hardware interface");
-            	hardwareInterface.Destroy();
+            	if(hardwareInterface != null)
+            		hardwareInterface.Destroy();
             }
         }
 
