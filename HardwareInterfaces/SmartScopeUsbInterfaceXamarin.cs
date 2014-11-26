@@ -20,6 +20,7 @@ namespace ECore.HardwareInterfaces
 
         public SmartScopeUsbInterfaceXamarin(Context context, UsbManager usbManager, UsbDevice device)
         {               
+        	Destroyed = false;
             if(!usbManager.HasPermission(device))
             {
                 Logger.Error("Permission denied");
@@ -139,13 +140,15 @@ namespace ECore.HardwareInterfaces
             bytesRead = usbConnection.BulkTransfer(dataEndpoint, readBuffer, length, 10);
         }
 
-        public string GetSerial()
-        {
-            return usbConnection.Serial;
+        public string Serial {
+			get { return usbConnection.Serial; }
         }
+
+        public bool Destroyed { get; private set; }
 
         public void Destroy()
         {
+        	Destroyed = true;
         }
 
 
