@@ -92,7 +92,7 @@ namespace ECore.Devices
             }
             catch (ScopeIOException e)
             {
-                Logger.Error("I/O failure while commint scope settings (" + e.Message + ")");
+                Logger.Error("I/O failure while committing scope settings (" + e.Message + ")");
             }
         }
         #endregion
