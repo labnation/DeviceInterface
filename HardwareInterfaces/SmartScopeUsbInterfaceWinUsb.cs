@@ -11,7 +11,7 @@ namespace ECore.HardwareInterfaces
 {
     internal class SmartScopeUsbInterfaceWinUsb : ISmartScopeUsbInterface
     {
-        private bool destroyed = false;
+        public bool Destroyed { get; private set; }
         private object usbLock = new object();
         
         private enum EndPoint { CMD_WRITE, CMD_READ, DATA };
@@ -113,6 +113,7 @@ namespace ECore.HardwareInterfaces
 
         public SmartScopeUsbInterfaceWinUsb(USBDevice usbDevice)
         {
+            Destroyed = false;
             device = usbDevice;
             serial = usbDevice.Descriptor.SerialNumber;
             foreach (USBPipe p in device.Pipes)
@@ -138,13 +139,16 @@ namespace ECore.HardwareInterfaces
         {
             //lock (usbLock)
             {
-                destroyed = true;
+                Destroyed = true;
             }
         }
 
-        public string GetSerial()
+        public string Serial
         {
-            return serial;
+            get
+            {
+                return serial;
+            }
         }
 
         public void WriteControlBytes(byte[] message, bool async)
@@ -211,7 +215,7 @@ namespace ECore.HardwareInterfaces
         {
             //lock (usbLock)
             {
-                if (!destroyed)
+                if (!Destroyed)
                 {
                     try
                     {
@@ -242,90 +246,6 @@ namespace ECore.HardwareInterfaces
                 return null;
             //return read data
             return cmd.buffer;
-        }
-
-        public void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
-        {
-            //In case of FPGA (I2C), first write address we're gonna read from to FPGA
-            //FIXME: this should be handled by the PIC firmware
-            if (ctrl == ScopeController.FPGA || ctrl == ScopeController.FPGA_ROM)
-                SetControllerRegister(ctrl, address, null);
-
-            if (ctrl == ScopeController.FLASH && (address + length) > (H.FLASH_USER_ADDRESS_MASK + 1))
-            {
-                throw new ScopeIOException(String.Format("Can't read flash rom beyond 0x{0:X8}", H.FLASH_USER_ADDRESS_MASK));
-            }
-
-            byte[] header = H.UsbCommandHeader(ctrl, H.Operation.READ, address, length);
-            this.WriteControlBytes(header, false);
-
-            //EP3 always contains 16 bytes xxx should be linked to constant
-            //FIXME: use endpoint length or so, or don't pass the argument to the function
-            byte[] readback = ReadControlBytes(16);
-
-            int readHeaderLength;
-            if (ctrl == ScopeController.FLASH)
-                readHeaderLength = 5;
-            else
-                readHeaderLength = 4;
-
-            //strip away first 4 bytes as these are not data
-            data = new byte[length];
-            Array.Copy(readback, readHeaderLength, data, 0, length);
-        }
-
-        public void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
-        {
-            if (data != null && data.Length > H.I2C_MAX_WRITE_LENGTH)
-            {
-                if (ctrl != ScopeController.AWG)
-                    throw new Exception(String.Format("Can't do writes of this length ({0}) to controller {1:G}", data.Length, ctrl));
-
-                int offset = 0;
-                byte[] toSend = new byte[32];
-
-                //Begin I2C - send start condition
-                WriteControlBytes(H.UsbCommandHeader(ctrl, H.Operation.WRITE_BEGIN, address, 0), false);
-
-                while (offset < data.Length)
-                {
-                    int length = Math.Min(data.Length - offset, H.I2C_MAX_WRITE_LENGTH_BULK);
-                    byte[] header = H.UsbCommandHeader(ctrl, H.Operation.WRITE_BODY, address, (uint)length);
-                    Array.Copy(header, toSend, header.Length);
-                    Array.Copy(data, offset, toSend, header.Length, length);
-                    WriteControlBytes(toSend, false);
-                    offset += length;
-                }
-                WriteControlBytes(H.UsbCommandHeader(ctrl, H.Operation.WRITE_END, address, 0), false);
-            }
-            else
-            {
-                uint length = data != null ? (uint)data.Length : 0;
-                byte[] header = H.UsbCommandHeader(ctrl, H.Operation.WRITE, address, length);
-
-                //Paste header and data together and send it
-                byte[] toSend = new byte[header.Length + length];
-                Array.Copy(header, toSend, header.Length);
-                if (length > 0)
-                    Array.Copy(data, 0, toSend, header.Length, data.Length);
-                WriteControlBytes(toSend, false);
-            }
-        }
-
-        public void SendCommand(H.PIC_COMMANDS cmd)
-        {
-            byte[] toSend = new byte[2] { H.HEADER_CMD_BYTE, (byte)cmd };
-            WriteControlBytes(toSend, false);
-        }
-
-        public void LoadBootLoader()
-        {
-            this.SendCommand(H.PIC_COMMANDS.PIC_BOOTLOADER);
-        }
-
-        public void Reset()
-        {
-            this.SendCommand(H.PIC_COMMANDS.PIC_RESET);
         }
     }
 }
