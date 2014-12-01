@@ -66,9 +66,6 @@ namespace ECore.Devices
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         byte[] chA = null, chB = null;
-#if DEBUG
-        byte[] rawBuffer = null;
-#endif
 
         private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
@@ -353,8 +350,8 @@ namespace ECore.Devices
                 SetCoupling(ch, coupling[ch]);
             }
                 
-            SetTriggerWidth(2);
-            SetTriggerThreshold(2);
+            SetTriggerWidth(3);
+            SetTriggerThreshold(3);
 
             SetAwgStretching(0);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
@@ -512,9 +509,6 @@ namespace ECore.Devices
                 {
                     chA = new byte[header.Samples];
                     chB = new byte[header.Samples];
-#if DEBUG
-                    rawBuffer = new byte[header.AcquisitionSize * header.BytesPerBurst];
-#endif
                 }
             }
 
@@ -522,15 +516,6 @@ namespace ECore.Devices
             {
                 chA[dataOffset + i] = buffer[header.Channels * i];
                 chB[dataOffset + i] = buffer[header.Channels * i + 1];
-#if DEBUG
-                if (rawBuffer != null)
-                {
-                    for (int j = 0; j < header.Channels; j++)
-                    {
-                        rawBuffer[(dataOffset + i) * header.Channels + j] = buffer[i * header.Channels + j];
-                    }
-                }
-#endif
             }
 
             //In rolling mode, crop the channel to the display length
@@ -562,26 +547,6 @@ namespace ECore.Devices
                         return p;
                 }
             }
-#if DEBUG
-            if (header.GetStrobe(STR.DEBUG_RAM) && header.GetRegister(REG.ACQUISITION_MULTIPLE_POWER) == 0)
-            {
-                UInt16[] testData = new UInt16[rawBuffer.Length / 2];
-                Buffer.BlockCopy(rawBuffer, 0, testData, 0, sizeof(UInt16) * testData.Length);
-                for (int i = 1; i < testData.Length; i++)
-                {
-                    UInt16 expected = Utils.nextFpgaTestVector(testData[i - 1]);
-                    bool mismatch = !expected.Equals(testData[i]);
-                    if (mismatch)
-                    {
-                        Logger.Debug("Stress test mismatch at sample " + i);
-                        ramTestFails++;
-                        goto ram_test_done;
-                    }
-                }
-                ramTestPasses++;
-            }
-            ram_test_done:
-#endif
 
             this.coupling[AnalogChannel.ChA] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
             this.coupling[AnalogChannel.ChB] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
