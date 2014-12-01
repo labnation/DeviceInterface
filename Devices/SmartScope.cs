@@ -118,10 +118,6 @@ namespace ECore.Devices
             }
         }
 
-#if DEBUG
-        public int ramTestPasses, ramTestFails, digitalTestPasses, digitalTestFails;
-#endif
-
         internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
             this.hardwareInterface = usbInterface;
@@ -190,9 +186,6 @@ namespace ECore.Devices
             InitializeMemories();
             try
             {
-#if DEBUG
-                resetTestResults("all");
-#endif
                 //FIXME: I have to do this synchronously here because there's no blocking on the USB traffic
                 //but there should be when flashing the FPGA.
 
@@ -260,23 +253,6 @@ namespace ECore.Devices
             this.hardwareInterface = null;
             this.flashed = false;
         }
-
-#if DEBUG
-        public void resetTestResults(string test)
-        {
-            if (test == "ram" || test == "all")
-            {
-                ramTestPasses = 0;
-                ramTestFails = 0;
-            }
-
-            if (test == "digi" || test == "all")
-            {
-                digitalTestPasses = 0;
-                digitalTestFails = 0;
-            }
-        }
-#endif
 
         //master method where all memories, registers etc get defined and linked together
         private void InitializeMemories()
@@ -550,30 +526,6 @@ namespace ECore.Devices
 
             this.coupling[AnalogChannel.ChA] = header.GetStrobe(STR.CHA_DCCOUPLING) ? Coupling.DC : Coupling.AC;
             this.coupling[AnalogChannel.ChB] = header.GetStrobe(STR.CHB_DCCOUPLING) ? Coupling.DC : Coupling.AC;
-
-#if DEBUG
-            if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.DIGI_DEBUG) && !header.GetStrobe(STR.DEBUG_RAM) && DebugDigital)
-            {
-                //Test if data in CHB is correct
-                byte[] testVector = new byte[header.SamplesPerAcquisition];
-                byte[] testData = header.GetStrobe(STR.LA_CHANNEL) ? chB : chA;
-                byte nextValue = testData[0];
-                for (int i = 0; i < testVector.Length; i++)
-                {
-                    testVector[i] = nextValue;
-                    int val = (nextValue >> 4) + 1;
-                    nextValue = (byte)((val << 4) + (Utils.ReverseWithLookupTable((byte)val) >> 4));
-                    if (testVector[i] != testData[i])
-                    {
-                        Logger.Error("Digital mismatch at sample " + i + ". Aborting check");
-                        digitalTestFails++;
-                        goto done;
-                    }
-                }
-                digitalTestPasses++;
-            }
-        done:
-#endif
 
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
