@@ -504,13 +504,12 @@ namespace ECore.Devices
             data.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);
             data.AddSetting("Multiplier" + AnalogChannel.ChB.Name, mulB);
             data.AddSetting("InputDecimation", header.GetRegister(REG.INPUT_DECIMATION));
+            data.SetDataRaw(AnalogChannel.ChA, chA);
+            data.SetDataRaw(AnalogChannel.ChB, chB);
+
 #if DEBUG
             data.AddSetting("DividerA", divA);
             data.AddSetting("DividerB", divB);
-
-
-            data.SetDataRaw(AnalogChannel.ChA, chA);
-            data.SetDataRaw(AnalogChannel.ChB, chB);
 
             if (this.disableVoltageConversion)
             {
