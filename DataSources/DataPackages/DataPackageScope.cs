@@ -110,13 +110,13 @@ namespace ECore.DataSources
         /// <summary>
         /// The trigger holdoff in seconds
         /// </summary>
-        public double Holdoff { get; private set; }
+        public double Holdoff { get; set; }
 
         /// <summary>
         /// The number of samples stored per channel
         /// </summary>
         //FIXME: this should be a private set, but is internal since a FIXME in SmartScope.GetScopeData()
-        public int Samples { get; internal set; }
+        public int Samples { get; set; }
 
         /// <summary>
         /// Indicates whether this is a partial acquisition package
