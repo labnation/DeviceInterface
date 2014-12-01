@@ -363,9 +363,8 @@ namespace ECore.Devices {
                 }
                 outputDigital = DummyScope.CropWave(outputWaveLength, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
             }                   
-            double firstSampleTime = (timeOffset.TotalMilliseconds / 1.0e3) + (triggerIndex - triggerHoldoffInSamples) * SamplePeriod;
-            UInt64 firstSampleTimeNs = (UInt64)(firstSampleTime * 1e9);
-            p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples, outputWaveLength, firstSampleTimeNs, false, false);
+            double holdoff = triggerHoldoffInSamples * SamplePeriod;
+            p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples, outputWaveLength, holdoff, false, false);
             foreach(AnalogChannel ch in AnalogChannel.List)
                 p.SetData(ch, outputAnalog[ch]);
 

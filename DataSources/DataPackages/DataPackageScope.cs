@@ -18,12 +18,12 @@ namespace ECore.DataSources
         private byte[] dataDigital;
         public Dictionary<string, double> Settings { get; private set; }
 
-        internal DataPackageScope(double samplePeriod, int triggerIndex, int samples, UInt64 firstSampleTime, bool partial, bool rolling)
+        internal DataPackageScope(double samplePeriod, int triggerIndex, int samples, double holdoff, bool partial, bool rolling)
         {
             this.TriggerIndex = triggerIndex;
             this.SamplePeriod = samplePeriod;
             this.Samples = samples;
-            this.FirstSampleTime = firstSampleTime;
+            this.Holdoff = holdoff;
             this.Partial = partial;
             this.Rolling = rolling;
             dataAnalog = new Dictionary<AnalogChannel, float[]>();
@@ -97,10 +97,9 @@ namespace ECore.DataSources
         public double SamplePeriod { get; private set; }
 
         /// <summary>
-        /// The time in ns scale at which the first sample of the
-        /// data was acquired, relative to the scope's own clock
+        /// The trigger holdoff in seconds
         /// </summary>
-        public UInt64 FirstSampleTime { get; private set; }
+        public double Holdoff { get; private set; }
 
         /// <summary>
         /// The number of samples stored per channel

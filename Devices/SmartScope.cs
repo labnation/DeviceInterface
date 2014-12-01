@@ -67,11 +67,11 @@ namespace ECore.Devices
 
         byte[] chA = null, chB = null;
 
-        private const double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
+        internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
         //FIXME: this should be automatically parsed from VHDL
-        private const int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
+        internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
         private const int INPUT_DECIMATION_MAX = 21;
 
@@ -438,7 +438,7 @@ namespace ECore.Devices
             catch (ScopeIOException) { return null; }
             if (buffer == null) return null;
 
-            try { header = new SmartScopeHeader(buffer); }
+            try { header = new SmartScopeHeader(buffer, FrequencyCompensationMode); }
             catch (Exception e)
             {
                 Logger.Error("Failed to parse header - resetting scope: " + e.Message);
@@ -578,7 +578,7 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, 0, chA.Length < header.SamplesPerAcquisition, header.Rolling);
+            DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, header.TriggerHoldoff, chA.Length < header.SamplesPerAcquisition, header.Rolling);
 #if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif

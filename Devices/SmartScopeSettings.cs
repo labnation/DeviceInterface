@@ -447,9 +447,6 @@ namespace ECore.Devices
             this.holdoff = time;
             byte inputDecimation = FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte();
             Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2,  inputDecimation)));
-            //FIXME FPGA bug
-            samples++;
-            samples++;
             //FIXME: this might not be the cleanest way to do this
             if (inputDecimation <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION)
                 samples += FrequencyCompensation.cutOffLength[FrequencyCompensationMode];

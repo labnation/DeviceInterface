@@ -38,6 +38,11 @@ namespace ECore.Devices
         internal double SamplePeriod { get; private set; }
 
         /// <summary>
+        /// The trigger holdoff in seconds
+        /// </summary>
+        internal double TriggerHoldoff { get; private set; }
+
+        /// <summary>
         /// The total number of samples in this acquisition
         /// </summary>
         internal int SamplesPerAcquisition { get { return AcquisitionSize * BytesPerBurst / Channels; } }
@@ -58,7 +63,8 @@ namespace ECore.Devices
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
         
-        internal SmartScopeHeader(byte[] data)
+        //FIXME: we really shouldn't be needing the freqcomp mode in here
+        internal SmartScopeHeader(byte[] data, FrequencyCompensationCPULoad fcm)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
             raw = new byte[headerSize];
@@ -83,7 +89,17 @@ namespace ECore.Devices
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
             //SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
             //For now, we hardcoded this case in the FPGA
-            SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.ACQUISITION_MULTIPLE_POWER) + GetRegister(REG.INPUT_DECIMATION));
+            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.ACQUISITION_MULTIPLE_POWER) + GetRegister(REG.INPUT_DECIMATION));
+
+
+            Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24);
+            if (GetRegister(REG.INPUT_DECIMATION) <= SmartScope.INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION)
+                holdoffSamples -= FrequencyCompensation.cutOffLength[fcm];
+
+            TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }
 
         internal byte GetRegister(REG r)
