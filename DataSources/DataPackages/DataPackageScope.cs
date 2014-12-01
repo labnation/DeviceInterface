@@ -13,20 +13,21 @@ namespace ECore.DataSources
     public class DataPackageScope
     {
         private Dictionary<AnalogChannel, float[]> dataAnalog;
+        private Dictionary<AnalogChannel, byte[]> dataAnalogRaw;
         //FIXME: think through how to deal with the digital data. For now, it's better
         //to just pass it around as an 8-bit bus. But what if we have 10 channels? or 11? or 42?
         private byte[] dataDigital;
         public Dictionary<string, double> Settings { get; private set; }
 
-        internal DataPackageScope(double samplePeriod, int triggerIndex, int samples, double holdoff, bool partial, bool rolling)
+        internal DataPackageScope(double samplePeriod, int samples, double holdoff, bool partial, bool rolling)
         {
-            this.TriggerIndex = triggerIndex;
             this.SamplePeriod = samplePeriod;
             this.Samples = samples;
             this.Holdoff = holdoff;
             this.Partial = partial;
             this.Rolling = rolling;
             dataAnalog = new Dictionary<AnalogChannel, float[]>();
+            dataAnalogRaw = new Dictionary<AnalogChannel, byte[]>();
             Settings = new Dictionary<string,double>();
         }
 
@@ -35,6 +36,12 @@ namespace ECore.DataSources
         {
             dataAnalog.Remove(ch);
             dataAnalog.Add(ch, data);
+        }
+
+        public void SetDataRaw(AnalogChannel ch, byte[] data)
+        {
+            dataAnalogRaw.Remove(ch);
+            dataAnalogRaw.Add(ch, data);
         }
 
         internal void SetDataDigital(byte[] data)
@@ -54,6 +61,14 @@ namespace ECore.DataSources
             dataAnalog.TryGetValue(ch, out data);
             return data;
         }
+
+        public byte[] GetDataRaw(AnalogChannel ch)
+        {
+            byte[] data = null;
+            dataAnalogRaw.TryGetValue(ch, out data);
+            return data;
+        }
+
         public byte[] GetDataDigital()
         {
             return dataDigital;
@@ -86,11 +101,7 @@ namespace ECore.DataSources
             }
             return null;
         }
-        /// <summary>
-        /// Index at which the data was triggered. WARN: This index is not necessarily within the 
-        /// data array's bounds, depending on what trigger holdoff was used
-        /// </summary>
-        public int TriggerIndex { get; private set; }
+
         /// <summary>
         /// Time between 2 consecutive data array elements. In seconds.
         /// </summary>

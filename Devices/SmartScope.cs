@@ -88,22 +88,6 @@ namespace ECore.Devices
             level = 0.0f
         };
 
-
-        //Select through: AnalogChannel, multiplier, subsampling
-        private Dictionary<AnalogChannel, Dictionary<double, Dictionary<ushort, Complex[]>>> compensationSpectrum;
-#if DEBUG
-        public 
-#else
-        private
-#endif
-        FrequencyCompensationCPULoad FrequencyCompensationMode { get; set; }
-#if DEBUG
-        public 
-#else
-        private
-#endif
-        bool TimeSmoothingEnabled = true;
-
 #if DEBUG
         public bool DebugDigital { get; set; }
 #endif
@@ -123,8 +107,7 @@ namespace ECore.Devices
             this.hardwareInterface = usbInterface;
             AwgOutOfRange = false;
             deviceReady = false;
-            FrequencyCompensationMode = FrequencyCompensationCPULoad.Basic;
-
+            
             coupling = new Dictionary<AnalogChannel, Coupling>();
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
             yOffset = new Dictionary<AnalogChannel, float>();
@@ -196,27 +179,6 @@ namespace ECore.Devices
 
                 //Init ROM
                 this.rom = new Rom(hardwareInterface);
-
-                //precalc compensation spectra
-                this.compensationSpectrum = new Dictionary<AnalogChannel,Dictionary<double,Dictionary<ushort,Complex[]>>>() {
-                    { AnalogChannel.ChA, new Dictionary<double, Dictionary<ushort,Complex[]>>() },
-                    { AnalogChannel.ChB, new Dictionary<double, Dictionary<ushort,Complex[]>>() },
-                };
-                foreach (FrequencyResponse fr in rom.frequencyResponse)
-                {
-                    Complex[] artSpectr = FrequencyCompensation.CreateArtificialSpectrum(fr.magnitudes, fr.phases);
-                        
-                    Dictionary<ushort, Complex[]> subsamplingSpectrum = new Dictionary<ushort, Complex[]>();
-                    subsamplingSpectrum.Add(0, artSpectr);
-                    for (ushort subsamplingBase10 = 1; subsamplingBase10 < 20; subsamplingBase10++)
-                    {
-                        //subsample the reconstruction spectrum
-                        artSpectr = FrequencyCompensation.SubsampleSpectrum(artSpectr);
-                        subsamplingSpectrum.Add(subsamplingBase10, artSpectr);
-                    }
-
-                    compensationSpectrum[fr.channel].Add(fr.multiplier, subsamplingSpectrum);
-                }
 
                 //Init FPGA
                 LogWait("Starting fpga flashing...", 0);
@@ -414,7 +376,7 @@ namespace ECore.Devices
             catch (ScopeIOException) { return null; }
             if (buffer == null) return null;
 
-            try { header = new SmartScopeHeader(buffer, FrequencyCompensationMode); }
+            try { header = new SmartScopeHeader(buffer); }
             catch (Exception e)
             {
                 Logger.Error("Failed to parse header - resetting scope: " + e.Message);
@@ -504,8 +466,6 @@ namespace ECore.Devices
                 chA = chANew;
                 chB = chBNew;
             }
-            //FIXME: Get these scope settings from header
-            int triggerIndex = 0;
 
             //If we're not decimating a lot, fetch on till the package is complete
             if (!header.Rolling && header.SamplesPerAcquisition > chA.Length && header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
@@ -530,7 +490,7 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            DataPackageScope data = new DataPackageScope(header.SamplePeriod, triggerIndex, chA.Length, header.TriggerHoldoff, chA.Length < header.SamplesPerAcquisition, header.Rolling);
+            DataPackageScope data = new DataPackageScope(header.SamplePeriod, chA.Length, header.TriggerHoldoff, chA.Length < header.SamplesPerAcquisition, header.Rolling);
 #if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif
@@ -540,12 +500,17 @@ namespace ECore.Devices
             double mulA = validMultipliers[(divMul >> 2) & 0x3];
             double divB = validDividers[(divMul >> 4) & 0x3];
             double mulB = validMultipliers[(divMul >> 6) & 0x3];
+
+            data.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);
+            data.AddSetting("Multiplier" + AnalogChannel.ChB.Name, mulB);
+            data.AddSetting("InputDecimation", header.GetRegister(REG.INPUT_DECIMATION));
 #if DEBUG
             data.AddSetting("DividerA", divA);
             data.AddSetting("DividerB", divB);
-            data.AddSetting("MultiplierA", mulA);
-            data.AddSetting("MultiplierB", mulB);
 
+
+            data.SetDataRaw(AnalogChannel.ChA, chA);
+            data.SetDataRaw(AnalogChannel.ChB, chB);
 
             if (this.disableVoltageConversion)
             {
@@ -558,48 +523,20 @@ namespace ECore.Devices
             else
             {
 #endif
-            byte subSamplingBase10Power = header.GetRegister(REG.INPUT_DECIMATION);
-
-            bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
                 bool logicAnalyserOnChannelA = header.GetStrobe(STR.LA_ENABLE) && !header.GetStrobe(STR.LA_CHANNEL);
                 bool logicAnalyserOnChannelB = header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.LA_CHANNEL);
 
+                bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
+            
                 if (logicAnalyserOnChannelA)
-                {
                     data.SetDataDigital(chA);
-                }
                 else
-                {
-                    float[] ChAConverted = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]);
-
-                    if (TimeSmoothingEnabled)
-                        ChAConverted = ECore.FrequencyCompensation.TimeDomainSmoothing(ChAConverted, chA);
-
-                    if (performFrequencyCompensation)
-                        ChAConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChA][mulA][subSamplingBase10Power], ChAConverted, FrequencyCompensationMode);
-
-                    data.SetData(AnalogChannel.ChA, ChAConverted);
-                    //FIXME: this is because the frequency compensation changes the data length
-                    data.Samples = ChAConverted.Length;
-                }
+                    data.SetData(AnalogChannel.ChA, ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]));
 
                 if (logicAnalyserOnChannelB)
-                {
                     data.SetDataDigital(chB);
-                }
                 else
-                {
-                    float[] ChBConverted = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]);
-                    
-                    if (TimeSmoothingEnabled)
-                        ChBConverted = ECore.FrequencyCompensation.TimeDomainSmoothing(ChBConverted, chB);
-
-                    if (performFrequencyCompensation)
-                        ChBConverted = ECore.FrequencyCompensation.Compensate(this.compensationSpectrum[AnalogChannel.ChB][mulB][subSamplingBase10Power], ChBConverted, FrequencyCompensationMode);
-
-                    data.SetData(AnalogChannel.ChB, ChBConverted);
-                    data.Samples = ChBConverted.Length;
-                }
+                    data.SetData(AnalogChannel.ChB, ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]));
 #if DEBUG                    
             }
 #endif

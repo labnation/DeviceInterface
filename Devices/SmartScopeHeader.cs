@@ -64,7 +64,7 @@ namespace ECore.Devices
         internal int TriggerAddress { get; private set; }
         
         //FIXME: we really shouldn't be needing the freqcomp mode in here
-        internal SmartScopeHeader(byte[] data, FrequencyCompensationCPULoad fcm)
+        internal SmartScopeHeader(byte[] data)
         {
             int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
             raw = new byte[headerSize];
@@ -96,9 +96,6 @@ namespace ECore.Devices
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24);
-            if (GetRegister(REG.INPUT_DECIMATION) <= SmartScope.INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION)
-                holdoffSamples -= FrequencyCompensation.cutOffLength[fcm];
-
             TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }
 

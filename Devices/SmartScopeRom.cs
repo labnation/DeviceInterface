@@ -23,18 +23,15 @@ namespace ECore.Devices
             public double multiplier;
             public double[] coefficients;
         }
-#if DEBUG
-        public
-#else
-        private
-#endif
-        struct FrequencyResponse
+        public struct FrequencyResponse
         {
             public AnalogChannel channel;
             public double multiplier;
             public Dictionary<int, float> magnitudes;
             public Dictionary<int, float> phases;
         }
+
+        public List<FrequencyResponse> FrequencyResponses { get { return rom.frequencyResponse; } }
 
 #if DEBUG
         public
@@ -112,11 +109,6 @@ namespace ECore.Devices
             public GainCalibration getCalibration(AnalogChannel ch, double divider, double multiplier)
             {
                 return gainCalibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
-            }
-
-            public FrequencyResponse getFrequencyReponse(AnalogChannel ch, double multiplier)
-            {
-                return frequencyResponse.Where(x => x.channel == ch && x.multiplier == multiplier).First();
             }
 
             private byte[] MapToBytes(Map m)

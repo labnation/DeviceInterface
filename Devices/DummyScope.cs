@@ -364,7 +364,7 @@ namespace ECore.Devices {
                 outputDigital = DummyScope.CropWave(outputWaveLength, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
             }                   
             double holdoff = triggerHoldoffInSamples * SamplePeriod;
-            p = new DataPackageScope(SamplePeriod, triggerHoldoffInSamples, outputWaveLength, holdoff, false, false);
+            p = new DataPackageScope(SamplePeriod, outputWaveLength, holdoff, false, false);
             foreach(AnalogChannel ch in AnalogChannel.List)
                 p.SetData(ch, outputAnalog[ch]);
 
