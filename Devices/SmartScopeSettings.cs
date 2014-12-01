@@ -434,6 +434,11 @@ namespace ECore.Devices
             SetTriggerHoldOff(holdoff);
         }
 
+        public double ConvertSamplesToTime(int samples)
+        {
+            return samples * BASE_SAMPLE_PERIOD * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+        }
+
         public double GetTimeRange()
         {
             return GetDefaultTimeRange() * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
