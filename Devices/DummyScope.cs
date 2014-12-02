@@ -34,7 +34,7 @@ namespace ECore.Devices {
 		private DateTime timeOrigin;
 		//Wave settings
         private int usbLatency = 2;
-        private const int outputWaveLength = 2000;
+        private const int outputWaveLength = 2048;
         private object resetAcquisitionLock = new object();
         private bool resetAcquisition = false;
         private bool forceTrigger = false;
