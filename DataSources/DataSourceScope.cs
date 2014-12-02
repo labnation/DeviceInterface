@@ -50,6 +50,8 @@ namespace ECore.DataSources
                 if (BeforeNewDataAvailable != null)
                     BeforeNewDataAvailable(LatestDataPackage, new EventArgs());
 #endif
+                if (Recording != null && Recording.Busy)
+                    Record(LatestDataPackage, new EventArgs());
                 if (OnNewDataAvailable != null)
                     OnNewDataAvailable(LatestDataPackage, new EventArgs());
             }
@@ -163,7 +165,6 @@ namespace ECore.DataSources
             
             Recording = new RecordingScope();
 
-            OnNewDataAvailable += Record;
             return true;
         }
 
@@ -200,7 +201,6 @@ namespace ECore.DataSources
                 return false;
             }
 
-            OnNewDataAvailable -= Record;
             Recording.Busy = false;
             if (Recording.acqInfo.Count == 0)
             {
