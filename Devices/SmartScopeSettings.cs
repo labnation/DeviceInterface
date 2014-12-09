@@ -439,6 +439,10 @@ namespace ECore.Devices
             return samples * BASE_SAMPLE_PERIOD * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
         }
 
+        public int SubSampleRate {
+			get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); }
+		}
+
         public double GetTimeRange()
         {
             return GetDefaultTimeRange() * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
