@@ -199,15 +199,16 @@ namespace ECore.DataSources
 
                 for(int i = 0; i < nSamples; i++)
                 {
-                    if(pair.Key == AnalogChannel.ChA)
+                    if(pair.Key == AnalogChannel.ChA && floatData.Length == nSamples)
                         records[i].chA = floatData[i];
-                    else if(pair.Key == AnalogChannel.ChB)
+					else if(pair.Key == AnalogChannel.ChB && floatData.Length == nSamples)
                         records[i].chB = floatData[i];
-                    else if(pair.Key == LogicAnalyserChannel.LogicAnalyser)
+					else if(pair.Key == LogicAnalyserChannel.LogicAnalyser && byteData.Length == nSamples)
                         records[i].logicAnalyser = byteData[i];
                 }
             }
             csvFileWriter.Configuration.RegisterClassMap<RecordingRecordMapper>();
+            csvFileWriter.Configuration.HasExcelSeparator=true;
             csvFileWriter.WriteRecords(records);
             textWriter.Close();
             return filename;
