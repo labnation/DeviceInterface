@@ -288,8 +288,9 @@ namespace ECore.Devices
                 SetCoupling(ch, coupling[ch]);
             }
                 
-            SetTriggerWidth(3);
-            SetTriggerThreshold(3);
+            SetTriggerWidth(2);
+            //SetTriggerThreshold(3);
+            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
             SetAwgStretching(0);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);

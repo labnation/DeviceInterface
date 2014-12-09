@@ -159,7 +159,7 @@ namespace ECore.Devices
             if (channel == triggerAnalog.channel)
             {
                 SetTriggerAnalog(this.triggerAnalog);
-                SetTriggerThreshold(this.triggerThreshold);
+                //SetTriggerThreshold(this.triggerThreshold);
             }
         }
 
@@ -338,8 +338,12 @@ namespace ECore.Devices
         {
             return (uint)FpgaSettingsMemory[REG.TRIGGER_WIDTH].GetByte();
         }
+
         public void SetTriggerThreshold(float threshold)
         {
+            Logger.Warn("Trigger threshold is not implemented!");
+            return;
+            //throw new NotImplementedException("Forget it");
             triggerThreshold = threshold;
             double level = 0;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
