@@ -68,10 +68,15 @@ namespace ECore.Devices
 
         public void Stop()
         {
-#if WINDOWS
+#if ANDROID
+            //Nothing to do here, just keeping same ifdef structure as above
+#elif WINDOWS
             BadDriver = false;
             running = false;
             badDriverDetectionThread.Join(100);
+#else
+            //Linux, MacOS en iOS
+            InterfaceManagerLibUsb.Instance.Destroy();
 #endif
         }
 
