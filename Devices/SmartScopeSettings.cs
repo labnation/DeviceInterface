@@ -264,8 +264,8 @@ namespace ECore.Devices
             this.triggerAnalog = trigger;
 
             /* Set Level */
-            double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
-            REG offsetRegister = GetTriggerChannel() == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+            double[] coefficients = channelSettings[trigger.channel].coefficients;
+            REG offsetRegister = trigger.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
             if(coefficients != null)
                 level = (ProbeScale(trigger.channel, trigger.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
@@ -418,6 +418,9 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
             FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
             FpgaSettingsMemory[REG.DIGITAL_TRIGGER_LOW].Set((byte)low);
+
+            //FIXME: We currently don't support passing the LA data through channel B, so the trigger needs to be set to chA
+            SetTriggerAnalog(new AnalogTriggerValue() { channel = AnalogChannel.ChA, direction = TriggerDirection.RISING, level = 0} );
         }
 
         public void SetTimeRange(double timeRange)
