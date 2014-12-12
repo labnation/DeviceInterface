@@ -286,6 +286,8 @@ namespace ECore.Devices {
                 bool triggerDetected = false;
 
                 while(true) {
+                    if (!acquisitionRunning)
+                        return null;
                     lock (resetAcquisitionLock)
                     {
                         AcquisitionModeLocal = acquisitionMode;

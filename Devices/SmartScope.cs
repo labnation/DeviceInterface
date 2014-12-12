@@ -159,7 +159,7 @@ namespace ECore.Devices
             {
                 Deconfigure();
             }
-            catch (ScopeIOException) { }
+            catch { }
             DestroyHardware();
         }
 
