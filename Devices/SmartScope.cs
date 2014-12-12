@@ -70,6 +70,7 @@ namespace ECore.Devices
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
+        private const int MAX_COMPLETION_TRIES = 5;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
@@ -365,115 +366,113 @@ namespace ECore.Devices
         /// Get a package of scope data
         /// </summary>
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
-        public DataPackageScope GetScopeData()
-        {
-            if (hardwareInterface == null)
-                return null;
+        public DataPackageScope GetScopeData ()
+		{
+			if (hardwareInterface == null)
+				return null;
 
-            byte[] buffer;
-            SmartScopeHeader header;
+			byte[] buffer;
+			SmartScopeHeader header;
             
-            try { buffer = hardwareInterface.GetData(BURST_SIZE); }
-            catch (ScopeIOException) { return null; }
-            if (buffer == null) return null;
+			try {
+				buffer = hardwareInterface.GetData (BURST_SIZE);
+			} catch (ScopeIOException) {
+				return null;
+			}
+			if (buffer == null)
+				return null;
 
-            try { header = new SmartScopeHeader(buffer); }
-            catch (Exception e)
-            {
-                Logger.Error("Failed to parse header - resetting scope: " + e.Message);
-                Reset();
-                return null;
-            }
+			try {
+				header = new SmartScopeHeader (buffer);
+			} catch (Exception e) {
+				Logger.Error ("Failed to parse header - resetting scope: " + e.Message);
+				Reset ();
+				return null;
+			}
 
-            acquiring = !header.LastAcquisition;
-            stopPending = header.ScopeStopPending;
+			acquiring = !header.LastAcquisition;
+			stopPending = header.ScopeStopPending;
 
-            if (header.NumberOfPayloadBursts == 0)
-                return null;
+			if (header.NumberOfPayloadBursts == 0)
+				return null;
 
-            try { buffer = hardwareInterface.GetData(BURST_SIZE * header.NumberOfPayloadBursts); }
-            catch (Exception e)
-            {
-                Logger.Error("Failed to fetch payload - resetting scope: " + e.Message);
-                Reset();
-                return null;
-            }
+			try {
+				buffer = hardwareInterface.GetData (BURST_SIZE * header.NumberOfPayloadBursts);
+			} catch (Exception e) {
+				Logger.Error ("Failed to fetch payload - resetting scope: " + e.Message);
+				Reset ();
+				return null;
+			}
                 
-            if (buffer == null)
-            {
-				Logger.Error("Failed to get payload - resetting");
-                Reset();
-                return null;
-            }
+			if (buffer == null) {
+				Logger.Error ("Failed to get payload - resetting");
+				Reset ();
+				return null;
+			}
 
-            int dataOffset;
-            if (header.Rolling)
-            {
-                if (chA == null)
-                {
-                    chA = new byte[header.Samples];
-                    chB = new byte[header.Samples];
-                    dataOffset = 0;
-                }
-                else //blow up the array
-                {
-                    byte[] chANew = new byte[chA.Length + header.Samples];
-                    byte[] chBNew = new byte[chB.Length + header.Samples];
-                    chA.CopyTo(chANew, 0);
-                    chB.CopyTo(chBNew, 0);
-                    dataOffset = chA.Length;
-                    chA = chANew;
-                    chB = chBNew;
-                }
-            }
-            else
-            {
-                //If it's part of an acquisition of which we already received
-                //samples, add to previously received data
-                dataOffset = 0;
-                if (header.PackageOffset != 0)
-                {
-                    //FIXME: this shouldn't be possible
-                    if (chA == null)
-                        return null;
-                    byte[] chANew = new byte[chA.Length + header.Samples];
-                    byte[] chBNew = new byte[chB.Length + header.Samples];
-                    chA.CopyTo(chANew, 0);
-                    chB.CopyTo(chBNew, 0);
-                    chA = chANew;
-                    chB = chBNew;
-                    dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
-                }
-                else //New acquisition, new buffers
-                {
-                    chA = new byte[header.Samples];
-                    chB = new byte[header.Samples];
-                }
-            }
+			int dataOffset;
+			if (header.Rolling) {
+				if (chA == null) {
+					chA = new byte[header.Samples];
+					chB = new byte[header.Samples];
+					dataOffset = 0;
+				} else { //blow up the array
+					byte[] chANew = new byte[chA.Length + header.Samples];
+					byte[] chBNew = new byte[chB.Length + header.Samples];
+					chA.CopyTo (chANew, 0);
+					chB.CopyTo (chBNew, 0);
+					dataOffset = chA.Length;
+					chA = chANew;
+					chB = chBNew;
+				}
+			} else {
+				//If it's part of an acquisition of which we already received
+				//samples, add to previously received data
+				dataOffset = 0;
+				if (header.PackageOffset != 0) {
+					//FIXME: this shouldn't be possible
+					if (chA == null)
+						return null;
+					byte[] chANew = new byte[chA.Length + header.Samples];
+					byte[] chBNew = new byte[chB.Length + header.Samples];
+					chA.CopyTo (chANew, 0);
+					chB.CopyTo (chBNew, 0);
+					chA = chANew;
+					chB = chBNew;
+					dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
+				} else { //New acquisition, new buffers
+					chA = new byte[header.Samples];
+					chB = new byte[header.Samples];
+				}
+			}
 
-            for (int i = 0; i < header.Samples; i++)
-            {
-                chA[dataOffset + i] = buffer[header.Channels * i];
-                chB[dataOffset + i] = buffer[header.Channels * i + 1];
-            }
+			for (int i = 0; i < header.Samples; i++) {
+				chA [dataOffset + i] = buffer [header.Channels * i];
+				chB [dataOffset + i] = buffer [header.Channels * i + 1];
+			}
 
-            //In rolling mode, crop the channel to the display length
-            if (chA.Length > NUMBER_OF_SAMPLES)
-            {
-                byte[] chANew = new byte[NUMBER_OF_SAMPLES];
-                byte[] chBNew = new byte[NUMBER_OF_SAMPLES];
-                Array.ConstrainedCopy(chA, chA.Length - NUMBER_OF_SAMPLES, chANew, 0, NUMBER_OF_SAMPLES);
-                Array.ConstrainedCopy(chB, chB.Length - NUMBER_OF_SAMPLES, chBNew, 0, NUMBER_OF_SAMPLES);
-                chA = chANew;
-                chB = chBNew;
-            }
+			//In rolling mode, crop the channel to the display length
+			if (chA.Length > NUMBER_OF_SAMPLES) {
+				byte[] chANew = new byte[NUMBER_OF_SAMPLES];
+				byte[] chBNew = new byte[NUMBER_OF_SAMPLES];
+				Array.ConstrainedCopy (chA, chA.Length - NUMBER_OF_SAMPLES, chANew, 0, NUMBER_OF_SAMPLES);
+				Array.ConstrainedCopy (chB, chB.Length - NUMBER_OF_SAMPLES, chBNew, 0, NUMBER_OF_SAMPLES);
+				chA = chANew;
+				chB = chBNew;
+			}
 
-            //If we're not decimating a lot, fetch on till the package is complete
-            if (!header.Rolling && header.SamplesPerAcquisition > chA.Length && header.GetRegister(REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
-            {
-                while (true)
-                {
-                    DataPackageScope p = GetScopeData();
+			//If we're not decimating a lot, fetch on till the package is complete
+			if (!header.Rolling && header.SamplesPerAcquisition > chA.Length && header.GetRegister (REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE) {
+				while (true) {
+					DataPackageScope p = null;
+					int tries = 0;
+					while (p == null && tries < MAX_COMPLETION_TRIES) {
+						tries++;
+						p = GetScopeData ();
+					}
+					if (tries > 1) {
+						Logger.Warn("Had to try " +tries+ " times to complete package");
+					}
                     if (p == null)
                     {
                         Logger.Error("While trying to complete acquisition, failed and got null. resetting");
