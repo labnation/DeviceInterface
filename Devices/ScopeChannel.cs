@@ -34,9 +34,9 @@ namespace ECore.Devices
                 list.Remove(ch);
         }
 
-        public override string ToString()
+        static public implicit operator string(Channel ch)
         {
-            return this.Name;
+            return ch.GetType().Name + "-" + ch.Name;
         }
     }
     public sealed class AnalogChannel : Channel 
@@ -46,6 +46,10 @@ namespace ECore.Devices
         private AnalogChannel(string name, int value) : base(name, value) { 
             list.Add(this);
         }
+        static public implicit operator AnalogChannel(string chName)
+        {
+            return list.Where(x => x == chName).First();
+        }
 
         public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
         public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
@@ -53,7 +57,13 @@ namespace ECore.Devices
     public sealed class DigitalChannel : Channel {
         private static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
         new public static IList<DigitalChannel> List { get { return list.ToList().AsReadOnly(); } }
-        private DigitalChannel(string name, int value) : base(name, value) { list.Add(this); }
+        private DigitalChannel(string name, int value) : base(name, value) { 
+            list.Add(this); 
+        }
+        static public implicit operator DigitalChannel(string chName)
+        {
+            return list.Where(x => x == chName).First();
+        }
 
         public static readonly DigitalChannel Digi0 = new DigitalChannel("0", 0);
         public static readonly DigitalChannel Digi1 = new DigitalChannel("1", 1);
