@@ -36,7 +36,7 @@ namespace ECore.Devices
 
         static public implicit operator string(Channel ch)
         {
-            return ch.GetType().Name + "-" + ch.Name;
+            return ch == null ? null : ch.GetType().Name + "-" + ch.Name;
         }
     }
     public sealed class AnalogChannel : Channel 
