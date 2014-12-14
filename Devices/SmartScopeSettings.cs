@@ -80,7 +80,7 @@ namespace ECore.Devices
         }
         private float ProbeScaleInv(AnalogChannel ch, float volt)
         {
-            return ProbeScaleFactors[probeSettings[ch]] / volt;
+            return ProbeScaleFactors[probeSettings[ch]] * volt;
         }
         public void CommitSettings()
         {
@@ -120,7 +120,7 @@ namespace ECore.Devices
             double[] c = channelSettings[channel].coefficients;
             //byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(ProbeScale(channel, offset) + c[2] + c[0] * 127.0) / c[1] ));
 
-            double origRequestedByteValue = (-((offset + c[2] + c[0] * 127.0) / c[1]));
+            double origRequestedByteValue = (-((ProbeScale(channel, offset) + c[2] + c[0] * 127.0) / c[1]));
             byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, origRequestedByteValue));
             FpgaSettingsMemory[r].Set(offsetByte);
             Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));            
@@ -128,17 +128,9 @@ namespace ECore.Devices
             //return exact value ONLY in case out of bounds, as otherwise returned value will be based on bytevalue and be different anyway from requested voltage
             double realVoltageSet = -(double)offsetByte*c[1]-c[2]-c[0]*127.0;
             if ((origRequestedByteValue < yOffsetMin) || (origRequestedByteValue > yOffsetMax))
-                return (float)realVoltageSet;
+                return ProbeScaleInv(channel, (float)realVoltageSet);
             else
                 return offset;
-        }
-
-        public float GetYOffset(AnalogChannel channel)
-        {
-            REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
-            double[] c = channelSettings[channel].coefficients;
-            double volt = -(double)FpgaSettingsMemory[r].GetByte()*c[1]-c[2]-c[0]*127.0;
-            return (float)volt;
         }
 
         /// <summary>
