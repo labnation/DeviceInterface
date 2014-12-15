@@ -510,14 +510,14 @@ namespace ECore.Devices
 #if DEBUG
             data.AddSetting("DividerA", divA);
             data.AddSetting("DividerB", divB);
+            data.AddSetting("OffsetA", ConvertYOffsetByteToVoltage(AnalogChannel.ChA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
+            data.AddSetting("OffsetB", ConvertYOffsetByteToVoltage(AnalogChannel.ChB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
 
             if (this.disableVoltageConversion)
             {
                 data.SetData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
                 data.SetData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
                 data.SetDataDigital(chB);
-                data.AddSetting("OffsetA", (float)header.GetRegister(REG.CHA_YOFFSET_VOLTAGE));
-                data.AddSetting("OffsetB", (float)header.GetRegister(REG.CHB_YOFFSET_VOLTAGE));
             }
             else
             {

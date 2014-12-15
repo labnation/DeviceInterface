@@ -123,13 +123,19 @@ namespace ECore.Devices
             FpgaSettingsMemory[r].Set(offsetByte);
             Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
         }
+
+        private float ConvertYOffsetByteToVoltage(AnalogChannel channel, byte value)
+        {
+            double[] c = channelSettings[channel].coefficients;
+            float voltageSet = (float)(-value * c[1] - c[2] - c[0] * 127.0);
+            return ProbeScaleScopeToHost(channel, voltageSet);
+        }
+
 		public float GetYOffset(AnalogChannel channel)
 		{
-			REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
+            REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             byte offsetByte = FpgaSettingsMemory[r].GetByte();
-            double[] c = channelSettings[channel].coefficients;
-            float voltageSet = -(float)(offsetByte*c[1]-c[2]-c[0]*127.0);
-            return ProbeScaleScopeToHost(channel, voltageSet);
+            return ConvertYOffsetByteToVoltage(channel, offsetByte);
         }
 
         /// <summary>
