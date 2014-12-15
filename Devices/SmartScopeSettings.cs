@@ -108,10 +108,10 @@ namespace ECore.Devices
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
-        public void SetYOffset(AnalogChannel channel, float offset)
+        public bool SetYOffset(AnalogChannel channel, float offset)
         {
             yOffset[channel] = offset;
-            if (!Connected) return;
+            if (!Connected) return false;
             //FIXME: convert offset to byte value
             REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
@@ -119,9 +119,20 @@ namespace ECore.Devices
             
             //Let ADC output of 127 be the zero point of the Yoffset
             double[] c = channelSettings[channel].coefficients;
-            byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1] ));
-            FpgaSettingsMemory[r].Set(offsetByte);
-            Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
+            int offsetInt = (int)(-(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1]);
+            bool clipping = false;
+            if(offsetInt > yOffsetMax) {
+                FpgaSettingsMemory[r].Set(yOffsetMax);
+                clipping = true;
+            } else if (offsetInt < yOffsetMin) {
+                FpgaSettingsMemory[r].Set(yOffsetMin);
+                clipping = true;
+            } else {
+                FpgaSettingsMemory[r].Set((byte)offsetInt);
+                clipping = false;
+            }
+            Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2} (clipping : {3})", channel, GetYOffset(channel), FpgaSettingsMemory[r].GetByte(), clipping));
+            return !clipping;
         }
 
         private float ConvertYOffsetByteToVoltage(AnalogChannel channel, byte value)

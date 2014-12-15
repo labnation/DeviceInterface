@@ -178,9 +178,10 @@ namespace ECore.Devices {
         {
             return ChannelConfig[ch].probeDivision;
         }
-        public void SetYOffset(AnalogChannel ch, float yOffset)
+        public bool SetYOffset(AnalogChannel ch, float yOffset)
 		{
 			this.yOffset [ch] = yOffset;
+            return true; //we never clip
 		}
 		public float GetYOffset(AnalogChannel ch)
 		{
