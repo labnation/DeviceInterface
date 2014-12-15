@@ -182,6 +182,10 @@ namespace ECore.Devices {
 		{
 			this.yOffset [ch] = yOffset;
 		}
+		public float GetYOffset(AnalogChannel ch)
+		{
+		   return this.yOffset[ch];
+		}
         public void SetForceTrigger()
         {
             forceTrigger = true;

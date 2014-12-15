@@ -74,9 +74,13 @@ namespace ECore.Devices
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(false);
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(true);
         }
-        private float ProbeScale(AnalogChannel ch, float volt)
+        private float ProbeScaleHostToScope(AnalogChannel ch, float volt)
         {
             return volt / ProbeScaleFactors[probeSettings[ch]];
+        }
+        private float ProbeScaleScopeToHost(AnalogChannel ch, float volt)
+        {
+            return volt * ProbeScaleFactors[probeSettings[ch]];
         }
         public void CommitSettings()
         {
@@ -115,9 +119,17 @@ namespace ECore.Devices
             
             //Let ADC output of 127 be the zero point of the Yoffset
             double[] c = channelSettings[channel].coefficients;
-            byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(ProbeScale(channel, offset) + c[2] + c[0] * 127) / c[1] ));
+            byte offsetByte = (byte)Math.Min(yOffsetMax, Math.Max(yOffsetMin, -(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1] ));
             FpgaSettingsMemory[r].Set(offsetByte);
             Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, offset, offsetByte));
+        }
+		public float GetYOffset(AnalogChannel channel)
+		{
+			REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
+            byte offsetByte = FpgaSettingsMemory[r].GetByte();
+            double[] c = channelSettings[channel].coefficients;
+            float voltageSet = -(float)(offsetByte*c[1]-c[2]-c[0]*127.0);
+            return ProbeScaleScopeToHost(channel, voltageSet);
         }
 
         /// <summary>
@@ -146,9 +158,9 @@ namespace ECore.Devices
                 dividerIndex= i / rom.computedMultipliers.Length;
                 multIndex = rom.computedMultipliers.Length - (i % rom.computedMultipliers.Length) - 1;
                 if (
-                    (ProbeScale(channel, maximum) < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    (ProbeScaleHostToScope(channel, maximum) < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
                     &&
-                    (ProbeScale(channel, minimum) > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    (ProbeScaleHostToScope(channel, minimum) > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
                     )
                     break;
             }
@@ -156,6 +168,7 @@ namespace ECore.Devices
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
             SetYOffset(channel, yOffset[channel]);
+            yOffset[channel] = GetYOffset(channel);
             if (channel == triggerAnalog.channel)
             {
                 SetTriggerAnalog(this.triggerAnalog);
@@ -268,7 +281,7 @@ namespace ECore.Devices
             REG offsetRegister = trigger.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
             double level = 0;
             if(coefficients != null)
-                level = (ProbeScale(trigger.channel, trigger.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                level = (ProbeScaleHostToScope(trigger.channel, trigger.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
@@ -348,7 +361,7 @@ namespace ECore.Devices
             double level = 0;
             double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
             if (coefficients != null)
-                level = (ProbeScale(triggerAnalog.channel, triggerThreshold) - coefficients[2]) / coefficients[0];
+                level = (ProbeScaleHostToScope(triggerAnalog.channel, triggerThreshold) - coefficients[2]) / coefficients[0];
             if (level < 0) level = 0;
             if (level > 255) level = 255;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)level);
