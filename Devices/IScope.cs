@@ -50,8 +50,11 @@ namespace ECore.Devices
         void SetTriggerAnalog(AnalogTriggerValue trigger);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
-        bool SetYOffset(AnalogChannel channel, float offset);
+        void SetYOffset(AnalogChannel channel, float offset);
         float GetYOffset(AnalogChannel channel);
+        float GetYOffsetMax(AnalogChannel ch);
+        float GetYOffsetMin(AnalogChannel ch);
+
         void SetForceTrigger();
         void SetCoupling(AnalogChannel channel, Coupling coupling);
         void SetTriggerWidth(uint width);

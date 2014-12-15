@@ -178,15 +178,17 @@ namespace ECore.Devices {
         {
             return ChannelConfig[ch].probeDivision;
         }
-        public bool SetYOffset(AnalogChannel ch, float yOffset)
+        public void SetYOffset(AnalogChannel ch, float yOffset)
 		{
 			this.yOffset [ch] = yOffset;
-            return true; //we never clip
 		}
 		public float GetYOffset(AnalogChannel ch)
 		{
 		   return this.yOffset[ch];
 		}
+        public float GetYOffsetMax(AnalogChannel ch) { return float.MaxValue; }
+        public float GetYOffsetMin(AnalogChannel ch) { return float.MinValue; }
+
         public void SetForceTrigger()
         {
             forceTrigger = true;

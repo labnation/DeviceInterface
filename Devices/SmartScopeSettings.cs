@@ -108,10 +108,10 @@ namespace ECore.Devices
         /// </summary>
         /// <param name="channel">0 or 1 (channel A or B)</param>
         /// <param name="offset">Vertical offset in Volt</param>
-        public bool SetYOffset(AnalogChannel channel, float offset)
+        public void SetYOffset(AnalogChannel channel, float offset)
         {
             yOffset[channel] = offset;
-            if (!Connected) return false;
+            if (!Connected) return;
             //FIXME: convert offset to byte value
             REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
             Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
@@ -120,19 +120,9 @@ namespace ECore.Devices
             //Let ADC output of 127 be the zero point of the Yoffset
             double[] c = channelSettings[channel].coefficients;
             int offsetInt = (int)(-(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1]);
-            bool clipping = false;
-            if(offsetInt > yOffsetMax) {
-                FpgaSettingsMemory[r].Set(yOffsetMax);
-                clipping = true;
-            } else if (offsetInt < yOffsetMin) {
-                FpgaSettingsMemory[r].Set(yOffsetMin);
-                clipping = true;
-            } else {
-                FpgaSettingsMemory[r].Set((byte)offsetInt);
-                clipping = false;
-            }
-            Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2} (clipping : {3})", channel, GetYOffset(channel), FpgaSettingsMemory[r].GetByte(), clipping));
-            return !clipping;
+
+            FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1])));
+            Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, GetYOffset(channel), FpgaSettingsMemory[r].GetByte()));
         }
 
         private float ConvertYOffsetByteToVoltage(AnalogChannel channel, byte value)
@@ -148,6 +138,10 @@ namespace ECore.Devices
             byte offsetByte = FpgaSettingsMemory[r].GetByte();
             return ConvertYOffsetByteToVoltage(channel, offsetByte);
         }
+
+        //FIXME: this might be need to be implemented as LUT
+        public float GetYOffsetMax(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMax); }
+        public float GetYOffsetMin(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMin); }
 
         /// <summary>
         /// Sets and uploads the divider and multiplier what are optimal for the requested range
