@@ -476,6 +476,8 @@ namespace ECore.Devices {
         private static void RemoveDcComponent(ref float[] p, double frequency, double samplePeriod)
         {
             int periodLength = (int)Math.Round(1.0 / (frequency * samplePeriod));
+            if (periodLength == 0)
+                return;
             float mean = p.Take(periodLength).Average();
             if (mean == 0f)
                 return;
