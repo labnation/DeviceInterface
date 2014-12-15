@@ -70,7 +70,7 @@ namespace ECore.Devices
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
-        private const int MAX_COMPLETION_TRIES = 5;
+        private const int MAX_COMPLETION_TRIES = 2;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
@@ -475,8 +475,7 @@ namespace ECore.Devices
 					}
                     if (p == null)
                     {
-                        Logger.Error("While trying to complete acquisition, failed and got null. resetting");
-                        Reset();
+                        Logger.Info("Failed to complete package. This can be due to a settings update during a require-trigger dump.");
                         return null;
                     }
                     if (p.Partial == false)

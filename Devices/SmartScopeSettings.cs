@@ -296,11 +296,11 @@ namespace ECore.Devices
             if (level < 0) level = 0;
             if (level > 255) level = 255;
 
-            Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
+            //Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
             FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
 
             /* Set Channel */
-            Logger.Debug(" Set trigger channel to " + (triggerAnalog.channel == AnalogChannel.ChA ? " CH A" : "CH B"));
+            //Logger.Debug(" Set trigger channel to " + (triggerAnalog.channel == AnalogChannel.ChA ? " CH A" : "CH B"));
             FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                 (byte)(
                     (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) +
@@ -314,7 +314,7 @@ namespace ECore.Devices
                     (((int)triggerAnalog.direction << 4) & 0x30)
                     )
             );
-            Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
+            //Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
 
         }
         public void SetForceTrigger()
