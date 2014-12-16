@@ -114,7 +114,7 @@ namespace ECore.Devices
             if (!Connected) return;
             //FIXME: convert offset to byte value
             REG r = (channel == AnalogChannel.ChA) ? REG.CHA_YOFFSET_VOLTAGE : REG.CHB_YOFFSET_VOLTAGE;
-            Logger.Debug("Set DC coupling for channel " + channel + " to " + offset + "V");
+            //Logger.Debug("Set Y-offset for channel " + channel + " to " + offset + "V");
             //Offset: 0V --> 150 - swing +-0.9V
             
             //Let ADC output of 127 be the zero point of the Yoffset
@@ -122,7 +122,7 @@ namespace ECore.Devices
             int offsetInt = (int)(-(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1]);
 
             FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1])));
-            Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, GetYOffset(channel), FpgaSettingsMemory[r].GetByte()));
+            //Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, GetYOffset(channel), FpgaSettingsMemory[r].GetByte()));
         }
 
         private float ConvertYOffsetByteToVoltage(AnalogChannel channel, byte value)
@@ -266,7 +266,7 @@ namespace ECore.Devices
         {
             STR dc = channel == AnalogChannel.ChA ? STR.CHA_DCCOUPLING : STR.CHB_DCCOUPLING;
             bool enableDc = coupling == Coupling.DC;
-            Logger.Debug("Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
+            //Logger.Debug("Set DC coupling for channel " + channel + (enableDc ? " ON" : " OFF"));
             StrobeMemory[dc].Set(enableDc);
         }
         public Coupling GetCoupling(AnalogChannel channel)
@@ -487,7 +487,7 @@ namespace ECore.Devices
             this.holdoff = time;
             byte inputDecimation = FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte();
             Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2,  inputDecimation)));
-            Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
+            //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B2].Set((byte)(samples >> 16));

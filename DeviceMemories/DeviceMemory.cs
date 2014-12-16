@@ -29,7 +29,7 @@ namespace ECore.DeviceMemories
             if (flushCount == 0)
                 return flushCount;
 
-            Logger.Debug(String.Format("About to flush {0} / {1} registers in {2}", flushCount, registers.Count, this.GetType()));
+            //Logger.Debug(String.Format("About to flush {0} / {1} registers in {2}", flushCount, registers.Count, this.GetType()));
 
             foreach (MemoryRegister m in registers.Values.Where(x => x.Dirty))
             {
