@@ -235,7 +235,10 @@ namespace ECore.HardwareInterfaces
                 }
             }
         }
-
+#if DEBUG
+        public static byte[] lastBuffer2 = null;
+        public static byte[] lastBuffer = null;
+#endif
         public byte[] GetData(int numberOfBytes)
         {
             UsbCommand cmd = new UsbCommand(dataEndpoint, new byte[numberOfBytes]);
@@ -244,6 +247,10 @@ namespace ECore.HardwareInterfaces
 
             if (cmd.bytesTransferred != numberOfBytes)
                 return null;
+#if DEBUG
+            lastBuffer2 = lastBuffer;
+            lastBuffer = cmd.buffer;
+#endif
             //return read data
             return cmd.buffer;
         }
