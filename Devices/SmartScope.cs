@@ -66,6 +66,7 @@ namespace ECore.Devices
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         byte[] chA = null, chB = null;
+        int triggerAddress;
 
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
@@ -362,6 +363,29 @@ namespace ECore.Devices
             return voltage;
         }
 
+#if WINDOWS
+        SmartScopeHeader ResyncHeader()
+        {
+            int tries = 64;
+            Logger.Warn("Trying to resync header by fetching up to " + tries + " packages");
+         
+            List<byte[]> crashBuffers = new List<byte[]>();
+            byte[] buf;
+            while ((buf = hardwareInterface.GetData(BURST_SIZE)) != null && tries > 0)
+            {
+                if (buf[0] == 'L' && buf[1] == 'N')
+                {
+                    Logger.Warn("Got " + crashBuffers.Count + " packages before another header came");
+                    SmartScopeHeader h = new SmartScopeHeader(buf);
+                    return h;
+                }
+                crashBuffers.Add(buf);
+                tries--;
+            }
+            return null;
+        }
+#endif
+
         /// <summary>
         /// Get a package of scope data
         /// </summary>
@@ -385,9 +409,20 @@ namespace ECore.Devices
 			try {
 				header = new SmartScopeHeader (buffer);
 			} catch (Exception e) {
+#if WINDOWS
+                Logger.Warn("Error parsing header - attempting to fix that");
+                header = ResyncHeader();
+                if (header == null)
+                {
+                    Logger.Error("Resync header failed - resetting");
+                    Reset();
+                    return null;
+                }
+#else
 				Logger.Error ("Failed to parse header - resetting scope: " + e.Message);
 				Reset ();
 				return null;
+#endif
 			}
 
 			acquiring = !header.LastAcquisition;
@@ -433,6 +468,9 @@ namespace ECore.Devices
 					//FIXME: this shouldn't be possible
 					if (chA == null)
 						return null;
+                    //In case of a resync or who knows what else went wrong
+                    if(triggerAddress != header.TriggerAddress)
+                        return null;
 					byte[] chANew = new byte[chA.Length + header.Samples];
 					byte[] chBNew = new byte[chB.Length + header.Samples];
 					chA.CopyTo (chANew, 0);
@@ -441,6 +479,7 @@ namespace ECore.Devices
 					chB = chBNew;
 					dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
 				} else { //New acquisition, new buffers
+                    triggerAddress = header.TriggerAddress;
 					chA = new byte[header.Samples];
 					chB = new byte[header.Samples];
 				}
