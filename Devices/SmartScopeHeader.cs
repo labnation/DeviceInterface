@@ -60,6 +60,11 @@ namespace ECore.Devices
         /// Wether the acquisition is in rolling mode
         /// </summary>
         internal bool Rolling { get; private set; }
+        /// <summary>
+        /// True when dump settings are impossible to be met
+        /// </summary>
+        internal bool ImpossibleDump{ get; private set; }
+
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
         
@@ -81,15 +86,18 @@ namespace ECore.Devices
             AcquisitionSize = (short)(data[8] + (data[9] << 8));
             
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
-            LastAcquisition = Utils.IsBitSet(data[10], 1);
             ScopeStopPending = !Utils.IsBitSet(data[10], 0);
+            LastAcquisition = Utils.IsBitSet(data[10], 1);
             Rolling = Utils.IsBitSet(data[10], 2);
+            ImpossibleDump = Utils.IsBitSet(data[10], 3);
+            if (ImpossibleDump)
+                throw new Exception("WTFFFFF");
 
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
             //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
             //SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
             //For now, we hardcoded this case in the FPGA
-            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.ACQUISITION_MULTIPLE_POWER) + GetRegister(REG.INPUT_DECIMATION));
+            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
 
 
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
@@ -143,19 +151,20 @@ namespace ECore.Devices
 			REG.CHB_YOFFSET_VOLTAGE, 
 			REG.DIVIDER_MULTIPLIER,
 			REG.INPUT_DECIMATION, 
-            REG.ACQUISITION_MULTIPLE_POWER,
             REG.TRIGGER_THRESHOLD,
             REG.TRIGGER_PWM,
 			REG.DIGITAL_TRIGGER_RISING,
 			REG.DIGITAL_TRIGGER_FALLING,
 			REG.DIGITAL_TRIGGER_HIGH,
-			REG.DIGITAL_TRIGGER_LOW
+			REG.DIGITAL_TRIGGER_LOW,
+            REG.ACQUISITION_DEPTH
         };
         internal static readonly REG[] DumpRegisters = new REG[]
         {
-            //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
-			//REG.VIEW_DECIMATION,
-			REG.VIEW_OFFSET,	
+			REG.VIEW_DECIMATION,
+			REG.VIEW_OFFSET_B0,
+            REG.VIEW_OFFSET_B1,
+            REG.VIEW_OFFSET_B2,
 			REG.VIEW_ACQUISITIONS,
 			REG.VIEW_BURSTS
         };

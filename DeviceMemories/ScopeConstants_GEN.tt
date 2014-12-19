@@ -18,7 +18,7 @@ namespace ECore.DeviceMemories
 	 * once we're in the class below we're in a TextProcessor sandbox where
 	 * "this" won't mean "here"
 	 */
-	String hdlFile = this.Host.ResolvePath("..\\..\\..\\firmware\\fpga\\hdl\\TypesConstants.vhd");
+	String hdlFile = this.Host.ResolvePath("..\\..\\..\\fpga\\hdl\\TypesConstants.vhd");
 #>
 <#=parseHdlToCSharpEnum(hdlFile,"REG") #>
 <#=parseHdlToCSharpEnum(hdlFile,"STR") #>
