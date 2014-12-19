@@ -90,14 +90,11 @@ namespace ECore.Devices
             LastAcquisition = Utils.IsBitSet(data[10], 1);
             Rolling = Utils.IsBitSet(data[10], 2);
             ImpossibleDump = Utils.IsBitSet(data[10], 3);
-            if (ImpossibleDump)
-                throw new Exception("WTFFFFF");
+            //if (ImpossibleDump)
+                //throw new Exception("WTFFFFF");
 
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
-            //FIXME: REG_VIEW_DECIMATION disabled (always equals ACQUISITION_MULTIPLE_POWER)
-            //SamplePeriod = 10e-9 * Math.Pow(2, GetRegister(REG.VIEW_DECIMATION) + GetRegister(REG.INPUT_DECIMATION));
-            //For now, we hardcoded this case in the FPGA
-            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
+            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION) + GetRegister(REG.VIEW_DECIMATION));
 
 
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +

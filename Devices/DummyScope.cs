@@ -34,7 +34,7 @@ namespace ECore.Devices {
 		private DateTime timeOrigin;
 		//Wave settings
         private int usbLatency = 2;
-        private const int outputWaveLength = 2048;
+        private uint acquisitionDepth = 2048;
         private object resetAcquisitionLock = new object();
         private bool resetAcquisition = false;
         private bool forceTrigger = false;
@@ -45,7 +45,7 @@ namespace ECore.Devices {
             { AnalogChannel.ChB, 0f}
         };
 		//Scope variables
-		private const int waveLength = 3 * outputWaveLength;
+        private uint waveLength { get { return 3 * acquisitionDepth; } }
 		private double samplePeriodMinimum = 10e-9;
 		//ns --> sampleFreq of 100MHz by default
         private double SamplePeriod { get { return samplePeriodMinimum * Math.Pow(2, decimation); } }
@@ -242,15 +242,26 @@ namespace ECore.Devices {
                 }
             }
 		}
-		public void SetTimeRange (double timeRange)
-		{
+		public void SetViewPort(double offset, double timespan, uint samples)
+        {
             lock (resetAcquisitionLock)
             {
-                decimation = (uint)Math.Max(0, Math.Ceiling(Math.Log(timeRange / GetDefaultTimeRange(), 2)));
+                decimation = (uint)Math.Max(0, Math.Ceiling(Math.Log(timespan / GetDefaultTimeRange(), 2)));
                 resetAcquisition = true;
             }
 		}
-        public double GetTimeRange()
+
+        public void SetAcquisitionDepth(uint depth)
+        {
+            acquisitionDepth = depth;
+        }
+
+        public uint GetAcquisitionDepth()
+        {
+            return acquisitionDepth;
+        }
+
+        public double GetViewPortTimeSpan()
         {
             return GetDefaultTimeRange() * Math.Pow(2,decimation);
         }
@@ -264,7 +275,7 @@ namespace ECore.Devices {
 		}
 		public double GetDefaultTimeRange ()
 		{ 
-			return outputWaveLength * samplePeriodMinimum; 
+			return acquisitionDepth * samplePeriodMinimum; 
 		}
         public DataPackageScope GetScopeData()
         {
@@ -335,13 +346,13 @@ namespace ECore.Devices {
 
                     if (logicAnalyser)
                     {
-                        triggerDetected = DummyScope.TriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, outputWaveLength, out triggerIndex);
+                        triggerDetected = DummyScope.TriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepth, out triggerIndex);
                     }
                     else
                     {
                         triggerDetected = DummyScope.TriggerAnalog(waveAnalog[triggerAnalog.channel].ToArray(), triggerAnalog,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
-                            outputWaveLength, out triggerIndex);
+                            acquisitionDepth, out triggerIndex);
                     }
                     
                     if(triggerDetected)
@@ -368,12 +379,12 @@ namespace ECore.Devices {
                     
                 foreach(AnalogChannel channel in AnalogChannel.List)
                 {
-                    outputAnalog[channel] = DummyScope.CropWave(outputWaveLength, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
+                    outputAnalog[channel] = DummyScope.CropWave(acquisitionDepth, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
                 }
-                outputDigital = DummyScope.CropWave(outputWaveLength, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
+                outputDigital = DummyScope.CropWave(acquisitionDepth, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
             }                   
             double holdoff = triggerHoldoffInSamples * SamplePeriod;
-            p = new DataPackageScope(SamplePeriod, outputWaveLength, holdoff, false, false);
+            p = new DataPackageScope(SamplePeriod, (int)acquisitionDepth, holdoff, false, false);
             foreach(AnalogChannel ch in AnalogChannel.List)
                 p.SetData(ch, outputAnalog[ch]);
 

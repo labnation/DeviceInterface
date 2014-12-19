@@ -75,7 +75,7 @@ namespace ECore.Devices
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
-        private const int INPUT_DECIMATION_MAX = 21;
+        private const int VIEW_DECIMATION_MAX = 10;
 
         private bool acquiring = false;
         private bool stopPending = false;
@@ -294,6 +294,7 @@ namespace ECore.Devices
             //SetTriggerThreshold(3);
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
+            SetAcquisitionDepth(512 * 1024);
             SetAwgStretching(0);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
 
@@ -427,6 +428,8 @@ namespace ECore.Devices
 
 			acquiring = !header.LastAcquisition;
 			stopPending = header.ScopeStopPending;
+            if (header.ImpossibleDump)
+                return null;
 
 			if (header.NumberOfPayloadBursts == 0)
 				return null;
@@ -502,7 +505,7 @@ namespace ECore.Devices
 
 			//If we're not decimating a lot, fetch on till the package is complete
 			if (!header.Rolling && header.SamplesPerAcquisition > chA.Length && header.GetRegister (REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE) {
-				while (true) {
+				while (false && true) {
 					DataPackageScope p = null;
 					int tries = 0;
 					while (p == null && tries < MAX_COMPLETION_TRIES) {

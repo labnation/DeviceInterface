@@ -447,36 +447,62 @@ namespace ECore.Devices
             SetTriggerAnalog(new AnalogTriggerValue() { channel = AnalogChannel.ChA, direction = TriggerDirection.RISING, level = 0} );
         }
 
-        public void SetTimeRange(double timeRange)
+
+        private const int ACQUISITION_DEPTH_BASE = 2048;
+        public void SetAcquisitionDepth(uint samples)
         {
-            double defaultTimeRange = GetDefaultTimeRange();
-            double timeScaler = timeRange / defaultTimeRange;
-            byte inputDecimation;
-            if (timeScaler > 1)
-                inputDecimation = (byte)Math.Ceiling(Math.Log(timeScaler, 2));
+            double multiple = Math.Ceiling((double)samples / ACQUISITION_DEPTH_BASE);
+            double power = Math.Log(multiple, 2);
+            FpgaSettingsMemory[REG.ACQUISITION_DEPTH].Set((int)power);
+        }
+        public uint GetAcquisitionDepth()
+        {
+            return (uint)(ACQUISITION_DEPTH_BASE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
+        }
+
+        public void SetViewPort(double offset, double timespan, uint samples)
+        {
+            double timeSpanRatio = AcquisitionBufferTimeSpan / timespan;
+            byte viewDecimation;
+
+            if (timeSpanRatio > 1)
+                viewDecimation = (byte)Math.Ceiling(Math.Log(timeSpanRatio, 2));
             else
-                inputDecimation = 0;
+                viewDecimation = 0;
 
-            if (inputDecimation > INPUT_DECIMATION_MAX)
-                inputDecimation = INPUT_DECIMATION_MAX;
+            if (viewDecimation > VIEW_DECIMATION_MAX)
+                viewDecimation = VIEW_DECIMATION_MAX;
 
-            FpgaSettingsMemory[REG.INPUT_DECIMATION].Set(inputDecimation);
-            ChunkyAcquisitions = inputDecimation >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
-            SetTriggerHoldOff(holdoff);
+            FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
+            FpgaSettingsMemory[REG.VIEW_BURSTS].Set((int)Math.Ceiling((double)samples / BURST_SIZE));
+            SetViewPortOffset(offset);
         }
 
-        public double ConvertSamplesToTime(int samples)
+        void SetViewPortOffset(double time)
         {
-            return samples * BASE_SAMPLE_PERIOD * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+            Int32 samples = TimeToSamples(time, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+            //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
+            FpgaSettingsMemory[REG.VIEW_OFFSET_B0].Set((byte)(samples));
+            FpgaSettingsMemory[REG.VIEW_OFFSET_B1].Set((byte)(samples >> 8));
+            FpgaSettingsMemory[REG.VIEW_OFFSET_B2].Set((byte)(samples >> 16));
         }
 
-        public int SubSampleRate {
-			get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); }
-		}
 
-        public double GetTimeRange()
+        public int SubSampleRate { get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); } }
+
+        public double SamplesToTime(int samples)
         {
-            return GetDefaultTimeRange() * Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+            return samples * BASE_SAMPLE_PERIOD * Math.Pow(2, SubSampleRate);
+        }
+
+        public double GetViewPortTimeSpan()
+        {
+            return AcquisitionBufferTimeSpan / Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte());
+        }
+
+        private Int32 TimeToSamples(double time, byte inputDecimation)
+        {
+            return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
         }
         ///<summary>
         ///Scope hold off
@@ -485,8 +511,7 @@ namespace ECore.Devices
         public void SetTriggerHoldOff(double time)
         {
             this.holdoff = time;
-            byte inputDecimation = FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte();
-            Int32 samples = (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2,  inputDecimation)));
+            Int32 samples = TimeToSamples(time,FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
             //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples)); 
             FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
@@ -496,13 +521,12 @@ namespace ECore.Devices
 
         #endregion
 
-        #region other        
-        /// <summary>
-        /// Returns the timerange when decimation is 1
-        /// </summary>
-        /// <returns></returns>
-        public double GetDefaultTimeRange() {
-            return BASE_SAMPLE_PERIOD * (NUMBER_OF_SAMPLES); 
+        #region other    
+        public double SamplePeriod {
+            get { return BASE_SAMPLE_PERIOD / Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()); } 
+        }
+        public double AcquisitionBufferTimeSpan {
+            get { return SamplePeriod * GetAcquisitionDepth(); }
         }
 
         /// <summary>

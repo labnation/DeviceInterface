@@ -34,10 +34,12 @@ namespace ECore.Devices
     public interface IScope : IDevice
     {
         DataPackageScope GetScopeData();
-        double GetDefaultTimeRange();
 
         void SetAcquisitionMode(AcquisitionMode mode);
         void SetAcquisitionRunning(bool running);
+        void SetAcquisitionDepth(uint samples);
+        uint GetAcquisitionDepth();
+
         bool CanRoll { get; }
         bool Rolling { get; }
         void SetRolling(bool enable);
@@ -68,8 +70,8 @@ namespace ECore.Devices
         void SetLogicAnalyserChannel(AnalogChannel channel);
 
         Coupling GetCoupling(AnalogChannel channel);
-        void SetTimeRange(double timeRange);
-        double GetTimeRange();
+        void SetViewPort(double offset, double timespan, uint samples);
+        double GetViewPortTimeSpan();
         DataSources.DataSource DataSourceScope { get; }
 
         void CommitSettings();
