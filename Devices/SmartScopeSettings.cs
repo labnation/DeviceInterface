@@ -321,7 +321,7 @@ namespace ECore.Devices
             }
         }
 
-        public void SetForceTrigger()
+        public void ForceTrigger()
         {
             if(Ready)
                 StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
@@ -358,32 +358,38 @@ namespace ECore.Devices
             triggerAnalog.direction = direction;
             TriggerAnalog = this.triggerAnalog;
         }
-        public void SetTriggerWidth(uint width)
+        public uint TriggerWidth
         {
-            FpgaSettingsMemory[REG.TRIGGER_WIDTH].Set((byte)width);
-        }
-        public uint GetTriggerWidth()
-        {
-            return (uint)FpgaSettingsMemory[REG.TRIGGER_WIDTH].GetByte();
+            set
+            {
+                FpgaSettingsMemory[REG.TRIGGER_WIDTH].Set((byte)value);
+            }
+            get
+            {
+                return (uint)FpgaSettingsMemory[REG.TRIGGER_WIDTH].GetByte();
+            }
         }
 
-        public void SetTriggerThreshold(float threshold)
+        public float TriggerThreshold
         {
-            Logger.Warn("Trigger threshold is not implemented!");
-            return;
-            //throw new NotImplementedException("Forget it");
-            triggerThreshold = threshold;
-            double level = 0;
-            double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
-            if (coefficients != null)
-                level = (ProbeScaleHostToScope(triggerAnalog.channel, triggerThreshold) - coefficients[2]) / coefficients[0];
-            if (level < 0) level = 0;
-            if (level > 255) level = 255;
-            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)level);
-        }
-        public float GetTriggerThreshold()
-        {
-            return triggerThreshold;
+            set
+            {
+                Logger.Warn("Trigger threshold is not implemented!");
+                return;
+                //throw new NotImplementedException("Forget it");
+                triggerThreshold = value;
+                double level = 0;
+                double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
+                if (coefficients != null)
+                    level = (ProbeScaleHostToScope(triggerAnalog.channel, triggerThreshold) - coefficients[2]) / coefficients[0];
+                if (level < 0) level = 0;
+                if (level > 255) level = 255;
+                FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)level);
+            }
+            get
+            {
+                return triggerThreshold;
+            }
         }
 
         public void SetAcquisitionMode(AcquisitionMode mode)

@@ -57,12 +57,10 @@ namespace ECore.Devices
         float GetYOffsetMax(AnalogChannel ch);
         float GetYOffsetMin(AnalogChannel ch);
 
-        void SetForceTrigger();
+        void ForceTrigger();
         void SetCoupling(AnalogChannel channel, Coupling coupling);
-        void SetTriggerWidth(uint width);
-        uint GetTriggerWidth();
-        void SetTriggerThreshold(float threshold);
-        float GetTriggerThreshold();
+        uint TriggerWidth { get; set; }
+        float TriggerThreshold { get; set; }
         void SetProbeDivision(AnalogChannel ch, ProbeDivision division);
         ProbeDivision GetProbeDivision(AnalogChannel ch);
         

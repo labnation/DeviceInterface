@@ -291,8 +291,8 @@ namespace ECore.Devices
                 SetCoupling(ch, coupling[ch]);
             }
                 
-            SetTriggerWidth(2);
-            //SetTriggerThreshold(3);
+            TriggerWidth = 2;
+            //TriggerThreshold = 3;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
             SetAcquisitionDepth(512 * 1024);

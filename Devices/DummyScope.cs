@@ -195,25 +195,31 @@ namespace ECore.Devices {
         public float GetYOffsetMax(AnalogChannel ch) { return float.MaxValue; }
         public float GetYOffsetMin(AnalogChannel ch) { return float.MinValue; }
 
-        public void SetForceTrigger()
+        public void ForceTrigger()
         {
             forceTrigger = true;
         }
-        public void SetTriggerWidth(uint width)
+        public uint TriggerWidth
         {
-            triggerWidth = width;
+            set
+            {
+                triggerWidth = value;
+            }
+            get
+            {
+                return triggerWidth;
+            }
         }
-        public uint GetTriggerWidth()
+        public float TriggerThreshold
         {
-            return triggerWidth;
-        }
-        public void SetTriggerThreshold(float threshold)
-        {
-            triggerThreshold = threshold;
-        }
-        public float GetTriggerThreshold()
-        {
-            return triggerThreshold;
+            set
+            {
+                triggerThreshold = value;
+            }
+            get
+            {
+                return triggerThreshold;
+            }
         }
         public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {
