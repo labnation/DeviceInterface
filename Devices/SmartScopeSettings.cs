@@ -392,32 +392,17 @@ namespace ECore.Devices
             }
         }
 
-        public void SetAcquisitionMode(AcquisitionMode mode)
+        public AcquisitionMode AcquisitionMode
         {
-            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
-                (byte)(
-                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x3F) +
-                    (((int)mode << 6) & 0xC0)
-                )
-            );
-        }
-        public void SetAcquisitionRunning(bool running)
-        {
-            if (!Connected) return;
-            STR s;
-            if (running)
+            set
             {
-                s = STR.ACQ_START;
-                acquiring = true;
-                stopPending = false;
+                FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                    (byte)(
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x3F) +
+                        (((int)value << 6) & 0xC0)
+                    )
+                );
             }
-            else
-            {
-                //Don't assume we'll stop immediately
-                s = STR.ACQ_STOP;
-            }
-            
-            StrobeMemory[s].WriteImmediate(true);
         }
 
         public bool CanRoll
@@ -429,17 +414,31 @@ namespace ECore.Devices
         }
         public bool Rolling
         {
-            get
-            {
-                return CanRoll && StrobeMemory[STR.ROLL].GetBool();
-            }
-        }
-        public void SetRolling(bool enable)
-        {
-            StrobeMemory[STR.ROLL].Set(enable);
+            get { return CanRoll && StrobeMemory[STR.ROLL].GetBool(); }
+            set { StrobeMemory[STR.ROLL].Set(value); }
         }
 
-        public bool Running { get { return Ready && acquiring; } }
+        public bool Running {
+            set
+            {
+                if (!Connected) return;
+                STR s;
+                if (value)
+                {
+                    s = STR.ACQ_START;
+                    acquiring = true;
+                    stopPending = false;
+                }
+                else
+                {
+                    //Don't assume we'll stop immediately
+                    s = STR.ACQ_STOP;
+                }
+
+                StrobeMemory[s].WriteImmediate(true);
+            }
+            get { return Ready && acquiring; } 
+        }
         public bool StopPending { get { return Ready && stopPending; } }
 
         public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
@@ -462,17 +461,21 @@ namespace ECore.Devices
 
 
         private const int ACQUISITION_DEPTH_BASE = 2048;
-        public void SetAcquisitionDepth(uint samples)
+
+        public uint AcquisitionDepth
         {
-            double multiple = Math.Ceiling((double)samples / ACQUISITION_DEPTH_BASE);
-            double power = Math.Log(multiple, 2);
-            FpgaSettingsMemory[REG.ACQUISITION_DEPTH].Set((int)power);
+            set
+            {
+                double multiple = Math.Ceiling((double)value / ACQUISITION_DEPTH_BASE);
+                double power = Math.Log(multiple, 2);
+                FpgaSettingsMemory[REG.ACQUISITION_DEPTH].Set((int)power);
+            }
+            get
+            {
+                return (uint)(ACQUISITION_DEPTH_BASE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
+            }
         }
-        public uint GetAcquisitionDepth()
-        {
-            return (uint)(ACQUISITION_DEPTH_BASE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
-        }
-        public double AcquisitionTimeSpan { get { return SamplesToTime(GetAcquisitionDepth()); } } 
+        public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
 
         private uint VIEWPORT_SAMPLES_MIN = 128;
         private uint VIEWPORT_SAMPLES_MAX = 2048;
@@ -592,7 +595,7 @@ namespace ECore.Devices
 
         #region other    
         public double AcquisitionBufferTimeSpan {
-            get { return SamplePeriod * GetAcquisitionDepth(); }
+            get { return SamplePeriod * AcquisitionDepth; }
         }
 
         /// <summary>

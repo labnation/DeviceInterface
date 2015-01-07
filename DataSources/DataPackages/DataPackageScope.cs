@@ -12,41 +12,65 @@ namespace ECore.DataSources
     /// </summary>
     public class DataPackageScope
     {
-        private Dictionary<AnalogChannel, float[]> dataAnalog;
-        private Dictionary<AnalogChannel, byte[]> dataAnalogRaw;
+        private Dictionary<AnalogChannel, float[]> acquisitionBufferOverviewAnalog;
+        private Dictionary<AnalogChannel, float[]> viewportDataAnalog;
+        private Dictionary<AnalogChannel, byte[]> viewportDataAnalogRaw;
         //FIXME: think through how to deal with the digital data. For now, it's better
         //to just pass it around as an 8-bit bus. But what if we have 10 channels? or 11? or 42?
-        private byte[] dataDigital;
+        private byte[] acquisitionBufferOverviewDigital;
+        private byte[] viewportDataDigital;
+
         public Dictionary<string, double> Settings { get; private set; }
 
-        internal DataPackageScope(double samplePeriod, int samples, double holdoff, bool partial, bool rolling)
+        internal DataPackageScope(
+            uint acquiredSamples, double samplePeriod, 
+            double viewportSamplePeriod, int viewportSamples, double viewportOffset,
+            double holdoff, bool partial, bool rolling)
         {
-            this.SamplePeriod = samplePeriod;
-            this.Samples = samples;
+            this.AcquisitionSamples = acquiredSamples;
+            this.AcquisitionSamplePeriod = samplePeriod;
+
+            this.ViewportSamples = viewportSamples;
+            this.ViewportSamplePeriod = viewportSamplePeriod;
+            this.ViewportOffset = viewportOffset;
+
             this.Holdoff = holdoff;
             this.Partial = partial;
             this.Rolling = rolling;
-            dataAnalog = new Dictionary<AnalogChannel, float[]>();
-            dataAnalogRaw = new Dictionary<AnalogChannel, byte[]>();
+
+            acquisitionBufferOverviewAnalog = new Dictionary<AnalogChannel, float[]>();
+            viewportDataAnalog = new Dictionary<AnalogChannel, float[]>();
+            viewportDataAnalogRaw = new Dictionary<AnalogChannel, byte[]>();
             Settings = new Dictionary<string,double>();
         }
 
         //FIXME should be internal but currently used by averaging and inverting processors
-        public void SetData(AnalogChannel ch, float[] data)
+        public void SetViewportData(AnalogChannel ch, float[] data)
         {
-            dataAnalog.Remove(ch);
-            dataAnalog.Add(ch, data);
+            viewportDataAnalog.Remove(ch);
+            viewportDataAnalog.Add(ch, data);
         }
 
-        public void SetDataRaw(AnalogChannel ch, byte[] data)
+        public void SetViewportDataRaw(AnalogChannel ch, byte[] data)
         {
-            dataAnalogRaw.Remove(ch);
-            dataAnalogRaw.Add(ch, data);
+            viewportDataAnalogRaw.Remove(ch);
+            viewportDataAnalogRaw.Add(ch, data);
         }
 
-        internal void SetDataDigital(byte[] data)
+        internal void SetViewportDataDigital(byte[] data)
         {
-            dataDigital = data;
+            viewportDataDigital = data;
+        }
+
+        public void SetAcquisitionBufferOverviewData(AnalogChannel ch, float[] data)
+        {
+            acquisitionBufferOverviewAnalog.Remove(ch);
+            acquisitionBufferOverviewAnalog.Add(ch, data);
+        }
+
+        internal void SetAcquisitionBufferOverviewDataDigital(byte[] data)
+        {
+            acquisitionBufferOverviewDigital = data;
         }
 
         internal void AddSetting(String setting, double value)
@@ -55,30 +79,30 @@ namespace ECore.DataSources
         }
 
         //FIXME: should we perhaps return a copy of the array?
-        public float[] GetData(AnalogChannel ch)
+        public float[] GetViewportData(AnalogChannel ch)
         {
             float[] data = null;
-            dataAnalog.TryGetValue(ch, out data);
+            viewportDataAnalog.TryGetValue(ch, out data);
             return data;
         }
 
-        public byte[] GetDataRaw(AnalogChannel ch)
+        public byte[] GetViewportDataRaw(AnalogChannel ch)
         {
             byte[] data = null;
-            dataAnalogRaw.TryGetValue(ch, out data);
+            viewportDataAnalogRaw.TryGetValue(ch, out data);
             return data;
         }
 
-        public byte[] GetDataDigital()
+        public byte[] GetViewportDataDigital()
         {
-            return dataDigital;
+            return viewportDataDigital;
         }
 
-        public bool[] GetDataDigital(Channel ch, float? thresholdHigh = null, float? thresholdLow = null)
+        public bool[] GetViewportDataDigital(Channel ch, float? thresholdHigh = null, float? thresholdLow = null)
         {
             if (ch is AnalogChannel)
             {
-                float[] analogData = GetData(ch as AnalogChannel);
+                float[] analogData = GetViewportData(ch as AnalogChannel);
                 if (analogData == null) return null;
 
                 float H = thresholdHigh.HasValue ? thresholdHigh.Value : analogData.Min() + (analogData.Max() - analogData.Min()) * 0.7f;
@@ -92,7 +116,7 @@ namespace ECore.DataSources
             }
             else if (ch is DigitalChannel)
             {
-                byte[] bus = GetDataDigital();
+                byte[] bus = GetViewportDataDigital();
                 if(bus == null) return null;
 
                 Func<byte, bool> bitFilter = new Func<byte,bool>(x => Utils.IsBitSet(x, ch.Value));
@@ -102,21 +126,21 @@ namespace ECore.DataSources
             return null;
         }
 
+
+        /// <summary>
+        /// The number of samples acquired
+        /// </summary>
+        public uint AcquisitionSamples { get; private set; }
+
         /// <summary>
         /// Time between 2 consecutive data array elements. In seconds.
         /// </summary>
-        public double SamplePeriod { get; private set; }
+        public double AcquisitionSamplePeriod { get; private set; }
 
         /// <summary>
         /// The trigger holdoff in seconds
         /// </summary>
         public double Holdoff { get; set; }
-
-        /// <summary>
-        /// The number of samples stored per channel
-        /// </summary>
-        //FIXME: this should be a private set, but is internal since a FIXME in SmartScope.GetScopeData()
-        public int Samples { get; set; }
 
         /// <summary>
         /// Indicates whether this is a partial acquisition package
@@ -127,5 +151,23 @@ namespace ECore.DataSources
         /// True when the scope is in rolling mode
         /// </summary>
         public bool Rolling { get; internal set; }
+
+        /// <summary>
+        /// The time between the first sample in the acquisition buffer and 
+        /// the viewport's first sample
+        /// </summary>
+        public double ViewportOffset { get; internal set; }
+
+        /// <summary>
+        /// The time between samples of the viewport
+        /// </summary>
+        public double ViewportSamplePeriod { get; internal set; }
+
+        /// <summary>
+        /// The number of samples stored per channel
+        /// </summary>
+        //FIXME: this should be a private set, but is internal since a FIXME in SmartScope.GetScopeData()
+        public int ViewportSamples { get; set; }
+
     }
 }

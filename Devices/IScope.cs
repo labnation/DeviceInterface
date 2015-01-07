@@ -34,44 +34,44 @@ namespace ECore.Devices
     public interface IScope : IDevice
     {
         DataPackageScope GetScopeData();
+        DataSources.DataSource DataSourceScope { get; }
 
-        void SetAcquisitionMode(AcquisitionMode mode);
-        void SetAcquisitionRunning(bool running);
-        void SetAcquisitionDepth(uint samples);
-        uint GetAcquisitionDepth();
-
+        bool Rolling { get; set; }
+        bool Running { get; set; }
         bool CanRoll { get; }
-        bool Rolling { get; }
-        void SetRolling(bool enable);
-        bool Running { get; }
         bool StopPending { get; }
         void Pause();
         void Resume();
 
+        /* Acquisition & Trigger */
+        AcquisitionMode AcquisitionMode { set; }
+        uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { set; }
         AnalogTriggerValue TriggerAnalog { set; }
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
+        uint TriggerWidth { get; set; }
+        float TriggerThreshold { get; set; }
+        void ForceTrigger();
+
+        /* Channel specifics */
+        void SetCoupling(AnalogChannel channel, Coupling coupling);
+        Coupling GetCoupling(AnalogChannel channel);
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
         void SetYOffset(AnalogChannel channel, float offset);
         float GetYOffset(AnalogChannel channel);
         float GetYOffsetMax(AnalogChannel ch);
         float GetYOffsetMin(AnalogChannel ch);
-
-        void ForceTrigger();
-        void SetCoupling(AnalogChannel channel, Coupling coupling);
-        uint TriggerWidth { get; set; }
-        float TriggerThreshold { get; set; }
         void SetProbeDivision(AnalogChannel ch, ProbeDivision division);
         ProbeDivision GetProbeDivision(AnalogChannel ch);
 
+        /* Logic Analyser */
         bool LogicAnalyserEnabled { get; set; }
         AnalogChannel LogicAnalyserChannel { set; }
 
-        Coupling GetCoupling(AnalogChannel channel);
+        /* Viewport */        
         void SetViewPort(double offset, double timespan);
         double GetViewPortTimeSpan();
-        DataSources.DataSource DataSourceScope { get; }
-
+        
         void CommitSettings();
     }
 

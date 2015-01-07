@@ -98,9 +98,9 @@ namespace ECore.DataSources
                 foreach (var kvp in channelBuffers)
                 {
                     if (kvp.Key is AnalogChannel)
-                        kvp.Value.AddData(ScopeData.GetData(kvp.Key as AnalogChannel));
+                        kvp.Value.AddData(ScopeData.GetViewportData(kvp.Key as AnalogChannel));
                     if (kvp.Key is LogicAnalyserChannel)
-                        kvp.Value.AddData(ScopeData.GetDataDigital());
+                        kvp.Value.AddData(ScopeData.GetViewportDataDigital());
                 }
                 DataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
 
@@ -108,8 +108,8 @@ namespace ECore.DataSources
                     new AcquisitionInfo()
                     {
                         firstSampleTime = (ulong)(DateTime.Now.TimeOfDay.TotalMilliseconds*1000000.0),
-                        samples = ScopeData.Samples,
-                        samplePeriod = ScopeData.SamplePeriod
+                        samples = ScopeData.ViewportSamples,
+                        samplePeriod = ScopeData.ViewportSamplePeriod
                     });
                 foreach (var kvp in ScopeData.Settings)
                 {

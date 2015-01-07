@@ -44,13 +44,33 @@ namespace ECore.Devices {
             { AnalogChannel.ChA, 0f},
             { AnalogChannel.ChB, 0f}
         };
-		//Scope variables
-        private uint waveLength { get { return 3 * acquisitionDepth; } }
-		private double samplePeriodMinimum = 10e-9;
-		//ns --> sampleFreq of 100MHz by default
-        private double SamplePeriod { get { return samplePeriodMinimum * Math.Pow(2, decimation); } }
+		
+        //Acquisition variables
+        private AcquisitionMode acquisitionMode = AcquisitionMode.NORMAL;
+        private bool acquisitionRunning = false;
+		
+        private uint waveLength { get { return 2 * acquisitionDepth; } }
+        internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
+        private uint decimation = 0;
+        private double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
+        public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
+        public double SamplesToTime(uint samples)
+        {
+            return samples * SamplePeriod;
+        }
+
+        private Int32 TimeToSamples(double time, uint inputDecimation)
+        {
+            return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
+        }
 
         public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get; private set; }
+
+        //Trigger
+        private double triggerHoldoff = 0;
+        private uint triggerWidth = 10;
+        private float triggerThreshold = 0;
+
         AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
         {
             channel = AnalogChannel.ChA,
@@ -58,10 +78,6 @@ namespace ECore.Devices {
             direction = TriggerDirection.RISING
         };
 		
-		private double triggerHoldoff = 0;
-		private uint triggerWidth = 10;
-        private float triggerThreshold = 0;
-
         private struct DigitalTrigger {
             public byte triggerCondition;
             public byte triggerMask;
@@ -69,12 +85,18 @@ namespace ECore.Devices {
             public byte preTriggerMask;
         }
         private DigitalTrigger digitalTrigger;
-        private bool logicAnalyser;
+        
+        //Viewport
+        private int viewportOffset = 0; //Number of samples to skip in acq buffer
+        private int viewportDecimation = 0;
 
-		private uint decimation = 1;
-        private AcquisitionMode acquisitionMode = AcquisitionMode.NORMAL;
-        private bool acquisitionRunning = false;
-		//Hack
+        private const int VIEWPORT_SAMPLES_MIN = 128;
+        private const int VIEWPORT_SAMPLES_MAX = 2048;
+        private const int VIEW_DECIMATION_MAX = 10;
+        private int viewportSamples = VIEWPORT_SAMPLES_MAX;
+
+        //Hack
+        private bool logicAnalyser;
 		bool regenerate = true;
 		DataPackageScope p;
         private int maximumGenerationLength = 1024*1024*100; //Don't generate more than this many samples of wave
@@ -131,29 +153,26 @@ namespace ECore.Devices {
 
 		#region real scope settings
 
-		private void validateDecimation (uint decimation)
-		{
-			if (decimation < 1)
-				throw new ValidationException ("Decimation must be larger than 0");
-		}
-        public void SetAcquisitionMode(AcquisitionMode mode)
+        public AcquisitionMode AcquisitionMode
         {
-            lock (resetAcquisitionLock)
+            set
             {
-                this.acquisitionMode = mode;
-                resetAcquisition = true;
+                lock (resetAcquisitionLock)
+                {
+                    this.acquisitionMode = value;
+                    resetAcquisition = true;
+                }
             }
         }
-        public void SetAcquisitionRunning(bool running)
-        {
-            this.acquisitionRunning = running;
+
+        public bool Running {
+            set { this.acquisitionRunning = value; }
+            get { return this.acquisitionRunning; } 
         }
-        public bool Running { get { return this.acquisitionRunning; } }
         public bool StopPending { get { return false; } }
 
         public bool CanRoll { get { return false; } }
-        public bool Rolling { get { return false; } }
-        public void SetRolling(bool enable) { }
+        public bool Rolling { set { } get { return false; } }
 
 		public double TriggerHoldOff
 		{
@@ -260,27 +279,65 @@ namespace ECore.Devices {
         }
 		public void SetViewPort(double offset, double timespan)
         {
+            /*                maxTimeSpan
+             *            <---------------->
+             *  .--------------------------,
+             *  |        ||       ||       |
+             *  `--------------------------`
+             *  <--------><------->
+             *    offset   timespan
+             */
             lock (resetAcquisitionLock)
             {
-                decimation = (uint)Math.Max(0, Math.Ceiling(Math.Log(timespan / GetDefaultTimeRange(), 2)));
+                double maxTimeSpan = AcquisitionTimeSpan - offset;
+                if (timespan > maxTimeSpan)
+                {
+                    Logger.Warn("Attempt at setting viewport beyond acquisition buffer");
+                    return;
+                }
+
+                //Because the check above, the timeSpanRatio will always be <= 1
+                double timeSpanRatio = timespan / maxTimeSpan;
+
+                //Decrease the number of samples till viewport sample period is larger than 
+                //or equal to the full sample rate
+                uint samples = VIEWPORT_SAMPLES_MAX;
+                while (samples >= VIEWPORT_SAMPLES_MIN)
+                {
+                    if (timespan / samples >= SamplePeriod)
+                        break;
+                    samples /= 2;
+                }
+                if (samples < VIEWPORT_SAMPLES_MIN)
+                {
+                    Logger.Warn("Unfeasible zoom level");
+                    return;
+                }
+
+                int viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
+
+                if (viewDecimation > VIEW_DECIMATION_MAX)
+                {
+                    Logger.Warn("Clipping view decimation! better decrease the sample rate!");
+                    viewDecimation = VIEW_DECIMATION_MAX;
+                }
+                viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
+                viewportOffset = TimeToSamples(offset, decimation);
                 resetAcquisition = true;
             }
 		}
-
-        public void SetAcquisitionDepth(uint depth)
-        {
-            acquisitionDepth = depth;
-        }
-
-        public uint GetAcquisitionDepth()
-        {
-            return acquisitionDepth;
-        }
-
         public double GetViewPortTimeSpan()
         {
-            return GetDefaultTimeRange() * Math.Pow(2,decimation);
+            return viewportSamples * SamplePeriod * Math.Pow(2, viewportDecimation);
         }
+
+        public uint AcquisitionDepth
+        {
+            set { acquisitionDepth = value; }
+            get { return acquisitionDepth; }
+        }
+
+
 		public void SetCoupling (AnalogChannel ch, Coupling coupling)
 		{
             ChannelConfig[ch].coupling = coupling;
@@ -289,22 +346,17 @@ namespace ECore.Devices {
 		{
             return ChannelConfig[ch].coupling;
 		}
-		public double GetDefaultTimeRange ()
-		{ 
-			return acquisitionDepth * samplePeriodMinimum; 
-		}
         public DataPackageScope GetScopeData()
         {
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
-            Dictionary<AnalogChannel, float[]> outputAnalog = new Dictionary<AnalogChannel, float[]>();
-            byte[] outputDigital = null;
+            Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
+            byte[] acquisitionBufferDigital = null;
             int triggerIndex = 0;
             int triggerHoldoffInSamples = 0;
-            double SamplePeriodLocal;
+            double SamplePeriodLocal = 0;
             double TriggerHoldoffLocal;
             AcquisitionMode AcquisitionModeLocal;
-
 
             if (!acquisitionRunning)
                 return null;
@@ -395,16 +447,23 @@ namespace ECore.Devices {
                     
                 foreach(AnalogChannel channel in AnalogChannel.List)
                 {
-                    outputAnalog[channel] = DummyScope.CropWave(acquisitionDepth, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
+                    acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepth, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
                 }
-                outputDigital = DummyScope.CropWave(acquisitionDepth, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
+                acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepth, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
             }                   
             double holdoff = triggerHoldoffInSamples * SamplePeriod;
-            p = new DataPackageScope(SamplePeriod, (int)acquisitionDepth, holdoff, false, false);
-            foreach(AnalogChannel ch in AnalogChannel.List)
-                p.SetData(ch, outputAnalog[ch]);
+            p = new DataPackageScope(
+                    acquisitionDepth, SamplePeriodLocal, 
+                    SamplePeriodLocal * Math.Pow(2, viewportDecimation), viewportSamples, viewportOffset, 
+                    holdoff, false, false);
 
-            p.SetDataDigital(outputDigital);
+            foreach (AnalogChannel ch in AnalogChannel.List)
+            {
+                p.SetAcquisitionBufferOverviewData(ch, null);
+                p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffset, viewportDecimation, viewportSamples));
+            }
+
+            p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffset, viewportDecimation, viewportSamples));
 #if __IOS__
 			regenerate = true;
 #endif
@@ -413,6 +472,12 @@ namespace ECore.Devices {
                 acquisitionRunning = false;
 
             return p;
+        }
+
+        public static T[] GetViewport<T>(T[] buffer, int offset, int decimation, int length)
+        {
+            int skip = 1 << decimation;
+            return buffer.Skip(offset).Take(length * skip).Where((x, i) => i % skip == 0).ToArray();
         }
 
 		#endregion
@@ -472,9 +537,14 @@ namespace ECore.Devices {
 			triggerIndex = 0;
 			for (int i = Math.Max (0, holdoff); i < wave.Length - width - outputWaveLength; i++) {
 				float invertor = (trigger.direction == TriggerDirection.RISING) ? 1f : -1f;
-                if (invertor * wave[i] < invertor * trigger.level && invertor * wave[i + width] >= invertor * trigger.level + threshold)
+                int triggerIndexTmp = (int)(i + width / 2);
+                if (
+                    (invertor * wave[i] < invertor * trigger.level && invertor * wave[i + width] >= invertor * trigger.level + threshold)
+                    &&
+                    triggerIndexTmp - holdoff + outputWaveLength <= wave.Length
+                    )
                 {
-					triggerIndex = (int) (i + width / 2);
+                    triggerIndex = triggerIndexTmp;
 					return true;
 				}
 			}

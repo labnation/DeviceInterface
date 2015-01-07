@@ -151,7 +151,7 @@ namespace ECore.Devices
             ConfigureAdc();
             CommitSettings();
             this.DataSourceScope.Resume();
-            this.SetAcquisitionRunning(this.acquiringWhenPaused);
+            this.Running = this.acquiringWhenPaused;
         }
 
         public void Dispose()
@@ -295,7 +295,7 @@ namespace ECore.Devices
             //TriggerThreshold = 3;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
-            SetAcquisitionDepth(512 * 1024);
+            AcquisitionDepth = 512 * 1024;
             SetAwgStretching(0);
             SetViewPort(0, 10e-3);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
@@ -533,7 +533,11 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            DataPackageScope data = new DataPackageScope(header.SamplePeriod, chA.Length, header.TriggerHoldoff, chA.Length < header.SamplesPerAcquisition, header.Rolling);
+            throw new NotImplementedException("This needs fixing");
+            DataPackageScope data = new DataPackageScope(
+                header.GetRegister(REG.ACQUISITION_DEPTH), header.SamplePeriod,
+                0, chA.Length, 0,
+                header.TriggerHoldoff, chA.Length < header.SamplesPerAcquisition, header.Rolling);
 #if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif
@@ -547,8 +551,8 @@ namespace ECore.Devices
             data.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);
             data.AddSetting("Multiplier" + AnalogChannel.ChB.Name, mulB);
             data.AddSetting("InputDecimation", header.GetRegister(REG.INPUT_DECIMATION));
-            data.SetDataRaw(AnalogChannel.ChA, chA);
-            data.SetDataRaw(AnalogChannel.ChB, chB);
+            data.SetViewportDataRaw(AnalogChannel.ChA, chA);
+            data.SetViewportDataRaw(AnalogChannel.ChB, chB);
 
 #if DEBUG
             data.AddSetting("DividerA", divA);
@@ -558,9 +562,9 @@ namespace ECore.Devices
 
             if (this.disableVoltageConversion)
             {
-                data.SetData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
-                data.SetData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
-                data.SetDataDigital(chB);
+                data.SetViewportData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
+                data.SetViewportData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
+                data.SetViewportDataDigital(chB);
             }
             else
             {
@@ -571,14 +575,14 @@ namespace ECore.Devices
                 bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
             
                 if (logicAnalyserOnChannelA)
-                    data.SetDataDigital(chA);
+                    data.SetViewportDataDigital(chA);
                 else
-                    data.SetData(AnalogChannel.ChA, ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]));
+                    data.SetViewportData(AnalogChannel.ChA, ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]));
 
                 if (logicAnalyserOnChannelB)
-                    data.SetDataDigital(chB);
+                    data.SetViewportDataDigital(chB);
                 else
-                    data.SetData(AnalogChannel.ChB, ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]));
+                    data.SetViewportData(AnalogChannel.ChB, ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]));
 #if DEBUG                    
             }
 #endif
