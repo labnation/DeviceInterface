@@ -90,6 +90,7 @@ namespace ECore.Devices {
         private int viewportOffset = 0; //Number of samples to skip in acq buffer
         private int viewportDecimation = 0;
 
+        private const int OVERVIEW_LENGTH = 2048;
         private const int VIEWPORT_SAMPLES_MIN = 128;
         private const int VIEWPORT_SAMPLES_MAX = 2048;
         private const int VIEW_DECIMATION_MAX = 10;
@@ -114,7 +115,7 @@ namespace ECore.Devices {
                         noise = 0.1,
                         coupling = Coupling.DC,
                         dcOffset = 0.0,
-                        frequency = 1e3,
+                        frequency = 10e3,
                         phase = 0,
                         waveform = WaveForm.TRIANGLE,
                         probeDivision = ProbeDivision.X1,
@@ -123,10 +124,10 @@ namespace ECore.Devices {
                 { AnalogChannel.ChB, new DummyScopeChannelConfig() 
                     {
                         amplitude = 1,
-                        noise = 0.1,
+                        noise = 0,
                         coupling = Coupling.DC,
                         dcOffset = 0.0,
-                        frequency = 1e3,
+                        frequency = 10e3,
                         phase = 0,
                         waveform = WaveForm.SINE,
                         probeDivision = ProbeDivision.X1,
@@ -287,44 +288,43 @@ namespace ECore.Devices {
              *  <--------><------->
              *    offset   timespan
              */
-            lock (resetAcquisitionLock)
+            double maxTimeSpan = AcquisitionTimeSpan - offset;
+            if (timespan > maxTimeSpan)
             {
-                double maxTimeSpan = AcquisitionTimeSpan - offset;
-                if (timespan > maxTimeSpan)
-                {
-                    Logger.Warn("Attempt at setting viewport beyond acquisition buffer");
-                    return;
-                }
-
-                //Because the check above, the timeSpanRatio will always be <= 1
-                double timeSpanRatio = timespan / maxTimeSpan;
-
-                //Decrease the number of samples till viewport sample period is larger than 
-                //or equal to the full sample rate
-                uint samples = VIEWPORT_SAMPLES_MAX;
-                while (samples >= VIEWPORT_SAMPLES_MIN)
-                {
-                    if (timespan / samples >= SamplePeriod)
-                        break;
-                    samples /= 2;
-                }
-                if (samples < VIEWPORT_SAMPLES_MIN)
-                {
-                    Logger.Warn("Unfeasible zoom level");
-                    return;
-                }
-
-                int viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
-
-                if (viewDecimation > VIEW_DECIMATION_MAX)
-                {
-                    Logger.Warn("Clipping view decimation! better decrease the sample rate!");
-                    viewDecimation = VIEW_DECIMATION_MAX;
-                }
-                viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
-                viewportOffset = TimeToSamples(offset, decimation);
-                resetAcquisition = true;
+                Logger.Warn("Attempt at setting viewport beyond acquisition buffer");
+                return;
             }
+
+            //Because the check above, the timeSpanRatio will always be <= 1
+            double timeSpanRatio = timespan / maxTimeSpan;
+
+            //Decrease the number of samples till viewport sample period is larger than 
+            //or equal to the full sample rate
+            uint samples = VIEWPORT_SAMPLES_MAX;
+                
+            int viewDecimation = 0;
+            while(true)
+            {
+                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
+                if (viewDecimation >= 0)
+                    break;
+                samples /= 2;
+            }
+                
+            if (samples < VIEWPORT_SAMPLES_MIN)
+            {
+                Logger.Warn("Unfeasible zoom level");
+                return;
+            }
+
+            if (viewDecimation > VIEW_DECIMATION_MAX)
+            {
+                Logger.Warn("Clipping view decimation! better decrease the sample rate!");
+                viewDecimation = VIEW_DECIMATION_MAX;
+            }
+            viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
+            viewportDecimation = viewDecimation
+            viewportOffset = TimeToSamples(offset, decimation);
 		}
         public double GetViewPortTimeSpan()
         {
@@ -333,7 +333,16 @@ namespace ECore.Devices {
 
         public uint AcquisitionDepth
         {
-            set { acquisitionDepth = value; }
+            set {
+                lock (resetAcquisitionLock)
+                {
+                    double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
+                    if(log2OfRatio != (int)log2OfRatio)
+                        throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
+                    acquisitionDepth = value;
+                    resetAcquisition = true;
+                }
+            }
             get { return acquisitionDepth; }
         }
 
@@ -355,6 +364,7 @@ namespace ECore.Devices {
             int triggerIndex = 0;
             int triggerHoldoffInSamples = 0;
             double SamplePeriodLocal = 0;
+            uint waveLengthLocal = 0;
             double TriggerHoldoffLocal;
             AcquisitionMode AcquisitionModeLocal;
 
@@ -379,6 +389,7 @@ namespace ECore.Devices {
                         AcquisitionModeLocal = acquisitionMode;
                         TriggerHoldoffLocal = triggerHoldoff;
                         SamplePeriodLocal = SamplePeriod;
+                        waveLengthLocal = waveLength;
                     }
 
                     foreach (AnalogChannel channel in AnalogChannel.List)
@@ -386,13 +397,13 @@ namespace ECore.Devices {
                         float[] wave;
                         switch(waveSource) {
                             case WaveSource.GENERATOR:
-                                wave = DummyScope.GenerateWave(waveLength,
+                                wave = DummyScope.GenerateWave(waveLengthLocal,
                                     SamplePeriodLocal,
                                     timeOffset.Ticks / 1e7,
                                     ChannelConfig[channel]);
                                 break;
                             case WaveSource.FILE:
-                                wave = GetWaveFromFile(channel, waveLength, SamplePeriodLocal, timeOffset.Ticks / 1e7);
+                                wave = GetWaveFromFile(channel, waveLengthLocal, SamplePeriodLocal, timeOffset.Ticks / 1e7);
                                 break;
                             default:
                                 throw new Exception("Unsupported wavesource");
@@ -405,7 +416,7 @@ namespace ECore.Devices {
                         DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
                         waveAnalog[channel].AddRange(wave);
                     }
-                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLength, SamplePeriodLocal, timeOffset.TotalSeconds));
+                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthLocal, SamplePeriodLocal, timeOffset.TotalSeconds));
 
                     triggerHoldoffInSamples = (int)(TriggerHoldoffLocal / SamplePeriodLocal);
                     double triggerTimeout = 0.0;
@@ -441,7 +452,7 @@ namespace ECore.Devices {
                         return null;
                     }
 
-                    var timePassed = new TimeSpan((long)(waveLength * SamplePeriodLocal * 1e7));
+                    var timePassed = new TimeSpan((long)(waveLengthLocal * SamplePeriodLocal * 1e7));
                     timeOffset = timeOffset.Add(timePassed);
                 }
                     
@@ -459,7 +470,7 @@ namespace ECore.Devices {
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                p.SetAcquisitionBufferOverviewData(ch, null);
+                p.SetAcquisitionBufferOverviewData(ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepth/OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffset, viewportDecimation, viewportSamples));
             }
 

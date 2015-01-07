@@ -126,6 +126,17 @@ namespace ECore.DataSources
             return null;
         }
 
+        public float[] GetOverviewBufferData(AnalogChannel ch)
+        {
+            float[] data = null;
+            acquisitionBufferOverviewAnalog.TryGetValue(ch, out data);
+            return data;
+        }
+
+        public byte[] GetOverviewBufferDataDigital()
+        {
+            return acquisitionBufferOverviewDigital;
+        }
 
         /// <summary>
         /// The number of samples acquired
