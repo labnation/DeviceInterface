@@ -63,9 +63,9 @@ namespace ECore.Devices
         float TriggerThreshold { get; set; }
         void SetProbeDivision(AnalogChannel ch, ProbeDivision division);
         ProbeDivision GetProbeDivision(AnalogChannel ch);
-        
-        void SetEnableLogicAnalyser(bool enable);
-        void SetLogicAnalyserChannel(AnalogChannel channel);
+
+        bool LogicAnalyserEnabled { get; set; }
+        AnalogChannel LogicAnalyserChannel { set; }
 
         Coupling GetCoupling(AnalogChannel channel);
         void SetViewPort(double offset, double timespan);

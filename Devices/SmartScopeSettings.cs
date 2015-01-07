@@ -617,16 +617,26 @@ namespace ECore.Devices
 
         #region Logic Analyser
 
-        public void SetEnableLogicAnalyser(bool enable)
+        public bool LogicAnalyserEnabled
         {
-            if (!Ready) return;
-            StrobeMemory[STR.LA_ENABLE].Set(enable);
-            if(enable)
-                StrobeMemory[STR.AWG_ENABLE].Set(false);
+            set
+            {
+                if (!Ready) return;
+                StrobeMemory[STR.LA_ENABLE].Set(value);
+                if (value)
+                    StrobeMemory[STR.AWG_ENABLE].Set(false);
+            }
+            get
+            {
+                return StrobeMemory[STR.LA_ENABLE].GetBool();
+            }
         }
-        public void SetLogicAnalyserChannel(AnalogChannel channel)
+        public AnalogChannel LogicAnalyserChannel
         {
-            StrobeMemory[STR.LA_CHANNEL].Set(channel == AnalogChannel.ChB);
+            set
+            {
+                StrobeMemory[STR.LA_CHANNEL].Set(value == AnalogChannel.ChB);
+            }
         }
 
         #endregion

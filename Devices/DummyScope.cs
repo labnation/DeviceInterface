@@ -451,11 +451,15 @@ namespace ECore.Devices {
 		}
 
         //FIXME: implement this
-        public void SetEnableLogicAnalyser(bool enable) 
+        public bool LogicAnalyserEnabled
         {
-            logicAnalyser = enable;
+            set { logicAnalyser = value; }
+            get { return logicAnalyser; }
         }
-        public void SetLogicAnalyserChannel(AnalogChannel channel) { }
+        public AnalogChannel LogicAnalyserChannel
+        {
+            set { }
+        }
 
 		#endregion
 
