@@ -50,7 +50,7 @@ namespace ECore.Devices
 
         double TriggerHoldOff { set; }
         AnalogTriggerValue TriggerAnalog { set; }
-        void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
+        Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
         void SetYOffset(AnalogChannel channel, float offset);
         float GetYOffset(AnalogChannel channel);

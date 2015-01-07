@@ -215,39 +215,43 @@ namespace ECore.Devices {
         {
             return triggerThreshold;
         }
-        public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
-		{
-            digitalTrigger.triggerCondition = 0x0;
-            digitalTrigger.triggerMask = 0xFF;
-            digitalTrigger.preTriggerCondition = 0x0;
-            digitalTrigger.preTriggerMask = 0xFF;
-            foreach (KeyValuePair<DigitalChannel, DigitalTriggerValue> kvp in condition)
+        public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
+        {
+            set
             {
-                int bit = kvp.Key.Value;
-                switch(kvp.Value) {
-                    case DigitalTriggerValue.X:
-                        Utils.ClearBit(ref digitalTrigger.triggerMask, bit);
-                        Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
-                        break;
-                    case DigitalTriggerValue.H:
-                        Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
-                        Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
-                        break;
-                    case DigitalTriggerValue.L:
-                        Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
-                        Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
-                        break;
-                    case DigitalTriggerValue.R:
-                        Utils.ClearBit(ref digitalTrigger.preTriggerCondition, bit);
-                        Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
-                        break;
-                    case DigitalTriggerValue.F:
-                        Utils.SetBit(ref digitalTrigger.preTriggerCondition, bit);
-                        Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
-                        break;
+                digitalTrigger.triggerCondition = 0x0;
+                digitalTrigger.triggerMask = 0xFF;
+                digitalTrigger.preTriggerCondition = 0x0;
+                digitalTrigger.preTriggerMask = 0xFF;
+                foreach (KeyValuePair<DigitalChannel, DigitalTriggerValue> kvp in value)
+                {
+                    int bit = kvp.Key.Value;
+                    switch (kvp.Value)
+                    {
+                        case DigitalTriggerValue.X:
+                            Utils.ClearBit(ref digitalTrigger.triggerMask, bit);
+                            Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                            break;
+                        case DigitalTriggerValue.H:
+                            Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                            Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
+                            break;
+                        case DigitalTriggerValue.L:
+                            Utils.ClearBit(ref digitalTrigger.preTriggerMask, bit);
+                            Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                            break;
+                        case DigitalTriggerValue.R:
+                            Utils.ClearBit(ref digitalTrigger.preTriggerCondition, bit);
+                            Utils.SetBit(ref digitalTrigger.triggerCondition, bit);
+                            break;
+                        case DigitalTriggerValue.F:
+                            Utils.SetBit(ref digitalTrigger.preTriggerCondition, bit);
+                            Utils.ClearBit(ref digitalTrigger.triggerCondition, bit);
+                            break;
+                    }
                 }
             }
-		}
+        }
 		public void SetViewPort(double offset, double timespan)
         {
             lock (resetAcquisitionLock)

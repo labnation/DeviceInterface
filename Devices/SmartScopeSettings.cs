@@ -183,7 +183,7 @@ namespace ECore.Devices
             yOffset[channel] = GetYOffset(channel);
             if (channel == triggerAnalog.channel)
             {
-                SetTriggerAnalog(this.triggerAnalog);
+                TriggerAnalog = this.triggerAnalog;
                 //SetTriggerThreshold(this.triggerThreshold);
             }
         }
@@ -339,7 +339,7 @@ namespace ECore.Devices
         public void SetTriggerChannel(AnalogChannel channel)
         {
             this.triggerAnalog.channel = channel;
-            SetTriggerAnalog(this.triggerAnalog);
+            TriggerAnalog = this.triggerAnalog;
         }
 
 
@@ -356,7 +356,7 @@ namespace ECore.Devices
         private void SetTriggerDirection(TriggerDirection direction)
         {
             triggerAnalog.direction = direction;
-            SetTriggerAnalog(this.triggerAnalog);
+            TriggerAnalog = this.triggerAnalog;
         }
         public void SetTriggerWidth(uint width)
         {
@@ -436,19 +436,22 @@ namespace ECore.Devices
         public bool Running { get { return Ready && acquiring; } }
         public bool StopPending { get { return Ready && stopPending; } }
 
-        public void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition)
+        public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {
-            int rising  = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R  ? 1 : 0) << x.Key.Value));
-            int falling = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
-            int high    = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H    ? 1 : 0) << x.Key.Value));
-            int low     = condition.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L     ? 1 : 0) << x.Key.Value));
-            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_RISING].Set((byte)rising);
-            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
-            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
-            FpgaSettingsMemory[REG.DIGITAL_TRIGGER_LOW].Set((byte)low);
+            set
+            {
+                int rising = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R ? 1 : 0) << x.Key.Value));
+                int falling = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
+                int high = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H ? 1 : 0) << x.Key.Value));
+                int low = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L ? 1 : 0) << x.Key.Value));
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_RISING].Set((byte)rising);
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_LOW].Set((byte)low);
 
-            //FIXME: We currently don't support passing the LA data through channel B, so the trigger needs to be set to chA
-            SetTriggerAnalog(new AnalogTriggerValue() { channel = AnalogChannel.ChA, direction = TriggerDirection.RISING, level = 0} );
+                //FIXME: We currently don't support passing the LA data through channel B, so the trigger needs to be set to chA
+                TriggerAnalog = new AnalogTriggerValue() { channel = AnalogChannel.ChA, direction = TriggerDirection.RISING, level = 0 };
+            }
         }
 
 
