@@ -568,10 +568,12 @@ namespace ECore.Devices
             return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
         }
 
-        public double GetViewPortTimeSpan()
+        public double ViewPortTimeSpan
         {
-            return viewPortSamples * (SamplePeriod * Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte()));
+            get { return viewPortSamples * (SamplePeriod * Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte())); }
         }
+
+        public double ViewPortOffset { get { return 0; } }
 
         ///<summary>
         ///Scope hold off

@@ -291,12 +291,17 @@ namespace ECore.Devices {
             double maxTimeSpan = AcquisitionTimeSpan - offset;
             if (timespan > maxTimeSpan)
             {
-                Logger.Warn("Attempt at setting viewport beyond acquisition buffer");
-                return;
+                if (timespan > AcquisitionTimeSpan)
+                {
+                    timespan = AcquisitionTimeSpan;
+                    offset = 0;
+                }
+                else
+                {
+                    //Limit offset so the timespan can fit
+                    offset = AcquisitionTimeSpan - timespan;
+                }
             }
-
-            //Because the check above, the timeSpanRatio will always be <= 1
-            double timeSpanRatio = timespan / maxTimeSpan;
 
             //Decrease the number of samples till viewport sample period is larger than 
             //or equal to the full sample rate
@@ -323,12 +328,16 @@ namespace ECore.Devices {
                 viewDecimation = VIEW_DECIMATION_MAX;
             }
             viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
-            viewportDecimation = viewDecimation
+            viewportDecimation = viewDecimation;
             viewportOffset = TimeToSamples(offset, decimation);
 		}
-        public double GetViewPortTimeSpan()
+        public double ViewPortTimeSpan
         {
-            return viewportSamples * SamplePeriod * Math.Pow(2, viewportDecimation);
+            get { return viewportSamples * SamplePeriod * Math.Pow(2, viewportDecimation); }
+        }
+        public double ViewPortOffset
+        {
+            get { return SamplesToTime(viewportOffset); }
         }
 
         public uint AcquisitionDepth

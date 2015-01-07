@@ -70,7 +70,8 @@ namespace ECore.Devices
 
         /* Viewport */        
         void SetViewPort(double offset, double timespan);
-        double GetViewPortTimeSpan();
+        double ViewPortTimeSpan { get; }
+        double ViewPortOffset { get; }
         
         void CommitSettings();
     }
