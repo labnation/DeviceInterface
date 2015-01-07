@@ -283,41 +283,44 @@ namespace ECore.Devices
         ///Set scope trigger level
         ///</summary>
         ///<param name="trigger">Trigger condition</param>
-        public void SetTriggerAnalog(AnalogTriggerValue trigger)
+        public AnalogTriggerValue TriggerAnalog
         {
-            if (!Connected) return;
-            this.triggerAnalog = trigger;
+            set
+            {
+                if (!Connected) return;
+                this.triggerAnalog = value;
 
-            /* Set Level */
-            double[] coefficients = channelSettings[trigger.channel].coefficients;
-            REG offsetRegister = trigger.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
-            double level = 0;
-            if(coefficients != null)
-                level = (ProbeScaleHostToScope(trigger.channel, trigger.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
-            if (level < 0) level = 0;
-            if (level > 255) level = 255;
+                /* Set Level */
+                double[] coefficients = channelSettings[value.channel].coefficients;
+                REG offsetRegister = value.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+                double level = 0;
+                if (coefficients != null)
+                    level = (ProbeScaleHostToScope(value.channel, value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                if (level < 0) level = 0;
+                if (level > 255) level = 255;
 
-            //Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
-            FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
+                //Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
+                FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);
 
-            /* Set Channel */
-            //Logger.Debug(" Set trigger channel to " + (triggerAnalog.channel == AnalogChannel.ChA ? " CH A" : "CH B"));
-            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
-                (byte)(
-                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) +
-                    (triggerAnalog.channel.Value << 2)
-                        ));
-            
-            /* Set Direction */
-            FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
-                (byte)(
-                    (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) +
-                    (((int)triggerAnalog.direction << 4) & 0x30)
-                    )
-            );
-            //Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
+                /* Set Channel */
+                //Logger.Debug(" Set trigger channel to " + (triggerAnalog.channel == AnalogChannel.ChA ? " CH A" : "CH B"));
+                FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                    (byte)(
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) +
+                        (triggerAnalog.channel.Value << 2)
+                            ));
 
+                /* Set Direction */
+                FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                    (byte)(
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) +
+                        (((int)triggerAnalog.direction << 4) & 0x30)
+                        )
+                );
+                //Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
+            }
         }
+
         public void SetForceTrigger()
         {
             if(Ready)

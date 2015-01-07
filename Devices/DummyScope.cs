@@ -166,10 +166,13 @@ namespace ECore.Devices {
                 }
             }
 		}
-		public void SetTriggerAnalog (AnalogTriggerValue trigger)
-		{
-			this.triggerAnalog = trigger;
-		}
+        public AnalogTriggerValue TriggerAnalog
+        {
+            set
+            {
+                this.triggerAnalog = value;
+            }
+        }
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {
         }
@@ -349,11 +352,11 @@ namespace ECore.Devices {
 
                     if (logicAnalyser)
                     {
-                        triggerDetected = DummyScope.TriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepth, out triggerIndex);
+                        triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepth, out triggerIndex);
                     }
                     else
                     {
-                        triggerDetected = DummyScope.TriggerAnalog(waveAnalog[triggerAnalog.channel].ToArray(), triggerAnalog,
+                        triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerAnalog.channel].ToArray(), triggerAnalog,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
                             acquisitionDepth, out triggerIndex);
                     }
@@ -447,7 +450,7 @@ namespace ECore.Devices {
 		#endregion
 
         #region Helpers
-        private static bool TriggerAnalog (float [] wave, AnalogTriggerValue trigger, int holdoff, float threshold, uint width, uint outputWaveLength, out int triggerIndex)
+        private static bool DoTriggerAnalog (float [] wave, AnalogTriggerValue trigger, int holdoff, float threshold, uint width, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
@@ -463,7 +466,7 @@ namespace ECore.Devices {
 			}
 			return false;
 		}
-        private static bool TriggerDigital(byte[] wave, int holdoff, DigitalTrigger trigger, uint outputWaveLength, out int triggerIndex)
+        private static bool DoTriggerDigital(byte[] wave, int holdoff, DigitalTrigger trigger, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
