@@ -155,12 +155,15 @@ namespace ECore.Devices {
         public bool Rolling { get { return false; } }
         public void SetRolling(bool enable) { }
 
-		public void SetTriggerHoldOff (double holdoff)
+		public double TriggerHoldOff
 		{
-            lock (resetAcquisitionLock)
+            set
             {
-                this.triggerHoldoff = holdoff;
-                resetAcquisition = true;
+                lock (resetAcquisitionLock)
+                {
+                    this.triggerHoldoff = value;
+                    resetAcquisition = true;
+                }
             }
 		}
 		public void SetTriggerAnalog (AnalogTriggerValue trigger)

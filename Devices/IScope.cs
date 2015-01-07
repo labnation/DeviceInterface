@@ -48,7 +48,7 @@ namespace ECore.Devices
         void Pause();
         void Resume();
 
-        void SetTriggerHoldOff(double time);
+        double TriggerHoldOff { set; }
         void SetTriggerAnalog(AnalogTriggerValue trigger);
         void SetTriggerDigital(Dictionary<DigitalChannel, DigitalTriggerValue> condition);
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
