@@ -337,7 +337,7 @@ namespace ECore.Devices {
         }
         public double ViewPortOffset
         {
-            get { return SamplesToTime(viewportOffset); }
+            get { return SamplesToTime((uint)viewportOffset); }
         }
 
         public uint AcquisitionDepth
