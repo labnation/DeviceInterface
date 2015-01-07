@@ -71,11 +71,12 @@ namespace ECore.Devices
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
-        private const int MAX_COMPLETION_TRIES = 2;
+        private const int MAX_COMPLETION_TRIES = 1;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
         private const int VIEW_DECIMATION_MAX = 10;
+        private const int BURSTS_MAX = 64;
 
         private bool acquiring = false;
         private bool stopPending = false;
@@ -296,6 +297,7 @@ namespace ECore.Devices
 
             SetAcquisitionDepth(512 * 1024);
             SetAwgStretching(0);
+            SetViewPort(0, 10e-3);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
 
             //Part 2: perform actual writes                

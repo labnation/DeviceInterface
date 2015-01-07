@@ -242,7 +242,7 @@ namespace ECore.Devices {
                 }
             }
 		}
-		public void SetViewPort(double offset, double timespan, uint samples)
+		public void SetViewPort(double offset, double timespan)
         {
             lock (resetAcquisitionLock)
             {

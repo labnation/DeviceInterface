@@ -47,6 +47,7 @@ namespace ECore.Devices
         static byte yOffsetMin = 10;
 
         float triggerThreshold = 0f;
+        int viewPortSamples = 2048;
 
         public bool ChunkyAcquisitions { get; private set; }
 
@@ -91,8 +92,8 @@ namespace ECore.Devices
                 {
                     registersWritten += mem.Commit();
                 }
-                if (registersWritten > 0)
-                    toggleUpdateStrobe();
+                //if (registersWritten > 0)
+                    //toggleUpdateStrobe();
             }
             catch (ScopeIOException e)
             {
@@ -459,22 +460,70 @@ namespace ECore.Devices
         {
             return (uint)(ACQUISITION_DEPTH_BASE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
         }
+        public double AcquisitionTimeSpan { get { return SamplesToTime(GetAcquisitionDepth()); } } 
 
-        public void SetViewPort(double offset, double timespan, uint samples)
+        private uint VIEWPORT_SAMPLES_MIN = 128;
+        private uint VIEWPORT_SAMPLES_MAX = 2048;
+
+        public void SetViewPort(double offset, double timespan)
         {
-            double timeSpanRatio = AcquisitionBufferTimeSpan / timespan;
-            byte viewDecimation;
+            /*                maxTimeSpan
+             *            <---------------->
+             *  .--------------------------,
+             *  |        ||       ||       |
+             *  `--------------------------`
+             *  <--------><------->
+             *    offset   timespan
+             */
+            double maxTimeSpan = AcquisitionTimeSpan - offset;
+            if (timespan > maxTimeSpan)
+            {
+                Logger.Warn("Attempt at setting viewport beyond acquisition buffer");
+                return;
+            }
 
-            if (timeSpanRatio > 1)
-                viewDecimation = (byte)Math.Ceiling(Math.Log(timeSpanRatio, 2));
-            else
-                viewDecimation = 0;
+
+            //Because the check above, the timeSpanRatio will always be <= 1
+            double timeSpanRatio = timespan / maxTimeSpan;
+
+            //Decrease the number of samples till viewport sample period is larger than 
+            //or equal to the full sample rate
+            uint samples = VIEWPORT_SAMPLES_MAX;
+            while(samples >= VIEWPORT_SAMPLES_MIN)
+            {
+                if (timespan / samples >= SamplePeriod)
+                    break;
+                samples /= 2;
+            }
+            if(samples < VIEWPORT_SAMPLES_MIN)
+            {
+                Logger.Warn("Unfeasible zoom level");
+                return;
+            }
+
+            int viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
 
             if (viewDecimation > VIEW_DECIMATION_MAX)
+            {
+                Logger.Warn("Clipping view decimation! better decrease the sample rate!");
                 viewDecimation = VIEW_DECIMATION_MAX;
+            }
 
+            viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
+            int bursts = (int)Math.Pow(2, Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / BURST_SIZE), 2))) * 2;
+            //If the computed view decimation results in fetching less than the maximum data payloads,
+            //reduce that decimation so we show as much detail as possible.
+            //In other words: don't decimate on the view side when we have room in the USB communication
+            //to pass more details.
+            while (bursts * 2 <= BURSTS_MAX && viewDecimation > 0)
+            {
+                viewDecimation--;
+                bursts *= 2;
+                viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
+            }
+            
             FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
-            FpgaSettingsMemory[REG.VIEW_BURSTS].Set((int)Math.Ceiling((double)samples / BURST_SIZE));
+            FpgaSettingsMemory[REG.VIEW_BURSTS].Set(bursts);
             SetViewPortOffset(offset);
         }
 
@@ -487,23 +536,28 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.VIEW_OFFSET_B2].Set((byte)(samples >> 16));
         }
 
-
         public int SubSampleRate { get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); } }
 
-        public double SamplesToTime(int samples)
+        public double SamplePeriod
         {
-            return samples * BASE_SAMPLE_PERIOD * Math.Pow(2, SubSampleRate);
+            get { return BASE_SAMPLE_PERIOD * Math.Pow(2, SubSampleRate); }
         }
 
-        public double GetViewPortTimeSpan()
+        public double SamplesToTime(uint samples)
         {
-            return AcquisitionBufferTimeSpan / Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte());
+            return samples * SamplePeriod;
         }
 
         private Int32 TimeToSamples(double time, byte inputDecimation)
         {
             return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
         }
+
+        public double GetViewPortTimeSpan()
+        {
+            return viewPortSamples * (SamplePeriod * Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte()));
+        }
+
         ///<summary>
         ///Scope hold off
         ///</summary>
@@ -522,9 +576,6 @@ namespace ECore.Devices
         #endregion
 
         #region other    
-        public double SamplePeriod {
-            get { return BASE_SAMPLE_PERIOD / Math.Pow(2, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()); } 
-        }
         public double AcquisitionBufferTimeSpan {
             get { return SamplePeriod * GetAcquisitionDepth(); }
         }

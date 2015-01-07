@@ -70,7 +70,7 @@ namespace ECore.Devices
         void SetLogicAnalyserChannel(AnalogChannel channel);
 
         Coupling GetCoupling(AnalogChannel channel);
-        void SetViewPort(double offset, double timespan, uint samples);
+        void SetViewPort(double offset, double timespan);
         double GetViewPortTimeSpan();
         DataSources.DataSource DataSourceScope { get; }
 
