@@ -618,12 +618,22 @@ namespace ECore.Devices
             set
             {
                 this.holdoff = value;
+                if (value > AcquisitionTimeSpan)
+                    this.holdoff = AcquisitionTimeSpan;
+                else if (value <= 0)
+                    this.holdoff = 0;
+                else
+                    this.holdoff = value;
                 Int32 samples = TimeToSamples(value, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
                 //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples));
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B2].Set((byte)(samples >> 16));
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B3].Set((byte)(samples >> 24));
+            }
+            get
+            {
+                return this.holdoff;
             }
         }
 

@@ -46,7 +46,7 @@ namespace ECore.Devices
         /* Acquisition & Trigger */
         AcquisitionMode AcquisitionMode { set; }
         uint AcquisitionDepth { get; set; }
-        double TriggerHoldOff { set; }
+        double TriggerHoldOff { get; set; }
         AnalogTriggerValue TriggerAnalog { set; }
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         uint TriggerWidth { get; set; }

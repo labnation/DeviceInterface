@@ -181,9 +181,18 @@ namespace ECore.Devices {
             {
                 lock (resetAcquisitionLock)
                 {
-                    this.triggerHoldoff = value;
+                    if (value > AcquisitionTimeSpan)
+                        this.triggerHoldoff = AcquisitionTimeSpan;
+                    else if (value < 0)
+                        this.triggerHoldoff = 0;
+                    else
+                        this.triggerHoldoff = value;
                     resetAcquisition = true;
                 }
+            }
+            get
+            {
+                return this.triggerHoldoff;
             }
 		}
         public AnalogTriggerValue TriggerAnalog
