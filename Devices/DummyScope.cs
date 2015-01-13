@@ -480,7 +480,7 @@ namespace ECore.Devices {
             p = new DataPackageScope(
                     acquisitionDepth, SamplePeriodCurrent, 
                     SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamples, viewportOffset * SamplePeriodCurrent, 
-                    (int)(TriggerHoldoffCurrent / SamplePeriodCurrent), false, false);
+                    TriggerHoldoffCurrent, false, false);
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
