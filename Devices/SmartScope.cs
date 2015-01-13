@@ -506,8 +506,8 @@ namespace ECore.Devices
 			}
 
 			//If we're not decimating a lot, fetch on till the package is complete
-			if (!header.Rolling && header.SamplesPerAcquisition > chA.Length && header.GetRegister (REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE) {
-				while (false && true) {
+			if (!header.Rolling && header.ViewportLength > chA.Length && header.GetRegister (REG.INPUT_DECIMATION) < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE) {
+				while (true) {
 					DataPackageScope p = null;
 					int tries = 0;
 					while (p == null && tries < MAX_COMPLETION_TRIES) {
@@ -533,11 +533,10 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            throw new NotImplementedException("This needs fixing");
             DataPackageScope data = new DataPackageScope(
-                header.GetRegister(REG.ACQUISITION_DEPTH), header.SamplePeriod,
-                0, chA.Length, 0,
-                header.TriggerHoldoff, chA.Length < header.SamplesPerAcquisition, header.Rolling);
+                header.AcquisitionDepth, header.SamplePeriod,
+                header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
+                header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling);
 #if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif

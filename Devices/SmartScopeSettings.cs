@@ -69,12 +69,17 @@ namespace ECore.Devices
                     String.Join(", ", validMultipliers.Select(x => x.ToString()).ToArray())
                     );
         }
-        private void toggleUpdateStrobe()
+        private void toggleAcquisitionUpdateStrobe()
         {
             if (!Connected) return;
-            StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(false);
             StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(true);
         }
+        private void toggleViewUpdateStrobe()
+        {
+            if (!Connected) return;
+            StrobeMemory[STR.VIEW_UPDATE].WriteImmediate(true);
+        }
+
         private float ProbeScaleHostToScope(AnalogChannel ch, float volt)
         {
             return volt / ProbeScaleFactors[probeSettings[ch]];
@@ -87,13 +92,26 @@ namespace ECore.Devices
         {
             try
             {
-                int registersWritten = 0;
-                foreach (DeviceMemory mem in memories)
-                {
-                    registersWritten += mem.Commit();
-                }
-                //if (registersWritten > 0)
-                    //toggleUpdateStrobe();
+                bool acquisitionUpdateRequired = false;
+                bool viewUpdateRequired = false;
+
+                PicMemory.Commit();
+                AdcMemory.Commit();
+                List<MemoryRegister> FpgaRegisters = FpgaSettingsMemory.Commit();
+                List<MemoryRegister> FpgaStrobes = StrobeMemory.Commit();
+                
+                var FpgaRegistersAddresses = FpgaRegisters.Select(x => (REG)x.Address);
+                if (FpgaRegistersAddresses.Where(x => AcquisitionRegisters.Contains(x)).Count() > 0)
+                    acquisitionUpdateRequired = true;
+                if (FpgaRegistersAddresses.Where(x => DumpRegisters.Contains(x)).Count() > 0)
+                    viewUpdateRequired = true;
+                if (!acquisitionUpdateRequired && FpgaStrobes.Select(x => (STR)x.Address).Where(x => AcquisitionStrobes.Contains(x)).Count() > 0)
+                    acquisitionUpdateRequired = true;
+                
+                if (acquisitionUpdateRequired && Running)
+                    toggleAcquisitionUpdateStrobe();
+                if(viewUpdateRequired)
+                    toggleViewUpdateStrobe();
             }
             catch (ScopeIOException e)
             {
@@ -493,30 +511,36 @@ namespace ECore.Devices
             double maxTimeSpan = AcquisitionTimeSpan - offset;
             if (timespan > maxTimeSpan)
             {
-                Logger.Warn("Attempt at setting viewport beyond acquisition buffer");
-                return;
+                if (timespan > AcquisitionTimeSpan)
+                {
+                    timespan = AcquisitionTimeSpan;
+                    offset = 0;
+                }
+                else
+                {
+                    //Limit offset so the timespan can fit
+                    offset = AcquisitionTimeSpan - timespan;
+                }
             }
-
-
-            //Because the check above, the timeSpanRatio will always be <= 1
-            double timeSpanRatio = timespan / maxTimeSpan;
 
             //Decrease the number of samples till viewport sample period is larger than 
             //or equal to the full sample rate
             uint samples = VIEWPORT_SAMPLES_MAX;
-            while(samples >= VIEWPORT_SAMPLES_MIN)
+
+            int viewDecimation = 0;
+            while (true)
             {
-                if (timespan / samples >= SamplePeriod)
+                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
+                if (viewDecimation >= 0)
                     break;
                 samples /= 2;
             }
-            if(samples < VIEWPORT_SAMPLES_MIN)
+
+            if (samples < VIEWPORT_SAMPLES_MIN)
             {
                 Logger.Warn("Unfeasible zoom level");
                 return;
             }
-
-            int viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
 
             if (viewDecimation > VIEW_DECIMATION_MAX)
             {
@@ -530,15 +554,17 @@ namespace ECore.Devices
             //reduce that decimation so we show as much detail as possible.
             //In other words: don't decimate on the view side when we have room in the USB communication
             //to pass more details.
+            /*
             while (bursts * 2 <= BURSTS_MAX && viewDecimation > 0)
             {
                 viewDecimation--;
                 bursts *= 2;
                 viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
-            }
+            }*/
             
             FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
             FpgaSettingsMemory[REG.VIEW_BURSTS].Set(bursts);
+            
             SetViewPortOffset(offset);
         }
 
@@ -573,7 +599,15 @@ namespace ECore.Devices
             get { return viewPortSamples * (SamplePeriod * Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte())); }
         }
 
-        public double ViewPortOffset { get { return 0; } }
+        public double ViewPortOffset {
+            get {
+                int samples = 
+                    FpgaSettingsMemory[REG.VIEW_OFFSET_B0].GetByte() +
+                    (FpgaSettingsMemory[REG.VIEW_OFFSET_B1].GetByte() << 8) +
+                    (FpgaSettingsMemory[REG.VIEW_OFFSET_B2].GetByte() << 16);
+                return SamplesToTime((uint)samples); 
+            }
+        }
 
         ///<summary>
         ///Scope hold off

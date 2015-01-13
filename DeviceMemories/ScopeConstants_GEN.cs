@@ -69,8 +69,6 @@ namespace ECore.DeviceMemories
 		OVERFLOW_DETECT = 16,
 		ENABLE_NEG = 17,
 		ENABLE_RAM = 19,
-		DEBUG_PIC = 20,
-		DEBUG_RAM = 21,
 		DOUT_3V_5V = 22,
 		EN_OPAMP_B = 23,
 		AWG_DEBUG = 24,

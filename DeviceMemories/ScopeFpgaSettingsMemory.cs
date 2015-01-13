@@ -27,7 +27,6 @@ namespace ECore.DeviceMemories
         {
             byte[] data = null;
             hwInterface.GetControllerRegister(ScopeController.FPGA, address, 1, out data);
-            
             registers[address].Set(data[0]);
             registers[address].Dirty = false;
         }

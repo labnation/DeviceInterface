@@ -22,12 +22,17 @@ namespace ECore.Devices
         /// <summary>
         /// The number of bursts that compose the entire acquisition
         /// </summary>
-        internal int AcquisitionSize { get; private set; }
+        internal int PackageTotal { get; private set; }
         /// <summary>
         /// The number of bytes in 1 payload burst
         /// </summary>
         internal byte BytesPerBurst { get; private set; }
-        
+
+        /// <summary>
+        /// The number of samples acquired
+        /// </summary>
+        internal uint AcquisitionDepth { get; private set; }
+
         /// <summary>
         /// The number of samples in this package
         /// </summary>
@@ -38,14 +43,24 @@ namespace ECore.Devices
         internal double SamplePeriod { get; private set; }
 
         /// <summary>
+        /// The time between two samples of the viewport
+        /// </summary>
+        internal double ViewportSamplePeriod { get; private set; }
+
+        /// <summary>
+        /// The time between the start of the acquisition and the viewport's first sample
+        /// </summary>
+        internal double ViewportOffset { get; private set; }
+
+        /// <summary>
         /// The trigger holdoff in seconds
         /// </summary>
         internal double TriggerHoldoff { get; private set; }
 
         /// <summary>
-        /// The total number of samples in this acquisition
+        /// The total number of samples in this viewport
         /// </summary>
-        internal int SamplesPerAcquisition { get { return AcquisitionSize * BytesPerBurst / Channels; } }
+        internal int ViewportLength { get { return PackageTotal * BytesPerBurst / Channels; } }
 
         /// <summary>
         /// Wether this is the last package in the acquisition
@@ -71,7 +86,7 @@ namespace ECore.Devices
         //FIXME: we really shouldn't be needing the freqcomp mode in here
         internal SmartScopeHeader(byte[] data)
         {
-            int headerSize = AcquisitionRegisters.Length + DumpRegisters.Length + (int)Math.Ceiling(AcquisitionStrobes.Length / 8.0);
+            int headerSize = SmartScope.AcquisitionRegisters.Length + SmartScope.DumpRegisters.Length + (int)Math.Ceiling(SmartScope.AcquisitionStrobes.Length / 8.0);
             raw = new byte[headerSize];
             if (data[0] != 'L' || data[1] != 'N')
                 throw new Exception("Invalid magic number, can't parse header");
@@ -83,8 +98,9 @@ namespace ECore.Devices
             NumberOfPayloadBursts = data[4] + (data[5] << 8);
             
             PackageOffset = (short)(data[6] + (data[7] << 8));
-            AcquisitionSize = (short)(data[8] + (data[9] << 8));
-            
+            PackageTotal = (short)(data[8] + (data[9] << 8));
+
+            AcquisitionDepth = (uint)(2048 << GetRegister(REG.ACQUISITION_DEPTH));
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
             ScopeStopPending = !Utils.IsBitSet(data[10], 0);
             LastAcquisition = Utils.IsBitSet(data[10], 1);
@@ -93,9 +109,16 @@ namespace ECore.Devices
             //if (ImpossibleDump)
                 //throw new Exception("WTFFFFF");
 
+            
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
-            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION) + GetRegister(REG.VIEW_DECIMATION));
+            SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
+            ViewportSamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION) + GetRegister(REG.VIEW_DECIMATION));
 
+            ViewportOffset = SamplePeriod * (
+                GetRegister(REG.VIEW_OFFSET_B0) +
+                (GetRegister(REG.VIEW_OFFSET_B1) << 8) +
+                (GetRegister(REG.VIEW_OFFSET_B2) << 16)
+                );
 
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
@@ -107,16 +130,16 @@ namespace ECore.Devices
         internal byte GetRegister(REG r)
         {
             int offset = 0;
-            if (!AcquisitionRegisters.Contains(r))
+            if (!SmartScope.AcquisitionRegisters.Contains(r))
             {
-                if (!DumpRegisters.Contains(r))
+                if (!SmartScope.DumpRegisters.Contains(r))
                     throw new Exception("Register " + r.ToString("G") + " not part of header");
                 else
-                    offset = AcquisitionRegisters.Length + Array.IndexOf(DumpRegisters, r);;
+                    offset = SmartScope.AcquisitionRegisters.Length + Array.IndexOf(SmartScope.DumpRegisters, r); ;
             }
             else
             {
-                offset = Array.IndexOf(AcquisitionRegisters, r);
+                offset = Array.IndexOf(SmartScope.AcquisitionRegisters, r);
             }
 
             return raw[offset]; 
@@ -124,57 +147,11 @@ namespace ECore.Devices
 
         internal bool GetStrobe(STR s)
         {
-            if(!AcquisitionStrobes.Contains(s))
+            if (!SmartScope.AcquisitionStrobes.Contains(s))
                 throw new Exception("Strobe  " + s.ToString("G") + " not part of header");
-            int offset = AcquisitionRegisters.Length + DumpRegisters.Length;
-            offset += Array.IndexOf(AcquisitionStrobes, s) / 8;
-            return Utils.IsBitSet(raw[offset], (int)Array.IndexOf(AcquisitionStrobes, s) % 8);
+            int offset = SmartScope.AcquisitionRegisters.Length + SmartScope.DumpRegisters.Length;
+            offset += Array.IndexOf(SmartScope.AcquisitionStrobes, s) / 8;
+            return Utils.IsBitSet(raw[offset], (int)Array.IndexOf(SmartScope.AcquisitionStrobes, s) % 8);
         }
-        /*
-         * WARNING: the following arrays are manually constructed from VHDL code in
-         * TypesConstants.vhd - Make sure that when you change the VHDL, you also
-         * update this code
-         */
-        internal static readonly REG[] AcquisitionRegisters = new REG[]
-        {
-            REG.TRIGGER_LEVEL, 
-            REG.TRIGGER_MODE,
-            REG.TRIGGER_WIDTH,
-			REG.TRIGGERHOLDOFF_B0, 
-            REG.TRIGGERHOLDOFF_B1, 
-            REG.TRIGGERHOLDOFF_B2, 
-            REG.TRIGGERHOLDOFF_B3, 
-			REG.CHA_YOFFSET_VOLTAGE, 
-			REG.CHB_YOFFSET_VOLTAGE, 
-			REG.DIVIDER_MULTIPLIER,
-			REG.INPUT_DECIMATION, 
-            REG.TRIGGER_THRESHOLD,
-            REG.TRIGGER_PWM,
-			REG.DIGITAL_TRIGGER_RISING,
-			REG.DIGITAL_TRIGGER_FALLING,
-			REG.DIGITAL_TRIGGER_HIGH,
-			REG.DIGITAL_TRIGGER_LOW,
-            REG.ACQUISITION_DEPTH
-        };
-        internal static readonly REG[] DumpRegisters = new REG[]
-        {
-			REG.VIEW_DECIMATION,
-			REG.VIEW_OFFSET_B0,
-            REG.VIEW_OFFSET_B1,
-            REG.VIEW_OFFSET_B2,
-			REG.VIEW_ACQUISITIONS,
-			REG.VIEW_BURSTS
-        };
-        internal static readonly STR[] AcquisitionStrobes = new STR[]
-        {
-			STR.AWG_ENABLE,
-			STR.LA_ENABLE,
-			STR.CHA_DCCOUPLING,
-			STR.CHB_DCCOUPLING,
-            STR.DEBUG_RAM,
-            STR.DIGI_DEBUG,
-            STR.ROLL,
-            STR.LA_CHANNEL
-        };
     }
 }

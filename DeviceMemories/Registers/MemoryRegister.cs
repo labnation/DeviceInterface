@@ -43,8 +43,9 @@ namespace ECore.DeviceMemories
             {
                 lock (_internalValueLock)
                 {
+                    object previousInternalValue = __internalValue;
                     __internalValue = value;
-                    this.Dirty = true;
+                    this.Dirty = previousInternalValue != __internalValue;
                 }
             }
         }

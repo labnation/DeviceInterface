@@ -23,19 +23,19 @@ namespace ECore.DeviceMemories
         /// <summary>
         /// Writes away all registers with the Dirty flag set
         /// </summary>
-        public int Commit()
+        public List<MemoryRegister> Commit()
         {
-            int flushCount = registers.Values.Where(x => x.Dirty).Count();
-            if (flushCount == 0)
-                return flushCount;
+            List<MemoryRegister> dirtyRegisters = registers.Values.Where(x => x.Dirty).ToList();
+            if (dirtyRegisters.Count == 0)
+                return dirtyRegisters;
 
             //Logger.Debug(String.Format("About to flush {0} / {1} registers in {2}", flushCount, registers.Count, this.GetType()));
 
-            foreach (MemoryRegister m in registers.Values.Where(x => x.Dirty))
+            foreach (MemoryRegister m in dirtyRegisters)
             {
                 m.WriteImmediate();
             }
-            return flushCount;
+            return dirtyRegisters;
         }
         
         public MemoryRegister this[uint address]
