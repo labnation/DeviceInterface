@@ -38,6 +38,10 @@ namespace ECore.Devices {
         private object resetAcquisitionLock = new object();
         private bool resetAcquisition = false;
         private bool forceTrigger = false;
+
+        Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
+        byte[] acquisitionBufferDigital = null;
+
         
         //milliseconds of latency to simulate USB request delay
         private Dictionary<AnalogChannel, float> yOffset = new Dictionary<AnalogChannel, float>() {
@@ -48,7 +52,11 @@ namespace ECore.Devices {
         //Acquisition variables
         private AcquisitionMode acquisitionMode = AcquisitionMode.NORMAL;
         private bool acquisitionRunning = false;
-		
+
+        private double SamplePeriodCurrent = 0;
+        private uint waveLengthLocal = 0;
+        private double TriggerHoldoffCurrent;
+        		
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private uint decimation = 0;
@@ -377,21 +385,11 @@ namespace ECore.Devices {
         {
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
-            Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
-            byte[] acquisitionBufferDigital = null;
-            int triggerIndex = 0;
-            int triggerHoldoffInSamples = 0;
-            double SamplePeriodLocal = 0;
-            uint waveLengthLocal = 0;
-            double TriggerHoldoffLocal;
-            AcquisitionMode AcquisitionModeLocal;
-
-            if (!acquisitionRunning)
-                return null;
-
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
-            if (regenerate)
+            if (acquisitionRunning)
             {
+                int triggerHoldoffInSamples = 0;
+                int triggerIndex = 0;
                 Dictionary<AnalogChannel, List<float>> waveAnalog = new Dictionary<AnalogChannel, List<float>>();
                 foreach(AnalogChannel ch in AnalogChannel.List)
                     waveAnalog.Add(ch, new List<float>());
@@ -400,13 +398,12 @@ namespace ECore.Devices {
                 bool triggerDetected = false;
 
                 while(true) {
-                    if (!acquisitionRunning)
-                        return null;
+                    AcquisitionMode AcquisitionModeLocal;
                     lock (resetAcquisitionLock)
                     {
                         AcquisitionModeLocal = acquisitionMode;
-                        TriggerHoldoffLocal = triggerHoldoff;
-                        SamplePeriodLocal = SamplePeriod;
+                        TriggerHoldoffCurrent = triggerHoldoff;
+                        SamplePeriodCurrent = SamplePeriod;
                         waveLengthLocal = waveLength;
                     }
 
@@ -416,27 +413,27 @@ namespace ECore.Devices {
                         switch(waveSource) {
                             case WaveSource.GENERATOR:
                                 wave = DummyScope.GenerateWave(waveLengthLocal,
-                                    SamplePeriodLocal,
+                                    SamplePeriodCurrent,
                                     timeOffset.Ticks / 1e7,
                                     ChannelConfig[channel]);
                                 break;
                             case WaveSource.FILE:
-                                wave = GetWaveFromFile(channel, waveLengthLocal, SamplePeriodLocal, timeOffset.Ticks / 1e7);
+                                wave = GetWaveFromFile(channel, waveLengthLocal, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
                                 break;
                             default:
                                 throw new Exception("Unsupported wavesource");
 
                         }
                         if (ChannelConfig[channel].coupling == Coupling.AC)
-                            DummyScope.RemoveDcComponent(ref wave, ChannelConfig[channel].frequency, SamplePeriodLocal);
+                            DummyScope.RemoveDcComponent(ref wave, ChannelConfig[channel].frequency, SamplePeriodCurrent);
                         else
                             DummyScope.AddDcComponent(ref wave, (float)ChannelConfig[channel].dcOffset);
                         DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
                         waveAnalog[channel].AddRange(wave);
                     }
-                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthLocal, SamplePeriodLocal, timeOffset.TotalSeconds));
+                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthLocal, SamplePeriodCurrent, timeOffset.TotalSeconds));
 
-                    triggerHoldoffInSamples = (int)(TriggerHoldoffLocal / SamplePeriodLocal);
+                    triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
                     if (AcquisitionModeLocal == AcquisitionMode.AUTO)
                         triggerTimeout = 0.01; //Give up after 10ms
@@ -456,7 +453,7 @@ namespace ECore.Devices {
                         break;
                     if (
                         forceTrigger || 
-                        (triggerTimeout > 0 && triggerTimeout < waveAnalog[AnalogChannel.ChA].Count * SamplePeriodLocal)
+                        (triggerTimeout > 0 && triggerTimeout < waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent)
                         )
                     {
                         forceTrigger = false;
@@ -470,7 +467,7 @@ namespace ECore.Devices {
                         return null;
                     }
 
-                    var timePassed = new TimeSpan((long)(waveLengthLocal * SamplePeriodLocal * 1e7));
+                    var timePassed = new TimeSpan((long)(waveLengthLocal * SamplePeriodCurrent * 1e7));
                     timeOffset = timeOffset.Add(timePassed);
                 }
                     
@@ -480,11 +477,10 @@ namespace ECore.Devices {
                 }
                 acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepth, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
             }                   
-            double holdoff = triggerHoldoffInSamples * SamplePeriod;
             p = new DataPackageScope(
-                    acquisitionDepth, SamplePeriodLocal, 
-                    SamplePeriodLocal * Math.Pow(2, viewportDecimation), viewportSamples, viewportOffset, 
-                    holdoff, false, false);
+                    acquisitionDepth, SamplePeriodCurrent, 
+                    SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamples, viewportOffset * SamplePeriodCurrent, 
+                    (int)(TriggerHoldoffCurrent / SamplePeriodCurrent), false, false);
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
