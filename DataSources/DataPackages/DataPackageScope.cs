@@ -25,7 +25,7 @@ namespace ECore.DataSources
         internal DataPackageScope(
             uint acquiredSamples, double samplePeriod, 
             double viewportSamplePeriod, int viewportSamples, double viewportOffset,
-            double holdoff, bool partial, bool rolling)
+            double holdoff, bool partial, bool rolling, double viewportExcess = 0)
         {
             this.AcquisitionSamples = acquiredSamples;
             this.AcquisitionSamplePeriod = samplePeriod;
@@ -33,6 +33,7 @@ namespace ECore.DataSources
             this.ViewportSamples = viewportSamples;
             this.ViewportSamplePeriod = viewportSamplePeriod;
             this.ViewportOffset = viewportOffset;
+            this.ViewportExcess = viewportExcess;
 
             this.Holdoff = holdoff;
             this.Partial = partial;
@@ -168,6 +169,11 @@ namespace ECore.DataSources
         /// the viewport's first sample
         /// </summary>
         public double ViewportOffset { get; internal set; }
+
+        /// <summary>
+        /// The time of excessive samples leading the viewport buffer
+        /// </summary>
+        public double ViewportExcess { get; internal set; }
 
         /// <summary>
         /// The time between samples of the viewport

@@ -549,32 +549,27 @@ namespace ECore.Devices
             }
 
             viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
-            int bursts = (int)Math.Pow(2, Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / BURST_SIZE), 2))) * 2;
-            //If the computed view decimation results in fetching less than the maximum data payloads,
-            //reduce that decimation so we show as much detail as possible.
-            //In other words: don't decimate on the view side when we have room in the USB communication
-            //to pass more details.
-            /*
-            while (bursts * 2 <= BURSTS_MAX && viewDecimation > 0)
-            {
-                viewDecimation--;
-                bursts *= 2;
-                viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
-            }*/
+            int bursts = (int)Math.Pow(2, Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / SAMPLES_PER_BURST), 2)));
+
+            //Make sure these number of samples are actually available in the acquisition buffer
+            
             
             FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
             FpgaSettingsMemory[REG.VIEW_BURSTS].Set(bursts);
             
-            SetViewPortOffset(offset);
+            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionDepth, SamplePeriod, offset, SAMPLES_PER_BURST * bursts, viewDecimation));
         }
 
-        void SetViewPortOffset(double time)
+        void SetViewPortOffset(double time, int samplesExcess)
         {
-            Int32 samples = TimeToSamples(time, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+            Int32 samples = TimeToSamples(time, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) - samplesExcess;
             //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.VIEW_OFFSET_B0].Set((byte)(samples));
             FpgaSettingsMemory[REG.VIEW_OFFSET_B1].Set((byte)(samples >> 8));
             FpgaSettingsMemory[REG.VIEW_OFFSET_B2].Set((byte)(samples >> 16));
+
+            FpgaSettingsMemory[REG.VIEW_EXCESS_B0].Set((byte)(samplesExcess));
+            FpgaSettingsMemory[REG.VIEW_EXCESS_B1].Set((byte)(samplesExcess >> 8));
         }
 
         public int SubSampleRate { get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); } }
@@ -589,10 +584,22 @@ namespace ECore.Devices
             return samples * SamplePeriod;
         }
 
-        private Int32 TimeToSamples(double time, byte inputDecimation)
+        private Int32 TimeToSamples(double time, int inputDecimation)
         {
             return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
         }
+
+        internal static int ComputeViewportSamplesExcess(uint acqDepth, double samplePeriod, double viewportOffset, int viewportSamples, int viewportDecimation)
+        {
+            double viewportSamplePeriod = samplePeriod * Math.Pow(2, viewportDecimation);
+            double endTime = viewportOffset + viewportSamples * viewportSamplePeriod;
+            double acquisitionTimeSpan = acqDepth * samplePeriod;
+            if (endTime > acquisitionTimeSpan)
+                return (int)((endTime - acquisitionTimeSpan) / samplePeriod);
+            else
+                return 0;
+        }
+
 
         public double ViewPortTimeSpan
         {
@@ -605,6 +612,12 @@ namespace ECore.Devices
                     FpgaSettingsMemory[REG.VIEW_OFFSET_B0].GetByte() +
                     (FpgaSettingsMemory[REG.VIEW_OFFSET_B1].GetByte() << 8) +
                     (FpgaSettingsMemory[REG.VIEW_OFFSET_B2].GetByte() << 16);
+
+                int samplesExcess =
+                    FpgaSettingsMemory[REG.VIEW_EXCESS_B0].GetByte() +
+                    (FpgaSettingsMemory[REG.VIEW_EXCESS_B1].GetByte() << 8);
+
+                samples += samplesExcess;
                 return SamplesToTime((uint)samples); 
             }
         }

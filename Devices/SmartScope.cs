@@ -71,6 +71,7 @@ namespace ECore.Devices
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BURST_SIZE = 64;
+        private const int SAMPLES_PER_BURST = BURST_SIZE / 2; //one byte per channel
         private const int MAX_COMPLETION_TRIES = 1;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
@@ -536,7 +537,7 @@ namespace ECore.Devices
             DataPackageScope data = new DataPackageScope(
                 header.AcquisitionDepth, header.SamplePeriod,
                 header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
-                header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling);
+                header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, header.ViewportExcess);
 #if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif

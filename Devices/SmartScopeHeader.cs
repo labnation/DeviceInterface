@@ -53,6 +53,10 @@ namespace ECore.Devices
         internal double ViewportOffset { get; private set; }
 
         /// <summary>
+        /// The time of excessive samples leading the viewport buffer
+        /// </summary>
+        internal double ViewportExcess { get; private set; }
+        /// <summary>
         /// The trigger holdoff in seconds
         /// </summary>
         internal double TriggerHoldoff { get; private set; }
@@ -119,6 +123,9 @@ namespace ECore.Devices
                 (GetRegister(REG.VIEW_OFFSET_B1) << 8) +
                 (GetRegister(REG.VIEW_OFFSET_B2) << 16)
                 );
+
+            int viewportExcessiveSamples = GetRegister(REG.VIEW_EXCESS_B0) + (GetRegister(REG.VIEW_EXCESS_B1) << 8);
+            ViewportExcess = viewportExcessiveSamples * SamplePeriod;
 
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +

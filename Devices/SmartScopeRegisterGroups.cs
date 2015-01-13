@@ -41,7 +41,9 @@ namespace ECore.Devices
             REG.VIEW_OFFSET_B1,
             REG.VIEW_OFFSET_B2,
 			REG.VIEW_ACQUISITIONS,
-			REG.VIEW_BURSTS
+			REG.VIEW_BURSTS,
+            REG.VIEW_EXCESS_B0,
+            REG.VIEW_EXCESS_B1
         };
         internal static readonly STR[] AcquisitionStrobes = new STR[]
         {
