@@ -65,6 +65,7 @@ namespace ECore.Devices
         private DataSources.DataSource dataSourceScope;
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
+        DataPackageScope currentDataPackage;
         byte[] chA = null, chB = null;
         float[] chAOverview = null, chBOverview = null;
         int OverviewIndentifier = -1;
@@ -290,7 +291,7 @@ namespace ECore.Devices
 
             //Enable scope controller
             EnableEssentials(true);
-            StrobeMemory[STR.VIEW_SEND_OVERVIEW].Set(true);
+            RequireOverviewBuffer = true;
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 SetVerticalRange(ch, -1f, 1f);
@@ -395,11 +396,17 @@ namespace ECore.Devices
         }
 #endif
 
+        public bool RequireOverviewBuffer
+        {
+            get { return StrobeMemory[STR.VIEW_SEND_OVERVIEW].GetBool(); }
+            set { StrobeMemory[STR.VIEW_SEND_OVERVIEW].Set(value); }
+        }
+
         /// <summary>
         /// Get a package of scope data
         /// </summary>
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
-        public DataPackageScope GetScopeData(DataPackageScope previouslyFetchPackage = null)
+        public DataPackageScope GetScopeData()
 		{
 			if (hardwareInterface == null)
 				return null;
@@ -447,22 +454,24 @@ namespace ECore.Devices
             if (header.OverviewBuffer)
             {
                 buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
-                if (previouslyFetchPackage != null)
+                byte[] chAOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
+                byte[] chBOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
+                for (int i = 0; i < OVERVIEW_BUFFER_SIZE; i++)
                 {
-                    byte[] chAOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
-                    byte[] chBOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
-                    for (int i = 0; i < OVERVIEW_BUFFER_SIZE; i++)
-                    {
-                        chAOverviewRaw[i] = buffer[i * 2];
-                        chBOverviewRaw[i] = buffer[i * 2 + 1];
-                    }
-                    chAOverview = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chAOverviewRaw, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]);
-                    chBOverview = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chBOverviewRaw, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]);
-                    previouslyFetchPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
-                    previouslyFetchPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
-                    OverviewIndentifier = header.TriggerAddress;
+                    chAOverviewRaw[i] = buffer[i * 2];
+                    chBOverviewRaw[i] = buffer[i * 2 + 1];
                 }
-                return previouslyFetchPackage;
+                chAOverview = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chAOverviewRaw, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]);
+                chBOverview = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chBOverviewRaw, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]);
+                OverviewIndentifier = header.TriggerAddress;
+
+                if(currentDataPackage != null && currentDataPackage.Identifier == header.TriggerAddress)
+                {
+                    currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
+                    currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
+                    return currentDataPackage;
+                }
+                return null;
             }
 
             if (header.ImpossibleDump)
@@ -579,37 +588,38 @@ namespace ECore.Devices
             //construct data package
             //FIXME: get firstsampletime and samples from FPGA
             //FIXME: parse package header and set DataPackageScope's trigger index
-            DataPackageScope data = new DataPackageScope(
+            currentDataPackage = new DataPackageScope(
                 header.AcquisitionDepth, header.SamplePeriod,
                 header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
-                header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, header.ViewportExcess);
+                header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, 
+                header.TriggerAddress, header.ViewportExcess);
 
-            if (header.TriggerAddress == OverviewIndentifier)
+            if (currentDataPackage.Identifier == OverviewIndentifier)
             {
-                data.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
-                data.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
+                currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
+                currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
             }
 #if DEBUG
-            data.AddSetting("TriggerAddress", header.TriggerAddress);
+            currentDataPackage.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif
 
-            data.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);
-            data.AddSetting("Multiplier" + AnalogChannel.ChB.Name, mulB);
-            data.AddSetting("InputDecimation", header.GetRegister(REG.INPUT_DECIMATION));
-            data.SetViewportDataRaw(AnalogChannel.ChA, chA);
-            data.SetViewportDataRaw(AnalogChannel.ChB, chB);
+            currentDataPackage.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);
+            currentDataPackage.AddSetting("Multiplier" + AnalogChannel.ChB.Name, mulB);
+            currentDataPackage.AddSetting("InputDecimation", header.GetRegister(REG.INPUT_DECIMATION));
+            currentDataPackage.SetViewportDataRaw(AnalogChannel.ChA, chA);
+            currentDataPackage.SetViewportDataRaw(AnalogChannel.ChB, chB);
 
 #if DEBUG
-            data.AddSetting("DividerA", divA);
-            data.AddSetting("DividerB", divB);
-            data.AddSetting("OffsetA", ConvertYOffsetByteToVoltage(AnalogChannel.ChA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
-            data.AddSetting("OffsetB", ConvertYOffsetByteToVoltage(AnalogChannel.ChB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
+            currentDataPackage.AddSetting("DividerA", divA);
+            currentDataPackage.AddSetting("DividerB", divB);
+            currentDataPackage.AddSetting("OffsetA", ConvertYOffsetByteToVoltage(AnalogChannel.ChA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE)));
+            currentDataPackage.AddSetting("OffsetB", ConvertYOffsetByteToVoltage(AnalogChannel.ChB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE)));
 
             if (this.disableVoltageConversion)
             {
-                data.SetViewportData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
-                data.SetViewportData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
-                data.SetViewportDataDigital(chB);
+                currentDataPackage.SetViewportData(AnalogChannel.ChA, Utils.CastArray<byte, float>(chA));
+                currentDataPackage.SetViewportData(AnalogChannel.ChB, Utils.CastArray<byte, float>(chB));
+                currentDataPackage.SetViewportDataDigital(chB);
             }
             else
             {
@@ -620,18 +630,20 @@ namespace ECore.Devices
                 bool performFrequencyCompensation = header.GetRegister(REG.INPUT_DECIMATION) <= INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION;
             
                 if (logicAnalyserOnChannelA)
-                    data.SetViewportDataDigital(chA);
+                    currentDataPackage.SetViewportDataDigital(chA);
                 else
-                    data.SetViewportData(AnalogChannel.ChA, ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]));
+                    currentDataPackage.SetViewportData(AnalogChannel.ChA, ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chA, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]));
 
                 if (logicAnalyserOnChannelB)
-                    data.SetViewportDataDigital(chB);
+                    currentDataPackage.SetViewportDataDigital(chB);
                 else
-                    data.SetViewportData(AnalogChannel.ChB, ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]));
+                    currentDataPackage.SetViewportData(AnalogChannel.ChB, ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chB, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]));
 #if DEBUG                    
             }
 #endif
-            return data;
+            if(currentDataPackage.HasOverviewBuffer || !RequireOverviewBuffer)
+                return currentDataPackage;
+            return null;
         }
 
         //FIXME: this needs proper handling

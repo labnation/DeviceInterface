@@ -33,7 +33,7 @@ namespace ECore.Devices
 
     public interface IScope : IDevice
     {
-        DataPackageScope GetScopeData(DataPackageScope previouslyFetchPackage = null);
+        DataPackageScope GetScopeData();
         DataSources.DataSource DataSourceScope { get; }
 
         bool Rolling { get; set; }
@@ -51,6 +51,7 @@ namespace ECore.Devices
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         uint TriggerWidth { get; set; }
         float TriggerThreshold { get; set; }
+        bool RequireOverviewBuffer { get; set; }
         void ForceTrigger();
 
         /* Channel specifics */

@@ -203,6 +203,9 @@ namespace ECore.Devices {
                 return this.triggerHoldoff;
             }
 		}
+
+        public bool RequireOverviewBuffer { get; set; }
+
         public AnalogTriggerValue TriggerAnalog
         {
             set
@@ -381,7 +384,7 @@ namespace ECore.Devices {
 		{
             return ChannelConfig[ch].coupling;
 		}
-        public DataPackageScope GetScopeData(DataPackageScope previouslyFetchPackage = null)
+        public DataPackageScope GetScopeData()
         {
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
@@ -480,7 +483,7 @@ namespace ECore.Devices {
             p = new DataPackageScope(
                     acquisitionDepth, SamplePeriodCurrent, 
                     SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamples, viewportOffset * SamplePeriodCurrent, 
-                    TriggerHoldoffCurrent, false, false);
+                    TriggerHoldoffCurrent, false, false, 0);
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {

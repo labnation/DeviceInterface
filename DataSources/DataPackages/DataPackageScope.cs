@@ -25,8 +25,9 @@ namespace ECore.DataSources
         internal DataPackageScope(
             uint acquiredSamples, double samplePeriod, 
             double viewportSamplePeriod, int viewportSamples, double viewportOffset,
-            double holdoff, bool partial, bool rolling, double viewportExcess = 0)
+            double holdoff, bool partial, bool rolling, int identifier, double viewportExcess = 0)
         {
+            this.Identifier = identifier;
             this.AcquisitionSamples = acquiredSamples;
             this.AcquisitionSamplePeriod = samplePeriod;
 
@@ -141,6 +142,10 @@ namespace ECore.DataSources
             return acquisitionBufferOverviewDigital;
         }
 
+        /// <summary>
+        /// Unique identifier for package
+        /// </summary>
+        public int Identifier { get; private set; }
 
         public bool HasOverviewBuffer { get; private set; }
 
