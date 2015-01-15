@@ -564,6 +564,8 @@ namespace ECore.Devices
         void SetViewPortOffset(double time, int samplesExcess)
         {
             Int32 samples = TimeToSamples(time, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) - samplesExcess;
+            if(samples < 0)
+                samples = 0;
             FpgaSettingsMemory[REG.VIEW_OFFSET_B0].Set((byte)(samples));
             FpgaSettingsMemory[REG.VIEW_OFFSET_B1].Set((byte)(samples >> 8));
             FpgaSettingsMemory[REG.VIEW_OFFSET_B2].Set((byte)(samples >> 16));

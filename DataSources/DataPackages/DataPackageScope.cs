@@ -149,6 +149,10 @@ namespace ECore.DataSources
 
         public bool HasOverviewBuffer { get; private set; }
 
+        public double OverviewSamplePeriod { get { return AcquisitionLength / acquisitionBufferOverviewAnalog[AnalogChannel.ChA].Length; } }
+
+        public double AcquisitionLength { get { return AcquisitionSamples * AcquisitionSamplePeriod; } }
+
         /// <summary>
         /// The number of samples acquired
         /// </summary>
