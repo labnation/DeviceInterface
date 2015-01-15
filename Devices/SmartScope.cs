@@ -66,12 +66,16 @@ namespace ECore.Devices
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         byte[] chA = null, chB = null;
+        float[] chAOverview = null, chBOverview = null;
+        int OverviewIndentifier = -1;
         int triggerAddress;
 
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
+        private const int OVERVIEW_BUFFER_SIZE = 2048;
         private const int NUMBER_OF_SAMPLES = 2048;
-        private const int BURST_SIZE = 64;
-        private const int SAMPLES_PER_BURST = BURST_SIZE / 2; //one byte per channel
+        private const int BYTES_PER_BURST = 64;
+        private const int BYTES_PER_SAMPLE = 2;
+        private const int SAMPLES_PER_BURST = BYTES_PER_BURST / BYTES_PER_SAMPLE; //one byte per channel
         private const int MAX_COMPLETION_TRIES = 1;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
@@ -286,6 +290,7 @@ namespace ECore.Devices
 
             //Enable scope controller
             EnableEssentials(true);
+            StrobeMemory[STR.VIEW_SEND_OVERVIEW].Set(true);
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 SetVerticalRange(ch, -1f, 1f);
@@ -375,7 +380,7 @@ namespace ECore.Devices
          
             List<byte[]> crashBuffers = new List<byte[]>();
             byte[] buf;
-            while ((buf = hardwareInterface.GetData(BURST_SIZE)) != null && tries > 0)
+            while ((buf = hardwareInterface.GetData(BYTES_PER_BURST)) != null && tries > 0)
             {
                 if (buf[0] == 'L' && buf[1] == 'N')
                 {
@@ -394,7 +399,7 @@ namespace ECore.Devices
         /// Get a package of scope data
         /// </summary>
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
-        public DataPackageScope GetScopeData ()
+        public DataPackageScope GetScopeData(DataPackageScope previouslyFetchPackage = null)
 		{
 			if (hardwareInterface == null)
 				return null;
@@ -403,7 +408,7 @@ namespace ECore.Devices
 			SmartScopeHeader header;
             
 			try {
-				buffer = hardwareInterface.GetData (BURST_SIZE);
+				buffer = hardwareInterface.GetData (BYTES_PER_BURST);
 			} catch (ScopeIOException) {
 				return null;
 			}
@@ -429,8 +434,37 @@ namespace ECore.Devices
 #endif
 			}
 
-			acquiring = !header.LastAcquisition;
-			stopPending = header.ScopeStopPending;
+			acquiring = header.Acquiring;
+			stopPending = !header.Acquiring;
+
+            //Parse div_mul
+            byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
+            double divA = validDividers[(divMul >> 0) & 0x3];
+            double mulA = validMultipliers[(divMul >> 2) & 0x3];
+            double divB = validDividers[(divMul >> 4) & 0x3];
+            double mulB = validMultipliers[(divMul >> 6) & 0x3];
+
+            if (header.OverviewBuffer)
+            {
+                buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
+                if (previouslyFetchPackage != null)
+                {
+                    byte[] chAOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
+                    byte[] chBOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
+                    for (int i = 0; i < OVERVIEW_BUFFER_SIZE; i++)
+                    {
+                        chAOverviewRaw[i] = buffer[i * 2];
+                        chBOverviewRaw[i] = buffer[i * 2 + 1];
+                    }
+                    chAOverview = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chAOverviewRaw, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]);
+                    chBOverview = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chBOverviewRaw, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]);
+                    previouslyFetchPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
+                    previouslyFetchPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
+                    OverviewIndentifier = header.TriggerAddress;
+                }
+                return previouslyFetchPackage;
+            }
+
             if (header.ImpossibleDump)
                 return null;
 
@@ -438,7 +472,7 @@ namespace ECore.Devices
 				return null;
 
 			try {
-				buffer = hardwareInterface.GetData (BURST_SIZE * header.NumberOfPayloadBursts);
+				buffer = hardwareInterface.GetData (BYTES_PER_BURST * header.NumberOfPayloadBursts);
 			} catch (Exception e) {
 				Logger.Error ("Failed to fetch payload - resetting scope: " + e.Message);
 				Reset ();
@@ -472,18 +506,29 @@ namespace ECore.Devices
 				dataOffset = 0;
 				if (header.PackageOffset != 0) {
 					//FIXME: this shouldn't be possible
-					if (chA == null)
-						return null;
-                    //In case of a resync or who knows what else went wrong
-                    if(triggerAddress != header.TriggerAddress)
+                    if (chA == null)
+                    {
+                        Logger.Warn("Got an off-set package but didn't get any date before");
                         return null;
+                    }
+                    //In case of a resync or who knows what else went wrong
+                    if (triggerAddress != header.TriggerAddress)
+                    {
+                        Logger.Warn("Got an off-set package but didn't get the initial package");
+                        return null;
+                    }
 					byte[] chANew = new byte[chA.Length + header.Samples];
 					byte[] chBNew = new byte[chB.Length + header.Samples];
 					chA.CopyTo (chANew, 0);
 					chB.CopyTo (chBNew, 0);
 					chA = chANew;
 					chB = chBNew;
-					dataOffset = BURST_SIZE * header.PackageOffset / header.Channels;
+					dataOffset = BYTES_PER_BURST * header.PackageOffset / header.Channels;
+                    if (dataOffset + header.Samples > chA.Length)
+                    {
+                        Logger.Warn("Got an off-set package but i'm missing an intermediate dump");
+                        return null;
+                    }
 				} else { //New acquisition, new buffers
                     triggerAddress = header.TriggerAddress;
 					chA = new byte[header.Samples];
@@ -538,15 +583,15 @@ namespace ECore.Devices
                 header.AcquisitionDepth, header.SamplePeriod,
                 header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
                 header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, header.ViewportExcess);
+
+            if (header.TriggerAddress == OverviewIndentifier)
+            {
+                data.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
+                data.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
+            }
 #if DEBUG
             data.AddSetting("TriggerAddress", header.TriggerAddress);
 #endif
-            //Parse div_mul
-            byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
-            double divA = validDividers[(divMul >> 0) & 0x3];
-            double mulA = validMultipliers[(divMul >> 2) & 0x3];
-            double divB = validDividers[(divMul >> 4) & 0x3];
-            double mulB = validMultipliers[(divMul >> 6) & 0x3];
 
             data.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);
             data.AddSetting("Multiplier" + AnalogChannel.ChB.Name, mulB);

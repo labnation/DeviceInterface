@@ -108,10 +108,11 @@ namespace ECore.Devices
                 if (!acquisitionUpdateRequired && FpgaStrobes.Select(x => (STR)x.Address).Where(x => AcquisitionStrobes.Contains(x)).Count() > 0)
                     acquisitionUpdateRequired = true;
                 
-                if (acquisitionUpdateRequired && Running)
+                if (acquisitionUpdateRequired)
                     toggleAcquisitionUpdateStrobe();
                 if(viewUpdateRequired)
                     toggleViewUpdateStrobe();
+                
             }
             catch (ScopeIOException e)
             {
@@ -563,7 +564,6 @@ namespace ECore.Devices
         void SetViewPortOffset(double time, int samplesExcess)
         {
             Int32 samples = TimeToSamples(time, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) - samplesExcess;
-            //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
             FpgaSettingsMemory[REG.VIEW_OFFSET_B0].Set((byte)(samples));
             FpgaSettingsMemory[REG.VIEW_OFFSET_B1].Set((byte)(samples >> 8));
             FpgaSettingsMemory[REG.VIEW_OFFSET_B2].Set((byte)(samples >> 16));

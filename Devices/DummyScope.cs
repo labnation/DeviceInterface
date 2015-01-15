@@ -381,7 +381,7 @@ namespace ECore.Devices {
 		{
             return ChannelConfig[ch].coupling;
 		}
-        public DataPackageScope GetScopeData()
+        public DataPackageScope GetScopeData(DataPackageScope previouslyFetchPackage = null)
         {
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);

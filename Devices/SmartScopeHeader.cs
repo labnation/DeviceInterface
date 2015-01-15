@@ -69,12 +69,13 @@ namespace ECore.Devices
         /// <summary>
         /// Wether this is the last package in the acquisition
         /// </summary>
-        internal bool LastAcquisition { get; private set; }
+        internal bool OverviewBuffer { get; private set; }
+
         /// <summary>
         /// When true, no new acquisition will be started when this
         /// one has finished
         /// </summary>
-        internal bool ScopeStopPending { get; private set; }
+        internal bool Acquiring { get; private set; }
         /// <summary>
         /// Wether the acquisition is in rolling mode
         /// </summary>
@@ -106,8 +107,8 @@ namespace ECore.Devices
 
             AcquisitionDepth = (uint)(2048 << GetRegister(REG.ACQUISITION_DEPTH));
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
-            ScopeStopPending = !Utils.IsBitSet(data[10], 0);
-            LastAcquisition = Utils.IsBitSet(data[10], 1);
+            Acquiring = Utils.IsBitSet(data[10], 0);
+            OverviewBuffer = Utils.IsBitSet(data[10], 1);
             Rolling = Utils.IsBitSet(data[10], 2);
             ImpossibleDump = Utils.IsBitSet(data[10], 3);
             //if (ImpossibleDump)

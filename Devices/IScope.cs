@@ -33,7 +33,7 @@ namespace ECore.Devices
 
     public interface IScope : IDevice
     {
-        DataPackageScope GetScopeData();
+        DataPackageScope GetScopeData(DataPackageScope previouslyFetchPackage = null);
         DataSources.DataSource DataSourceScope { get; }
 
         bool Rolling { get; set; }

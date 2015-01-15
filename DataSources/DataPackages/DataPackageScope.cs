@@ -38,6 +38,7 @@ namespace ECore.DataSources
             this.Holdoff = holdoff;
             this.Partial = partial;
             this.Rolling = rolling;
+            this.HasOverviewBuffer = false;
 
             acquisitionBufferOverviewAnalog = new Dictionary<AnalogChannel, float[]>();
             viewportDataAnalog = new Dictionary<AnalogChannel, float[]>();
@@ -65,6 +66,7 @@ namespace ECore.DataSources
 
         public void SetAcquisitionBufferOverviewData(AnalogChannel ch, float[] data)
         {
+            this.HasOverviewBuffer = true;
             acquisitionBufferOverviewAnalog.Remove(ch);
             acquisitionBufferOverviewAnalog.Add(ch, data);
         }
@@ -138,6 +140,9 @@ namespace ECore.DataSources
         {
             return acquisitionBufferOverviewDigital;
         }
+
+
+        public bool HasOverviewBuffer { get; private set; }
 
         /// <summary>
         /// The number of samples acquired
