@@ -88,8 +88,16 @@ namespace ECore.HardwareInterfaces
                     Logger.Info("Ignoring WINUSB device arrival since device already registered");
                     return;
                 }
-                USBDevice d = new USBDevice(e.DevicePath);
-                DeviceFound(d);
+                try
+                {
+                    USBDevice d = new USBDevice(e.DevicePath);
+                    DeviceFound(d);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Failed to register device: " + ex.Message);
+                    return;
+                }
             }
         }
 
