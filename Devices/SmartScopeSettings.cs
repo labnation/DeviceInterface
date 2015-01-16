@@ -481,6 +481,12 @@ namespace ECore.Devices
 
         private const int ACQUISITION_DEPTH_BASE = 2048;
 
+        public double AcquisitionLength
+        {
+            get { return AcquisitionDepth * SamplePeriod; }
+            set { }
+        }
+
         public uint AcquisitionDepth
         {
             set

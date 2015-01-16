@@ -145,6 +145,7 @@ namespace ECore.Devices {
             
             timeOrigin = DateTime.Now;
 			DataSourceScope = new DataSources.DataSource (this);
+            AcquisitionDepth = 16 * 1024;
 		}
         public void CommitSettings() { }
 
@@ -360,6 +361,21 @@ namespace ECore.Devices {
             get { return SamplesToTime((uint)viewportOffset); }
         }
 
+        public double AcquisitionLength
+        {
+            get
+            {
+                return AcquisitionDepth * SamplePeriod;
+            }
+            set
+            {
+                uint samples = (uint)(value / SamplePeriod);
+                double ratio = samples / OVERVIEW_LENGTH;
+                int log2OfRatio = (int)Math.Log(ratio, 2);
+                AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow(2, log2OfRatio));
+            }
+        }
+
         public uint AcquisitionDepth
         {
             set {
@@ -368,7 +384,10 @@ namespace ECore.Devices {
                     double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
                     if(log2OfRatio != (int)log2OfRatio)
                         throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
-                    acquisitionDepth = value;
+                    if (value > maximumGenerationLength)
+                        acquisitionDepth = (uint)maximumGenerationLength;
+                    else
+                        acquisitionDepth = value;
                     resetAcquisition = true;
                 }
             }
