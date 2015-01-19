@@ -71,7 +71,8 @@ namespace ECore.Devices
 
         public static T[] CropWave<T>(uint outputLength, T[] sourceWave, int triggerIndex, int holdoff)
         {
-            if (triggerIndex - holdoff + outputLength > sourceWave.Length) return null;
+            if (triggerIndex - holdoff + outputLength > sourceWave.Length) 
+                return null;
             
             T[] output = new T[outputLength];
             Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);

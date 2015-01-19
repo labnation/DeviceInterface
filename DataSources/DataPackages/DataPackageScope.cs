@@ -50,23 +50,28 @@ namespace ECore.DataSources
         //FIXME should be internal but currently used by averaging and inverting processors
         public void SetViewportData(AnalogChannel ch, float[] data)
         {
+            if (data.Length == 0) return;
             viewportDataAnalog.Remove(ch);
             viewportDataAnalog.Add(ch, data);
         }
 
         public void SetViewportDataRaw(AnalogChannel ch, byte[] data)
         {
+            if (data.Length == 0) return;
             viewportDataAnalogRaw.Remove(ch);
             viewportDataAnalogRaw.Add(ch, data);
         }
 
         internal void SetViewportDataDigital(byte[] data)
         {
+            if (data.Length == 0) return;
             viewportDataDigital = data;
         }
 
         public void SetAcquisitionBufferOverviewData(AnalogChannel ch, float[] data)
         {
+            if (data.Length == 0) return;
+
             this.HasOverviewBuffer = true;
             acquisitionBufferOverviewAnalog.Remove(ch);
             acquisitionBufferOverviewAnalog.Add(ch, data);
@@ -74,6 +79,7 @@ namespace ECore.DataSources
 
         internal void SetAcquisitionBufferOverviewDataDigital(byte[] data)
         {
+            if (data.Length == 0) return;
             acquisitionBufferOverviewDigital = data;
         }
 

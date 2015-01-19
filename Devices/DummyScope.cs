@@ -56,9 +56,11 @@ namespace ECore.Devices {
         private double SamplePeriodCurrent = 0;
         private uint waveLengthLocal = 0;
         private double TriggerHoldoffCurrent;
+        private uint acquisitionDepthCurrent;
         		
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
+        private static uint ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024;
         private uint decimation = 0;
         private double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
         public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
@@ -106,9 +108,8 @@ namespace ECore.Devices {
 
         //Hack
         private bool logicAnalyser;
-		bool regenerate = true;
 		DataPackageScope p;
-        private int maximumGenerationLength = 1024*1024*100; //Don't generate more than this many samples of wave
+        private static int GENERATION_LENGTH_MAX = (int)ACQUISITION_DEPTH_MAX * 3; //Don't generate more than this many samples of wave
 
 		#region constructor / initializer
 
@@ -309,19 +310,13 @@ namespace ECore.Devices {
              *  <--------><------->
              *    offset   timespan
              */
+            if (offset < 0)
+                offset = 0;
             double maxTimeSpan = AcquisitionTimeSpan - offset;
+            
             if (timespan > maxTimeSpan)
             {
-                if (timespan > AcquisitionTimeSpan)
-                {
-                    timespan = AcquisitionTimeSpan;
-                    offset = 0;
-                }
-                else
-                {
-                    //Limit offset so the timespan can fit
-                    offset = AcquisitionTimeSpan - timespan;
-                }
+                return;
             }
 
             //Decrease the number of samples till viewport sample period is larger than 
@@ -372,7 +367,15 @@ namespace ECore.Devices {
                 uint samples = (uint)(value / SamplePeriod);
                 double ratio = samples / OVERVIEW_LENGTH;
                 int log2OfRatio = (int)Math.Log(ratio, 2);
+                if (log2OfRatio < 0)
+                    log2OfRatio = 0;
                 AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow(2, log2OfRatio));
+
+                ratio = (double)samples / AcquisitionDepth;
+                log2OfRatio = (int)Math.Log(ratio, 2);
+                if (log2OfRatio < 0)
+                    log2OfRatio = 0;
+                decimation = (uint)log2OfRatio;
             }
         }
 
@@ -384,8 +387,8 @@ namespace ECore.Devices {
                     double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
                     if(log2OfRatio != (int)log2OfRatio)
                         throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
-                    if (value > maximumGenerationLength)
-                        acquisitionDepth = (uint)maximumGenerationLength;
+                    if (value > ACQUISITION_DEPTH_MAX)
+                        acquisitionDepth = ACQUISITION_DEPTH_MAX;
                     else
                         acquisitionDepth = value;
                     resetAcquisition = true;
@@ -424,6 +427,7 @@ namespace ECore.Devices {
                     lock (resetAcquisitionLock)
                     {
                         AcquisitionModeLocal = acquisitionMode;
+                        acquisitionDepthCurrent = AcquisitionDepth;
                         TriggerHoldoffCurrent = triggerHoldoff;
                         SamplePeriodCurrent = SamplePeriod;
                         waveLengthLocal = waveLength;
@@ -462,16 +466,16 @@ namespace ECore.Devices {
 
                     if (logicAnalyser)
                     {
-                        triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepth, out triggerIndex);
+                        triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
                     }
                     else
                     {
                         triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerAnalog.channel].ToArray(), triggerAnalog,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
-                            acquisitionDepth, out triggerIndex);
+                            acquisitionDepthCurrent, out triggerIndex);
                     }
-                    
-                    if(triggerDetected)
+
+                    if (triggerDetected)
                         break;
                     if (
                         forceTrigger || 
@@ -483,7 +487,7 @@ namespace ECore.Devices {
                         break;
                     }
                     //Stop trying to find a trigger at some point to avoid running out of memory
-                    if (waveAnalog[AnalogChannel.ChA].Count  > maximumGenerationLength)
+                    if (waveAnalog[AnalogChannel.ChA].Count  > GENERATION_LENGTH_MAX)
                     {
                         System.Threading.Thread.Sleep(10);
                         return null;
@@ -495,22 +499,28 @@ namespace ECore.Devices {
                     
                 foreach(AnalogChannel channel in AnalogChannel.List)
                 {
-                    acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepth, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
+                    acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepthCurrent, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
                 }
-                acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepth, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
-            }                   
+                acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepthCurrent, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
+            }
+            if (acquisitionBufferAnalog[AnalogChannel.ChA] == null)
+                return null;
+
+            int viewportOffsetLocal = viewportOffset;
+            int viewportSamplesLocal = viewportSamples;
             p = new DataPackageScope(
-                    acquisitionDepth, SamplePeriodCurrent, 
-                    SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamples, viewportOffset * SamplePeriodCurrent, 
+                    acquisitionDepthCurrent, SamplePeriodCurrent, 
+                    SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamplesLocal, viewportOffsetLocal * SamplePeriodCurrent, 
                     TriggerHoldoffCurrent, false, false, 0);
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                p.SetAcquisitionBufferOverviewData(ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepth/OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
-                p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffset, viewportDecimation, viewportSamples));
+                p.SetAcquisitionBufferOverviewData(ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
+                p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamplesLocal));
             }
 
-            p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffset, viewportDecimation, viewportSamples));
+            if(acquisitionBufferDigital != null)
+                p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamplesLocal));
 #if __IOS__
 			regenerate = true;
 #endif
