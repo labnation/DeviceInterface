@@ -73,6 +73,7 @@ namespace ECore.Devices
 
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
+        private const int ACQUISITION_DEPTH_BASE = 2048;
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BYTES_PER_BURST = 64;
         private const int BYTES_PER_SAMPLE = 2;

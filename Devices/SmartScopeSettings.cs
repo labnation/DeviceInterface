@@ -478,13 +478,24 @@ namespace ECore.Devices
             }
         }
 
-
-        private const int ACQUISITION_DEPTH_BASE = 2048;
-
         public double AcquisitionLength
         {
             get { return AcquisitionDepth * SamplePeriod; }
-            set { }
+            set 
+            {
+                uint samples = (uint)(value / SamplePeriod);
+                double ratio = samples / OVERVIEW_BUFFER_SIZE;
+                int log2OfRatio = (int)Math.Log(ratio, 2);
+                if (log2OfRatio < 0)
+                    log2OfRatio = 0;
+                AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, log2OfRatio));
+
+                ratio = (double)samples / AcquisitionDepth;
+                log2OfRatio = (int)Math.Log(ratio, 2);
+                if (log2OfRatio < 0)
+                    log2OfRatio = 0;
+                SubSampleRate = log2OfRatio;
+            }
         }
 
         public uint AcquisitionDepth
@@ -580,7 +591,10 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.VIEW_EXCESS_B1].Set((byte)(samplesExcess >> 8));
         }
 
-        public int SubSampleRate { get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); } }
+        public int SubSampleRate { 
+            get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); }
+            private set { FpgaSettingsMemory[REG.INPUT_DECIMATION].Set((byte)value); } 
+        }
 
         public double SamplePeriod
         {
