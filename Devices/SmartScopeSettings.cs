@@ -478,12 +478,17 @@ namespace ECore.Devices
             }
         }
 
+        public double AcquisitionLengthMax
+        {
+            get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * 255; }
+        }
+
         public double AcquisitionLength
         {
             get { return AcquisitionDepth * SamplePeriod; }
             set 
             {
-                uint samples = (uint)(value / SamplePeriod);
+                uint samples = (uint)(value / BASE_SAMPLE_PERIOD);
                 double ratio = samples / OVERVIEW_BUFFER_SIZE;
                 int log2OfRatio = (int)Math.Log(ratio, 2);
                 if (log2OfRatio < 0)
@@ -502,13 +507,15 @@ namespace ECore.Devices
         {
             set
             {
-                double multiple = Math.Ceiling((double)value / ACQUISITION_DEPTH_BASE);
+                if (value > ACQUISITION_DEPTH_MAX)
+                    value = ACQUISITION_DEPTH_MAX;
+                double multiple = Math.Ceiling((double)value / OVERVIEW_BUFFER_SIZE);
                 double power = Math.Log(multiple, 2);
                 FpgaSettingsMemory[REG.ACQUISITION_DEPTH].Set((int)power);
             }
             get
             {
-                return (uint)(ACQUISITION_DEPTH_BASE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
+                return (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
             }
         }
         public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 

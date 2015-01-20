@@ -60,6 +60,7 @@ namespace ECore.Devices {
         		
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
+        internal int DECIMATION_MAX = 10;
         private static uint ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024;
         private uint decimation = 0;
         private double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
@@ -354,6 +355,11 @@ namespace ECore.Devices {
         public double ViewPortOffset
         {
             get { return SamplesToTime((uint)viewportOffset); }
+        }
+
+        public double AcquisitionLengthMax
+        {
+            get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * DECIMATION_MAX; }
         }
 
         public double AcquisitionLength

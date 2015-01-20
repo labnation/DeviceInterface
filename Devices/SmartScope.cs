@@ -73,7 +73,7 @@ namespace ECore.Devices
 
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
-        private const int ACQUISITION_DEPTH_BASE = 2048;
+        private const int ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024; //Size of RAM
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BYTES_PER_BURST = 64;
         private const int BYTES_PER_SAMPLE = 2;
@@ -82,7 +82,7 @@ namespace ECore.Devices
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
-        private const int VIEW_DECIMATION_MAX = 10;
+        private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
 
         private bool acquiring = false;
@@ -478,7 +478,7 @@ namespace ECore.Devices
             if (header.ImpossibleDump)
                 return null;
 
-			if (header.NumberOfPayloadBursts == 0)
+			if (header.NumberOfPayloadBursts == 0 || header.TimedOut)
 				return null;
 
 			try {

@@ -85,6 +85,11 @@ namespace ECore.Devices
         /// </summary>
         internal bool ImpossibleDump{ get; private set; }
 
+        /// <summary>
+        /// True when dump was due to timeout
+        /// </summary>
+        internal bool TimedOut { get; private set; }
+
         internal readonly int Channels = 2;
         internal int TriggerAddress { get; private set; }
         
@@ -111,6 +116,7 @@ namespace ECore.Devices
             OverviewBuffer = Utils.IsBitSet(data[10], 1);
             Rolling = Utils.IsBitSet(data[10], 2);
             ImpossibleDump = Utils.IsBitSet(data[10], 3);
+            TimedOut = Utils.IsBitSet(data[10], 4);
             //if (ImpossibleDump)
                 //throw new Exception("WTFFFFF");
 

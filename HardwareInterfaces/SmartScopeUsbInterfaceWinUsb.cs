@@ -245,8 +245,14 @@ namespace ECore.HardwareInterfaces
             cmd.Execute(usbLock);
             cmd.WaitForCompletion();
 
-            if (cmd.bytesTransferred != numberOfBytes)
+            if (cmd.bytesTransferred == 0)
                 return null;
+            if (cmd.bytesTransferred != numberOfBytes)
+            {
+                Common.Logger.Error(String.Format("WinUSB GetData: got {0} bytes instead of requested {1}", cmd.bytesTransferred, numberOfBytes));
+                return null;
+            }
+
 #if DEBUG
             lastBuffer2 = lastBuffer;
             lastBuffer = cmd.buffer;
