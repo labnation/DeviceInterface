@@ -27,6 +27,7 @@ namespace ECore.DataSources
             double viewportSamplePeriod, int viewportSamples, double viewportOffset,
             double holdoff, bool partial, bool rolling, int identifier, double viewportExcess = 0)
         {
+            this.Processed = false;
             this.Identifier = identifier;
             this.AcquisitionSamples = acquiredSamples;
             this.AcquisitionSamplePeriod = samplePeriod;
@@ -71,10 +72,9 @@ namespace ECore.DataSources
         public void SetAcquisitionBufferOverviewData(AnalogChannel ch, float[] data)
         {
             if (data.Length == 0) return;
-
-            this.HasOverviewBuffer = true;
             acquisitionBufferOverviewAnalog.Remove(ch);
             acquisitionBufferOverviewAnalog.Add(ch, data);
+            this.HasOverviewBuffer = true;
         }
 
         internal void SetAcquisitionBufferOverviewDataDigital(byte[] data)
@@ -206,5 +206,11 @@ namespace ECore.DataSources
         //FIXME: this should be a private set, but is internal since a FIXME in SmartScope.GetScopeData()
         public int ViewportSamples { get; set; }
 
+        /// <summary>
+        /// Flag which can be used by external code to indicate this DataPackage has been processed
+        /// already. This is useful for the case where the same datapackage is modified, i.e. an overview
+        /// buffer was added, and sent to the UI again.
+        /// </summary>
+        public bool Processed { get; set; }
     }
 }

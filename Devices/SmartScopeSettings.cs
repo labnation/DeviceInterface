@@ -434,7 +434,13 @@ namespace ECore.Devices
         public bool Rolling
         {
             get { return CanRoll && StrobeMemory[STR.ROLL].GetBool(); }
-            set { StrobeMemory[STR.ROLL].Set(value); }
+            set { 
+                StrobeMemory[STR.ROLL].Set(value && CanRoll);
+                if (Rolling)
+                {
+                    SetViewPort(0, ViewPortTimeSpan);
+                }
+            }
         }
 
         public bool Running {
@@ -483,6 +489,11 @@ namespace ECore.Devices
             get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * 255; }
         }
 
+        public bool PreferPartial { 
+            get { return StrobeMemory[STR.VIEW_SEND_PARTIAL].GetBool(); }
+            set { StrobeMemory[STR.VIEW_SEND_PARTIAL].Set(value); }
+        }
+
         public double AcquisitionLength
         {
             get { return AcquisitionDepth * SamplePeriod; }
@@ -490,16 +501,27 @@ namespace ECore.Devices
             {
                 uint samples = (uint)(value / BASE_SAMPLE_PERIOD);
                 double ratio = samples / OVERVIEW_BUFFER_SIZE;
-                int log2OfRatio = (int)Math.Log(ratio, 2);
-                if (log2OfRatio < 0)
-                    log2OfRatio = 0;
-                AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, log2OfRatio));
+                int acquisitionDepthPower = (int)Math.Log(ratio, 2);
+                
+                if (acquisitionDepthPower < 0)
+                    acquisitionDepthPower = 0;
+                AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, acquisitionDepthPower));
+                acquisitionDepthPower = (int)Math.Log(AcquisitionDepth / OVERVIEW_BUFFER_SIZE, 2);
 
                 ratio = (double)samples / AcquisitionDepth;
-                log2OfRatio = (int)Math.Log(ratio, 2);
-                if (log2OfRatio < 0)
-                    log2OfRatio = 0;
-                SubSampleRate = log2OfRatio;
+                int inputDecimationPower = (int)Math.Log(ratio, 2);
+                if (inputDecimationPower < 0)
+                    inputDecimationPower = 0;
+                SubSampleRate = inputDecimationPower;
+
+
+                if (PreferPartial && acquisitionDepthPower >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE && SubSampleRate < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
+                {
+                    int adjustment = INPUT_DECIMATION_MIN_FOR_ROLLING_MODE - SubSampleRate;
+                    acquisitionDepthPower -= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+                    AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, acquisitionDepthPower));
+                    SubSampleRate += INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+                }
             }
         }
 
@@ -533,6 +555,15 @@ namespace ECore.Devices
              *  <--------><------->
              *    offset   timespan
              */
+            if (Rolling)
+            {
+                AcquisitionDepth = VIEWPORT_SAMPLES_MAX;
+                int decimation = (int)Math.Log(timespan / (AcquisitionDepth * BASE_SAMPLE_PERIOD), 2);
+                SubSampleRate = decimation;
+                FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(0);
+                SetViewPortOffset(0, 0);
+                return;
+            }
             double maxTimeSpan = AcquisitionTimeSpan - offset;
             if (timespan > maxTimeSpan)
             {
@@ -659,14 +690,13 @@ namespace ECore.Devices
         {
             set
             {
-                this.holdoff = value;
                 if (value > AcquisitionTimeSpan)
                     this.holdoff = AcquisitionTimeSpan;
                 else if (value <= 0)
                     this.holdoff = 0;
                 else
                     this.holdoff = value;
-                Int32 samples = TimeToSamples(value, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+                Int32 samples = TimeToSamples(this.holdoff, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
                 //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples));
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));

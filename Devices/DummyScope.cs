@@ -194,8 +194,8 @@ namespace ECore.Devices {
                 {
                     if (value > AcquisitionTimeSpan)
                         this.triggerHoldoff = AcquisitionTimeSpan;
-                    else if (value < 0)
-                        this.triggerHoldoff = 0;
+                    //else if (value < 0)
+                        //this.triggerHoldoff = 0;
                     else
                         this.triggerHoldoff = value;
                     resetAcquisition = true;
@@ -207,7 +207,7 @@ namespace ECore.Devices {
             }
 		}
 
-        public bool RequireOverviewBuffer { get; set; }
+        public bool SendOverviewBuffer { get; set; }
 
         public AnalogTriggerValue TriggerAnalog
         {
@@ -361,6 +361,8 @@ namespace ECore.Devices {
         {
             get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * DECIMATION_MAX; }
         }
+
+        public bool PreferPartial { get; set; }
 
         public double AcquisitionLength
         {

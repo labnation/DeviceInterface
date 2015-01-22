@@ -44,6 +44,7 @@ namespace ECore.Devices
         void Resume();
 
         /* Acquisition & Trigger */
+        bool PreferPartial { get; set; }
         AcquisitionMode AcquisitionMode { set; }
         double AcquisitionLength { get; set; }
         double AcquisitionLengthMax { get; }
@@ -53,7 +54,7 @@ namespace ECore.Devices
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         uint TriggerWidth { get; set; }
         float TriggerThreshold { get; set; }
-        bool RequireOverviewBuffer { get; set; }
+        bool SendOverviewBuffer { get; set; }
         void ForceTrigger();
 
         /* Channel specifics */

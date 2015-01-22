@@ -81,7 +81,7 @@ namespace ECore.Devices
         private const int MAX_COMPLETION_TRIES = 1;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
-        private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 14;
+        private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 5;
         private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
 
@@ -292,7 +292,7 @@ namespace ECore.Devices
 
             //Enable scope controller
             EnableEssentials(true);
-            RequireOverviewBuffer = true;
+            SendOverviewBuffer = false;
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 SetVerticalRange(ch, -1f, 1f);
@@ -397,7 +397,7 @@ namespace ECore.Devices
         }
 #endif
 
-        public bool RequireOverviewBuffer
+        public bool SendOverviewBuffer
         {
             get { return StrobeMemory[STR.VIEW_SEND_OVERVIEW].GetBool(); }
             set { StrobeMemory[STR.VIEW_SEND_OVERVIEW].Set(value); }
@@ -642,9 +642,7 @@ namespace ECore.Devices
 #if DEBUG                    
             }
 #endif
-            if(currentDataPackage.HasOverviewBuffer || !RequireOverviewBuffer)
-                return currentDataPackage;
-            return null;
+            return currentDataPackage;
         }
 
         //FIXME: this needs proper handling
