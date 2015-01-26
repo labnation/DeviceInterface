@@ -605,15 +605,15 @@ namespace ECore.Devices
             }
 
             viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
-            int bursts = (int)Math.Pow(2, Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / SAMPLES_PER_BURST), 2)));
+            int burstsLog2 = (int)Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / SAMPLES_PER_BURST), 2));
 
             //Make sure these number of samples are actually available in the acquisition buffer
             
             
             FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
-            FpgaSettingsMemory[REG.VIEW_BURSTS].Set(bursts);
+            FpgaSettingsMemory[REG.VIEW_BURSTS].Set(burstsLog2);
             
-            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionDepth, SamplePeriod, offset, SAMPLES_PER_BURST * bursts, viewDecimation));
+            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionDepth, SamplePeriod, offset, SAMPLES_PER_BURST * burstsLog2, viewDecimation));
         }
 
         void SetViewPortOffset(double time, int samplesExcess)
