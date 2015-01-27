@@ -442,7 +442,7 @@ namespace ECore.Devices
                 StrobeMemory[STR.ROLL].Set(value && CanRoll);
                 if (Rolling)
                 {
-                    SetViewPort(0, ViewPortTimeSpan);
+                    SetViewPort(0, AcquisitionLength);
                 }
             }
         }
@@ -475,12 +475,13 @@ namespace ECore.Devices
 				    -- acquisition in this case, yet send a FORCE-TRIGGER right after
 				    -- sending the STOP request in software
                  */
-                if(s == STR.ACQ_STOP && (AcquisitionMode == Devices.AcquisitionMode.NORMAL || AcquisitionMode == Devices.AcquisitionMode.SINGLE))
-                    ForceTrigger();
+                //if(s == STR.ACQ_STOP && (AcquisitionMode == Devices.AcquisitionMode.NORMAL || AcquisitionMode == Devices.AcquisitionMode.SINGLE))
+                //    ForceTrigger();
             }
             get { return Ready && (acquiring || stopPending); } 
         }
         public bool StopPending { get { return Ready && stopPending; } }
+        public bool AwaitingTrigger { get { return Ready && awaitingTrigger; } }
 
         public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {
@@ -534,9 +535,9 @@ namespace ECore.Devices
                 if (PreferPartial && acquisitionDepthPower >= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE && SubSampleRate < INPUT_DECIMATION_MIN_FOR_ROLLING_MODE)
                 {
                     int adjustment = INPUT_DECIMATION_MIN_FOR_ROLLING_MODE - SubSampleRate;
-                    acquisitionDepthPower -= INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+                    acquisitionDepthPower -= adjustment;
                     AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, acquisitionDepthPower));
-                    SubSampleRate += INPUT_DECIMATION_MIN_FOR_ROLLING_MODE;
+                    SubSampleRate += adjustment;
                 }
             }
         }
@@ -571,15 +572,6 @@ namespace ECore.Devices
              *  <--------><------->
              *    offset   timespan
              */
-            if (Rolling)
-            {
-                AcquisitionDepth = VIEWPORT_SAMPLES_MAX;
-                int decimation = (int)Math.Log(timespan / (AcquisitionDepth * BASE_SAMPLE_PERIOD), 2);
-                SubSampleRate = decimation;
-                FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(0);
-                SetViewPortOffset(0, 0);
-                return;
-            }
             double maxTimeSpan = AcquisitionTimeSpan - offset;
             if (timespan > maxTimeSpan)
             {

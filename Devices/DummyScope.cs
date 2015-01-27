@@ -182,6 +182,7 @@ namespace ECore.Devices {
             get { return this.acquisitionRunning; } 
         }
         public bool StopPending { get { return false; } }
+        public bool AwaitingTrigger { get { return false; } }
 
         public bool CanRoll { get { return false; } }
         public bool Rolling { set { } get { return false; } }

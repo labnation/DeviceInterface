@@ -40,6 +40,7 @@ namespace ECore.Devices
         bool Running { get; set; }
         bool CanRoll { get; }
         bool StopPending { get; }
+        bool AwaitingTrigger { get; }
         void Pause();
         void Resume();
 

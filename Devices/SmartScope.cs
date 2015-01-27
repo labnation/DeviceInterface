@@ -81,12 +81,13 @@ namespace ECore.Devices
         private const int MAX_COMPLETION_TRIES = 1;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
-        private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 5;
+        private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 7;
         private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
 
         private bool acquiring = false;
         private bool stopPending = false;
+        private bool awaitingTrigger = false;
         private bool paused = false;
         private bool acquiringWhenPaused = false;
 
@@ -444,6 +445,7 @@ namespace ECore.Devices
 
 			acquiring = header.Acquiring;
 			stopPending = header.LastAcquisition;
+            awaitingTrigger = header.AwaitingTrigger;
 
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
