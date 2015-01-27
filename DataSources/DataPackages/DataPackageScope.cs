@@ -19,6 +19,9 @@ namespace ECore.DataSources
         //to just pass it around as an 8-bit bus. But what if we have 10 channels? or 11? or 42?
         private byte[] acquisitionBufferOverviewDigital;
         private byte[] viewportDataDigital;
+#if DEBUG
+        internal SmartScopeHeader header = null;
+#endif
 
         public Dictionary<string, double> Settings { get; private set; }
 

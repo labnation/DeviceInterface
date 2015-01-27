@@ -594,7 +594,9 @@ namespace ECore.Devices
                 header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
                 header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, 
                 header.TriggerAddress, header.ViewportExcess);
-
+#if DEBUG
+            currentDataPackage.header = header;
+#endif            
             if (currentDataPackage.Identifier == OverviewIndentifier)
             {
                 currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
