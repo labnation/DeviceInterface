@@ -422,6 +422,10 @@ namespace ECore.Devices
                     )
                 );
             }
+            get
+            {
+                return (AcquisitionMode)((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xC0) >> 6);
+            }
         }
 
         public bool CanRoll
@@ -461,6 +465,18 @@ namespace ECore.Devices
                 }
 
                 StrobeMemory[s].WriteImmediate(true);
+
+                //FIXME - From VHDL (ScopeController.vhd:871)
+                /*
+                    -- The condition beneath makes it so that when running in continuous
+				    -- mode (AUTO or REQUIRE), pressing stop before the acquisition
+				    -- is finishing leaves us with a useless acquisition buffer.
+				    -- Until a ping-pong scheme is implemented, we don't stop the
+				    -- acquisition in this case, yet send a FORCE-TRIGGER right after
+				    -- sending the STOP request in software
+                 */
+                if(s == STR.ACQ_STOP && (AcquisitionMode == Devices.AcquisitionMode.NORMAL || AcquisitionMode == Devices.AcquisitionMode.SINGLE))
+                    ForceTrigger();
             }
             get { return Ready && (acquiring || stopPending); } 
         }
