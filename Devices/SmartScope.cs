@@ -443,7 +443,7 @@ namespace ECore.Devices
 			}
 
 			acquiring = header.Acquiring;
-			stopPending = !header.Acquiring;
+			stopPending = header.LastAcquisition;
 
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);

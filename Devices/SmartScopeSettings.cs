@@ -462,7 +462,7 @@ namespace ECore.Devices
 
                 StrobeMemory[s].WriteImmediate(true);
             }
-            get { return Ready && acquiring; } 
+            get { return Ready && (acquiring || stopPending); } 
         }
         public bool StopPending { get { return Ready && stopPending; } }
 

@@ -77,6 +77,11 @@ namespace ECore.Devices
         /// </summary>
         internal bool Acquiring { get; private set; }
         /// <summary>
+        /// When true, no new acquisition will be started when this
+        /// one has finished
+        /// </summary>
+        internal bool LastAcquisition { get; private set; }
+        /// <summary>
         /// Wether the acquisition is in rolling mode
         /// </summary>
         internal bool Rolling { get; private set; }
@@ -114,12 +119,9 @@ namespace ECore.Devices
             Samples = NumberOfPayloadBursts * BytesPerBurst / Channels;
             Acquiring = Utils.IsBitSet(data[10], 0);
             OverviewBuffer = Utils.IsBitSet(data[10], 1);
-            Rolling = Utils.IsBitSet(data[10], 2);
+            LastAcquisition = Utils.IsBitSet(data[10], 2);
             ImpossibleDump = Utils.IsBitSet(data[10], 3);
             TimedOut = Utils.IsBitSet(data[10], 4);
-            //if (ImpossibleDump)
-                //throw new Exception("WTFFFFF");
-
             
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
             SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
