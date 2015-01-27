@@ -66,6 +66,20 @@ namespace ECore.Devices
         public DataSources.DataSource DataSourceScope { get { return dataSourceScope; } }
 
         DataPackageScope currentDataPackage;
+        bool _discardPreviousAcquisition = true;
+        object discardPreviousAcquisitionLock = new object();
+        bool DiscardPreviousAcquisition
+        {
+            get { return _discardPreviousAcquisition; }
+            set
+            {
+                lock (discardPreviousAcquisitionLock)
+                {
+                    _discardPreviousAcquisition = value;
+                }
+            }
+        }
+        
         byte[] chA = null, chB = null;
         float[] chAOverview = null, chBOverview = null;
         int OverviewIndentifier = -1;
@@ -88,6 +102,7 @@ namespace ECore.Devices
         private bool acquiring = false;
         private bool stopPending = false;
         private bool awaitingTrigger = false;
+        private bool armed = false;
         private bool paused = false;
         private bool acquiringWhenPaused = false;
 
@@ -446,6 +461,7 @@ namespace ECore.Devices
 			acquiring = header.Acquiring;
 			stopPending = header.LastAcquisition;
             awaitingTrigger = header.AwaitingTrigger;
+            armed = header.Armed;
 
             //Parse div_mul
             byte divMul = header.GetRegister(REG.DIVIDER_MULTIPLIER);
@@ -499,7 +515,8 @@ namespace ECore.Devices
 
 			int dataOffset;
 			if (header.Rolling) {
-				if (chA == null) {
+				if (chA == null || DiscardPreviousAcquisition) {
+                    DiscardPreviousAcquisition = false;
 					chA = new byte[header.Samples];
 					chB = new byte[header.Samples];
 					dataOffset = 0;

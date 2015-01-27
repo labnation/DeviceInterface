@@ -72,18 +72,21 @@ namespace ECore.Devices
         internal bool OverviewBuffer { get; private set; }
 
         /// <summary>
-        /// When true, no new acquisition will be started when this
-        /// one has finished
+        /// True when acquisition is ongoing
         /// </summary>
         internal bool Acquiring { get; private set; }
+        /// <summary>
+        /// True when the holdoff is satisfied
+        /// </summary>
+        internal bool Armed { get; private set; }
         /// <summary>
         /// When true, no new acquisition will be started when this
         /// one has finished
         /// </summary>
         internal bool LastAcquisition { get; private set; }
         /// <summary>
-        /// When true, no new acquisition will be started when this
-        /// one has finished
+        /// True when a trigger needs to come in. Might be true
+        /// while holdoff is not completed yet
         /// </summary>
         internal bool AwaitingTrigger { get; private set; }
         /// <summary>
@@ -128,6 +131,7 @@ namespace ECore.Devices
             Rolling         = Utils.IsBitSet(data[10], 3);
             TimedOut        = Utils.IsBitSet(data[10], 4);
             AwaitingTrigger = Utils.IsBitSet(data[10], 5);
+            Armed           = Utils.IsBitSet(data[10], 6);
             
             TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
             SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));

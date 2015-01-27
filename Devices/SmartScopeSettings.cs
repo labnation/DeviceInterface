@@ -107,9 +107,12 @@ namespace ECore.Devices
                     viewUpdateRequired = true;
                 if (!acquisitionUpdateRequired && FpgaStrobes.Select(x => (STR)x.Address).Where(x => AcquisitionStrobes.Contains(x)).Count() > 0)
                     acquisitionUpdateRequired = true;
-                
+
                 if (acquisitionUpdateRequired)
+                {
                     toggleAcquisitionUpdateStrobe();
+                    DiscardPreviousAcquisition = true;
+                }
                 if(viewUpdateRequired)
                     toggleViewUpdateStrobe();
                 
@@ -482,6 +485,7 @@ namespace ECore.Devices
         }
         public bool StopPending { get { return Ready && stopPending; } }
         public bool AwaitingTrigger { get { return Ready && awaitingTrigger; } }
+        public bool Armed { get { return Ready && armed; } }
 
         public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {

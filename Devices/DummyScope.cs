@@ -183,6 +183,7 @@ namespace ECore.Devices {
         }
         public bool StopPending { get { return false; } }
         public bool AwaitingTrigger { get { return false; } }
+        public bool Armed { get { return true; } }
 
         public bool CanRoll { get { return false; } }
         public bool Rolling { set { } get { return false; } }

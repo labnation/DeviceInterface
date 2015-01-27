@@ -41,6 +41,7 @@ namespace ECore.Devices
         bool CanRoll { get; }
         bool StopPending { get; }
         bool AwaitingTrigger { get; }
+        bool Armed { get; }
         void Pause();
         void Resume();
 
