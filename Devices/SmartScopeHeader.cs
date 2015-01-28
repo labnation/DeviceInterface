@@ -149,7 +149,7 @@ namespace ECore.Devices
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
-                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24);
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.AnalogTriggerDelay(GetRegister(REG.TRIGGER_WIDTH), GetRegister(REG.INPUT_DECIMATION));
             TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }
 

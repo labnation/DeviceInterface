@@ -318,6 +318,7 @@ namespace ECore.Devices
                 double level = 0;
                 if (coefficients != null)
                     level = (ProbeScaleHostToScope(value.channel, value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                level -= FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte() / 2.0;
                 if (level < 0) level = 0;
                 if (level > 255) level = 255;
 
@@ -385,6 +386,7 @@ namespace ECore.Devices
             set
             {
                 FpgaSettingsMemory[REG.TRIGGER_WIDTH].Set((byte)value);
+                TriggerHoldOff = this.holdoff;
             }
             get
             {
@@ -563,7 +565,7 @@ namespace ECore.Devices
         }
         public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
 
-        private uint VIEWPORT_SAMPLES_MIN = 128;
+        private int BURSTS_MIN = 2;
         private uint VIEWPORT_SAMPLES_MAX = 2048;
 
         public void SetViewPort(double offset, double timespan)
@@ -604,12 +606,6 @@ namespace ECore.Devices
                 samples /= 2;
             }
 
-            if (samples < VIEWPORT_SAMPLES_MIN)
-            {
-                Logger.Warn("Unfeasible zoom level");
-                return;
-            }
-
             if (viewDecimation > VIEW_DECIMATION_MAX)
             {
                 Logger.Warn("Clipping view decimation! better decrease the sample rate!");
@@ -618,7 +614,8 @@ namespace ECore.Devices
 
             viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
             int burstsLog2 = (int)Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / SAMPLES_PER_BURST), 2));
-
+            if (burstsLog2 < BURSTS_MIN)
+                burstsLog2 = BURSTS_MIN;
             //Make sure these number of samples are actually available in the acquisition buffer
             
             
@@ -643,7 +640,10 @@ namespace ECore.Devices
 
         public int SubSampleRate { 
             get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); }
-            private set { FpgaSettingsMemory[REG.INPUT_DECIMATION].Set((byte)value); } 
+            private set { 
+                FpgaSettingsMemory[REG.INPUT_DECIMATION].Set((byte)value);
+                TriggerHoldOff = this.holdoff;
+            } 
         }
 
         public double SamplePeriod
@@ -694,6 +694,11 @@ namespace ECore.Devices
             }
         }
 
+        internal static int AnalogTriggerDelay(uint triggerWidth, int inputDecimation)
+        {
+            return (((int)triggerWidth) >> inputDecimation) + 3;
+        }
+
         ///<summary>
         ///Scope hold off
         ///</summary>
@@ -709,6 +714,7 @@ namespace ECore.Devices
                 else
                     this.holdoff = value;
                 Int32 samples = TimeToSamples(this.holdoff, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+                samples += AnalogTriggerDelay(TriggerWidth, SubSampleRate);
                 //FIXME-FPGA bug
                 if (samples >= AcquisitionDepth)
                 {
