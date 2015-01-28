@@ -63,7 +63,7 @@ namespace ECore.Devices {
         internal int DECIMATION_MAX = 10;
         private static uint ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024;
         private uint decimation = 0;
-        private double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
+        public double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
         public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
         public double SamplesToTime(uint samples)
         {

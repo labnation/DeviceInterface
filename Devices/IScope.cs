@@ -49,6 +49,7 @@ namespace ECore.Devices
         bool PreferPartial { get; set; }
         AcquisitionMode AcquisitionMode { set; }
         double AcquisitionLength { get; set; }
+        double SamplePeriod { get; }
         double AcquisitionLengthMax { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
