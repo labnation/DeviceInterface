@@ -709,6 +709,11 @@ namespace ECore.Devices
                 else
                     this.holdoff = value;
                 Int32 samples = TimeToSamples(this.holdoff, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+                //FIXME-FPGA bug
+                if (samples >= AcquisitionDepth)
+                {
+                    samples = (int)AcquisitionDepth - 1;
+                }
                 //Logger.Debug(" Set trigger holdoff to " + time * 1e6 + "us or " + samples + " samples " );
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B0].Set((byte)(samples));
                 FpgaSettingsMemory[REG.TRIGGERHOLDOFF_B1].Set((byte)(samples >> 8));
