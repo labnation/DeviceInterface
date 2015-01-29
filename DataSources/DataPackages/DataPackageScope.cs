@@ -154,8 +154,6 @@ namespace ECore.DataSources
         /// </summary>
         public int Identifier { get; private set; }
 
-        public double OverviewSamplePeriod { get { return AcquisitionLength / acquisitionBufferOverviewAnalog[AnalogChannel.ChA].Length; } }
-
         public double AcquisitionLength { get { return AcquisitionSamples * AcquisitionSamplePeriod; } }
 
         /// <summary>
