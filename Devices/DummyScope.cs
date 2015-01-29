@@ -602,18 +602,31 @@ namespace ECore.Devices {
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
 			// - if negative, start looking at index 0
 			triggerIndex = 0;
+            float invertor = (trigger.direction == TriggerDirection.RISING) ? 1f : -1f;
+            uint halfWidth = width / 2;
+            uint preconditionCounter = 0;
+            uint postconditionCounter = 0;
 			for (int i = Math.Max (0, holdoff); i < wave.Length - width - outputWaveLength; i++) {
-				float invertor = (trigger.direction == TriggerDirection.RISING) ? 1f : -1f;
-                int triggerIndexTmp = (int)(i + width / 2);
-                if (
-                    (invertor * wave[i] < invertor * trigger.level && invertor * wave[i + width] >= invertor * trigger.level + threshold)
-                    &&
-                    triggerIndexTmp - holdoff + outputWaveLength <= wave.Length
-                    )
+                bool preconditionMet = preconditionCounter == halfWidth;
+                if (preconditionMet)
                 {
-                    triggerIndex = triggerIndexTmp;
-					return true;
-				}
+                    if (invertor * wave[i] >= invertor * (trigger.level + threshold))
+                        postconditionCounter++;
+                }
+                else
+                {
+                    if (invertor * wave[i] < invertor * trigger.level)
+                        preconditionCounter++;
+                }
+                if (preconditionMet && postconditionCounter == halfWidth)
+                {
+                    int triggerIndexTmp = (int)(i + width / 2);
+                    if (triggerIndexTmp - holdoff + outputWaveLength <= wave.Length)
+                    {
+                        triggerIndex = triggerIndexTmp;
+                        return true;
+                    }
+                }
 			}
 			return false;
 		}
