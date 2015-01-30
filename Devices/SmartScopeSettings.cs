@@ -522,13 +522,17 @@ namespace ECore.Devices
             get { return AcquisitionDepth * SamplePeriod; }
             set 
             {
-                uint samples = (uint)(value / BASE_SAMPLE_PERIOD);
+                ulong samples = (ulong)(value / BASE_SAMPLE_PERIOD);
                 double ratio = samples / OVERVIEW_BUFFER_SIZE;
                 int acquisitionDepthPower = (int)Math.Log(ratio, 2);
                 
                 if (acquisitionDepthPower < 0)
                     acquisitionDepthPower = 0;
-                AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, acquisitionDepthPower));
+
+                if (samples > ACQUISITION_DEPTH_MAX)
+                    AcquisitionDepth = ACQUISITION_DEPTH_MAX;
+                else
+                    AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, acquisitionDepthPower));
                 acquisitionDepthPower = (int)Math.Log(AcquisitionDepth / OVERVIEW_BUFFER_SIZE, 2);
 
                 ratio = (double)samples / AcquisitionDepth;
