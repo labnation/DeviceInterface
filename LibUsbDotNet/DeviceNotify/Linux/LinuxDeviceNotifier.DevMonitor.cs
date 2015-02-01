@@ -97,6 +97,8 @@ namespace LibUsbDotNet.DeviceNotify.Linux
             mUsbFS.IncludeSubdirectories = false;
             mUsbFS.Created += FileAdded;
             mUsbFS.Deleted += FileRemoved;
+            if(Main.Helper.IsMac)
+            	mUsbFS.Filter = "usbdev*";
             mUsbFS.EnableRaisingEvents = true;
         }
 
