@@ -213,10 +213,8 @@ namespace ECore.Devices {
 
         public AnalogTriggerValue TriggerAnalog
         {
-            set
-            {
-                this.triggerAnalog = value;
-            }
+            get { return this.triggerAnalog.Copy(); }
+            set { this.triggerAnalog = value; }
         }
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {

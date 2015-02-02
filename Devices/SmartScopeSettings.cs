@@ -342,6 +342,33 @@ namespace ECore.Devices
                 );
                 //Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
             }
+            get
+            {
+                AnalogTriggerValue v = this.triggerAnalog.Copy();
+
+                //When clipping
+                if (FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte() != 0 && FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte() != 255)
+                    return v;
+
+                TriggerDirection dir = (TriggerDirection)((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x30) >> 4);
+                AnalogChannel ch = AnalogChannel.List.Single(x=>x.Value == ((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2));
+
+                double[] coefficients = channelSettings[ch].coefficients;
+                REG offsetRegister = ch == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+                double level = 0;
+                if (coefficients != null) {
+                    level = FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte() + FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte() / 2.0;
+                    level = level * coefficients[0] + coefficients[1] * FpgaSettingsMemory[offsetRegister].GetByte() + coefficients[2];
+                    level = ProbeScaleScopeToHost(ch, (float)level);
+                }
+
+                return new AnalogTriggerValue()
+                {
+                    channel = ch,
+                    direction = dir,
+                    level = (float)level
+                };
+            }
         }
 
         public void ForceTrigger()

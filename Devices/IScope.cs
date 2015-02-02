@@ -29,6 +29,11 @@ namespace ECore.Devices
         /// Trigger level in volt
         /// </summary>
         public float level;
+
+        public AnalogTriggerValue Copy()
+        {
+            return (AnalogTriggerValue)this.MemberwiseClone();
+        }
     }
 
     public interface IScope : IDevice
@@ -53,7 +58,7 @@ namespace ECore.Devices
         double AcquisitionLengthMax { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
-        AnalogTriggerValue TriggerAnalog { set; }
+        AnalogTriggerValue TriggerAnalog { get; set; }
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         uint TriggerWidth { get; set; }
         float TriggerThreshold { get; set; }
