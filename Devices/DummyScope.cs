@@ -33,7 +33,7 @@ namespace ECore.Devices {
         public DataSources.DataSource DataSourceScope { get; private set; }
 		private DateTime timeOrigin;
 		//Wave settings
-        private int usbLatency = 2;
+        private int usbLatency = 10;
         private uint acquisitionDepth = 2048;
         private object resetAcquisitionLock = new object();
         private bool resetAcquisition = false;
@@ -359,12 +359,6 @@ namespace ECore.Devices {
                 if (viewDecimation >= 0)
                     break;
                 samples /= 2;
-            }
-                
-            if (samples < VIEWPORT_SAMPLES_MIN)
-            {
-                Logger.Warn("Unfeasible zoom level");
-                return;
             }
 
             if (viewDecimation > VIEW_DECIMATION_MAX)
