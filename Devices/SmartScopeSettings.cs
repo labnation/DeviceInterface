@@ -550,8 +550,8 @@ namespace ECore.Devices
             set 
             {
                 ulong samples = (ulong)(value / BASE_SAMPLE_PERIOD);
-                double ratio = samples / OVERVIEW_BUFFER_SIZE;
-                int acquisitionDepthPower = (int)Math.Log(ratio, 2);
+                double ratio = (double)samples / OVERVIEW_BUFFER_SIZE;
+                int acquisitionDepthPower = (int)Math.Ceiling(Math.Log(ratio, 2));
                 
                 if (acquisitionDepthPower < 0)
                     acquisitionDepthPower = 0;
@@ -653,7 +653,7 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
             FpgaSettingsMemory[REG.VIEW_BURSTS].Set(burstsLog2);
             
-            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionDepth, SamplePeriod, offset, SAMPLES_PER_BURST * burstsLog2, viewDecimation));
+            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionDepth, SamplePeriod, offset, (int)(SAMPLES_PER_BURST * Math.Pow(2, burstsLog2)), viewDecimation));
         }
 
         void SetViewPortOffset(double time, int samplesExcess)
