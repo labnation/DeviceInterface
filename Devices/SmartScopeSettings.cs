@@ -563,7 +563,7 @@ namespace ECore.Devices
                 acquisitionDepthPower = (int)Math.Log(AcquisitionDepth / OVERVIEW_BUFFER_SIZE, 2);
 
                 ratio = (double)samples / AcquisitionDepth;
-                int inputDecimationPower = (int)Math.Log(ratio, 2);
+                int inputDecimationPower = (int)Math.Ceiling(Math.Log(ratio, 2));
                 if (inputDecimationPower < 0)
                     inputDecimationPower = 0;
                 SubSampleRate = inputDecimationPower;
