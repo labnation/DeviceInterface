@@ -182,7 +182,10 @@ namespace ECore.Devices {
             set
             {
                 if (value)
+                {
+                    StopPending = false;
                     this.acquisitionRunning = value;
+                }
                 else
                     StopPending = true;
             }
@@ -249,7 +252,11 @@ namespace ECore.Devices {
 
         public void ForceTrigger()
         {
-            forceTrigger = true;
+            if (!forceTrigger)
+            {
+                awaitingTrigger = false;
+                forceTrigger = true;
+            }
         }
         public uint TriggerWidth
         {
@@ -483,6 +490,17 @@ namespace ECore.Devices {
                     if (AcquisitionModeLocal == AcquisitionMode.AUTO)
                         triggerTimeout = 0.01; //Give up after 10ms
 
+                    if (
+                        forceTrigger ||
+                        (triggerTimeout > 0 && triggerTimeout < waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent)
+                    )
+                    {
+                        forceTrigger = false;
+                        triggerIndex = triggerHoldoffInSamples;
+                        awaitingTrigger = false;
+                        break;
+                    }
+
                     if (logicAnalyser)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
@@ -497,15 +515,6 @@ namespace ECore.Devices {
 
                     if (triggerDetected)
                         break;
-                    if (
-                        forceTrigger || 
-                        (triggerTimeout > 0 && triggerTimeout < waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent)
-                        )
-                    {
-                        forceTrigger = false;
-                        triggerIndex = triggerHoldoffInSamples;
-                        break;
-                    }
                     //Stop trying to find a trigger at some point to avoid running out of memory
                     if (waveAnalog[AnalogChannel.ChA].Count  > GENERATION_LENGTH_MAX)
                     {
