@@ -573,9 +573,6 @@ namespace ECore.Devices {
 
             if(acquisitionBufferDigital != null)
                 p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamplesLocal));
-#if __IOS__
-			regenerate = true;
-#endif
 
             if (acquisitionMode == AcquisitionMode.SINGLE)
                 acquisitionRunning = false;
