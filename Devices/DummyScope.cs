@@ -60,9 +60,21 @@ namespace ECore.Devices {
         		
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
-        internal int DECIMATION_MAX = 10;
-        private static uint ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024;
-        private uint decimation = 0;
+        internal uint DECIMATION_MAX = 10;
+        private static uint ACQUISITION_DEPTH_MAX = 16 * 1024;
+        private static int ACQUISITION_DEPTH_POWER_MAX = (int)Math.Ceiling(Math.Log(uint.MaxValue / OVERVIEW_LENGTH, 2));
+        private uint _decimation = 0;
+        private uint decimation
+        {
+            get { return _decimation; }
+            set
+            {
+                if (value > DECIMATION_MAX)
+                    _decimation = DECIMATION_MAX;
+                else
+                    _decimation = value;
+            }
+        }
         public double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
         public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
         public double SamplesToTime(uint samples)
@@ -389,14 +401,16 @@ namespace ECore.Devices {
             }
             set
             {
-                uint samples = (uint)(value / SamplePeriod);
+                double samples = value / BASE_SAMPLE_PERIOD;
                 double ratio = (double)samples / OVERVIEW_LENGTH;
                 int log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
                 if (log2OfRatio < 0)
                     log2OfRatio = 0;
+                if (log2OfRatio > ACQUISITION_DEPTH_POWER_MAX)
+                    log2OfRatio = ACQUISITION_DEPTH_POWER_MAX;
                 AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow(2, log2OfRatio));
 
-                ratio = (double)samples / AcquisitionDepth;
+                ratio = samples / AcquisitionDepth;
                 log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
                 if (log2OfRatio < 0)
                     log2OfRatio = 0;
@@ -409,13 +423,20 @@ namespace ECore.Devices {
             set {
                 lock (resetAcquisitionLock)
                 {
-                    double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
-                    if(log2OfRatio != (int)log2OfRatio)
-                        throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
-                    if (value > ACQUISITION_DEPTH_MAX)
+                    if (value == 0) //Overflowing - take max
+                    {
                         acquisitionDepth = ACQUISITION_DEPTH_MAX;
+                    }
                     else
-                        acquisitionDepth = value;
+                    {
+                        double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
+                        if (log2OfRatio != (int)log2OfRatio)
+                            throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
+                        if (value > ACQUISITION_DEPTH_MAX)
+                            acquisitionDepth = ACQUISITION_DEPTH_MAX;
+                        else
+                            acquisitionDepth = value;
+                    }
                     resetAcquisition = true;
                 }
             }
