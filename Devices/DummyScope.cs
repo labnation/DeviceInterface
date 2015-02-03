@@ -373,14 +373,14 @@ namespace ECore.Devices {
             set
             {
                 uint samples = (uint)(value / SamplePeriod);
-                double ratio = samples / OVERVIEW_LENGTH;
-                int log2OfRatio = (int)Math.Log(ratio, 2);
+                double ratio = (double)samples / OVERVIEW_LENGTH;
+                int log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
                 if (log2OfRatio < 0)
                     log2OfRatio = 0;
                 AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow(2, log2OfRatio));
 
                 ratio = (double)samples / AcquisitionDepth;
-                log2OfRatio = (int)Math.Log(ratio, 2);
+                log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
                 if (log2OfRatio < 0)
                     log2OfRatio = 0;
                 decimation = (uint)log2OfRatio;
