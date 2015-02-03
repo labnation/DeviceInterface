@@ -98,6 +98,7 @@ namespace ECore.Devices {
         private DigitalTrigger digitalTrigger;
         
         //Viewport
+        private bool viewportUpdate = false;
         private int viewportOffset = 0; //Number of samples to skip in acq buffer
         private int viewportDecimation = 0;
 
@@ -178,12 +179,20 @@ namespace ECore.Devices {
         }
 
         public bool Running {
-            set { this.acquisitionRunning = value; }
+            set
+            {
+                if (value)
+                    this.acquisitionRunning = value;
+                else
+                    StopPending = true;
+            }
+
             get { return this.acquisitionRunning; } 
         }
-        public bool StopPending { get { return false; } }
-        public bool AwaitingTrigger { get { return false; } }
-        public bool Armed { get { return true; } }
+        public bool StopPending { get; private set; }
+        private bool awaitingTrigger = false;
+        public bool AwaitingTrigger { get { return acquisitionRunning && awaitingTrigger; } }
+        public bool Armed { get { return acquisitionRunning; } }
 
         public bool CanRoll { get { return false; } }
         public bool Rolling { set { } get { return false; } }
@@ -347,6 +356,7 @@ namespace ECore.Devices {
             viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
             viewportDecimation = viewDecimation;
             viewportOffset = TimeToSamples(offset, decimation);
+            viewportUpdate = true;
 		}
         public double ViewPortTimeSpan
         {
@@ -373,14 +383,14 @@ namespace ECore.Devices {
             set
             {
                 uint samples = (uint)(value / SamplePeriod);
-                double ratio = (double)samples / OVERVIEW_LENGTH;
-                int log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
+                double ratio = samples / OVERVIEW_LENGTH;
+                int log2OfRatio = (int)Math.Log(ratio, 2);
                 if (log2OfRatio < 0)
                     log2OfRatio = 0;
                 AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow(2, log2OfRatio));
 
                 ratio = (double)samples / AcquisitionDepth;
-                log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
+                log2OfRatio = (int)Math.Log(ratio, 2);
                 if (log2OfRatio < 0)
                     log2OfRatio = 0;
                 decimation = (uint)log2OfRatio;
@@ -421,6 +431,7 @@ namespace ECore.Devices {
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
             if (acquisitionRunning)
             {
+                viewportUpdate = true;
                 int triggerHoldoffInSamples = 0;
                 int triggerIndex = 0;
                 Dictionary<AnalogChannel, List<float>> waveAnalog = new Dictionary<AnalogChannel, List<float>>();
@@ -482,6 +493,7 @@ namespace ECore.Devices {
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
                             acquisitionDepthCurrent, out triggerIndex);
                     }
+                    awaitingTrigger = !triggerDetected;
 
                     if (triggerDetected)
                         break;
@@ -510,7 +522,15 @@ namespace ECore.Devices {
                     acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepthCurrent, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
                 }
                 acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepthCurrent, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
+                if (StopPending)
+                {
+                    acquisitionRunning = false;
+                }
             }
+            if (!viewportUpdate)
+                return null;
+            viewportUpdate = false;
+
             if (acquisitionBufferAnalog[AnalogChannel.ChA] == null)
                 return null;
 
