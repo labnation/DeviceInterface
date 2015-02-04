@@ -88,6 +88,7 @@ namespace ECore.Devices
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
         private const int ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024; //Size of RAM
+        private const int ACQUISITION_DEPTH_DEFAULT = 512 * 1024;
         private const int NUMBER_OF_SAMPLES = 2048;
         private const int BYTES_PER_BURST = 64;
         private const int BYTES_PER_SAMPLE = 2;
@@ -319,7 +320,7 @@ namespace ECore.Devices
             //TriggerThreshold = 3;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
-            AcquisitionDepth = 512 * 1024;
+            AcquisitionDepth = ACQUISITION_DEPTH_DEFAULT;
             SetAwgStretching(0);
             SetViewPort(0, 10e-3);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
@@ -458,6 +459,8 @@ namespace ECore.Devices
 #endif
 			}
 
+            AcquisitionDepthLastPackage = header.AcquisitionDepth;
+            SamplePeriodLastPackage = header.SamplePeriod;
 			acquiring = header.Acquiring;
 			stopPending = header.LastAcquisition;
             awaitingTrigger = header.AwaitingTrigger;

@@ -496,7 +496,7 @@ namespace ECore.Devices
                     s = STR.ACQ_STOP;
                 }
 
-                StrobeMemory[s].WriteImmediate(true);
+                StrobeMemory[s].Set(true);
 
                 //FIXME - From VHDL (ScopeController.vhd:871)
                 /*
@@ -594,10 +594,31 @@ namespace ECore.Devices
                 return (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, FpgaSettingsMemory[REG.ACQUISITION_DEPTH].GetByte()));
             }
         }
-        public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
 
         private int BURSTS_MIN = 2;
         private uint VIEWPORT_SAMPLES_MAX = 2048;
+
+        uint? AcquisitionDepthLastPackage = null;
+        private double AcquisitionLengthCurrent
+        {
+            get
+            {
+                if (Running || !AcquisitionDepthLastPackage.HasValue)
+                    return AcquisitionLength;
+                return AcquisitionDepthLastPackage.Value * SamplePeriodCurrent;
+            }
+        }
+
+        double? SamplePeriodLastPackage = null;
+        private double SamplePeriodCurrent
+        {
+            get
+            {
+                if (Running || !SamplePeriodLastPackage.HasValue)
+                    return SamplePeriod;
+                return SamplePeriodLastPackage.Value;
+            }
+        }
 
         public void SetViewPort(double offset, double timespan)
         {
@@ -609,18 +630,18 @@ namespace ECore.Devices
              *  <--------><------->
              *    offset   timespan
              */
-            double maxTimeSpan = AcquisitionTimeSpan - offset;
+            double maxTimeSpan = AcquisitionLengthCurrent - offset;
             if (timespan > maxTimeSpan)
             {
-                if (timespan > AcquisitionTimeSpan)
+                if (timespan > AcquisitionLengthCurrent)
                 {
-                    timespan = AcquisitionTimeSpan;
+                    timespan = AcquisitionLengthCurrent;
                     offset = 0;
                 }
                 else
                 {
                     //Limit offset so the timespan can fit
-                    offset = AcquisitionTimeSpan - timespan;
+                    offset = AcquisitionLengthCurrent - timespan;
                 }
             }
 
@@ -631,7 +652,7 @@ namespace ECore.Devices
             int viewDecimation = 0;
             while (true)
             {
-                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
+                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriodCurrent, 2));
                 if (viewDecimation >= 0)
                     break;
                 samples /= 2;
@@ -643,7 +664,7 @@ namespace ECore.Devices
                 viewDecimation = VIEW_DECIMATION_MAX;
             }
 
-            viewPortSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
+            viewPortSamples = (int)(timespan / (SamplePeriodCurrent * Math.Pow(2, viewDecimation)));
             int burstsLog2 = (int)Math.Ceiling(Math.Log(Math.Ceiling((double)viewPortSamples / SAMPLES_PER_BURST), 2));
             if (burstsLog2 < BURSTS_MIN)
                 burstsLog2 = BURSTS_MIN;
@@ -653,12 +674,12 @@ namespace ECore.Devices
             FpgaSettingsMemory[REG.VIEW_DECIMATION].Set(viewDecimation);
             FpgaSettingsMemory[REG.VIEW_BURSTS].Set(burstsLog2);
             
-            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionDepth, SamplePeriod, offset, (int)(SAMPLES_PER_BURST * Math.Pow(2, burstsLog2)), viewDecimation));
+            SetViewPortOffset(offset, ComputeViewportSamplesExcess(AcquisitionLengthCurrent, SamplePeriodCurrent, offset, (int)(SAMPLES_PER_BURST * Math.Pow(2, burstsLog2)), viewDecimation));
         }
 
         void SetViewPortOffset(double time, int samplesExcess)
         {
-            Int32 samples = TimeToSamples(time, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte()) - samplesExcess;
+            Int32 samples = (int)(time / SamplePeriodCurrent) - samplesExcess;
             if(samples < 0)
                 samples = 0;
             FpgaSettingsMemory[REG.VIEW_OFFSET_B0].Set((byte)(samples));
@@ -687,16 +708,10 @@ namespace ECore.Devices
             return samples * SamplePeriod;
         }
 
-        private Int32 TimeToSamples(double time, int inputDecimation)
-        {
-            return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
-        }
-
-        internal static int ComputeViewportSamplesExcess(uint acqDepth, double samplePeriod, double viewportOffset, int viewportSamples, int viewportDecimation)
+        internal static int ComputeViewportSamplesExcess(double acquisitionTimeSpan, double samplePeriod, double viewportOffset, int viewportSamples, int viewportDecimation)
         {
             double viewportSamplePeriod = samplePeriod * Math.Pow(2, viewportDecimation);
             double endTime = viewportOffset + viewportSamples * viewportSamplePeriod;
-            double acquisitionTimeSpan = acqDepth * samplePeriod;
             if (endTime > acquisitionTimeSpan)
                 return (int)((endTime - acquisitionTimeSpan) / samplePeriod);
             else
@@ -706,7 +721,7 @@ namespace ECore.Devices
 
         public double ViewPortTimeSpan
         {
-            get { return viewPortSamples * (SamplePeriod * Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte())); }
+            get { return viewPortSamples * (SamplePeriodCurrent * Math.Pow(2, FpgaSettingsMemory[REG.VIEW_DECIMATION].GetByte())); }
         }
 
         public double ViewPortOffset {
@@ -721,7 +736,7 @@ namespace ECore.Devices
                     (FpgaSettingsMemory[REG.VIEW_EXCESS_B1].GetByte() << 8);
 
                 samples += samplesExcess;
-                return SamplesToTime((uint)samples); 
+                return samples * SamplePeriodCurrent; 
             }
         }
 
@@ -738,13 +753,13 @@ namespace ECore.Devices
         {
             set
             {
-                if (value > AcquisitionTimeSpan)
-                    this.holdoff = AcquisitionTimeSpan;
+                if (value > AcquisitionLengthCurrent)
+                    this.holdoff = AcquisitionLengthCurrent;
                 else if (value <= 0)
                     this.holdoff = 0;
                 else
                     this.holdoff = value;
-                Int32 samples = TimeToSamples(this.holdoff, FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte());
+                Int32 samples = (int)(this.holdoff / SamplePeriod);
                 samples += AnalogTriggerDelay(TriggerWidth, SubSampleRate);
                 //FIXME-FPGA bug
                 if (samples >= AcquisitionDepth)
