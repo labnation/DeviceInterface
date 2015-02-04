@@ -536,7 +536,7 @@ namespace ECore.Devices
 
         public double AcquisitionLengthMax
         {
-            get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * 255; }
+            get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * Math.Pow(2, INPUT_DECIMATION_MAX); }
         }
 
         public bool PreferPartial { 
@@ -566,6 +566,8 @@ namespace ECore.Devices
                 int inputDecimationPower = (int)Math.Ceiling(Math.Log(ratio, 2));
                 if (inputDecimationPower < 0)
                     inputDecimationPower = 0;
+                if (inputDecimationPower > INPUT_DECIMATION_MAX)
+                    inputDecimationPower = INPUT_DECIMATION_MAX;
                 SubSampleRate = inputDecimationPower;
 
 

@@ -97,6 +97,7 @@ namespace ECore.Devices
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 7;
+        internal const int INPUT_DECIMATION_MAX = 9;
         private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
 
