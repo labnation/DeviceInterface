@@ -83,7 +83,6 @@ namespace ECore.Devices
         byte[] chA = null, chB = null;
         float[] chAOverview = null, chBOverview = null;
         int OverviewIndentifier = -1;
-        int triggerAddress;
 
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
@@ -486,9 +485,9 @@ namespace ECore.Devices
                 }
                 chAOverview = ConvertByteToVoltage(AnalogChannel.ChA, divA, mulA, chAOverviewRaw, header.GetRegister(REG.CHA_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChA]);
                 chBOverview = ConvertByteToVoltage(AnalogChannel.ChB, divB, mulB, chBOverviewRaw, header.GetRegister(REG.CHB_YOFFSET_VOLTAGE), probeSettings[AnalogChannel.ChB]);
-                OverviewIndentifier = header.TriggerAddress;
+                OverviewIndentifier = header.AcquisitionId;
 
-                if(currentDataPackage != null && currentDataPackage.Identifier == header.TriggerAddress)
+                if(currentDataPackage != null && currentDataPackage.Identifier == header.AcquisitionId)
                 {
                     currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
                     currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
@@ -544,12 +543,6 @@ namespace ECore.Devices
                         Logger.Warn("Got an off-set package but didn't get any date before");
                         return null;
                     }
-                    //In case of a resync or who knows what else went wrong
-                    if (triggerAddress != header.TriggerAddress)
-                    {
-                        Logger.Warn("Got an off-set package but didn't get the initial package");
-                        return null;
-                    }
 					byte[] chANew = new byte[chA.Length + header.Samples];
 					byte[] chBNew = new byte[chB.Length + header.Samples];
 					chA.CopyTo (chANew, 0);
@@ -563,7 +556,6 @@ namespace ECore.Devices
                         return null;
                     }
 				} else { //New acquisition, new buffers
-                    triggerAddress = header.TriggerAddress;
 					chA = new byte[header.Samples];
 					chB = new byte[header.Samples];
 				}
@@ -616,7 +608,7 @@ namespace ECore.Devices
                 header.AcquisitionDepth, header.SamplePeriod,
                 header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
                 header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, 
-                header.TriggerAddress, header.ViewportExcess);
+                header.AcquisitionId, header.ViewportExcess);
 #if DEBUG
             currentDataPackage.header = header;
 #endif            
@@ -626,7 +618,7 @@ namespace ECore.Devices
                 currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
             }
 #if DEBUG
-            currentDataPackage.AddSetting("TriggerAddress", header.TriggerAddress);
+            currentDataPackage.AddSetting("AcquisitionId", header.AcquisitionId);
 #endif
 
             currentDataPackage.AddSetting("Multiplier" + AnalogChannel.ChA.Name, mulA);

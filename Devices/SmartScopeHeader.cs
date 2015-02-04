@@ -104,7 +104,7 @@ namespace ECore.Devices
         internal bool TimedOut { get; private set; }
 
         internal readonly int Channels = 2;
-        internal int TriggerAddress { get; private set; }
+        internal int AcquisitionId { get; private set; }
         
         //FIXME: we really shouldn't be needing the freqcomp mode in here
         internal SmartScopeHeader(byte[] data)
@@ -133,7 +133,7 @@ namespace ECore.Devices
             AwaitingTrigger = Utils.IsBitSet(data[10], 5);
             Armed           = Utils.IsBitSet(data[10], 6);
             
-            TriggerAddress = data[11] + (data[12] << 8) + (data[13] << 16);
+            AcquisitionId = data[11];
             SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
             ViewportSamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION) + GetRegister(REG.VIEW_DECIMATION));
 
