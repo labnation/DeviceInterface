@@ -111,14 +111,11 @@ namespace ECore.Devices {
         
         //Viewport
         private bool viewportUpdate = false;
-        private int viewportOffset = 0; //Number of samples to skip in acq buffer
-        private int viewportDecimation = 0;
 
         private const int OVERVIEW_LENGTH = 2048;
         private const int VIEWPORT_SAMPLES_MIN = 128;
         private const int VIEWPORT_SAMPLES_MAX = 2048;
         private const int VIEW_DECIMATION_MAX = 10;
-        private int viewportSamples = VIEWPORT_SAMPLES_MAX;
 
         //Hack
         private bool logicAnalyser;
@@ -341,43 +338,27 @@ namespace ECore.Devices {
              */
             if (offset < 0)
                 offset = 0;
+            if (offset >= AcquisitionTimeSpan)
+                offset = 0;
+
             double maxTimeSpan = AcquisitionTimeSpan - offset;
             
             if (timespan > maxTimeSpan || timespan < SamplePeriod)
-            {
                 return;
-            }
 
-            //Decrease the number of samples till viewport sample period is larger than 
-            //or equal to the full sample rate
-            uint samples = VIEWPORT_SAMPLES_MAX;
-                
-            int viewDecimation = 0;
-            while(true)
-            {
-                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / (samples + 2) / SamplePeriod, 2));
-                if (viewDecimation >= 0)
-                    break;
-                samples /= 2;
-            }
-
-            if (viewDecimation > VIEW_DECIMATION_MAX)
-            {
-                Logger.Warn("Clipping view decimation! better decrease the sample rate!");
-                viewDecimation = VIEW_DECIMATION_MAX;
-            }
-            viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation))) + 2;
-            viewportDecimation = viewDecimation;
-            viewportOffset = TimeToSamples(offset, decimation);
+            ViewPortOffset = offset;
+            ViewPortTimeSpan = timespan;
             viewportUpdate = true;
 		}
         public double ViewPortTimeSpan
         {
-            get { return (viewportSamples - 2) * SamplePeriod * Math.Pow(2, viewportDecimation); }
+            get;
+            private set;
         }
         public double ViewPortOffset
         {
-            get { return SamplesToTime((uint)viewportOffset); }
+            get;
+            private set;
         }
 
         public double AcquisitionLengthMax
@@ -558,21 +539,40 @@ namespace ECore.Devices {
             if (acquisitionBufferAnalog[AnalogChannel.ChA] == null)
                 return null;
 
-            int viewportOffsetLocal = viewportOffset;
-            int viewportSamplesLocal = viewportSamples;
+            //Decrease the number of samples till viewport sample period is larger than 
+            //or equal to the full sample rate
+            uint samples = VIEWPORT_SAMPLES_MAX;
+            int viewportDecimation = 0;
+            while (true)
+            {
+                viewportDecimation = (int)Math.Ceiling(Math.Log(ViewPortTimeSpan / (samples + 2) / SamplePeriodCurrent, 2));
+                if (viewportDecimation >= 0)
+                    break;
+                samples /= 2;
+            }
+
+            if (viewportDecimation > VIEW_DECIMATION_MAX)
+            {
+                Logger.Warn("Clipping view decimation! better decrease the sample rate!");
+                viewportDecimation = VIEW_DECIMATION_MAX;
+            }
+            int viewportSamples = (int)(ViewPortTimeSpan / (SamplePeriodCurrent * Math.Pow(2, viewportDecimation))) + 2;
+            int viewportOffsetLocal = (int)(ViewPortOffset / SamplePeriodCurrent);
+
+            
             p = new DataPackageScope(
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
-                    SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamplesLocal, viewportOffsetLocal * SamplePeriodCurrent, 
+                    SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamples, ViewPortOffset, 
                     TriggerHoldoffCurrent, false, false, 0);
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 p.SetAcquisitionBufferOverviewData(ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
-                p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamplesLocal));
+                p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
             }
 
             if(acquisitionBufferDigital != null)
-                p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamplesLocal));
+                p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
 
             if (acquisitionMode == AcquisitionMode.SINGLE)
                 acquisitionRunning = false;
