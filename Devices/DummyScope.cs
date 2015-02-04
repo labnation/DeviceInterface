@@ -343,7 +343,7 @@ namespace ECore.Devices {
                 offset = 0;
             double maxTimeSpan = AcquisitionTimeSpan - offset;
             
-            if (timespan > maxTimeSpan)
+            if (timespan > maxTimeSpan || timespan < SamplePeriod)
             {
                 return;
             }
@@ -355,7 +355,7 @@ namespace ECore.Devices {
             int viewDecimation = 0;
             while(true)
             {
-                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / samples / SamplePeriod, 2));
+                viewDecimation = (int)Math.Ceiling(Math.Log(timespan / (samples + 2) / SamplePeriod, 2));
                 if (viewDecimation >= 0)
                     break;
                 samples /= 2;
@@ -366,14 +366,14 @@ namespace ECore.Devices {
                 Logger.Warn("Clipping view decimation! better decrease the sample rate!");
                 viewDecimation = VIEW_DECIMATION_MAX;
             }
-            viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation)));
+            viewportSamples = (int)(timespan / (SamplePeriod * Math.Pow(2, viewDecimation))) + 2;
             viewportDecimation = viewDecimation;
             viewportOffset = TimeToSamples(offset, decimation);
             viewportUpdate = true;
 		}
         public double ViewPortTimeSpan
         {
-            get { return viewportSamples * SamplePeriod * Math.Pow(2, viewportDecimation); }
+            get { return (viewportSamples - 2) * SamplePeriod * Math.Pow(2, viewportDecimation); }
         }
         public double ViewPortOffset
         {
