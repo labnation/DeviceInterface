@@ -476,6 +476,8 @@ namespace ECore.Devices
             if (header.OverviewBuffer)
             {
                 buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
+                if (buffer == null)
+                    return null;
                 byte[] chAOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
                 byte[] chBOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
                 for (int i = 0; i < OVERVIEW_BUFFER_SIZE; i++)
