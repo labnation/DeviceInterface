@@ -15,7 +15,8 @@ namespace ECore.Devices
     {
         DeviceConnectHandler connectHandler;
         IDevice device;
-        IDevice fallbackDevice;
+        public IDevice fallbackDevice { get; private set; }
+        Thread pollThread;
 #if WINDOWS
         Thread badDriverDetectionThread;
         bool running = true;
@@ -45,35 +46,49 @@ namespace ECore.Devices
 
             /* Register fallback device */
             fallbackDevice = new DummyScope();
-            connectHandler(fallbackDevice, true);
+        }
 
+        public void Start()
+        {
+            pollThread = new Thread(PollUponStart);
+            pollThread.Name = "Devicemanager Startup poll";
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
-            InterfaceManagerXamarin.Instance.PollDevice();
 #elif WINUSB
             InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
+#else
+            InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
+#endif
+
+            pollThread.Start();
+        }
+
+        private void PollUponStart()
+        {
+#if ANDROID
+            InterfaceManagerXamarin.Instance.PollDevice();
+#elif WINUSB
             InterfaceManagerWinUsb.Instance.PollDevice();
             badDriverDetectionThread = new Thread(SearchDeviceFromVidPidThread);
             badDriverDetectionThread.Name = "Bad WINUSB driver detection";
             BadDriver = false;
             badDriverDetectionThread.Start();
-#else
-            InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
-            #if !IOS
+#elif !IOS
             InterfaceManagerLibUsb.Instance.PollDevice();
-            #endif
 #endif
         }
 
         public void Stop()
         {
+            pollThread.Join(100);
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
             BadDriver = false;
             running = false;
-            badDriverDetectionThread.Join(100);
+            if(badDriverDetectionThread != null)
+                badDriverDetectionThread.Join(100);
 #else
             //Linux, MacOS en iOS
             InterfaceManagerLibUsb.Instance.Destroy();
