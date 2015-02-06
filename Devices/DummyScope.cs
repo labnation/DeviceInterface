@@ -649,7 +649,7 @@ namespace ECore.Devices {
                 bool preconditionMet = preconditionCounter == halfWidth;
                 if (preconditionMet)
                 {
-                    if (invertor * wave[i] >= invertor * (trigger.level + threshold))
+                    if (invertor * wave[i] >= invertor * trigger.level + threshold)
                         postconditionCounter++;
                 }
                 else
