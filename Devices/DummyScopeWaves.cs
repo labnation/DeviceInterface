@@ -21,6 +21,7 @@ namespace ECore.Devices
             double frequency = config.frequency;
             double amplitude = config.amplitude;
             double phase = config.phase;
+            double dutyCycle = config.dutyCycle;
             double dcOffset = config.dcOffset;
 
             float[] wave = new float[waveLength];
@@ -32,7 +33,7 @@ namespace ECore.Devices
                     wave = DummyScope.WaveCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
                 case WaveForm.SQUARE:
-                    wave = DummyScope.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
+                    wave = DummyScope.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, dutyCycle);
                     break;
                 case WaveForm.SAWTOOTH:
                     wave = DummyScope.WaveSawTooth(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
@@ -108,11 +109,11 @@ namespace ECore.Devices
             return result;
         }
 
-        public static float[] WaveSquare(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)
+        public static float[] WaveSquare(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase, double dutyCycle = 0.5)
         {
             float[] wave = new float[nSamples];
             for (int i = 0; i < wave.Length; i++)
-                wave[i] = (((double)i * samplePeriod + timeOffset + (phase / 2.0 / Math.PI / frequency)) % (1.0 / frequency)) * frequency > 0.5 ? (float)amplitude : -1f * (float)amplitude;
+                wave[i] = (((double)i * samplePeriod + timeOffset + (phase / 2.0 / Math.PI / frequency)) % (1.0 / frequency)) * frequency < dutyCycle ? (float)amplitude : -1f * (float)amplitude;
             return wave;
         }
         public static float[] WaveSawTooth(uint nSamples, double samplePeriod, double timeOffset, double frequency, double amplitude, double phase)

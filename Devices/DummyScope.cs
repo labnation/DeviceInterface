@@ -20,6 +20,7 @@ namespace ECore.Devices {
         public double dcOffset;
         public double frequency;
         public double phase;
+        public double dutyCycle;
         public double noise;
         public int bursts;
         public ProbeDivision probeDivision;
@@ -136,6 +137,7 @@ namespace ECore.Devices {
                         dcOffset = 0.0,
                         frequency = 10e3,
                         phase = 0,
+                        dutyCycle = 0.5f,
                         waveform = WaveForm.TRIANGLE,
                         probeDivision = ProbeDivision.X1,
                     }
@@ -148,6 +150,7 @@ namespace ECore.Devices {
                         dcOffset = 0.0,
                         frequency = 10e3,
                         phase = 0,
+                        dutyCycle = 0.5f,
                         waveform = WaveForm.SINE,
                         probeDivision = ProbeDivision.X1,
                     }
@@ -599,6 +602,10 @@ namespace ECore.Devices {
         public void SetDummyWavePhase(AnalogChannel channel, double phase)
         {
             ChannelConfig[channel].phase = phase;
+        }
+        public void SetDummyWaveDutyCycle(AnalogChannel channel, double dc)
+        {
+            ChannelConfig[channel].dutyCycle = dc > 1 ? 1 : dc < 0 ? 0 : dc;
         }
         public void SetDummyWaveForm(AnalogChannel channel, WaveForm w)
 		{
