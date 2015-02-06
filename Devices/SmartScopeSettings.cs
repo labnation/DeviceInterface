@@ -301,10 +301,7 @@ namespace ECore.Devices
         #endregion
 
         #region horizontal
-        ///<summary>
-        ///Set scope trigger level
-        ///</summary>
-        ///<param name="trigger">Trigger condition</param>
+
         public AnalogTriggerValue TriggerAnalog
         {
             set
@@ -747,10 +744,6 @@ namespace ECore.Devices
             return (((int)triggerWidth) >> inputDecimation) + 3;
         }
 
-        ///<summary>
-        ///Scope hold off
-        ///</summary>
-        ///<param name="time">Store [time] before trigger</param>
         public double TriggerHoldOff
         {
             set

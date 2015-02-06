@@ -35,8 +35,7 @@ namespace ECore.Devices {
 		//Wave settings
         private int usbLatency = 10;
         private uint acquisitionDepth = 2048;
-        private object resetAcquisitionLock = new object();
-        private bool resetAcquisition = false;
+        private object acquisitionSettingsLock = new object();
         private bool forceTrigger = false;
 
         Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
@@ -179,10 +178,9 @@ namespace ECore.Devices {
         {
             set
             {
-                lock (resetAcquisitionLock)
+                lock (acquisitionSettingsLock)
                 {
                     this.acquisitionMode = value;
-                    resetAcquisition = true;
                 }
             }
         }
@@ -213,7 +211,7 @@ namespace ECore.Devices {
 		{
             set
             {
-                lock (resetAcquisitionLock)
+                lock (acquisitionSettingsLock)
                 {
                     if (value > AcquisitionTimeSpan)
                         this.triggerHoldoff = AcquisitionTimeSpan;
@@ -221,7 +219,6 @@ namespace ECore.Devices {
                         //this.triggerHoldoff = 0;
                     else
                         this.triggerHoldoff = value;
-                    resetAcquisition = true;
                 }
             }
             get
@@ -396,7 +393,7 @@ namespace ECore.Devices {
         public uint AcquisitionDepth
         {
             set {
-                lock (resetAcquisitionLock)
+                lock (acquisitionSettingsLock)
                 {
                     if (value == 0) //Overflowing - take max
                     {
@@ -412,7 +409,6 @@ namespace ECore.Devices {
                         else
                             acquisitionDepth = value;
                     }
-                    resetAcquisition = true;
                 }
             }
             get { return acquisitionDepth; }
@@ -446,7 +442,7 @@ namespace ECore.Devices {
 
                 while(true) {
                     AcquisitionMode AcquisitionModeLocal;
-                    lock (resetAcquisitionLock)
+                    lock (acquisitionSettingsLock)
                     {
                         AcquisitionModeLocal = acquisitionMode;
                         acquisitionDepthCurrent = AcquisitionDepth;
