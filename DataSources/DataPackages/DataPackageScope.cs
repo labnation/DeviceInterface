@@ -120,7 +120,7 @@ namespace ECore.DataSources
                 float L = thresholdLow.HasValue ? thresholdLow.Value : analogData.Min() + (analogData.Max() - analogData.Min()) * 0.3f;
 
                 bool[] digitalData = new bool[analogData.Length];
-                bool digitalDataPrevious = false;
+                bool digitalDataPrevious = analogData[0] >= H;
                 for (int i = 0; i < analogData.Length; i++)
                     digitalDataPrevious = digitalData[i] = Utils.Schmitt(analogData[i], digitalDataPrevious, H, L);
                 return digitalData;
