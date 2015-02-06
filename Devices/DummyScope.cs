@@ -566,12 +566,17 @@ namespace ECore.Devices {
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                p.SetAcquisitionBufferOverviewData(ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
+                if(SendOverviewBuffer)
+                    p.SetAcquisitionBufferOverviewData(ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetViewportData(ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
             }
 
-            if(acquisitionBufferDigital != null)
+            if (acquisitionBufferDigital != null)
+            {
+                if (SendOverviewBuffer)
+                    p.SetAcquisitionBufferOverviewDataDigital(GetViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetViewportDataDigital(GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
+            }
 
             if (acquisitionMode == AcquisitionMode.SINGLE)
                 acquisitionRunning = false;

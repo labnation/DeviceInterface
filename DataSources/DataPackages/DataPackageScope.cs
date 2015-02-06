@@ -137,11 +137,26 @@ namespace ECore.DataSources
             return null;
         }
 
-        public float[] GetOverviewBufferData(AnalogChannel ch)
+        public object GetOverviewBufferData(Channel ch)
         {
-            float[] data = null;
-            acquisitionBufferOverviewAnalog.TryGetValue(ch, out data);
-            return data;
+            if (ch is AnalogChannel)
+            {
+                float[] data = null;
+                acquisitionBufferOverviewAnalog.TryGetValue((AnalogChannel)ch, out data);
+                return data;
+            }
+            else if (ch is DigitalChannel)
+            {
+                if (acquisitionBufferOverviewDigital == null) return null;
+
+                Func<byte, bool> bitFilter = new Func<byte, bool>(x => Utils.IsBitSet(x, ch.Value));
+                bool[] output = Utils.TransformArray(acquisitionBufferOverviewDigital, bitFilter);
+                return output;
+            }
+            else
+            {
+                throw new Exception("Impossible! Can't get an overview buffer for channel of type " + ch.GetType());
+            }
         }
 
         public byte[] GetOverviewBufferDataDigital()
