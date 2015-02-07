@@ -38,6 +38,7 @@ namespace ECore.Devices {
         private uint acquisitionDepth = 2048;
         private object acquisitionSettingsLock = new object();
         private bool forceTrigger = false;
+        private int acquistionId = 0;
 
         Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
         byte[] acquisitionBufferDigital = null;
@@ -454,6 +455,8 @@ namespace ECore.Devices {
                         waveLengthLocal = waveLength;
                     }
 
+                    acquistionId++;
+
                     foreach (AnalogChannel channel in AnalogChannel.List)
                     {
                         float[] wave;
@@ -562,7 +565,7 @@ namespace ECore.Devices {
             p = new DataPackageScope(
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
                     SamplePeriodCurrent * Math.Pow(2, viewportDecimation), viewportSamples, ViewPortOffset, 
-                    TriggerHoldoffCurrent, false, false, 0);
+                    TriggerHoldoffCurrent, false, false, acquistionId);
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
