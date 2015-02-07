@@ -442,7 +442,7 @@ namespace ECore.Devices
 
 			try {
 				header = new SmartScopeHeader (buffer);
-			} catch (Exception) {
+			} catch (Exception e) {
 #if WINDOWS
                 Logger.Warn("Error parsing header - attempting to fix that");
                 header = ResyncHeader();
