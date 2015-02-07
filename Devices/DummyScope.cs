@@ -55,7 +55,7 @@ namespace ECore.Devices {
         private bool acquisitionRunning = false;
 
         private double SamplePeriodCurrent = 0;
-        private uint waveLengthLocal = 0;
+        private uint waveLengthCurrent = 0;
         private double TriggerHoldoffCurrent;
         private uint acquisitionDepthCurrent;
         		
@@ -445,14 +445,14 @@ namespace ECore.Devices {
                 bool triggerDetected = false;
 
                 while(true) {
-                    AcquisitionMode AcquisitionModeLocal;
+                    AcquisitionMode AcquisitionModeCurrent;
                     lock (acquisitionSettingsLock)
                     {
-                        AcquisitionModeLocal = acquisitionMode;
+                        AcquisitionModeCurrent = acquisitionMode;
                         acquisitionDepthCurrent = AcquisitionDepth;
                         TriggerHoldoffCurrent = triggerHoldoff;
                         SamplePeriodCurrent = SamplePeriod;
-                        waveLengthLocal = waveLength;
+                        waveLengthCurrent = waveLength;
                     }
 
                     acquistionId++;
@@ -462,13 +462,13 @@ namespace ECore.Devices {
                         float[] wave;
                         switch(waveSource) {
                             case WaveSource.GENERATOR:
-                                wave = DummyScope.GenerateWave(waveLengthLocal,
+                                wave = DummyScope.GenerateWave(waveLengthCurrent,
                                     SamplePeriodCurrent,
                                     timeOffset.Ticks / 1e7,
                                     ChannelConfig[channel]);
                                 break;
                             case WaveSource.FILE:
-                                wave = GetWaveFromFile(channel, waveLengthLocal, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
+                                wave = GetWaveFromFile(channel, waveLengthCurrent, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
                                 break;
                             default:
                                 throw new Exception("Unsupported wavesource");
@@ -481,11 +481,11 @@ namespace ECore.Devices {
                         DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
                         waveAnalog[channel].AddRange(wave);
                     }
-                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthLocal, SamplePeriodCurrent, timeOffset.TotalSeconds));
+                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
 
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
-                    if (AcquisitionModeLocal == AcquisitionMode.AUTO)
+                    if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
                         triggerTimeout = 0.01; //Give up after 10ms
 
                     if (
@@ -520,7 +520,7 @@ namespace ECore.Devices {
                         return null;
                     }
 
-                    var timePassed = new TimeSpan((long)(waveLengthLocal * SamplePeriodCurrent * 1e7));
+                    var timePassed = new TimeSpan((long)(waveLengthCurrent * SamplePeriodCurrent * 1e7));
                     timeOffset = timeOffset.Add(timePassed);
                 }
                     
