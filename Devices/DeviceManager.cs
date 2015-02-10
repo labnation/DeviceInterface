@@ -81,7 +81,8 @@ namespace ECore.Devices
 
         public void Stop()
         {
-            pollThread.Join(100);
+            if(pollThread != null)
+                pollThread.Join(100);
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
