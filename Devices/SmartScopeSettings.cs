@@ -798,6 +798,12 @@ namespace ECore.Devices
             return response.Skip(4).Take(3).Reverse().ToArray();
         }
 
+        public byte GPIO
+        {
+            get { return FpgaSettingsMemory[REG.DIGITAL_OUT].GetByte(); }
+            set { FpgaSettingsMemory[REG.DIGITAL_OUT].WriteImmediate(value); }
+        }
+
         #endregion
 
         #region Logic Analyser
