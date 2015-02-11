@@ -798,7 +798,7 @@ namespace ECore.Devices
             return response.Skip(4).Take(3).Reverse().ToArray();
         }
 
-        public byte GPIO
+        public byte DigitalOutput
         {
             get { return FpgaSettingsMemory[REG.DIGITAL_OUT].GetByte(); }
             set { FpgaSettingsMemory[REG.DIGITAL_OUT].WriteImmediate(value); }

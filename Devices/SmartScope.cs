@@ -315,7 +315,8 @@ namespace ECore.Devices
                 SetVerticalRange(ch, -1f, 1f);
                 SetCoupling(ch, coupling[ch]);
             }
-                
+
+            DigitalOutput = 0;
             TriggerWidth = 2;
             //TriggerThreshold = 3;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
