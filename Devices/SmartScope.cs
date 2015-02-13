@@ -613,6 +613,10 @@ namespace ECore.Devices
                 header.ViewportSamplePeriod, chA.Length, header.ViewportOffset,
                 header.TriggerHoldoff, chA.Length < header.ViewportLength, header.Rolling, 
                 header.AcquisitionId, header.ViewportExcess);
+
+            
+            currentDataPackage.SetResolution(AnalogChannel.ChA, ProbeScaleScopeToHost(AnalogChannel.ChA, (float)rom.getCalibration(AnalogChannel.ChA, divA, mulA).coefficients[0]));
+            currentDataPackage.SetResolution(AnalogChannel.ChB, ProbeScaleScopeToHost(AnalogChannel.ChB, (float)rom.getCalibration(AnalogChannel.ChB, divB, mulB).coefficients[0]));
 #if DEBUG
             currentDataPackage.header = header;
 #endif      

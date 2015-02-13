@@ -12,6 +12,7 @@ namespace ECore.DataSources
     /// </summary>
     public class DataPackageScope
     {
+        public Dictionary<AnalogChannel, float> resolution { get; private set; }
         private Dictionary<AnalogChannel, float[]> acquisitionBufferOverviewAnalog;
         private Dictionary<AnalogChannel, float[]> viewportDataAnalog;
         private Dictionary<AnalogChannel, byte[]> viewportDataAnalogRaw;
@@ -48,6 +49,10 @@ namespace ECore.DataSources
             viewportDataAnalog = new Dictionary<AnalogChannel, float[]>();
             viewportDataAnalogRaw = new Dictionary<AnalogChannel, byte[]>();
             Settings = new Dictionary<string,double>();
+            resolution = new Dictionary<AnalogChannel, float>() {
+                { AnalogChannel.ChA, float.PositiveInfinity },
+                { AnalogChannel.ChB, float.PositiveInfinity },
+            };
         }
 
         //FIXME should be internal but currently used by averaging and inverting processors
@@ -82,6 +87,10 @@ namespace ECore.DataSources
         {
             if (data.Length == 0) return;
             acquisitionBufferOverviewDigital = data;
+        }
+        public void SetResolution(AnalogChannel ch, float res)
+        {
+            resolution[ch] = res;
         }
 
         internal void AddSetting(String setting, double value)
