@@ -82,6 +82,7 @@ namespace ECore.Devices
         
         byte[] chA = null, chB = null;
         float[] chAOverview = null, chBOverview = null;
+        byte[] chAOverviewRaw = null, chBOverviewRaw = null;
         int OverviewIndentifier = -1;
 
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
@@ -479,8 +480,8 @@ namespace ECore.Devices
                 buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
                 if (buffer == null)
                     return null;
-                byte[] chAOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
-                byte[] chBOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
+                chAOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
+                chBOverviewRaw = new byte[OVERVIEW_BUFFER_SIZE];
                 for (int i = 0; i < OVERVIEW_BUFFER_SIZE; i++)
                 {
                     chAOverviewRaw[i] = buffer[i * 2];
@@ -492,8 +493,7 @@ namespace ECore.Devices
 
                 if(currentDataPackage != null && currentDataPackage.Identifier == header.AcquisitionId)
                 {
-                    currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
-                    currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
+                    UpdatePackageOverviewBuffer(currentDataPackage, header, chAOverview, chAOverviewRaw, chBOverview, chBOverviewRaw);
                     return currentDataPackage;
                 }
                 return null;
@@ -614,11 +614,10 @@ namespace ECore.Devices
                 header.AcquisitionId, header.ViewportExcess);
 #if DEBUG
             currentDataPackage.header = header;
-#endif            
+#endif      
             if (currentDataPackage.Identifier == OverviewIndentifier)
             {
-                currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
-                currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
+                UpdatePackageOverviewBuffer(currentDataPackage, header, chAOverview, chAOverviewRaw, chBOverview, chBOverviewRaw);
             }
 #if DEBUG
             currentDataPackage.AddSetting("AcquisitionId", header.AcquisitionId);
@@ -663,6 +662,24 @@ namespace ECore.Devices
             }
 #endif
             return currentDataPackage;
+        }
+
+        private static void UpdatePackageOverviewBuffer(DataPackageScope currentDataPackage, SmartScopeHeader header, 
+            float[] chAOverview, byte[] chAOverviewRaw, 
+            float[] chBOverview, byte[] chBOverviewRaw)
+        {
+            bool logicAnalyserOnChannelA = header.GetStrobe(STR.LA_ENABLE) && !header.GetStrobe(STR.LA_CHANNEL);
+            bool logicAnalyserOnChannelB = header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.LA_CHANNEL);
+
+            if(logicAnalyserOnChannelA)
+                currentDataPackage.SetAcquisitionBufferOverviewDataDigital(chAOverviewRaw);
+            else
+                currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChA, chAOverview);
+
+            if(logicAnalyserOnChannelB)
+                currentDataPackage.SetAcquisitionBufferOverviewDataDigital(chBOverviewRaw);
+            else
+                currentDataPackage.SetAcquisitionBufferOverviewData(AnalogChannel.ChB, chBOverview);
         }
 
         //FIXME: this needs proper handling
