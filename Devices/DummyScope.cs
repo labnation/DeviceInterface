@@ -62,6 +62,7 @@ namespace ECore.Devices {
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         internal uint DECIMATION_MAX = 10;
+        private static uint ACQUISITION_DEPTH_MIN = 1024;
         private static uint ACQUISITION_DEPTH_MAX = 16 * 1024;
         private static int ACQUISITION_DEPTH_POWER_MAX = (int)Math.Ceiling(Math.Log(uint.MaxValue / OVERVIEW_LENGTH, 2));
         private uint _decimation = 0;
@@ -362,6 +363,10 @@ namespace ECore.Devices {
             private set;
         }
 
+        public double AcquisitionLengthMin
+        {
+            get { return ACQUISITION_DEPTH_MIN * BASE_SAMPLE_PERIOD; }
+        }
         public double AcquisitionLengthMax
         {
             get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * DECIMATION_MAX; }

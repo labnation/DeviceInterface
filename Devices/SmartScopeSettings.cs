@@ -531,6 +531,10 @@ namespace ECore.Devices
             }
         }
 
+        public double AcquisitionLengthMin
+        {
+            get { return ACQUISITION_DEPTH_MIN * BASE_SAMPLE_PERIOD; }
+        }
         public double AcquisitionLengthMax
         {
             get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * Math.Pow(2, INPUT_DECIMATION_MAX); }

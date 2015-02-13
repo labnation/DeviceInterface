@@ -56,6 +56,7 @@ namespace ECore.Devices
         double AcquisitionLength { get; set; }
         double SamplePeriod { get; }
         double AcquisitionLengthMax { get; }
+        double AcquisitionLengthMin { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
         AnalogTriggerValue TriggerAnalog { get; set; }
