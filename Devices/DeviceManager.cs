@@ -48,7 +48,7 @@ namespace ECore.Devices
             fallbackDevice = new DummyScope();
         }
 
-        public void Start()
+        public void Start(bool async = true)
         {
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
@@ -62,6 +62,9 @@ namespace ECore.Devices
 #endif
 
             pollThread.Start();
+
+            if (!async)
+                pollThread.Join();
         }
 
         private void PollUponStart()
