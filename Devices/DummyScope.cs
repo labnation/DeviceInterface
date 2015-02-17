@@ -134,7 +134,7 @@ namespace ECore.Devices {
                 { AnalogChannel.ChA, new DummyScopeChannelConfig()
                     {
                         amplitude = 2,
-                        noise = 0.1,
+                        noise = 0,
                         coupling = Coupling.DC,
                         dcOffset = 0.0,
                         frequency = 10e3,
@@ -147,7 +147,7 @@ namespace ECore.Devices {
                 { AnalogChannel.ChB, new DummyScopeChannelConfig() 
                     {
                         amplitude = 1,
-                        noise = 0,
+                        noise = 0.1,
                         coupling = Coupling.DC,
                         dcOffset = 0.0,
                         frequency = 10e3,
@@ -491,11 +491,11 @@ namespace ECore.Devices {
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
-                        triggerTimeout = 0.01; //Give up after 10ms
+                        triggerTimeout = GENERATION_LENGTH_MAX * SamplePeriodCurrent; //Give up after 10ms
 
                     if (
                         forceTrigger ||
-                        (triggerTimeout > 0 && triggerTimeout < waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent)
+                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout)
                     )
                     {
                         forceTrigger = false;
