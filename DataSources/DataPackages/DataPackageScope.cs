@@ -194,6 +194,10 @@ namespace ECore.DataSources
         /// The trigger holdoff in seconds
         /// </summary>
         public double Holdoff { get; set; }
+        /// <summary>
+        /// The holdoff relative to the center of the acquisition buffer
+        /// </summary>
+        public double HoldoffCenter { get { return Holdoff - AcquisitionLength / 2.0; } }
 
         /// <summary>
         /// Indicates whether this is a partial acquisition package
