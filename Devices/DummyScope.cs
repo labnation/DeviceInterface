@@ -113,6 +113,7 @@ namespace ECore.Devices {
         
         //Viewport
         private bool viewportUpdate = false;
+        private object viewportUpdateLock = new object();
 
         private const int OVERVIEW_LENGTH = 2048;
         private const int VIEWPORT_SAMPLES_MIN = 128;
@@ -350,7 +351,10 @@ namespace ECore.Devices {
 
             ViewPortOffset = offset;
             ViewPortTimeSpan = timespan;
-            viewportUpdate = true;
+            lock (viewportUpdateLock)
+            {
+                viewportUpdate = true;
+            }
 		}
         public double ViewPortTimeSpan
         {
@@ -439,7 +443,10 @@ namespace ECore.Devices {
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
             if (acquisitionRunning)
             {
-                viewportUpdate = true;
+                lock (viewportUpdateLock)
+                {
+                    viewportUpdate = true;
+                }
                 int triggerHoldoffInSamples = 0;
                 int triggerIndex = 0;
                 Dictionary<AnalogChannel, List<float>> waveAnalog = new Dictionary<AnalogChannel, List<float>>();
@@ -539,9 +546,12 @@ namespace ECore.Devices {
                     acquisitionRunning = false;
                 }
             }
-            if (!viewportUpdate)
-                return null;
-            viewportUpdate = false;
+            lock (viewportUpdateLock)
+            {
+                if (!viewportUpdate)
+                    return null;
+                viewportUpdate = false;
+            }
 
             if (acquisitionBufferAnalog[AnalogChannel.ChA] == null)
                 return null;
