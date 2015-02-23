@@ -754,8 +754,6 @@ namespace ECore.Devices
             {
                 if (value > AcquisitionLengthCurrent)
                     this.holdoff = AcquisitionLengthCurrent;
-                else if (value <= 0)
-                    this.holdoff = 0;
                 else
                     this.holdoff = value;
                 Int32 samples = (int)(this.holdoff / SamplePeriod);
