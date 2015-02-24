@@ -500,17 +500,6 @@ namespace ECore.Devices {
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
                         triggerTimeout = GENERATION_LENGTH_MAX * SamplePeriodCurrent; //Give up after 10ms
 
-                    if (
-                        forceTrigger ||
-                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout)
-                    )
-                    {
-                        forceTrigger = false;
-                        triggerIndex = triggerHoldoffInSamples;
-                        awaitingTrigger = false;
-                        break;
-                    }
-
                     if (logicAnalyser)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
@@ -524,7 +513,22 @@ namespace ECore.Devices {
                     awaitingTrigger = !triggerDetected;
 
                     if (triggerDetected)
+                    {
+                        forceTrigger = false;
+                        awaitingTrigger = false;
                         break;
+                    }
+
+                    if (
+                        forceTrigger ||
+                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout)
+                    )
+                    {
+                        forceTrigger = false;
+                        triggerIndex = triggerHoldoffInSamples;
+                        awaitingTrigger = false;
+                        break;
+                    }
                     //Stop trying to find a trigger at some point to avoid running out of memory
                     if (waveAnalog[AnalogChannel.ChA].Count  > GENERATION_LENGTH_MAX)
                     {
