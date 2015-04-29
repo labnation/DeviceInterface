@@ -11,7 +11,6 @@ namespace MatlabFileIO
     {
         BinaryWriter fileWriter;
         MemoryStream uncompressedStream;
-        long arrayStartPosition;
         IMatlabFileWriterLocker locker;
 
         public MatlabFileWriter(string fileName)
