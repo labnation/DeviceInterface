@@ -1,0 +1,1 @@
+wdi-simple.exe -n SmartScope -f smartscope.inf -m LabNation -v 0x04D8 -p 0xF4B5 -g {7d2c7901-f90b-434d-aae1-38e3e39a3ca1} -t 0 -b

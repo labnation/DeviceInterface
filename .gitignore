@@ -1,0 +1,12 @@
+bin/
+obj/
+Release/
+*.suo
+/*.userprefs
+Resource.designer.cs
+*csproj.user
+.DS_Store
+/packages/
+/Resources.resources
+*.csproj
+packages.config
