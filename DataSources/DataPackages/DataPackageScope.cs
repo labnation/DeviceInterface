@@ -42,6 +42,7 @@ namespace LabNation.DeviceInterface.DataSources
     /// </summary>
     public class DataPackageScope
     {
+        readonly object dataLock = new object();
         private static int OVERVIEW_SAMPLES = 2048;
         private static Dictionary<Type, Type> ChannelDataTypes = new Dictionary<Type, Type>() {
             { typeof(AnalogChannel), typeof(float) },
@@ -99,10 +100,13 @@ namespace LabNation.DeviceInterface.DataSources
 
         internal void SetData(DataSourceType type, Channel ch, Array arr, bool partial = false)
         {
-            if (arr.GetType().GetElementType() != ChannelDataTypes[ch.GetType()])
-                throw new Exception("Invalid data type " + arr.GetType().GetElementType().ToString() + " for channel of type " + ch.GetType().ToString());
+            lock (dataLock)
+            {
+                if (arr.GetType().GetElementType() != ChannelDataTypes[ch.GetType()])
+                    throw new Exception("Invalid data type " + arr.GetType().GetElementType().ToString() + " for channel of type " + ch.GetType().ToString());
 
-            data[type][ch] = new ChannelData(type, ch, arr, partial, samplePeriod[type], offset[type]);
+                data[type][ch] = new ChannelData(type, ch, arr, partial, samplePeriod[type], offset[type]);
+            }
         }
 
         internal void AddData(DataSourceType type, Channel ch, Array arrayToAdd)
@@ -143,21 +147,27 @@ namespace LabNation.DeviceInterface.DataSources
         }
         public ChannelData GetData(DataSourceType type, Channel ch)
         {
-            if (data[type].ContainsKey(ch))
-                return data[type][ch];
-            else if (ch is DigitalChannel)
-                return ExtractBitsFromLogicAnalyser((DigitalChannel)ch, type);
+            lock (dataLock)
+            {
+                if (data[type].ContainsKey(ch))
+                    return data[type][ch];
+                else if (ch is DigitalChannel)
+                    return ExtractBitsFromLogicAnalyser((DigitalChannel)ch, type);
+            }
             return null;
         }
         private ChannelData ExtractBitsFromLogicAnalyser(DigitalChannel ch, DataSourceType t)
         {
+            lock (dataLock)
+            {
                 //FIXME: expand for more than 1 LA
                 if (!data[t].ContainsKey(LogicAnalyserChannel.LA))
                     return null;
                 Func<byte, bool> bitFilter = new Func<byte, bool>(x => Utils.IsBitSet(x, ch.Value));
                 var laChannel = data[t][LogicAnalyserChannel.LA];
                 data[t][ch] = new ChannelData(t, ch, Utils.TransformArray(laChannel.array, bitFilter), laChannel.partial, samplePeriod[t], offset[t]);
-            return data[t][ch];
+                return data[t][ch];
+            }
         }
 
         /// <summary>
