@@ -5,7 +5,7 @@ using System.Text;
 using LabNation.DeviceInterface.Hardware;
 using System.Runtime.InteropServices;
 using LabNation.Common;
-using MathNet.Numerics.LinearAlgebra.Double;
+//using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace LabNation.DeviceInterface.Devices
 {
@@ -386,7 +386,7 @@ namespace LabNation.DeviceInterface.Devices
                 }
             }
 
-#if DEBUG
+#if false
             public static SmartScope.GainCalibration ComputeCalibration(AnalogChannel channel, double div, double mul, double[] inputVoltage, double[] adcValue, double[] yOffset)
             {
                 int rows = adcValue.Length;
