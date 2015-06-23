@@ -502,7 +502,7 @@ namespace LabNation.DeviceInterface.Devices {
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
                         triggerTimeout = GENERATION_LENGTH_MAX * SamplePeriodCurrent; //Give up after 10ms
 
-                    if (logicAnalyser)
+                    if (logicAnalyser && this.TriggerMode == TriggerModes.Digital)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
                     }
@@ -738,5 +738,7 @@ namespace LabNation.DeviceInterface.Devices {
             p = p.AsParallel().Select(x => x - mean).ToArray();
         }
         #endregion
-	}
+
+        public TriggerModes TriggerMode { get; set; }
+    }
 }

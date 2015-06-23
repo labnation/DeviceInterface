@@ -31,6 +31,7 @@ namespace LabNation.DeviceInterface.Devices
         }
     }
 
+    public enum TriggerModes { Analog, Digital, External };
     public enum TriggerDirection { RISING = 0, FALLING = 1 };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
@@ -82,6 +83,7 @@ namespace LabNation.DeviceInterface.Devices
         double AcquisitionLengthMin { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
+        TriggerModes TriggerMode { get; }
         AnalogTriggerValue TriggerAnalog { get; set; }
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         uint TriggerWidth { get; set; }
