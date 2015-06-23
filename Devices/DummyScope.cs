@@ -40,7 +40,7 @@ namespace LabNation.DeviceInterface.Devices {
         private bool forceTrigger = false;
         private int acquistionId = 0;
 
-        Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
+        Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog;
         byte[] acquisitionBufferDigital = null;
 
         
@@ -58,6 +58,8 @@ namespace LabNation.DeviceInterface.Devices {
         private uint waveLengthCurrent = 0;
         private double TriggerHoldoffCurrent;
         private uint acquisitionDepthCurrent;
+        private bool logicAnalyserEnabledCurrent;
+        private AnalogChannel logicAnalyserChannelCurrent;
         		
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
@@ -120,8 +122,6 @@ namespace LabNation.DeviceInterface.Devices {
         private const int VIEWPORT_SAMPLES_MAX = 2048;
         private const int VIEW_DECIMATION_MAX = 10;
 
-        //Hack
-        private bool logicAnalyser;
 		DataPackageScope p;
         private static int GENERATION_LENGTH_MAX = (int)ACQUISITION_DEPTH_MAX * 3; //Don't generate more than this many samples of wave
 
@@ -462,17 +462,22 @@ namespace LabNation.DeviceInterface.Devices {
                     AcquisitionMode AcquisitionModeCurrent;
                     lock (acquisitionSettingsLock)
                     {
+                        acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
                         AcquisitionModeCurrent = acquisitionMode;
                         acquisitionDepthCurrent = AcquisitionDepth;
                         TriggerHoldoffCurrent = triggerHoldoff;
                         SamplePeriodCurrent = SamplePeriod;
                         waveLengthCurrent = waveLength;
+                        logicAnalyserChannelCurrent = logicAnalyserChannel;
+                        logicAnalyserEnabledCurrent = logicAnalyserEnabled;
                     }
 
                     acquistionId++;
 
                     foreach (AnalogChannel channel in AnalogChannel.List)
                     {
+                        if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
+                            continue;
                         float[] wave;
                         switch(waveSource) {
                             case WaveSource.GENERATOR:
@@ -495,14 +500,15 @@ namespace LabNation.DeviceInterface.Devices {
                         DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
                         waveAnalog[channel].AddRange(wave);
                     }
-                    waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
+                    if(logicAnalyserEnabledCurrent)
+                        waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
 
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
                         triggerTimeout = GENERATION_LENGTH_MAX * SamplePeriodCurrent; //Give up after 10ms
 
-                    if (logicAnalyser && this.TriggerMode == TriggerModes.Digital)
+                    if (logicAnalyserEnabledCurrent && this.TriggerMode == TriggerModes.Digital)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
                     }
@@ -532,7 +538,7 @@ namespace LabNation.DeviceInterface.Devices {
                         break;
                     }
                     //Stop trying to find a trigger at some point to avoid running out of memory
-                    if (waveAnalog[AnalogChannel.ChA].Count  > GENERATION_LENGTH_MAX)
+                    if (waveAnalog.First().Value.Count > GENERATION_LENGTH_MAX)
                     {
                         System.Threading.Thread.Sleep(10);
                         return null;
@@ -544,6 +550,8 @@ namespace LabNation.DeviceInterface.Devices {
                     
                 foreach(AnalogChannel channel in AnalogChannel.List)
                 {
+                    if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
+                        continue;
                     acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepthCurrent, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
                 }
                 acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepthCurrent, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
@@ -559,7 +567,7 @@ namespace LabNation.DeviceInterface.Devices {
                 viewportUpdate = false;
             }
 
-            if (acquisitionBufferAnalog[AnalogChannel.ChA] == null)
+            if (acquisitionBufferAnalog.Count == null)
                 return null;
 
             //Decrease the number of samples till viewport sample period is larger than 
@@ -592,12 +600,14 @@ namespace LabNation.DeviceInterface.Devices {
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
+                if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
+                    continue;
                 if(SendOverviewBuffer)
                     p.SetData(DataSourceType.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetData(DataSourceType.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
             }
 
-            if (acquisitionBufferDigital != null)
+            if (logicAnalyserEnabledCurrent)
             {
                 if (SendOverviewBuffer)
                     p.SetData(DataSourceType.Overview, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
@@ -656,14 +666,31 @@ namespace LabNation.DeviceInterface.Devices {
 		}
 
         //FIXME: implement this
+        private bool logicAnalyserEnabled = false;
         public bool LogicAnalyserEnabled
         {
-            set { logicAnalyser = value; }
-            get { return logicAnalyser; }
+            set
+            {
+                lock (acquisitionSettingsLock)
+                {
+                    this.logicAnalyserEnabled = value;
+                }
+            }
+            get
+            {
+                return this.logicAnalyserEnabled;
+            }
         }
+        private AnalogChannel logicAnalyserChannel = AnalogChannel.ChB;
         public AnalogChannel ChannelSacrificedForLogicAnalyser
         {
-            set { }
+            set 
+            {
+                lock (acquisitionSettingsLock)
+                {
+                    this.logicAnalyserChannel = value;
+                }
+            }
         }
 
 		#endregion
