@@ -371,7 +371,7 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        private Dictionary<DigitalChannel, DigitalTriggerValue> triggerDigital;
+        private Dictionary<DigitalChannel, DigitalTriggerValue> triggerDigital = new Dictionary<DigitalChannel,DigitalTriggerValue>();
         public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {
             set

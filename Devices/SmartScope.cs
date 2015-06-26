@@ -124,7 +124,10 @@ namespace LabNation.DeviceInterface.Devices
             this.hardwareInterface = usbInterface;
             AwgOutOfRange = false;
             deviceReady = false;
-            
+
+            foreach (DigitalChannel d in DigitalChannel.List)
+                this.triggerDigital[d] = DigitalTriggerValue.X;
+
             probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
             yOffset = new Dictionary<AnalogChannel, float>();
             verticalRanges = new Dictionary<AnalogChannel, Range>();
