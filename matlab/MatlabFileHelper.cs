@@ -47,6 +47,15 @@ namespace MatlabFileIO
         }
     }
 
+    public static class MatfileIO
+    {
+        public static bool IsTypeSupported(Type t)
+        {
+            return t != null && MatfileHelper.ArrayTypes.Contains(t);
+        }
+
+    }
+
     internal static class MatfileHelper
     {
         public const int SZ_TAG = 8; //Tag size in bytes
@@ -151,7 +160,7 @@ namespace MatlabFileIO
             }
         }
 
-        private static Type[] ArrayTypes = new Type[] {
+        internal static Type[] ArrayTypes = new Type[] {
             null,               //0
             null,               //1
             null,               //2
