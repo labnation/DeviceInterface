@@ -54,7 +54,7 @@ namespace LabNation.Common
 
         private void dumpThreadStart()
         {
-            while (running)
+            while (running || logQueue.Count > 0)
             {
                 while (logQueue.Count > 0)
                 {
