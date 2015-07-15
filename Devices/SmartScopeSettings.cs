@@ -371,6 +371,41 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
+        private Dictionary<DigitalChannel, DigitalTriggerValue> triggerDigital = new Dictionary<DigitalChannel,DigitalTriggerValue>();
+        public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
+        {
+            set
+            {
+                this.triggerDigital = value;
+                int rising = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R ? 1 : 0) << x.Key.Value));
+                int falling = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
+                int high = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H ? 1 : 0) << x.Key.Value));
+                int low = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L ? 1 : 0) << x.Key.Value));
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_RISING].Set((byte)rising);
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
+                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_LOW].Set((byte)low);
+
+                //FIXME: We currently don't support passing the LA data through channel B, so the trigger needs to be set to chA
+                TriggerAnalog = new AnalogTriggerValue() { channel = ChannelSacrificedForLogicAnalyser, direction = TriggerDirection.RISING, level = 0 };
+            }
+            get
+            {
+                return this.triggerDigital;
+            }
+        }
+
+        public TriggerModes TriggerMode
+        {
+            get
+            {
+                if (LogicAnalyserEnabled && triggerAnalog.channel.Equals(ChannelSacrificedForLogicAnalyser))
+                    return TriggerModes.Digital;
+                return TriggerModes.Analog;
+
+            }
+        }
+
         public void ForceTrigger()
         {
             if(Ready)
@@ -515,24 +550,6 @@ namespace LabNation.DeviceInterface.Devices
         public bool StopPending { get { return Ready && stopPending; } }
         public bool AwaitingTrigger { get { return Ready && awaitingTrigger; } }
         public bool Armed { get { return Ready && armed; } }
-
-        public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
-        {
-            set
-            {
-                int rising = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R ? 1 : 0) << x.Key.Value));
-                int falling = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
-                int high = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H ? 1 : 0) << x.Key.Value));
-                int low = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L ? 1 : 0) << x.Key.Value));
-                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_RISING].Set((byte)rising);
-                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
-                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
-                FpgaSettingsMemory[REG.DIGITAL_TRIGGER_LOW].Set((byte)low);
-
-                //FIXME: We currently don't support passing the LA data through channel B, so the trigger needs to be set to chA
-                TriggerAnalog = new AnalogTriggerValue() { channel = AnalogChannel.ChA, direction = TriggerDirection.RISING, level = 0 };
-            }
-        }
 
         public double AcquisitionLengthMin
         {
@@ -832,6 +849,11 @@ namespace LabNation.DeviceInterface.Devices
             set
             {
                 StrobeMemory[STR.LA_CHANNEL].Set(value == AnalogChannel.ChB);
+                TriggerDigital = this.TriggerDigital;
+            }
+            get
+            {
+                return StrobeMemory[STR.LA_CHANNEL].GetBool() ? AnalogChannel.ChB : AnalogChannel.ChA;
             }
         }
 
