@@ -89,7 +89,11 @@ namespace LabNation.DeviceInterface.Devices
         internal const int INPUT_DECIMATION_MAX = 9;
         private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
-        private byte AdcTimingValue = 0;
+        List<byte> adcTimingValues = new List<byte>() { 0, 1, 2, 3, 5, 6, 7 };
+        private byte AdcTimingValue { 
+            get { return adcTimingValues.Contains(this.rom.AdcTimingValue) ? this.rom.AdcTimingValue : adcTimingValues[0]; }
+            set { this.rom.AdcTimingValue = value; }
+        }
 
         private bool acquiring = false;
         private bool stopPending = false;
@@ -277,10 +281,10 @@ namespace LabNation.DeviceInterface.Devices
         }
 
         /// <summary>
-        /// Calibrate ADC and set this.AdcTimingValue
+        /// Calibrate ADC timing
         /// </summary>
-        /// <returns>True for success, false for failure</returns>
-        private bool CalibrateAdc()
+        /// <returns>Throws when fails</returns>
+        private void CalibrateAdc()
         {
             ConfigureAdc();
             AdcMemory[MAX19506.FORMAT_PATTERN].Set(80);
@@ -293,74 +297,70 @@ namespace LabNation.DeviceInterface.Devices
             LogicAnalyserEnabled = false;
             Running = true;
             Logger.Info("Calibrating ADC timing");
+            CommitSettings();
 
-            List<byte> timingValues = new List<byte>() {
-                                          0,
-                                          1,
-                                          2,
-                                          3,
-                                          5,
-                                          6,
-                                          7,
-                                      };
-
-
-            foreach(byte timingValue in timingValues)
+            //If the adc timing value is not the default (being 0, the first one in the list)
+            // it means it was read from ROM. Try working with that value first.
+            if (AdcTimingValue != adcTimingValues[0])
             {
-                Logger.Info("Testing ADC timing value [" + timingValue + "]");
-                int triesLeft = 20;
-                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(timingValue);
-                CommitSettings();
-                //Note: ForceTrigger won't work here yet since Ready is still false
-                StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
-
-                while (triesLeft >= 0)
+                if (TestAdcRamp())
                 {
-                    DataPackageScope p = GetScopeData();
-
-                    if (triesLeft == 0)
-                    {
-                        Logger.Error("Failed to get ADC calibration data");
-                        return false;
-                    }
-
-                    if (p == null) {
-                        StrobeMemory[STR.ACQ_START].WriteImmediate(true);
-                        StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
-                        //StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(true);
-                        //StrobeMemory[STR.VIEW_UPDATE].WriteImmediate(true);
-                        triesLeft--;
-                        
-                        continue;
-                    }
-
-                    if (p.FullAcquisitionFetchProgress < 1f)
-                        continue;
-                    
-                    if (p != null && (p.GetData(DataSourceType.Acquisition, AnalogChannel.ChA.Raw())) != null)
-                    {
-                        bool allGood = true;
-                        foreach (AnalogChannelRaw ch in AnalogChannelRaw.List)
-                        {
-                            ChannelData d = p.GetData(DataSourceType.Acquisition, ch);
-                            bool verified = LabNation.Common.Utils.VerifyRamp((byte[])d.array);
-                            allGood &= verified;
-                            if(!verified)
-                                Logger.Info("ADC timing value " + timingValue + " failed for channel " + ch.Name);
-                        }
-                        if (allGood)
-                        {
-                            AdcTimingValue = timingValue;
-                            return true;
-                        }
-                        else
-                            break;
-                    }
+                    Logger.Info("ADC calibration OK with value from ROM = " + AdcTimingValue);
+                    return;
                 }
             }
 
+            foreach(byte timingValue in adcTimingValues)
+            {
+                Logger.Info("Testing ADC timing value [" + timingValue + "]");
+                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(timingValue);
+                CommitSettings();
+                //Note: ForceTrigger won't work here yet since Ready is still false
+                if (TestAdcRamp())
+                {
+                    Logger.Info("ADC calibration OK with value " + timingValue);
+                    AdcTimingValue = timingValue;
+                    return;
+                }
+            }
+
+            throw new ScopeIOException("failed to calibrate ADC");
+        }
+
+        private bool TestAdcRamp()
+        {
+            int triesLeft = 20;
+            while (triesLeft >= 0)
+            {
+                DataPackageScope p = GetScopeData();
+
+                if (p == null)
+                {
+                    StrobeMemory[STR.ACQ_START].WriteImmediate(true);
+                    StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
+                    triesLeft--;
+                    continue;
+                }
+
+                if (p.FullAcquisitionFetchProgress < 1f)
+                    continue;
+
+                if (p != null && (p.GetData(DataSourceType.Acquisition, AnalogChannel.ChA.Raw())) != null)
+                {
+                    bool allGood = true;
+                    foreach (AnalogChannelRaw ch in AnalogChannelRaw.List)
+                    {
+                        ChannelData d = p.GetData(DataSourceType.Acquisition, ch);
+                        bool verified = LabNation.Common.Utils.VerifyRamp((byte[])d.array);
+                        allGood &= verified;
+                    }
+                    return allGood;
+                }
+            }
+            Logger.Error("Failed to get ADC calibration data");
             return false;
         }
+
         private void DeconfigureAdc()
         {
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(0);
@@ -400,13 +400,12 @@ namespace LabNation.DeviceInterface.Devices
             CommitSettings();
             hardwareInterface.FlushDataPipe();
 
-            if(!CalibrateAdc())
-                throw new ScopeIOException("failed to calibrate ADC");
+            CalibrateAdc();
+            
             Logger.Info("Found good ADC timing value [" + AdcTimingValue + "]");
             AcquisitionDepth = ACQUISITION_DEPTH_DEFAULT;
             CommitSettings();
 
-            //hardwareInterface.FlushDataPipe();
             //Reconfigure ADC with new timing value
             ConfigureAdc();
         }

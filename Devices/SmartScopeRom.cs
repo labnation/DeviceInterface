@@ -47,6 +47,7 @@ namespace LabNation.DeviceInterface.Devices
             //Number of possible multiplier/divider combinations
             int modes = validMultipliers.Length * validDividers.Length;
             public UInt32 plugCount { get; private set; }
+            public byte AdcTimingValue { get; internal set; }
             public List<GainCalibration> gainCalibration { get; private set; }
             public List<FrequencyResponse> frequencyResponse { get; private set; }
             ISmartScopeUsbInterface hwInterface;
@@ -145,6 +146,7 @@ namespace LabNation.DeviceInterface.Devices
                 public fixed ushort magnitudesIndices[frequencyResponseMagnitudes * 3 * 2]; //nFrequencyResponseMagnitudes * nMultiplier * nChannel
                 public fixed float phases[frequencyResponsePhases * 3 * 2]; //nfrequencyResponsePhases * nMultiplier * nChannel
                 public fixed ushort phasesIndices[frequencyResponsePhases * 3 * 2]; //nfrequencyResponsePhases * nMultiplier * nChannel
+                public byte adcTimingValue;
             }
 
 #if DEBUG
@@ -232,6 +234,7 @@ namespace LabNation.DeviceInterface.Devices
                 //Fill ROM map structure
                 Map m = new Map();
                 m.plugCount = plugCount;
+                m.adcTimingValue = AdcTimingValue;
                 int offset = 0;
 
                 //FIXME: this code can be cleaner and shorter I suppose
@@ -317,7 +320,7 @@ namespace LabNation.DeviceInterface.Devices
                 }
                 Map m = BytesToMap(romContents);
                 this.plugCount = m.plugCount;
-
+                this.AdcTimingValue = m.adcTimingValue;
                 this.gainCalibration = new List<GainCalibration>();
                 int offset = 0;
                 foreach (AnalogChannel ch in AnalogChannel.List)
