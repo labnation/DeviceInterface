@@ -749,6 +749,21 @@ namespace LabNation.Common
             }
         }
 #endif
+
+        public static bool VerifyRamp(byte[] p)
+        {
+            if (p.Length < 2) return false;
+
+            List<int> failingIndices = new List<int>();
+
+            for (int i = 1; i < p.Length; i++)
+                if ((byte)(p[i - 1] + 1) != p[i])
+                    failingIndices.Add(i);
+
+            Logger.Debug(failingIndices.Count + " failing indices");
+
+            return failingIndices.Count == 0;
+        }
     }
 
 }
