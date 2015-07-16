@@ -412,11 +412,15 @@ namespace LabNation.DeviceInterface.Devices
                 StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
         }
 #if DEBUG
-        public void SetTriggerByte(byte level)
+        public 
+#else
+        private
+#endif
+        void SetTriggerByte(byte level)
         {
             FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set(level);
         }
-#endif
+
         /// <summary>
         /// Choose channel upon which to trigger
         /// </summary>
