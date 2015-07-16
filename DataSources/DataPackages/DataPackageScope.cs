@@ -64,6 +64,8 @@ namespace LabNation.DeviceInterface.DataSources
         public Dictionary<string, double> Settings { get; private set; }
         public Dictionary<DataSourceType, double> samplePeriod;
         public Dictionary<DataSourceType, double> offset;
+        public Dictionary<Channel, float> SaturationLowValue = new Dictionary<Channel, float>();
+        public Dictionary<Channel, float> SaturationHighValue = new Dictionary<Channel, float>();
 
         internal DataPackageScope(
             Type scopeType,
@@ -100,7 +102,7 @@ namespace LabNation.DeviceInterface.DataSources
                 { AnalogChannel.ChA, float.PositiveInfinity },
                 { AnalogChannel.ChB, float.PositiveInfinity },
             };
-        }
+        }       
 
         internal void SetData(DataSourceType type, Channel ch, Array arr, bool partial = false)
         {

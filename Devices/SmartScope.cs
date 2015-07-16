@@ -536,6 +536,12 @@ namespace LabNation.DeviceInterface.Devices
             Dictionary<AnalogChannel, GainCalibration> channelConfig = header.ChannelSettings(this.rom);
             Dictionary<Channel, Array> receivedData;
 
+            //find min and max voltages for each channel, to allow saturation detection
+            byte[] minMaxBytes = new byte[] { 0, 255 };
+            Dictionary<Channel, float[]> minMaxVoltages = new Dictionary<Channel, float[]>();
+            foreach (AnalogChannel ch in analogChannels)
+                minMaxVoltages.Add(ch, minMaxBytes.ConvertByteToVoltage(header.ChannelSettings(this.rom)[ch], header.GetRegister(ch.YOffsetRegister()), probeSettings[ch]));
+
             if (header.OverviewBuffer)
             {
                 buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
@@ -555,8 +561,16 @@ namespace LabNation.DeviceInterface.Devices
                 }
 
                 receivedData = SplitAndConvert(buffer, analogChannels, header);
-                foreach(Channel ch in receivedData.Keys)
+                foreach (Channel ch in receivedData.Keys)
+                {
                     currentDataPackage.SetData(DataSourceType.Overview, ch, receivedData[ch]);
+                    if (ch is AnalogChannel)
+                    {
+                        currentDataPackage.SaturationLowValue[ch] = minMaxVoltages[ch][0];
+                        currentDataPackage.SaturationHighValue[ch] = minMaxVoltages[ch][1];
+                    }
+                }               
+
                 return currentDataPackage;
             }
 
@@ -581,6 +595,11 @@ namespace LabNation.DeviceInterface.Devices
                     {
                         targetArray = Array.CreateInstance(receivedData[ch].GetType().GetElementType(), header.AcquisitionDepth);
                         currentDataPackage.SetData(DataSourceType.Acquisition, ch, targetArray);
+                        if (ch is AnalogChannel)
+                        {
+                            currentDataPackage.SaturationLowValue[ch] = minMaxVoltages[ch][0];
+                            currentDataPackage.SaturationHighValue[ch] = minMaxVoltages[ch][1];
+                        }
                     }
                     else
                     {
@@ -642,6 +661,11 @@ namespace LabNation.DeviceInterface.Devices
             foreach (Channel ch in receivedData.Keys)
             {
                 currentDataPackage.AddData(DataSourceType.Viewport, ch, receivedData[ch]);
+                if (ch is AnalogChannel)
+                {
+                    currentDataPackage.SaturationLowValue[ch] = minMaxVoltages[ch][0];
+                    currentDataPackage.SaturationHighValue[ch] = minMaxVoltages[ch][1];
+                }
             }
 
             foreach (AnalogChannel ch in AnalogChannel.List)
