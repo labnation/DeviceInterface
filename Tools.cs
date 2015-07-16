@@ -42,14 +42,18 @@ namespace LabNation.DeviceInterface
             return p;
         }
 
-        public static Dictionary<AnalogChannel, AnalogWaveProperties> MeasureAutoArrangeSettings(IScope scope, AnalogChannel aciveChannel)
+        public static Dictionary<AnalogChannel, AnalogWaveProperties> MeasureAutoArrangeSettings(IScope scope, AnalogChannel aciveChannel, Action<float> progressReport)
         {
+            float progress = 0f;
+            progressReport(progress);
             SmartScope s = scope as SmartScope;
 
             //check whether scope is ready/available
             if (s == null || !s.Ready)
             {
                 Logger.Error("No scope found to perform AutoArrange");
+                progress = 1f;
+                progressReport(progress);
                 return null;
             }
 
@@ -77,7 +81,8 @@ namespace LabNation.DeviceInterface
                 s.SetCoupling(ch, Coupling.DC);
 
             s.CommitSettings();
-
+            progress += .1f;
+            progressReport(progress);
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // VERTICAL
 
@@ -91,6 +96,9 @@ namespace LabNation.DeviceInterface
             //measure min and max voltage over 3 full ranges
             for (int i = -1; i < 2; i++)
             {
+                progress += .1f;
+                progressReport(progress);
+
                 foreach (AnalogChannel ch in AnalogChannel.List)
                     s.SetYOffset(ch, (float)i * maxRange);
                 s.CommitSettings();
@@ -192,6 +200,9 @@ namespace LabNation.DeviceInterface
             int iterationCounter = 0;
             for (float currTimeRange = maxTimeRange; currTimeRange > minTimeRange; currTimeRange/=100f)
             {
+                progress += .04f;
+                progressReport(progress);
+
                 iterationCounter++;
 
                 s.AcquisitionLength = currTimeRange;
