@@ -591,7 +591,7 @@ namespace LabNation.DeviceInterface.Devices {
             int viewportOffsetLocal = (int)(ViewPortOffset / SamplePeriodCurrent);
 
             
-            p = new DataPackageScope(
+            p = new DataPackageScope(this.GetType(),
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
                     viewportSamples, 
                     TriggerHoldoffCurrent, false, acquistionId);

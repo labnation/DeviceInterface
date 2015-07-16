@@ -89,6 +89,7 @@ namespace LabNation.DeviceInterface.Devices
         internal const int INPUT_DECIMATION_MAX = 9;
         private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
+        private byte AdcTimingValue = 0;
 
         private bool acquiring = false;
         private bool stopPending = false;
@@ -269,10 +270,96 @@ namespace LabNation.DeviceInterface.Devices
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4);
             AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(1);
             AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
+            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(AdcTimingValue);
             AdcMemory[MAX19506.CHA_TERMINATION].Set(18);
-            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(0);
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
             AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
+        }
+
+        /// <summary>
+        /// Calibrate ADC and set this.AdcTimingValue
+        /// </summary>
+        /// <returns>True for success, false for failure</returns>
+        private bool CalibrateAdc()
+        {
+            ConfigureAdc();
+            AdcMemory[MAX19506.FORMAT_PATTERN].Set(80);
+            AcquisitionDepth = 64 * 1024;
+            SetViewPort(0, AcquisitionLength);
+            AcquisitionMode = Devices.AcquisitionMode.SINGLE;
+            SendOverviewBuffer = false;
+            PreferPartial = false;
+            SetTriggerByte(127);
+            LogicAnalyserEnabled = false;
+            Running = true;
+            Logger.Info("Calibrating ADC timing");
+
+            List<byte> timingValues = new List<byte>() {
+                                          0,
+                                          1,
+                                          2,
+                                          3,
+                                          5,
+                                          6,
+                                          7,
+                                      };
+
+
+            foreach(byte timingValue in timingValues)
+            {
+                Logger.Info("Testing ADC timing value [" + timingValue + "]");
+                int triesLeft = 20;
+                AdcMemory[MAX19506.DATA_CLK_TIMING].Set(timingValue);
+                CommitSettings();
+                //Note: ForceTrigger won't work here yet since Ready is still false
+                StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
+
+                while (triesLeft >= 0)
+                {
+                    DataPackageScope p = GetScopeData();
+
+                    if (triesLeft == 0)
+                    {
+                        Logger.Error("Failed to get ADC calibration data");
+                        return false;
+                    }
+
+                    if (p == null) {
+                        StrobeMemory[STR.ACQ_START].WriteImmediate(true);
+                        StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
+                        //StrobeMemory[STR.SCOPE_UPDATE].WriteImmediate(true);
+                        //StrobeMemory[STR.VIEW_UPDATE].WriteImmediate(true);
+                        triesLeft--;
+                        
+                        continue;
+                    }
+
+                    if (p.FullAcquisitionFetchProgress < 1f)
+                        continue;
+                    
+                    if (p != null && (p.GetData(DataSourceType.Acquisition, AnalogChannel.ChA.Raw())) != null)
+                    {
+                        bool allGood = true;
+                        foreach (AnalogChannelRaw ch in AnalogChannelRaw.List)
+                        {
+                            ChannelData d = p.GetData(DataSourceType.Acquisition, ch);
+                            bool verified = LabNation.Common.Utils.VerifyRamp((byte[])d.array);
+                            allGood &= verified;
+                            if(!verified)
+                                Logger.Info("ADC timing value " + timingValue + " failed for channel " + ch.Name);
+                        }
+                        if (allGood)
+                        {
+                            AdcTimingValue = timingValue;
+                            return true;
+                        }
+                        else
+                            break;
+                    }
+                }
+            }
+
+            return false;
         }
         private void DeconfigureAdc()
         {
@@ -289,12 +376,9 @@ namespace LabNation.DeviceInterface.Devices
 
         private void Configure()
         {
-            //Part 1: Just set all desired memory settings
-
-            ConfigureAdc();
-
-            //Enable scope controller
             EnableEssentials(true);
+            
+            //Enable scope controller
             SendOverviewBuffer = false;
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
@@ -307,7 +391,6 @@ namespace LabNation.DeviceInterface.Devices
             //TriggerThreshold = 3;
             FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
-            AcquisitionDepth = ACQUISITION_DEPTH_DEFAULT;
             SetAwgStretching(0);
             SetViewPort(0, 10e-3);
             SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
@@ -316,6 +399,16 @@ namespace LabNation.DeviceInterface.Devices
             StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
             CommitSettings();
             hardwareInterface.FlushDataPipe();
+
+            if(!CalibrateAdc())
+                throw new ScopeIOException("failed to calibrate ADC");
+            Logger.Info("Found good ADC timing value [" + AdcTimingValue + "]");
+            AcquisitionDepth = ACQUISITION_DEPTH_DEFAULT;
+            CommitSettings();
+
+            //hardwareInterface.FlushDataPipe();
+            //Reconfigure ADC with new timing value
+            ConfigureAdc();
         }
 
         private void Deconfigure()
@@ -532,7 +625,7 @@ namespace LabNation.DeviceInterface.Devices
                     Logger.Warn("Got an off-set package but didn't get any date before");
                     return null;
                 }
-                currentDataPackage = new DataPackageScope(
+                currentDataPackage = new DataPackageScope(this.GetType(),
                     header.AcquisitionDepth, header.SamplePeriod,
                     header.ViewportLength,
                     header.TriggerHoldoff, header.Rolling,

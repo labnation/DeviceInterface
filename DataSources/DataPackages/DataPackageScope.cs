@@ -53,6 +53,8 @@ namespace LabNation.DeviceInterface.DataSources
 
         public Dictionary<AnalogChannel, float> Resolution { get; private set; }
 
+        public Type ScopeType { get; private set; }
+
         private Dictionary<DataSourceType, Dictionary<Channel, ChannelData>> data;        
 
 #if DEBUG
@@ -64,10 +66,12 @@ namespace LabNation.DeviceInterface.DataSources
         public Dictionary<DataSourceType, double> offset;
 
         internal DataPackageScope(
+            Type scopeType,
             uint acquiredSamples, double acqSamplePeriod, 
             int viewportSamples,
             double holdoff, bool rolling, int identifier, double viewportExcess = 0)
         {
+            this.ScopeType = scopeType;
             this.Identifier = identifier;
             this.AcquisitionSamples = acquiredSamples;
 
