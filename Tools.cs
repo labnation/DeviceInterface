@@ -63,10 +63,11 @@ namespace LabNation.DeviceInterface
             //Prepare scope for test
             s.SetDisableVoltageConversion(false);
 
-            //set to wide timerange, but slightly off so smallest chance of aliasing
-            const float initialTimeRange = 0.495f;
+            //set to timerange wide enough to capture 50Hz, but slightly off so smallest chance of aliasing
+            const float initialTimeRange = 0.0277f;
             s.AcquisitionMode = AcquisitionMode.AUTO;
             s.AcquisitionLength = initialTimeRange;
+            s.SetViewPort(0, s.AcquisitionLength);
             //s.AcquisitionDepth = 4096;
             s.TriggerHoldOff = 0;
             s.SendOverviewBuffer = false;
@@ -84,7 +85,7 @@ namespace LabNation.DeviceInterface
             progress += .1f;
             progressReport(progress);
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // VERTICAL
+            // VERTICAL == VOLTAGE
 
             //set to largest input range
             float maxRange = 1.2f / 1f * 36f;
@@ -132,15 +133,15 @@ namespace LabNation.DeviceInterface
 
             //calc ideal voltage range and offset
             float sizer = 3; //meaning 3 waves would fill entire view
-            float[] amplitudes = new float[2];
-            amplitudes[0] = maxValues[0] - minValues[0];
-            amplitudes[1] = maxValues[1] - minValues[1];
+            float[] coarseAmplitudes = new float[2];
+            coarseAmplitudes[0] = maxValues[0] - minValues[0];
+            coarseAmplitudes[1] = maxValues[1] - minValues[1];
             float[] desiredOffsets = new float[2];
             desiredOffsets[0] = (maxValues[0] + minValues[0]) / 2f;
             desiredOffsets[1] = (maxValues[1] + minValues[1]) / 2f;
             float[] desiredRanges = new float[2];
-            desiredRanges[0] = amplitudes[0] * sizer;
-            desiredRanges[1] = amplitudes[1] * sizer;
+            desiredRanges[0] = coarseAmplitudes[0] * sizer;
+            desiredRanges[1] = coarseAmplitudes[1] * sizer;
 
             //intervene in case the offset is out of range for this range
             if (desiredRanges[0] < Math.Abs(desiredOffsets[0]))
@@ -158,52 +159,46 @@ namespace LabNation.DeviceInterface
             //now get data in order to find accurate lowHigh levels (as in coarse mode this was not accurate)
             DataPackageScope pFine = FetchLastFrame(s);
             pFine = FetchLastFrame(s); //needs this second fetch as well to get voltage conversion on ChanB right?!?
-            float[] dataAfine = (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array;
-            float[] dataBfine = (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array;
-            amplitudes[0] = dataAfine.Max() - dataAfine.Min();
-            amplitudes[1] = dataBfine.Max() - dataBfine.Min();
-            minValues[0] = dataAfine.Min();
-            minValues[1] = dataBfine.Min();
-            maxValues[0] = dataAfine.Max();
-            maxValues[1] = dataBfine.Max();
-
-            //set trigger in middle of active wave
-            float[] activeData;
-            float activeMinValue, activeMaxValue;
-            if (aciveChannel == AnalogChannel.ChA)
+            
+            Dictionary<AnalogChannel, float[]> dataFine = new Dictionary<AnalogChannel, float[]>();
+            dataFine.Add(AnalogChannel.ChA, (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array);
+            dataFine.Add(AnalogChannel.ChB, (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array);
+            
+            Dictionary<AnalogChannel, float> minimumValues = new Dictionary<AnalogChannel, float>();
+            Dictionary<AnalogChannel, float> maximumValues = new Dictionary<AnalogChannel, float>();
+            Dictionary<AnalogChannel, float> amplitudes = new Dictionary<AnalogChannel, float>();
+            Dictionary<AnalogChannel, float> offsets = new Dictionary<AnalogChannel, float>();
+            Dictionary<AnalogChannel, bool> isFlatline = new Dictionary<AnalogChannel, bool>();
+            foreach (var kvp in dataFine)
             {
-                activeData = dataAfine;
-                activeMinValue = dataAfine.Min() + amplitudes[0]*0.1f;
-                activeMaxValue = dataAfine.Max() - amplitudes[0] * 0.1f;
+                minimumValues.Add(kvp.Key, kvp.Value.Min());
+                maximumValues.Add(kvp.Key, kvp.Value.Max());
+                amplitudes.Add(kvp.Key, kvp.Value.Max() - kvp.Value.Min());
+                offsets.Add(kvp.Key, (kvp.Value.Max() + kvp.Value.Min())/2f);
+                isFlatline.Add(kvp.Key, amplitudes[kvp.Key] < 0.01f);
             }
-            else
-            {
-                activeData = dataBfine;
-                activeMinValue = dataBfine.Min() + amplitudes[1] * 0.1f;
-                activeMaxValue = dataBfine.Max() - amplitudes[1] * 0.1f;
-            }
-            float activeAmplitude = Math.Abs(activeData.Min() + activeData.Max());
-            float triggerLevel = (activeData.Min() + activeData.Max()) / 2f;
-            AnalogTriggerValue trig = new AnalogTriggerValue();
-            trig.channel = aciveChannel;
-            trig.direction = TriggerDirection.RISING;
-            trig.level = triggerLevel;
-            scope.TriggerAnalog = trig;
 
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // HORIZONTAL
+            // HORIZONTAL == FREQUENCY
+            
             const float minTimeRange = 500f * 0.00000001f;//500 samples over full hor span
-            const float maxTimeRange = 0.2f;            
+            const float maxTimeRange = 1f;            
 
             double frequency, frequencyError, dutyCycle, dutyCycleError;
-            double finalFrequency = double.MinValue;
-            int iterationCounter = 0;
-            for (float currTimeRange = maxTimeRange; currTimeRange > minTimeRange; currTimeRange/=100f)
+            Dictionary<AnalogChannel, double> finalFrequencies = new Dictionary<AnalogChannel, double>();
+            finalFrequencies.Add(AnalogChannel.ChA, double.MaxValue);
+            finalFrequencies.Add(AnalogChannel.ChB, double.MaxValue);
+            int iterationCounter = 0;   //only for performance testing
+            float currTimeRange = minTimeRange;
+            bool continueLooping = true;
+            if (isFlatline.Where(x => x.Value).ToList().Count == isFlatline.Count) //no need to find frequency in case of 2 DC signals
+                continueLooping = false; 
+            while (continueLooping)
             {
                 progress += .04f;
                 progressReport(progress);
 
-                iterationCounter++;
+                iterationCounter++;     //only for performance testing
 
                 s.AcquisitionLength = currTimeRange;
                 s.SetViewPort(0, s.AcquisitionLength);
@@ -211,28 +206,44 @@ namespace LabNation.DeviceInterface
 
                 DataPackageScope pHor = FetchLastFrame(s);
                 pHor = FetchLastFrame(s);
-                activeData = (float[])pFine.GetData(DataSourceType.Viewport, aciveChannel).array;
+                Dictionary<AnalogChannel, float[]> timeData = new Dictionary<AnalogChannel, float[]>();
+                timeData.Add(AnalogChannel.ChA, (float[])pHor.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array);
+                timeData.Add(AnalogChannel.ChB, (float[])pHor.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array);
 
-                float currMinVal = activeData.Min();
-                float currMaxVal = activeData.Max();
-                if (currMinVal > activeMinValue)
-                    break;
+                foreach (var kvp in timeData)
+                {
+                    //make sure entire amplitude is in view
+                    float currMinVal = kvp.Value.Min();
+                    float currMaxVal = kvp.Value.Max();
+                    float lowMarginValue = minimumValues[kvp.Key] + amplitudes[kvp.Key] * 0.1f;
+                    float highMarginValue = maximumValues[kvp.Key] - amplitudes[kvp.Key] * 0.1f;
+                    if (currMinVal > lowMarginValue) break;
+                    if (currMaxVal < highMarginValue) break;
 
-                if (currMaxVal < activeMaxValue)
-                    break;
+                    ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError);
+                    if (!double.IsNaN(frequency) && (finalFrequencies[kvp.Key] == double.MaxValue))
+                        finalFrequencies[kvp.Key] = frequency;
+                }               
 
-                ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, aciveChannel), out frequency, out frequencyError, out dutyCycle, out dutyCycleError);
-                if (frequency > finalFrequency)
-                    finalFrequency = frequency;
-            }
+                //update and check whether we've found what we were looking for
+                currTimeRange *= 100f;
+                bool freqFoundForAllActiveWaves = true;
+                foreach (var kvp in timeData)
+                    if (!isFlatline[kvp.Key] && finalFrequencies[kvp.Key] == double.MaxValue)
+                        freqFoundForAllActiveWaves = false;
+                continueLooping = !freqFoundForAllActiveWaves;
+                if (currTimeRange > maxTimeRange) 
+                    continueLooping = false;
+            } 
 
             //in case of flatline or very low freq, initial value will not have changed
-            if (finalFrequency == double.MinValue)
-                finalFrequency = 0;
+            foreach (AnalogChannel ch in finalFrequencies.Keys.ToList())
+                if (finalFrequencies[ch] == double.MaxValue)
+                    finalFrequencies[ch] = 0;
 
             Dictionary<AnalogChannel, AnalogWaveProperties> waveProperties = new Dictionary<AnalogChannel, AnalogWaveProperties>();
-            waveProperties.Add(AnalogChannel.ChA, new AnalogWaveProperties(minValues[0], maxValues[0], finalFrequency));
-            waveProperties.Add(AnalogChannel.ChB, new AnalogWaveProperties(minValues[1], maxValues[1], finalFrequency));
+            foreach (var kvp in isFlatline)
+                waveProperties.Add(kvp.Key, new AnalogWaveProperties(minimumValues[kvp.Key], maximumValues[kvp.Key], finalFrequencies[kvp.Key]));
 
             return waveProperties;
         }
