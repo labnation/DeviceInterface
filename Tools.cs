@@ -12,12 +12,18 @@ namespace LabNation.DeviceInterface
     {
         public float minValue;
         public float maxValue;
+        public float amplitude;
+        public float offset;
+        public bool isFlatline;
         public double frequency;
 
-        public AnalogWaveProperties(float minValue, float maxValue, double frequency)
+        public AnalogWaveProperties(float minValue, float maxValue, float amplitude, float offset, bool isFlatline, double frequency)
         {
-            this.minValue = minValue;
-            this.maxValue = maxValue;
+            this.minValue   = minValue;
+            this.maxValue   = maxValue; 
+            this.amplitude  = amplitude; 
+            this.offset     = offset;
+            this.isFlatline = isFlatline;
             this.frequency = frequency;
         }
     }                           
@@ -243,7 +249,7 @@ namespace LabNation.DeviceInterface
 
             Dictionary<AnalogChannel, AnalogWaveProperties> waveProperties = new Dictionary<AnalogChannel, AnalogWaveProperties>();
             foreach (var kvp in isFlatline)
-                waveProperties.Add(kvp.Key, new AnalogWaveProperties(minimumValues[kvp.Key], maximumValues[kvp.Key], finalFrequencies[kvp.Key]));
+                waveProperties.Add(kvp.Key, new AnalogWaveProperties(minimumValues[kvp.Key], maximumValues[kvp.Key], amplitudes[kvp.Key], offsets[kvp.Key], isFlatline[kvp.Key], finalFrequencies[kvp.Key]));
 
             return waveProperties;
         }
