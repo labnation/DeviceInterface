@@ -30,7 +30,7 @@ namespace LabNation.DeviceInterface
                                  
     public static class Tools
     {
-        public static DataPackageScope FetchLastFrame(SmartScope scope)
+        public static DataPackageScope FetchLastFrame(IScope scope)
         {
             DateTime oldFetchTime = DateTime.Now;
             DataPackageScope oldPackage = null;
@@ -52,42 +52,33 @@ namespace LabNation.DeviceInterface
         {
             float progress = 0f;
             progressReport(progress);
-            SmartScope s = scope as SmartScope;
-
-            //check whether scope is ready/available
-            if (s == null || !s.Ready)
-            {
-                Logger.Error("No scope found to perform AutoArrange");
-                progress = 1f;
-                progressReport(progress);
-                return null;
-            }
 
             //stop scope streaming
-            s.DataSourceScope.Stop();
+            scope.DataSourceScope.Stop();
 
             //Prepare scope for test
-            s.SetDisableVoltageConversion(false);
+            if (scope is SmartScope)
+                (scope as SmartScope).SetDisableVoltageConversion(false);
 
             //set to timerange wide enough to capture 50Hz, but slightly off so smallest chance of aliasing
             const float initialTimeRange = 0.0277f;
-            s.AcquisitionMode = AcquisitionMode.AUTO;
-            s.AcquisitionLength = initialTimeRange;
-            s.SetViewPort(0, s.AcquisitionLength);
+            scope.AcquisitionMode = AcquisitionMode.AUTO;
+            scope.AcquisitionLength = initialTimeRange;
+            scope.SetViewPort(0, scope.AcquisitionLength);
             //s.AcquisitionDepth = 4096;
-            s.TriggerHoldOff = 0;
-            s.SendOverviewBuffer = false;
+            scope.TriggerHoldOff = 0;
+            scope.SendOverviewBuffer = false;
             
             AnalogTriggerValue atv = new AnalogTriggerValue();
             atv.channel = AnalogChannel.ChA;
             atv.direction = TriggerDirection.RISING;
             atv.level = 5000;
-            s.TriggerAnalog = atv;
+            scope.TriggerAnalog = atv;
 
             foreach (AnalogChannel ch in AnalogChannel.List)
-                s.SetCoupling(ch, Coupling.DC);
+                scope.SetCoupling(ch, Coupling.DC);
 
-            s.CommitSettings();
+            scope.CommitSettings();
             progress += .1f;
             progressReport(progress);
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +87,7 @@ namespace LabNation.DeviceInterface
             //set to largest input range
             float maxRange = 1.2f / 1f * 36f;
             foreach (AnalogChannel ch in AnalogChannel.List)
-                s.SetVerticalRange(ch, -maxRange / 2f, maxRange / 2f);
+                scope.SetVerticalRange(ch, -maxRange / 2f, maxRange / 2f);
 
             float[] minValues = new float[] { float.MaxValue, float.MaxValue };
             float[] maxValues = new float[] { float.MinValue, float.MinValue };
@@ -107,15 +98,15 @@ namespace LabNation.DeviceInterface
                 progressReport(progress);
 
                 foreach (AnalogChannel ch in AnalogChannel.List)
-                    s.SetYOffset(ch, (float)i * maxRange);
-                s.CommitSettings();
+                    scope.SetYOffset(ch, (float)i * maxRange);
+                scope.CommitSettings();
 
                 System.Threading.Thread.Sleep(100);
-                s.ForceTrigger();
+                scope.ForceTrigger();
 
                 //fetch data
-                DataPackageScope p = FetchLastFrame(s);
-                p = FetchLastFrame(s); //needs this second fetch as well to get voltage conversion on ChanB right?!?
+                DataPackageScope p = FetchLastFrame(scope);
+                p = FetchLastFrame(scope); //needs this second fetch as well to get voltage conversion on ChanB right?!?
 
                 if (p == null)
                 {
@@ -156,15 +147,15 @@ namespace LabNation.DeviceInterface
                 desiredRanges[1] = Math.Abs(desiredOffsets[1]);
 
             //set fine voltage range and offset
-            s.SetVerticalRange(AnalogChannel.ChA, -desiredRanges[0] / 2f, desiredRanges[0] / 2f);
-            s.SetYOffset(AnalogChannel.ChA, -desiredOffsets[0]);
-            s.SetVerticalRange(AnalogChannel.ChB, -desiredRanges[1] / 2f, desiredRanges[1] / 2f);
-            s.SetYOffset(AnalogChannel.ChB, -desiredOffsets[1]);
-            s.CommitSettings();
+            scope.SetVerticalRange(AnalogChannel.ChA, -desiredRanges[0] / 2f, desiredRanges[0] / 2f);
+            scope.SetYOffset(AnalogChannel.ChA, -desiredOffsets[0]);
+            scope.SetVerticalRange(AnalogChannel.ChB, -desiredRanges[1] / 2f, desiredRanges[1] / 2f);
+            scope.SetYOffset(AnalogChannel.ChB, -desiredOffsets[1]);
+            scope.CommitSettings();
 
             //now get data in order to find accurate lowHigh levels (as in coarse mode this was not accurate)
-            DataPackageScope pFine = FetchLastFrame(s);
-            pFine = FetchLastFrame(s); //needs this second fetch as well to get voltage conversion on ChanB right?!?
+            DataPackageScope pFine = FetchLastFrame(scope);
+            pFine = FetchLastFrame(scope); //needs this second fetch as well to get voltage conversion on ChanB right?!?
             
             Dictionary<AnalogChannel, float[]> dataFine = new Dictionary<AnalogChannel, float[]>();
             dataFine.Add(AnalogChannel.ChA, (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array);
@@ -206,12 +197,12 @@ namespace LabNation.DeviceInterface
 
                 iterationCounter++;     //only for performance testing
 
-                s.AcquisitionLength = currTimeRange;
-                s.SetViewPort(0, s.AcquisitionLength);
-                s.CommitSettings();
+                scope.AcquisitionLength = currTimeRange;
+                scope.SetViewPort(0, scope.AcquisitionLength);
+                scope.CommitSettings();
 
-                DataPackageScope pHor = FetchLastFrame(s);
-                pHor = FetchLastFrame(s);
+                DataPackageScope pHor = FetchLastFrame(scope);
+                pHor = FetchLastFrame(scope);
                 Dictionary<AnalogChannel, float[]> timeData = new Dictionary<AnalogChannel, float[]>();
                 timeData.Add(AnalogChannel.ChA, (float[])pHor.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array);
                 timeData.Add(AnalogChannel.ChB, (float[])pHor.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array);
