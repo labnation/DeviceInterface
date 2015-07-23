@@ -605,6 +605,10 @@ namespace LabNation.DeviceInterface.Devices {
                 if(SendOverviewBuffer)
                     p.SetData(DataSourceType.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetData(DataSourceType.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
+
+                //set dummy minmax values
+                p.SaturationLowValue[ch] = float.MinValue;
+                p.SaturationHighValue[ch] = float.MaxValue;
             }
 
             if (logicAnalyserEnabledCurrent)
