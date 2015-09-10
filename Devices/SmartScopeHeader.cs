@@ -107,6 +107,20 @@ namespace LabNation.DeviceInterface.Devices
         /// </summary>
         internal bool TimedOut { get; private set; }
 
+        internal bool LogicAnalyserEnabled { get; private set; }
+        internal AnalogChannel ChannelSacrificedForLogicAnalyser { get; private set; }
+        public AnalogTriggerValue AnalogTrigger { get; private set; }
+        internal TriggerModes TriggerMode
+        {
+            get
+            {
+                if (LogicAnalyserEnabled && AnalogTrigger.channel.Equals(ChannelSacrificedForLogicAnalyser))
+                    return TriggerModes.Digital;
+                return TriggerModes.Analog;
+
+            }
+        }
+
         internal readonly int Channels = 2;
         internal int AcquisitionId { get; private set; }
         
@@ -138,6 +152,14 @@ namespace LabNation.DeviceInterface.Devices
             AwaitingTrigger = Utils.IsBitSet(data[10], 5);
             Armed           = Utils.IsBitSet(data[10], 6);
             FullAcquisitionDump = Utils.IsBitSet(data[10], 7);
+
+            AnalogTrigger = new AnalogTriggerValue()
+            {
+                channel = AnalogChannel.List.First(x => x.Value ==  ((GetRegister(REG.TRIGGER_MODE) >> 2) & 0x03)),
+                direction = (TriggerDirection)((GetRegister(REG.TRIGGER_MODE) >> 4) & 0x03),
+            };
+            ChannelSacrificedForLogicAnalyser = GetStrobe(STR.LA_CHANNEL) ? AnalogChannel.ChB : AnalogChannel.ChA;
+            LogicAnalyserEnabled = GetStrobe(STR.LA_ENABLE);
             
             AcquisitionId = data[11];
             SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
@@ -155,7 +177,7 @@ namespace LabNation.DeviceInterface.Devices
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
-                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.AnalogTriggerDelay(GetRegister(REG.TRIGGER_WIDTH), GetRegister(REG.INPUT_DECIMATION));
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.TriggerDelay(TriggerMode, GetRegister(REG.TRIGGER_WIDTH), GetRegister(REG.INPUT_DECIMATION));
             TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }
 

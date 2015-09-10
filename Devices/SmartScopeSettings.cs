@@ -395,6 +395,8 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
+        public AnalogTriggerValue AnalogTriggerValue { get; private set; }
+
         public TriggerModes TriggerMode
         {
             get
@@ -767,9 +769,11 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        internal static int AnalogTriggerDelay(uint triggerWidth, int inputDecimation)
+        internal static int TriggerDelay(TriggerModes mode, uint triggerWidth, int inputDecimation)
         {
-            return (((int)triggerWidth) >> inputDecimation) + 3;
+            if(mode == TriggerModes.Digital)
+                return (((int)triggerWidth) >> inputDecimation) + 1;
+            return (((int)triggerWidth) >> inputDecimation) + 4;
         }
 
         public double TriggerHoldOff
@@ -781,7 +785,7 @@ namespace LabNation.DeviceInterface.Devices
                 else
                     this.holdoff = value;
                 Int32 samples = (int)(this.holdoff / SamplePeriod);
-                samples += AnalogTriggerDelay(TriggerWidth, SubSampleRate);
+                samples += TriggerDelay(TriggerMode, TriggerWidth, SubSampleRate);
                 //FIXME-FPGA bug
                 if (samples >= AcquisitionDepth)
                 {
