@@ -24,6 +24,7 @@ namespace LabNation.DeviceInterface.Devices
         public static implicit operator float(ProbeDivision d) { return d.factor; }
         public static ProbeDivision X1 = new ProbeDivision("X1", 1f);
         public static ProbeDivision X10 = new ProbeDivision("X10", 10f);
+        public static ProbeDivision X100 = new ProbeDivision("X100", 100f);
         public static ProbeDivision findByFactor(float factor)
         {
             ProbeDivision d = divs.SingleOrDefault(x => x.factor == factor);
