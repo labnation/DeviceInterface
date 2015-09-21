@@ -3,7 +3,7 @@
   <Name>MatlabFileIO</Name>
   <DefaultAction>Generate</DefaultAction>
   <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
-  <SupportedPlatforms>Android,Linux,Windows,iOS,MacOS</SupportedPlatforms>
+  <SupportedPlatforms>Android,Linux,Windows,WindowsGL,iOS,MacOS</SupportedPlatforms>
   <DefaultWindowsPlatforms>Android,Windows,iOS</DefaultWindowsPlatforms>
   <ModuleAssemblies />
 </ModuleInfo>
