@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="LabNation.Common" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows">
+<Project Name="LabNation.Common" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
@@ -14,6 +14,7 @@
       <Platform Name="Linux">TRACE;LINUX</Platform>
       <Platform Name="MacOS">MONOMAC</Platform>
       <Platform Name="Windows">TRACE;WINDOWS</Platform>
+	  <Platform Name="WindowsGL">TRACE;WINDOWS</Platform>	  
     </CustomDefinitions>
 	<NoWarn>1591</NoWarn>
   </Properties>
