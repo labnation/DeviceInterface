@@ -88,6 +88,9 @@ namespace LabNation.DeviceInterface.Devices
 
         public void Stop()
         {
+			if (device is IScope)
+				((IScope)device).DataSourceScope.Stop ();
+
             if(pollThread != null)
                 pollThread.Join(100);
 #if ANDROID
