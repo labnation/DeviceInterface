@@ -15,6 +15,10 @@ namespace LabNation.DeviceInterface.Devices
     {
         DeviceConnectHandler connectHandler;
         IDevice device;
+		/// <summary>
+		/// Gets the fallback device.
+		/// </summary>
+		/// <value>The fallback device when no device is detected</value>
         public IDevice fallbackDevice { get; private set; }
         Thread pollThread;
 #if WINDOWS

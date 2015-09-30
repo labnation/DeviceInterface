@@ -169,6 +169,11 @@ namespace LabNation.DeviceInterface.Devices
         public float GetYOffsetMax(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMax); }
         public float GetYOffsetMin(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMin); }
 
+
+		//The voltage range for div/mul = 1/1
+		float baseVoltageRangeMin = -0.6345f; //V
+		float baseVoltageRangeMax = 0.6769f; //V
+
         /// <summary>
         /// Sets and uploads the divider and multiplier what are optimal for the requested range
         /// </summary>
@@ -178,11 +183,7 @@ namespace LabNation.DeviceInterface.Devices
         public void SetVerticalRange(AnalogChannel channel, float minimum, float maximum)
         {
             if (!Connected) return;
-            //The voltage range for div/mul = 1/1
-            //20140808: these seem to be OK: on div0/mult0 the ADC input range is approx 1.3V
-            float baseMin = -0.6345f; //V
-            float baseMax = 0.6769f; //V
-
+            
             //Walk through dividers/multipliers till requested range fits
             //this walk assumes it starts with the smallest range, and that range is only increasing
             int dividerIndex = 0;
@@ -195,9 +196,9 @@ namespace LabNation.DeviceInterface.Devices
                 dividerIndex= i / rom.computedMultipliers.Length;
                 multIndex = rom.computedMultipliers.Length - (i % rom.computedMultipliers.Length) - 1;
                 if (
-                    (ProbeScaleHostToScope(channel, maximum) < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    (ProbeScaleHostToScope(channel, maximum) < baseVoltageRangeMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
                     &&
-                    (ProbeScaleHostToScope(channel, minimum) > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
+                    (ProbeScaleHostToScope(channel, minimum) > baseVoltageRangeMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
                     )
                     break;
             }
@@ -212,6 +213,16 @@ namespace LabNation.DeviceInterface.Devices
                 //SetTriggerThreshold(this.triggerThreshold);
             }
         }
+		public float[] GetVerticalRange(AnalogChannel channel)
+		{
+			int dividerIndex = Array.IndexOf (validDividers, channelSettings [channel].divider);
+			int multIndex = Array.IndexOf (validMultipliers, channelSettings [channel].multiplier);
+			return new float[] {
+				ProbeScaleScopeToHost(channel, (float)(baseVoltageRangeMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])),
+
+				ProbeScaleScopeToHost(channel, (float)(baseVoltageRangeMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex]))
+			};
+		}
 
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
         {

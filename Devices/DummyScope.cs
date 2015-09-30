@@ -189,6 +189,9 @@ namespace LabNation.DeviceInterface.Devices {
                     this.acquisitionMode = value;
                 }
             }
+			get {
+				return this.acquisitionMode;
+			}
         }
 
         public bool Running {
@@ -243,6 +246,10 @@ namespace LabNation.DeviceInterface.Devices {
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {
         }
+		public float[] GetVerticalRange(AnalogChannel ch)
+		{
+			return new float[] { -100f, 100f };
+		}
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
         {
             ChannelConfig[ch].probeDivision = division;
