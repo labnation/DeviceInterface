@@ -76,7 +76,7 @@ namespace LabNation.DeviceInterface.Devices
         
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
-        private const int ACQUISITION_DEPTH_MIN = 128; //Size of RAM
+		private const int ACQUISITION_DEPTH_MIN = OVERVIEW_BUFFER_SIZE; //Size of RAM
         private const int ACQUISITION_DEPTH_MAX = 512 * 1024;//4 * 1024 * 1024; //Size of RAM
         private const int ACQUISITION_DEPTH_DEFAULT = 512 * 1024;
         private const int BYTES_PER_BURST = 64;
