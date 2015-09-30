@@ -133,7 +133,7 @@ namespace LabNation.DeviceInterface.Hardware
                     Common.Logger.Warn("Can't re-register device with this serial " + serial);
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 }
-                C.Logger.Warn("Device found with serial [" + serial + "]");
+				C.Logger.Debug("Device found with serial [" + serial + "]");
                 interfaces.Add(serial, f);
 
                 if (onConnect != null)
