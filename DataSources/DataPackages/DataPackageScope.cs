@@ -13,7 +13,9 @@ namespace LabNation.DeviceInterface.DataSources
         Viewport,
         Overview
     }
-
+	/// <summary>
+	/// Class representing an oscilloscope acquisition's channel data
+	/// </summary>
     public class ChannelData
     {
         public DataSourceType source { get; private set; } 
@@ -23,8 +25,22 @@ namespace LabNation.DeviceInterface.DataSources
         /// create a new array and with that, a new ChannelData object
         /// </summary>
         public Array array { get; private set; }
+		/// <summary>
+		/// Gets a value indicating whether this <see cref="LabNation.DeviceInterface.DataSources.ChannelData"/> is partial, i.e.
+		/// if more data is required to consider the acquisition complete. This can be false when the acquisition is still ongoing
+		/// while the data dump has already begun.
+		/// </summary>
+		/// <value><c>true</c> if partial; otherwise, <c>false</c>.</value>
         public bool partial { get; private set; }
+		/// <summary>
+		/// Time between 2 samples in seconds
+		/// </summary>
+		/// <value>The sample period.</value>
         public double samplePeriod { get; private set; }
+		/// <summary>
+		/// Time offset of the first sample.
+		/// </summary>
+		/// <value>The time offset.</value>
         public double timeOffset { get; private set; }
         public ChannelData(DataSourceType t, Channel channel, Array data, bool partial, double samplePeriod, double timeOffset = 0)
         {
