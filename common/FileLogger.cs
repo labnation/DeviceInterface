@@ -70,6 +70,7 @@ namespace LabNation.Common
                 Thread.Sleep(50);
             }
             writer.Flush();
+            writer.Close();
         }
     }
 }
