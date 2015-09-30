@@ -552,9 +552,9 @@ namespace LabNation.Common
             return numberSignificanceFormat(precisionRound(number, precision), significance);
         }
 
-        static public string siPrint(double number, double precision, int significance, string unit)
+		static public string siPrint(double number, double precision, int significance, string unit, int thousand = 1000)
         {
-            return siScale(number, precision, significance) + " " + siPrefix(number, precision, unit);
+			return siScale(number, precision, significance, thousand) + " " + siPrefix(number, precision, unit, thousand);
         }
 
         /// <summary>
