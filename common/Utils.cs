@@ -552,6 +552,11 @@ namespace LabNation.Common
             return numberSignificanceFormat(precisionRound(number, precision), significance);
         }
 
+        static public string siPrint(double number, double precision, int significance, string unit)
+        {
+            return siScale(number, precision, significance) + " " + siPrefix(number, precision, unit);
+        }
+
         /// <summary>
         /// Convert a number to SI scale, given a certain precision and significance
         /// 
