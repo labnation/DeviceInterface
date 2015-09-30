@@ -42,8 +42,12 @@ namespace LabNation.Common
                 cb();
         }
         public static void Info(string text) {  Log(LogLevel.INFO, text); }
+		public static void Info(string format, params object[] args) { Info (String.Format (format, args)); }
         public static void Debug(string text) { Log(LogLevel.DEBUG, text); }
+		public static void Debug(string format, params object[] args) { Debug (String.Format (format, args)); }
         public static void Warn(string text) { Log(LogLevel.WARN, text); }
+		public static void Warn(string format, params object[] args) { Warn (String.Format (format, args)); }
         public static void Error(string text) { Log(LogLevel.ERROR, text); }
+		public static void Error(string format, params object[] args) { Error (String.Format (format, args)); }
     }
 }
