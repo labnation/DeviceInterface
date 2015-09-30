@@ -16,6 +16,7 @@ namespace LabNation.Common
         ConcurrentQueue<LogMessage> logQueue;
         bool running;
         LogLevel logLevel;
+		private static string originInsert = "\n" + new string (' ', 28);
 
         public FileLogger(StreamWriter writer, LogLevel level)
         {
@@ -61,8 +62,8 @@ namespace LabNation.Common
                     LogMessage entry;
                     if (logQueue.TryDequeue(out entry))
                     {
-                        if (entry.level > logLevel) continue;
-                        string message = entry.timestamp.ToString().PadRight(22) + entry.level.ToString().PadRight(15) + entry.message;
+                        if (entry.level > logLevel) continue;							
+						string message = entry.timestamp.ToString().PadRight(22) + entry.level.ToString().PadRight(6) + (entry.origin == null ? "" : entry.origin.PadRight(20) + originInsert) + entry.message;
                         writer.WriteLine(message);
                     }
                 }

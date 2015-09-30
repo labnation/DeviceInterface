@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections.Concurrent;
+using System.Threading;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace LabNation.Common
 {
@@ -17,10 +20,12 @@ namespace LabNation.Common
         public DateTime timestamp = DateTime.Now;
         public LogLevel level { get; private set; }
         public string message { get; private set; }
-        public LogMessage(LogLevel l, string msg)
+		public string origin { get; private set; }
+		public LogMessage(LogLevel l, string msg, string origin = null)
         {
             this.message = msg;
             this.level = l;
+			this.origin = origin;
         }
     }
     public class Logger
@@ -28,6 +33,12 @@ namespace LabNation.Common
         public delegate void logUpdateCallback();
         static List<ConcurrentQueue<LogMessage>> logQueues = new List<ConcurrentQueue<LogMessage>>();
         static List<logUpdateCallback> logUpdateCallbacks = new List<logUpdateCallback>();
+
+		/// <summary>
+		/// Log the origin of the messages using reflection
+		/// </summary>
+		public static bool LogOrigin = false;
+
         public static void AddQueue(ConcurrentQueue<LogMessage> q, logUpdateCallback cb = null)
         {
             logQueues.Add(q);
@@ -36,8 +47,15 @@ namespace LabNation.Common
         }
         private static void Log(LogLevel l, string msg)
         {
+			string origin = null;
+			if (LogOrigin) {
+				StackFrame f = new StackFrame (2);
+				MethodBase m = f.GetMethod ();
+				origin = m.DeclaringType + m.Name;
+			}
+			
             foreach(var q in logQueues)
-                q.Enqueue(new LogMessage(l, msg));
+				q.Enqueue(new LogMessage(l, msg, origin));
             foreach (var cb in logUpdateCallbacks)
                 cb();
         }
