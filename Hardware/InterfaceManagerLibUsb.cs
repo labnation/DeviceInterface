@@ -156,7 +156,7 @@ namespace LabNation.DeviceInterface.Hardware
 				C.Logger.Debug("LibUSB device arrival");
                     if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains(e.Device.IdProduct))
                     {
-					C.Logger.Info("Not taking this device, PID/VID not a smartscope");
+					C.Logger.Debug("Not taking this device, PID/VID not a smartscope");
                         return;
                     }
 

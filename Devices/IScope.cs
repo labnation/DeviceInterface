@@ -277,7 +277,7 @@ namespace LabNation.DeviceInterface.Devices
         double ViewPortOffset { get; }
         
 		/// <summary>
-		/// Commits the settings to the scope 
+		/// Commits the settings to the device
 		/// </summary>
         void CommitSettings();
     }

@@ -52,7 +52,7 @@ namespace LabNation.DeviceInterface.Devices {
                 return false;
 			}
 				
-			Logger.Info("Got firmware of length " + firmware.Length);
+			Logger.Debug("Got firmware of length " + firmware.Length);
 
 			//Send FW to FPGA
 			try {

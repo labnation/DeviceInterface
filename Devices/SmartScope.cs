@@ -296,7 +296,7 @@ namespace LabNation.DeviceInterface.Devices
             SetTriggerByte(127);
             LogicAnalyserEnabled = false;
             Running = true;
-            Logger.Info("Calibrating ADC timing");
+            Logger.Debug("Calibrating ADC timing");
             CommitSettings();
 
             //If the adc timing value is not the default (being 0, the first one in the list)
@@ -305,20 +305,20 @@ namespace LabNation.DeviceInterface.Devices
             {
                 if (TestAdcRamp())
                 {
-                    Logger.Info("ADC calibration OK with value from ROM = " + AdcTimingValue);
+                    Logger.Debug("ADC calibration OK with value from ROM = " + AdcTimingValue);
                     return;
                 }
             }
 
             foreach(byte timingValue in adcTimingValues)
             {
-                Logger.Info("Testing ADC timing value [" + timingValue + "]");
+                Logger.Debug("Testing ADC timing value [" + timingValue + "]");
                 AdcMemory[MAX19506.DATA_CLK_TIMING].Set(timingValue);
                 CommitSettings();
                 //Note: ForceTrigger won't work here yet since Ready is still false
                 if (TestAdcRamp())
                 {
-                    Logger.Info("ADC calibration OK with value " + timingValue);
+                    Logger.Debug("ADC calibration OK with value " + timingValue);
                     AdcTimingValue = timingValue;
                     return;
                 }
@@ -402,7 +402,7 @@ namespace LabNation.DeviceInterface.Devices
 
             CalibrateAdc();
             
-            Logger.Info("Found good ADC timing value [" + AdcTimingValue + "]");
+            Logger.Debug("Found good ADC timing value [" + AdcTimingValue + "]");
             AcquisitionDepth = ACQUISITION_DEPTH_DEFAULT;
             CommitSettings();
 
