@@ -15,7 +15,7 @@ using Android.OS.Storage;
 
 namespace LabNation.Common
 {
-    public class Utils
+    public static class Utils
     {
         public static List<FileInfo> GetFiles(string dir, string pattern, List<FileInfo> files = null)
         {
@@ -769,6 +769,25 @@ namespace LabNation.Common
 
             return failingIndices.Count == 0;
         }
+
+		public static string Overwrite(this string input, int start, string replacement)
+		{
+			if (start >= input.Length)
+				start = input.Length - 1;
+			if (start < 0)
+				start = 0;
+			 
+
+			int repLen = replacement.Length;
+			if (start + replacement.Length > input.Length)
+				repLen = input.Length - start;
+
+			return input.Substring (0, start) + replacement.Substring (0, repLen) + input.Substring (start + repLen);
+		}
+
+		public static string YesNo(this bool b) {
+			return b ? "Yes" : "No";
+		}
     }
 
 }
