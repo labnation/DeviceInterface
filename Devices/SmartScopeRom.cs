@@ -112,6 +112,36 @@ namespace LabNation.DeviceInterface.Devices
                 return gainCalibration.Where(x => x.channel == ch && x.divider == divider && x.multiplier == multiplier).First();
             }
 
+            private void ByteSwap(byte[] b, Type t)
+            {
+                if (BitConverter.IsLittleEndian)
+                    return;
+                foreach (var field in t.GetFields())
+                {
+                    int subsize = 0;
+                    foreach (var subField in field.FieldType.GetFields())
+                    {
+                        if (!subField.IsStatic)
+                            subsize = Marshal.SizeOf(subField.FieldType);
+                    }
+                    var offs = Marshal.OffsetOf(t, field.Name).ToInt32();
+                    var size = Marshal.SizeOf(field.FieldType);
+                    int count = 1;
+                    if (subsize > 0) {
+                        count = size / subsize;
+                        size = subsize;
+                    }
+                    if (size > 1)
+                    {
+                        for (uint i = 0; i < count; i++)
+                        {
+                            Array.Reverse(b, offs, size);
+                            offs += size;
+                        }
+                    }
+                }
+            }
+
             private byte[] MapToBytes(Map m)
             {
                 int size = Marshal.SizeOf(m);
@@ -120,6 +150,7 @@ namespace LabNation.DeviceInterface.Devices
 
                 Marshal.StructureToPtr(m, p, true);
                 Marshal.Copy(p, output, 0, size);
+                ByteSwap(output, typeof(Map));
                 Marshal.FreeHGlobal(p);
                 return output;
             }
@@ -129,6 +160,7 @@ namespace LabNation.DeviceInterface.Devices
                 Map m = new Map();
                 int size = Marshal.SizeOf(m);
                 IntPtr ptr = Marshal.AllocHGlobal(size);
+                ByteSwap(b, typeof(Map));
                 Marshal.Copy(b, 0, ptr, size);
 
                 m = (Map)Marshal.PtrToStructure(ptr, m.GetType());
