@@ -11,7 +11,9 @@ namespace LabNation.DeviceInterface.DataSources
     {
         Acquisition,
         Viewport,
-        Overview
+        Overview,
+        ETSVoltages,
+        ETSTimestamps
     }
 
     public class ChannelData
@@ -26,6 +28,7 @@ namespace LabNation.DeviceInterface.DataSources
         public bool partial { get; private set; }
         public double samplePeriod { get; private set; }
         public double timeOffset { get; private set; }
+        
         public ChannelData(DataSourceType t, Channel channel, Array data, bool partial, double samplePeriod, double timeOffset = 0)
         {
             this.partial = partial;
@@ -70,8 +73,8 @@ namespace LabNation.DeviceInterface.DataSources
         internal DataPackageScope(
             Type scopeType,
             uint acquiredSamples, double acqSamplePeriod, 
-            int viewportSamples,
-            double holdoff, bool rolling, int identifier, double viewportExcess = 0)
+            int viewportSamples, Int64 viewportOffsetSamples,
+            double holdoff, Int64 holdoffSamples, bool rolling, int identifier, double viewportExcess = 0)
         {
             this.ScopeType = scopeType;
             this.Identifier = identifier;
@@ -79,6 +82,7 @@ namespace LabNation.DeviceInterface.DataSources
 
             this.ViewportSamples = viewportSamples;
             this.ViewportExcess = viewportExcess;
+            this.ViewportOffsetSamples = viewportOffsetSamples;
 
             samplePeriod = new Dictionary<DataSourceType, double>() {
                 { DataSourceType.Acquisition, acqSamplePeriod },
@@ -92,6 +96,7 @@ namespace LabNation.DeviceInterface.DataSources
 
             this.Holdoff = holdoff;
             this.Rolling = rolling;
+            this.HoldoffSamples = holdoffSamples;
 
             data = new Dictionary<DataSourceType, Dictionary<Channel, ChannelData>>();
             foreach(DataSourceType t in Enum.GetValues(typeof(DataSourceType)))
@@ -106,6 +111,9 @@ namespace LabNation.DeviceInterface.DataSources
 
         internal void SetData(DataSourceType type, Channel ch, Array arr, bool partial = false)
         {
+            if (arr == null)
+                return;
+
             lock (dataLock)
             {
                 if (arr.GetType().GetElementType() != ChannelDataTypes[ch.GetType()])
@@ -193,6 +201,10 @@ namespace LabNation.DeviceInterface.DataSources
         /// </summary>
         public double Holdoff { get; private set; }
         /// <summary>
+        /// The trigger holdoff in samples
+        /// </summary>
+        public Int64 HoldoffSamples { get; private set; }
+        /// <summary>
         /// The holdoff relative to the center of the acquisition buffer
         /// </summary>
         public double HoldoffCenter { get { return Holdoff - AcquisitionLength / 2.0; } }
@@ -215,6 +227,7 @@ namespace LabNation.DeviceInterface.DataSources
         /// The number of samples stored per channel
         /// </summary>
         public int ViewportSamples { get; private set; }
+        public Int64 ViewportOffsetSamples { get; private set; }
         public double ViewportTimespan { get { return samplePeriod[DataSourceType.Viewport] * ViewportSamples; } } 
     }
 }

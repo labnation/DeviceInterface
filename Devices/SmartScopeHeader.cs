@@ -50,6 +50,11 @@ namespace LabNation.DeviceInterface.Devices
         internal double ViewportOffset { get; private set; }
 
         /// <summary>
+        /// The number of samples between the start of the acquisition and the viewport's first sample
+        /// </summary>
+        internal Int64 ViewportOffsetSamples { get; private set; }
+
+        /// <summary>
         /// The time of excessive samples leading the viewport buffer
         /// </summary>
         internal double ViewportExcess { get; private set; }
@@ -57,7 +62,10 @@ namespace LabNation.DeviceInterface.Devices
         /// The trigger holdoff in seconds
         /// </summary>
         internal double TriggerHoldoff { get; private set; }
-
+        /// <summary>
+        /// The trigger holdoff in samples
+        /// </summary>
+        internal Int64 TriggerHoldoffSamples { get; private set; }
         /// <summary>
         /// The total number of samples in this viewport
         /// </summary>
@@ -165,11 +173,10 @@ namespace LabNation.DeviceInterface.Devices
             SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
             ViewportSamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION) + GetRegister(REG.VIEW_DECIMATION));
 
-            ViewportOffset = SamplePeriod * (
-                GetRegister(REG.VIEW_OFFSET_B0) +
+            ViewportOffsetSamples = GetRegister(REG.VIEW_OFFSET_B0) +
                 (GetRegister(REG.VIEW_OFFSET_B1) << 8) +
-                (GetRegister(REG.VIEW_OFFSET_B2) << 16)
-                );
+                (GetRegister(REG.VIEW_OFFSET_B2) << 16);
+            ViewportOffset = SamplePeriod * ViewportOffsetSamples;
 
             int viewportExcessiveSamples = GetRegister(REG.VIEW_EXCESS_B0) + (GetRegister(REG.VIEW_EXCESS_B1) << 8);
             ViewportExcess = viewportExcessiveSamples * SamplePeriod;
@@ -178,6 +185,7 @@ namespace LabNation.DeviceInterface.Devices
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.TriggerDelay(TriggerMode, GetRegister(REG.TRIGGER_WIDTH), GetRegister(REG.INPUT_DECIMATION));
+            TriggerHoldoffSamples = holdoffSamples;
             TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }
 

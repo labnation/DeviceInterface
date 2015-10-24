@@ -593,8 +593,8 @@ namespace LabNation.DeviceInterface.Devices {
             
             p = new DataPackageScope(this.GetType(),
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
-                    viewportSamples, 
-                    TriggerHoldoffCurrent, false, acquistionId);
+                    viewportSamples, (Int64)(ViewPortOffset / SamplePeriodCurrent),
+                    TriggerHoldoffCurrent, (Int64)(TriggerHoldoffCurrent/SamplePeriodCurrent), false, acquistionId);
             p.samplePeriod[DataSourceType.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[DataSourceType.Viewport] = ViewPortOffset;
 
@@ -626,6 +626,9 @@ namespace LabNation.DeviceInterface.Devices {
 
         public static T[] GetViewport<T>(T[] buffer, int offset, int decimation, int length)
         {
+            if (buffer == null)
+                return null;
+
             int skip = 1 << decimation;
             return buffer.Skip(offset).Take(length * skip).Where((x, i) => i % skip == 0).ToArray();
         }

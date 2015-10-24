@@ -645,8 +645,8 @@ namespace LabNation.DeviceInterface.Devices
                 }
                 currentDataPackage = new DataPackageScope(this.GetType(),
                     header.AcquisitionDepth, header.SamplePeriod,
-                    header.ViewportLength,
-                    header.TriggerHoldoff, header.Rolling,
+                    header.ViewportLength, header.ViewportOffsetSamples,
+                    header.TriggerHoldoff, header.TriggerHoldoffSamples, header.Rolling,
                     header.AcquisitionId, header.ViewportExcess);
             }
 
