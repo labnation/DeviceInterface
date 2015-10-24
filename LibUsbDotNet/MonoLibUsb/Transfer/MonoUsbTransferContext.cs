@@ -223,8 +223,9 @@ namespace LibUsbDotNet.LudnMonoLibUsb.Internal
             }
         }
 
-        private static void TransferCallback(MonoUsbTransfer pTransfer)
+        private static void TransferCallback(IntPtr pTransferI)
         {
+            MonoUsbTransfer pTransfer = new MonoUsbTransfer(pTransferI);
             ManualResetEvent completeEvent = GCHandle.FromIntPtr(pTransfer.PtrUserData).Target as ManualResetEvent;
             completeEvent.Set();
         }
