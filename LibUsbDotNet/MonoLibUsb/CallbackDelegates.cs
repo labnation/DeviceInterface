@@ -9,7 +9,7 @@ namespace MonoLibUsb
     /// </summary>
     /// <param name="transfer">The transfer previously allocated with <see cref="MonoUsbApi.AllocTransfer"/>.</param>
     [UnmanagedFunctionPointer(MonoUsbApi.CC)]
-    public delegate void MonoUsbTransferDelegate(MonoUsbTransfer transfer);
+    public delegate void MonoUsbTransferDelegate(IntPtr transfer);
 
     /// <summary>
     /// Callback delegate, invoked when a new file descriptor should be added to the set of file descriptors monitored for events. 

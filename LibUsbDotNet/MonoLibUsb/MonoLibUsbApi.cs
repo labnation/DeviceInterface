@@ -44,8 +44,9 @@ namespace MonoLibUsb
         #region Private Members
 
         private static readonly MonoUsbTransferDelegate DefaultAsyncDelegate = DefaultAsyncCB;
-        private static void DefaultAsyncCB(MonoUsbTransfer transfer)
+        private static void DefaultAsyncCB(IntPtr transferI)
         {
+            MonoUsbTransfer transfer = new MonoUsbTransfer(transferI);
             ManualResetEvent completeEvent = GCHandle.FromIntPtr(transfer.PtrUserData).Target as ManualResetEvent;
             completeEvent.Set();
         }
