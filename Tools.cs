@@ -278,7 +278,8 @@ namespace LabNation.DeviceInterface
                     
                     //only add in case both boundary voltages were reached
                     if (beginIndex > prevCrossIndex && endIndex < nextCrossIndex)
-                        riseTimes.Add((endIndex - beginIndex - 1)*samplePeriod);
+                        if (endIndex - beginIndex - 1 > 1)
+                            riseTimes.Add((endIndex - beginIndex - 1)*samplePeriod);
                 }
                 else //falling edge
                 {
@@ -294,7 +295,8 @@ namespace LabNation.DeviceInterface
 
                     //only add in case both boundary voltages were reached
                     if (beginIndex > prevCrossIndex && endIndex < nextCrossIndex)
-                        fallTimes.Add((endIndex - beginIndex - 1) * samplePeriod);
+                        if (endIndex - beginIndex - 1 > 1)
+                            fallTimes.Add((endIndex - beginIndex - 1) * samplePeriod);
                 }
 
                 if (riseTimes.Count == 0)
@@ -357,6 +359,18 @@ namespace LabNation.DeviceInterface
 
             if (edgePeriod.Count < 1)
                 return;
+
+            //if freq is way too high to be measured
+            if (risingNFallingEdges.Count >= digitized.Length/2)
+            {
+                //invalidate all results and return
+                frequency = double.NaN;
+                frequencyError = double.NaN;
+                dutyCycle = double.NaN;
+                dutyCycleError = double.NaN;
+                risingNFallingEdges = new Dictionary<int, bool>();
+                return;
+            }
 
             double average = edgePeriod.Average();
 
