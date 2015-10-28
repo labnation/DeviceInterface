@@ -217,7 +217,8 @@ namespace LabNation.DeviceInterface
                     if (currMinVal > lowMarginValue) break;
                     if (currMaxVal < highMarginValue) break;
 
-                    ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError);
+                    Dictionary<int, bool> risingNFallingEdges;
+                    ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError, out risingNFallingEdges);
                     if (!double.IsNaN(frequency) && (finalFrequencies[kvp.Key] == double.MaxValue))
                         finalFrequencies[kvp.Key] = frequency;
                 }               
@@ -245,12 +246,76 @@ namespace LabNation.DeviceInterface
             return waveProperties;
         }
 
-        public static void ComputeFrequencyDutyCycle(ChannelData data, out double frequency, out double frequencyError, out double dutyCycle, out double dutyCycleError)
+        public static void ComputeRiseFallTimes(float[] voltages, float minVoltage, float maxVoltage, double samplePeriod, float pct, Dictionary<int, bool> risingNFallingEdges, out double riseTime, out double fallTime)
+        {
+            riseTime = double.NaN;
+            fallTime = double.NaN;
+            List<double> riseTimes = new List<double>();
+            List<double> fallTimes = new List<double>();
+
+            float amp = maxVoltage - minVoltage;
+            float lowVBoundary = minVoltage + amp*(1f-pct)/2f;
+            float highVBoundary = maxVoltage - amp*(1f-pct)/2f;
+
+            for (int i = 1; i < risingNFallingEdges.Count-1; i++)
+            {
+                bool risingEdge = risingNFallingEdges.ElementAt(i).Value;
+                int prevCrossIndex = risingNFallingEdges.ElementAt(i-1).Key;
+                int currCrossIndex = risingNFallingEdges.ElementAt(i).Key;
+                int nextCrossIndex = risingNFallingEdges.ElementAt(i+1).Key;
+                
+                if (risingEdge) //rising edge
+                {
+                    //walk backwards                    
+                    int beginIndex = currCrossIndex;
+                    while (beginIndex > prevCrossIndex && voltages[beginIndex] > lowVBoundary)
+                        beginIndex--;                    
+
+                    //walk forward
+                    int endIndex = currCrossIndex;
+                    while (endIndex < nextCrossIndex && voltages[endIndex] < highVBoundary)
+                        endIndex++;
+                    
+                    //only add in case both boundary voltages were reached
+                    if (beginIndex > prevCrossIndex && endIndex < nextCrossIndex)
+                        riseTimes.Add((endIndex - beginIndex - 1)*samplePeriod);
+                }
+                else //falling edge
+                {
+                    //walk backwards                    
+                    int beginIndex = currCrossIndex;
+                    while (beginIndex > prevCrossIndex && voltages[beginIndex] < highVBoundary)
+                        beginIndex--;
+
+                    //walk forward
+                    int endIndex = currCrossIndex;
+                    while (endIndex < nextCrossIndex && voltages[endIndex] > lowVBoundary)
+                        endIndex++;
+
+                    //only add in case both boundary voltages were reached
+                    if (beginIndex > prevCrossIndex && endIndex < nextCrossIndex)
+                        fallTimes.Add((endIndex - beginIndex - 1) * samplePeriod);
+                }
+
+                if (riseTimes.Count == 0)
+                    riseTime = double.NaN;
+                else
+                    riseTime = riseTimes.Average();
+
+                if (fallTimes.Count == 0)
+                    fallTime = double.NaN;
+                else
+                    fallTime = fallTimes.Average();
+            }
+        }
+
+        public static void ComputeFrequencyDutyCycle(ChannelData data, out double frequency, out double frequencyError, out double dutyCycle, out double dutyCycleError, out Dictionary<int, bool> risingNFallingEdges)
         {
             frequency = double.NaN;
             frequencyError = double.NaN;    
             dutyCycle = double.NaN;
             dutyCycleError = double.NaN;
+            risingNFallingEdges = new Dictionary<int, bool>();
 
             bool[] digitized = data.array.GetType().GetElementType() == typeof(bool) ? (bool[])data.array : LabNation.Common.Utils.Schmitt((float[])data.array);
 
@@ -270,6 +335,7 @@ namespace LabNation.DeviceInterface
                     //If we're high now, it's a rising edge
                     if (digitized[i])
                     {
+                        risingNFallingEdges.Add(i, true);
                         if (lastRisingIndex > 0)
                             edgePeriod.Add((i - lastRisingIndex) * samplePeriod);
                         if (lastFallingIndex > 0)
@@ -279,6 +345,7 @@ namespace LabNation.DeviceInterface
                     }
                     else
                     {
+                        risingNFallingEdges.Add(i, false);
                         if (lastFallingIndex > 0)
                             edgePeriod.Add((i - lastFallingIndex) * samplePeriod);
                         if (lastRisingIndex > 0)
