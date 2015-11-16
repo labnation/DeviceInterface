@@ -14,7 +14,7 @@ namespace LabNation.DeviceInterface.Devices
     public class DeviceManager
     {
         DeviceConnectHandler connectHandler;
-        IDevice device;
+        public IDevice device { get; private set; }
         public IDevice fallbackDevice { get; private set; }
         Thread pollThread;
 #if WINDOWS
@@ -105,12 +105,16 @@ namespace LabNation.DeviceInterface.Devices
                 if(device == null)
                 {
                     device = new SmartScope(hardwareInterface);
-                    connectHandler(fallbackDevice, false);
+                    if (connectHandler != null)
+                        connectHandler(fallbackDevice, false);
+
 					#if WINDOWS
                     lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
                     Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
 					#endif
-                    connectHandler(device, true);
+
+                    if (connectHandler != null)
+                        connectHandler(device, true);
                 }
             }
             else 
@@ -118,7 +122,8 @@ namespace LabNation.DeviceInterface.Devices
                 if (device is SmartScope)
                 {
                 	Logger.Debug("DeviceManager: Calling connect handler");
-                    connectHandler(device, false);
+                    if (connectHandler != null)
+                        connectHandler(device, false);
 					Logger.Debug("DeviceManager: disposing device");
                     (device as SmartScope).Dispose();
                     device = null;
@@ -126,7 +131,8 @@ namespace LabNation.DeviceInterface.Devices
                     lastSmartScopeDetectedThroughWinUsb = null;
 					#endif
 					Logger.Debug("DeviceManager: calling connect for fallback device");
-                    connectHandler(fallbackDevice, true);
+                    if (connectHandler != null)
+                        connectHandler(fallbackDevice, true);
                 }
             }
         }
