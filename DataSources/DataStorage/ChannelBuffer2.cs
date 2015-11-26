@@ -3,25 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Xml.Serialization;
+using LabNation.Interfaces;
+using LabNation.DeviceInterface.Devices;
 
 namespace LabNation.DeviceInterface.DataSources
 {
-    abstract internal class ChannelBuffer<T>:IChannelBuffer
+    internal class ChannelBuffer2:IChannelBuffer
     {
         private string name;
         private string filename;
+        private Channel channel;
+        private Type internalDataType;
         protected FileStream stream;
         protected BinaryWriter writer;
         protected BinaryReader reader;
         protected object streamLock = new object();
         protected int readBufferSize = 2048;
-        protected int sizeOfType;
-        
-        public ChannelBuffer(string name)
+
+        public ChannelBuffer2(string name, Channel channel)
         {
             this.filename = Path.GetTempFileName();
             this.name = name;
+            this.channel = channel;
             this.stream = new FileStream(filename, FileMode.Create, FileAccess.ReadWrite);
             this.writer = new BinaryWriter(this.stream);
             this.reader = new BinaryReader(this.stream);
@@ -43,28 +46,58 @@ namespace LabNation.DeviceInterface.DataSources
 
         public Type GetDataType()
         {
-            return typeof(T);
+            return internalDataType;
         }
 
         public void AddData(Array data)
         {
             if (data == null) return;
-            if(data.GetType().GetElementType() != typeof(T))
+            if (data.Length == 0) return;
+
+            if (internalDataType == null)
+                internalDataType = data.GetType().GetElementType();
+            else if(data.GetType().GetElementType() != internalDataType)
                 throw new Exception("Data incompatible with this channel buffer");
+
             lock (streamLock)
             {
                 stream.Seek(0, SeekOrigin.End);
-                byte[] byteData = new byte[data.Length * sizeOfType];
-                Buffer.BlockCopy(data, 0, byteData, 0, byteData.Length);
+                byte[] byteData = null;
+                object dataSample = data.GetValue(0);
+                if (dataSample is float)
+                {
+                    int sizeOfType = sizeof(float);
+                    byteData = new byte[data.Length * sizeOfType];
+                    Buffer.BlockCopy(data, 0, byteData, 0, byteData.Length);
+                }
+                else if (dataSample is byte)
+                {
+                    byteData = (byte[])data;
+                }
+                else if (dataSample is DecoderOutput)
+                {
+                    List<byte> byteList = new List<byte>();
+                    DecoderOutput[] decoderOutputArray = (DecoderOutput[])data;
+                    foreach (DecoderOutput decOut in decoderOutputArray)
+                        byteList.AddRange(decOut.Serialize());
+
+                    byteData = byteList.ToArray();
+                }
+                else
+                {
+                    Common.Logger.Error("Unsupported type for temporary storage");
+                }
+                
                 writer.Write(byteData);
             }
         }
 
         public Array GetData(int offset = 0, long length = -1)
         {
-            T[] output;
+            //T[] output;
             lock (streamLock)
             {
+                /*
                 offset *= sizeOfType;
                 stream.Seek(offset, SeekOrigin.Begin);
                 if (length == -1) length = stream.Length - offset;
@@ -81,8 +114,12 @@ namespace LabNation.DeviceInterface.DataSources
                     Buffer.BlockCopy(readBuffer, 0, output, bytesRead, readBuffer.Length);
                     bytesRead += readBuffer.Length;
                 }
+            
             }
             return output;
+                 */
+            }
+                return null;
         }
     }
 }

@@ -145,7 +145,7 @@ namespace LabNation.DeviceInterface.DataSources
 
         public bool StartRecording()
         {
-            return StartRecording(TimeSpan.Zero, 0);
+            return StartRecording(TimeSpan.FromSeconds(30), 1);
         }
 
         public bool StartRecording(TimeSpan timeInterval, int acquisitionsPerInterval)

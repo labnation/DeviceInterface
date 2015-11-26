@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace LabNation.DeviceInterface.Devices
-{
+{    
     public abstract class Channel
     {
         public static int CompareByOrder(Channel a, Channel b)
@@ -15,16 +15,19 @@ namespace LabNation.DeviceInterface.Devices
         public virtual bool Destructable { get { return false; } }
         public string Name { get; protected set; }
         public int Value { get; protected set; }
+        public int SizeInBytes { get; protected set; }
+        public Type OutputType { get; protected set; }
         public static explicit operator int(Channel ch) { return ch.Value; }
 
         public int Order { get; protected set; }
         private static HashSet<Channel> list = new HashSet<Channel>();
         public static IList<Channel> List { get { return list.ToList().AsReadOnly(); } }
-        public Channel(string name, int value)
+        public Channel(string name, int value, int sizeInBytes)
         {
             this.Name = name; 
             this.Value = value;
             this.Order = order;
+            this.SizeInBytes = sizeInBytes;
             order++;
             list.Add(this);
         }
@@ -43,7 +46,7 @@ namespace LabNation.DeviceInterface.Devices
     {
         private static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
         new public static IList<AnalogChannel> List { get { return list.ToList().AsReadOnly(); } }
-        private AnalogChannel(string name, int value) : base(name, value) { 
+        private AnalogChannel(string name, int value, int sizeInBytes) : base(name, value, sizeInBytes) { 
             list.Add(this);
         }
         static public implicit operator AnalogChannel(string chName)
@@ -55,8 +58,8 @@ namespace LabNation.DeviceInterface.Devices
             return AnalogChannelRaw.List.Single(x => x.Value == ch.Value);
         }
 
-        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
-        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
+        public static readonly AnalogChannel ChA = new AnalogChannel("A", 0, sizeof(float));
+        public static readonly AnalogChannel ChB = new AnalogChannel("B", 1, sizeof(float));
     }
 
     public class AnalogChannelRaw : Channel
@@ -77,7 +80,7 @@ namespace LabNation.DeviceInterface.Devices
                 return list.ToList().AsReadOnly();
             }
         }
-        private AnalogChannelRaw(AnalogChannel ch) : base(ch.Name, ch.Value) { }
+        private AnalogChannelRaw(AnalogChannel ch) : base(ch.Name, ch.Value, 1) { }
     }
 
     public static class ChannelHelpers
@@ -91,7 +94,7 @@ namespace LabNation.DeviceInterface.Devices
     public sealed class DigitalChannel : Channel {
         private static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
         new public static IList<DigitalChannel> List { get { return list.ToList().AsReadOnly(); } }
-        private DigitalChannel(string name, int value) : base(name, value) { 
+        private DigitalChannel(string name, int value) : base(name, value, sizeof(byte)) { 
             list.Add(this); 
         }
         static public implicit operator DigitalChannel(string chName)
@@ -112,7 +115,7 @@ namespace LabNation.DeviceInterface.Devices
     {
         private static HashSet<LogicAnalyserChannel> list = new HashSet<LogicAnalyserChannel>();
         new public static IList<LogicAnalyserChannel> List { get { return list.ToList().AsReadOnly(); } }
-        private LogicAnalyserChannel(string name, int value) : base(name, value) { list.Add(this); }
+        private LogicAnalyserChannel(string name, int value) : base(name, value, sizeof(byte)) { list.Add(this); }
 
         public static readonly LogicAnalyserChannel LA = new LogicAnalyserChannel("LA", 0);
     }

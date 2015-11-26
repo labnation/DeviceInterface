@@ -37,11 +37,17 @@ namespace LabNation.DeviceInterface.DataSources
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
 
+            Type t = typeof(Channel);
+            foreach (Channel ch in Channel.List)
+                channelBuffers.Add(ch, new ChannelBuffer2("Channel" + ch.Name, ch));
+
+            /*
             foreach (AnalogChannel ch in AnalogChannel.List)
                 channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
 
             foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.List)
                 channelBuffers.Add(ch, new ChannelBufferByte("LogicAnalyser" + ch.Name));
+             */
         }
 
         ~RecordingScope()
