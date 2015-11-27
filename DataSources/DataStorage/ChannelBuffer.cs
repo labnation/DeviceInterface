@@ -55,13 +55,13 @@ namespace LabNation.DeviceInterface.DataSources
         {
             if (data == null) return;
             if (data.Length == 0) return;
-            writing = true;
-
-            //first write how many elements will be added for this acquisition
-            writer.Write(BitConverter.GetBytes(data.Length));
+            writing = true;            
 
             lock (streamLock)
             {
+                //first write how many elements will be added for this acquisition
+                writer.Write(BitConverter.GetBytes(data.Length));
+
                 stream.Seek(0, SeekOrigin.End);
                 byte[] byteData = null;
                 //object dataSample = data.GetValue(0);

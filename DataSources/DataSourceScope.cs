@@ -51,9 +51,19 @@ namespace LabNation.DeviceInterface.DataSources
                     BeforeNewDataAvailable(LatestDataPackage, this, new EventArgs());
 #endif
                 if (Recording != null && Recording.Busy)
-                    Record(LatestDataPackage, new EventArgs());
-                if (OnNewDataAvailable != null)
-                    OnNewDataAvailable(LatestDataPackage, this, new EventArgs());
+                {
+                    lock (Recording)
+                    {
+                        Record(LatestDataPackage, new EventArgs());
+                        if (OnNewDataAvailable != null)
+                            OnNewDataAvailable(LatestDataPackage, this, new EventArgs());
+                    }
+                }
+                else
+                {
+                    if (OnNewDataAvailable != null)
+                        OnNewDataAvailable(LatestDataPackage, this, new EventArgs());
+                }
             }
         }
         
