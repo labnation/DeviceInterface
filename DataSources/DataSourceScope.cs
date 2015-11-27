@@ -52,7 +52,7 @@ namespace LabNation.DeviceInterface.DataSources
 #endif
                 if (Recording != null && Recording.Busy)
                 {
-                    lock (Recording)
+                    lock (Recording) //need this lock, as otherwise Recording can be disposed and streams closed between now and when decoder outputs are to be saved
                     {
                         Record(LatestDataPackage, new EventArgs());
                         if (OnNewDataAvailable != null)
@@ -210,7 +210,7 @@ namespace LabNation.DeviceInterface.DataSources
                 Logger.Info("Recording stop requested but was already stopped");
                 return false;
             }
-
+            
             Recording.Busy = false;
             if (Recording.acqInfo.Count == 0)
             {
