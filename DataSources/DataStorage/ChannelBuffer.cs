@@ -19,6 +19,7 @@ namespace LabNation.DeviceInterface.DataSources
         protected BinaryReader reader;
         protected object streamLock = new object();
         protected int readBufferSize = 2048;
+        private bool writing = false;
 
         public ChannelBuffer(string name, Channel channel)
         {
@@ -54,6 +55,10 @@ namespace LabNation.DeviceInterface.DataSources
         {
             if (data == null) return;
             if (data.Length == 0) return;
+            writing = true;
+
+            //first write how many elements will be added for this acquisition
+            writer.Write(BitConverter.GetBytes(data.Length));
 
             lock (streamLock)
             {
@@ -88,11 +93,30 @@ namespace LabNation.DeviceInterface.DataSources
             }
         }
 
-        public Array GetData(int offset = 0, long length = -1)
+        public Array GetDataOfNextAcquisition()
         {
-            //T[] output;
+            Array output = null;
+            if (stream.Length == 0)
+                return null;
+
             lock (streamLock)
             {
+                //in case of first read, the stream has to be rolled back to position 0
+                if (writing)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    writing = false;
+                }
+
+                int elementsToRead = BitConverter.ToInt32(reader.ReadBytes(4), 0);
+
+                if (internalDataType == typeof(float))
+                {
+                    int sizeOfType = sizeof(float);
+                    output = new float[elementsToRead];
+                    byte[] readBuffer = reader.ReadBytes(elementsToRead * sizeOfType);
+                    Buffer.BlockCopy(readBuffer, 0, output, 0, readBuffer.Length);
+                }
                 /*
                 offset *= sizeOfType;
                 stream.Seek(offset, SeekOrigin.Begin);
@@ -115,7 +139,7 @@ namespace LabNation.DeviceInterface.DataSources
             return output;
                  */
             }
-                return null;
+                return output;
         }
     }
 }

@@ -89,17 +89,19 @@ namespace LabNation.DeviceInterface.DataSources
             MatLabFileArrayWriter arrayWriter;
             foreach (var pair in recording.channelBuffers)
             {
-                dataType = pair.Value.GetDataType();
-                arrayWriter = matFileWriter.OpenArray(dataType, pair.Value.GetName(), true);
-                int offset = 0;
-                foreach (RecordingScope.AcquisitionInfo acqInfo in recording.acqInfo)
+                if (pair.Value.BytesStored() > 0)
                 {
-                    arrayWriter.AddRow(pair.Value.GetData(offset, acqInfo.samples));
-                    offset += acqInfo.samples;
+                    dataType = pair.Value.GetDataType();
+                    arrayWriter = matFileWriter.OpenArray(dataType, pair.Value.GetName(), true);
+
+                    //for each acquisition: read from temp binary file and write to final format file
+                    for (int i = 0; i < recording.acqInfo.Count; i++)
+                        arrayWriter.AddRow(pair.Value.GetDataOfNextAcquisition());
+
+                    arrayWriter.FinishArray(dataType);
+                    if (progress != null)
+                        progress(.3f);
                 }
-                arrayWriter.FinishArray(dataType);
-                if(progress != null)
-                    progress(.3f);
             }
 
             #if false
@@ -183,7 +185,7 @@ namespace LabNation.DeviceInterface.DataSources
 
             foreach (var pair in recording.channelBuffers)
             {
-                object data = pair.Value.GetData(0, nSamples);
+                object data = pair.Value.GetDataOfNextAcquisition();
                 float[] floatData = null;
                 byte[] byteData = null;
                 if(data.GetType() == typeof(float[]))

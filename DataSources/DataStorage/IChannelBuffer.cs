@@ -10,7 +10,7 @@ namespace LabNation.DeviceInterface.DataSources
         Type GetDataType();
         String GetName();
         void AddData(Array data);
-        Array GetData(int offset = 0, long length = -1);
+        Array GetDataOfNextAcquisition();
         long BytesStored();
         void Destroy();
     }
