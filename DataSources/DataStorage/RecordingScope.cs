@@ -39,7 +39,7 @@ namespace LabNation.DeviceInterface.DataSources
 
             Type t = typeof(Channel);
             foreach (Channel ch in Channel.List)
-                channelBuffers.Add(ch, new ChannelBuffer2("Channel" + ch.Name, ch));
+                channelBuffers.Add(ch, new ChannelBuffer("Channel" + ch.Name, ch));
 
             /*
             foreach (AnalogChannel ch in AnalogChannel.List)
@@ -82,6 +82,14 @@ namespace LabNation.DeviceInterface.DataSources
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Record(Channel ch, Array data)
+        {
+            if (!channelBuffers.ContainsKey(ch))
+                return;
+
+            channelBuffers[ch].AddData(data);
         }
 
         public void Record(DataPackageScope ScopeData, EventArgs e)
