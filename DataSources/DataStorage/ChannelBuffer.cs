@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using LabNation.Interfaces;
 using LabNation.DeviceInterface.Devices;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace LabNation.DeviceInterface.DataSources
 {
@@ -20,6 +21,7 @@ namespace LabNation.DeviceInterface.DataSources
         protected object streamLock = new object();
         protected int readBufferSize = 2048;
         private bool writing = false;
+        BinaryFormatter bin = new BinaryFormatter();
 
         public ChannelBuffer(string name, Channel channel)
         {
@@ -59,43 +61,35 @@ namespace LabNation.DeviceInterface.DataSources
 
             lock (streamLock)
             {
+                MemoryStream newStream = new MemoryStream();                
+                bin.Serialize(newStream, data);
+
                 //first write how many elements will be added for this acquisition
-                writer.Write(BitConverter.GetBytes(data.Length));
-
-                stream.Seek(0, SeekOrigin.End);
-                byte[] byteData = null;
-                //object dataSample = data.GetValue(0);
-                if (internalDataType == typeof(float))
-                {
-                    int sizeOfType = sizeof(float);
-                    byteData = new byte[data.Length * sizeOfType];
-                    Buffer.BlockCopy(data, 0, byteData, 0, byteData.Length);
-                }
-                else if (internalDataType == typeof(byte))
-                {
-                    byteData = (byte[])data;
-                }
-                else if (internalDataType == typeof(DecoderOutput))
-                {
-                    List<byte> byteList = new List<byte>();
-                    DecoderOutput[] decoderOutputArray = (DecoderOutput[])data;
-                    foreach (DecoderOutput decOut in decoderOutputArray)
-                        byteList.AddRange(decOut.Serialize());
-
-                    byteData = byteList.ToArray();
-                }
-                else
-                {
-                    Common.Logger.Error("Unsupported type for temporary storage");
-                }
+                byte[] appendLength = BitConverter.GetBytes(newStream.Length);
+                stream.Write(appendLength, 0, appendLength.Length);
                 
-                writer.Write(byteData);
+                //now append the new data
+                newStream.Position = 0;
+                newStream.CopyTo(stream);
+            }
+        }
+
+        private void CopyStream(Stream input, Stream output, int bytes)
+        {
+            byte[] buffer = new byte[32768];
+            int read;
+            while (bytes > 0 &&
+                   (read = input.Read(buffer, 0, Math.Min(buffer.Length, bytes))) > 0)
+            {
+                output.Write(buffer, 0, read);
+                bytes -= read;
             }
         }
 
         public Array GetDataOfNextAcquisition()
         {
             Array output = null;
+
             if (stream.Length == 0)
                 return null;
 
@@ -108,38 +102,18 @@ namespace LabNation.DeviceInterface.DataSources
                     writing = false;
                 }
 
-                int elementsToRead = BitConverter.ToInt32(reader.ReadBytes(4), 0);
+                long bytesToRead = BitConverter.ToInt64(reader.ReadBytes(8), 0);
 
-                if (internalDataType == typeof(float))
-                {
-                    int sizeOfType = sizeof(float);
-                    output = new float[elementsToRead];
-                    byte[] readBuffer = reader.ReadBytes(elementsToRead * sizeOfType);
-                    Buffer.BlockCopy(readBuffer, 0, output, 0, readBuffer.Length);
-                }
-                /*
-                offset *= sizeOfType;
-                stream.Seek(offset, SeekOrigin.Begin);
-                if (length == -1) length = stream.Length - offset;
+                //get section of stream containing data of this acquisition
+                MemoryStream newStream = new MemoryStream();
+                CopyStream(stream, newStream, (int)bytesToRead);
+                newStream.Position = 0;
 
-                long bytesToRead = Math.Max(0, Math.Min(stream.Length - offset, length * sizeOfType));
-                int bytesRead = 0;
-                output = new T[bytesToRead / sizeOfType];
-
-                byte[] readBuffer;
-                while (bytesRead < bytesToRead)
-                {
-                    int readLength = (int)Math.Min(bytesToRead - bytesRead, Math.Min(stream.Length - offset, readBufferSize));
-                    readBuffer = reader.ReadBytes(readLength);
-                    Buffer.BlockCopy(readBuffer, 0, output, bytesRead, readBuffer.Length);
-                    bytesRead += readBuffer.Length;
-                }
-            
+                //deserialize
+                output = (Array)bin.Deserialize(newStream);
             }
+                
             return output;
-                 */
-            }
-                return output;
         }
     }
 }
