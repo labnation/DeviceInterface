@@ -10,6 +10,7 @@ using MatlabFileIO;
 using LabNation.Common;
 using CsvHelper;
 using CsvHelper.Configuration;
+using LabNation.Interfaces;
 
 namespace LabNation.DeviceInterface.DataSources
 {
@@ -92,13 +93,116 @@ namespace LabNation.DeviceInterface.DataSources
                 if (pair.Value.BytesStored() > 0)
                 {
                     dataType = pair.Value.GetDataType();
-                    arrayWriter = matFileWriter.OpenArray(dataType, pair.Value.GetName(), true);
+                    string matlabFriendlyVariableName = pair.Value.GetName().Replace("-", "_").Replace(" ", "");
 
-                    //for each acquisition: read from temp binary file and write to final format file
-                    for (int i = 0; i < recording.acqInfo.Count; i++)
-                        arrayWriter.AddRow(pair.Value.GetDataOfNextAcquisition());
+                    if (dataType != typeof(DecoderOutput))
+                    { // for simple datatypes
+                        arrayWriter = matFileWriter.OpenArray(dataType, matlabFriendlyVariableName, true);
+                        for (int i = 0; i < recording.acqInfo.Count; i++)
+                        {
+                            Array acqData = pair.Value.GetDataOfNextAcquisition();
+                            arrayWriter.AddRow(acqData);
+                        }
+                        arrayWriter.FinishArray(dataType);
+                    }
+                    else // array of DecoderOutput objects
+                    {
+                        List<List<int>> allDecoderOutputTypes = new List<List<int>>();
+                        List<List<int>> allStartIndices = new List<List<int>>();
+                        List<List<int>> allEndIndices = new List<List<int>>();
+                        List<List<string>> allTexts = new List<List<string>>();
+                        List<List<byte>> allValues = new List<List<byte>>();
 
-                    arrayWriter.FinishArray(dataType);
+                        int highestRank = 0;
+                        for (int i = 0; i < recording.acqInfo.Count; i++)
+                        {
+                            List<int> decoderOutputTypes = new List<int>();
+                            List<int> startIndices = new List<int>();
+                            List<int> endIndices = new List<int>();
+                            List<string> texts = new List<string>();
+                            List<byte> values = new List<byte>();
+
+                            DecoderOutput[] acqData = (DecoderOutput[])pair.Value.GetDataOfNextAcquisition();
+                            foreach (DecoderOutput decOut in acqData)
+                            {
+                                startIndices.Add(decOut.StartIndex);
+                                endIndices.Add(decOut.EndIndex);
+                                texts.Add(decOut.Text);
+                                if (decOut is DecoderOutputEvent)
+                                {
+                                    decoderOutputTypes.Add(0);
+                                    values.Add(0);
+                                }
+                                else
+                                {
+                                    decoderOutputTypes.Add(1);
+                                    if (!(decOut is DecoderOutputValue<byte>))
+                                        throw new Exception("Storage of decoder values other than bytes not yet supported!");
+                                    values.Add((decOut as DecoderOutputValue<byte>).Value);
+                                }
+                            }
+
+                            allDecoderOutputTypes.Add(decoderOutputTypes);
+                            allStartIndices.Add(startIndices);
+                            allEndIndices.Add(endIndices);
+                            allTexts.Add(texts);
+                            allValues.Add(values);
+
+                            highestRank = (int)Math.Max(highestRank, values.Count);
+                        }
+                        
+                        //save all resulting data to file
+                        arrayWriter = matFileWriter.OpenArray(typeof(int), matlabFriendlyVariableName + "_DecoderOutputTypes", true);
+                        foreach (var row in allDecoderOutputTypes)
+                        {
+                            row.Capacity = highestRank;
+                            arrayWriter.AddRow(row.ToArray());
+                        }
+                        arrayWriter.FinishArray(typeof(int));
+
+                        arrayWriter = matFileWriter.OpenArray(typeof(int), matlabFriendlyVariableName + "_StartIndex", true);
+                        foreach (var row in allStartIndices)
+                        {
+                            row.Capacity = highestRank;
+                            arrayWriter.AddRow(row.ToArray());
+                        }
+                        arrayWriter.FinishArray(typeof(int));
+
+                        arrayWriter = matFileWriter.OpenArray(typeof(int), matlabFriendlyVariableName + "_EndIndex", true);
+                        foreach (var row in allEndIndices)
+                        {
+                            row.Capacity = highestRank;
+                            arrayWriter.AddRow(row.ToArray());
+                        }
+                        arrayWriter.FinishArray(typeof(int));
+
+                        for (int i = 0; i < allTexts.Count; i++)
+                        {
+                            List<string> acqTexts = allTexts.ElementAt(i);
+
+                            //first find max string length of this acq
+                            int maxLength = 0;
+                            foreach (string txt in acqTexts)
+                                maxLength = (int)Math.Max(maxLength, txt.Length);
+
+                            //matlab string array requires even length
+                            if (maxLength % 2 != 0) maxLength++;
+
+                            arrayWriter = matFileWriter.OpenArray(typeof(char), matlabFriendlyVariableName + "_Text_Acq"+(i+1).ToString("00000"), true);
+                            foreach (string str in acqTexts)
+                                arrayWriter.AddRow(str.PadRight(maxLength).ToCharArray());
+                            arrayWriter.FinishArray(typeof(char));
+                        }
+
+                        arrayWriter = matFileWriter.OpenArray(typeof(byte), matlabFriendlyVariableName + "_Value", true);
+                        foreach (var row in allValues)
+                        {
+                            row.Capacity = highestRank;
+                            arrayWriter.AddRow(row.ToArray());
+                        }
+                        arrayWriter.FinishArray(typeof(byte));
+                    }
+
                     if (progress != null)
                         progress(.3f);
                 }
