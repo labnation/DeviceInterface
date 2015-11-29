@@ -20,7 +20,7 @@ namespace LabNation.DeviceInterface.DataSources
         protected BinaryReader reader;
         protected object streamLock = new object();
         protected int readBufferSize = 2048;
-        private bool writing = false;
+        private bool writing = true;
         BinaryFormatter bin = new BinaryFormatter();
 
         public ChannelBuffer(string name, Channel channel)
@@ -56,8 +56,12 @@ namespace LabNation.DeviceInterface.DataSources
         public void AddData(Array data)
         {
             if (data == null) return;
-            if (data.Length == 0) return;
-            writing = true;            
+            //if (data.Length == 0) return; //also need to add if data is empty! because otherwise this channel will have less entries in csv/matlab than other channels
+
+            //thread safety! it's possible that data is still added once the reading has begun, completely corrupting the stream position
+            //code should only enter when there's something wrong with thread safety, but here for safety
+            if (!writing)
+                return; 
 
             lock (streamLock)
             {
@@ -91,7 +95,7 @@ namespace LabNation.DeviceInterface.DataSources
             Array output = null;
 
             if (stream.Length == 0)
-                return null;
+                return null;            
 
             lock (streamLock)
             {
@@ -102,15 +106,24 @@ namespace LabNation.DeviceInterface.DataSources
                     writing = false;
                 }
 
-                long bytesToRead = BitConverter.ToInt64(reader.ReadBytes(8), 0);
+                byte[] bytesToReadByteArr = new byte[8];
+                stream.Read(bytesToReadByteArr, 0, 8);
+                
+                long bytesToRead = BitConverter.ToInt64(bytesToReadByteArr, 0);
 
-                //get section of stream containing data of this acquisition
-                MemoryStream newStream = new MemoryStream();
-                CopyStream(stream, newStream, (int)bytesToRead);
-                newStream.Position = 0;
+                if (bytesToRead == 0)
+                    output = null;
+                else
+                {
+                    //get section of stream containing data of this acquisition
+                    MemoryStream newStream = new MemoryStream();
+                    long debugPosOrig = stream.Position;
+                    CopyStream(stream, newStream, (int)bytesToRead);
+                    newStream.Position = 0;
 
-                //deserialize
-                output = (Array)bin.Deserialize(newStream);
+                    //deserialize
+                    output = (Array)bin.Deserialize(newStream);      
+                }
             }
                 
             return output;

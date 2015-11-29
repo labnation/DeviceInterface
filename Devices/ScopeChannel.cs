@@ -93,7 +93,7 @@ namespace LabNation.DeviceInterface.Devices
     public sealed class DigitalChannel : Channel {
         private static HashSet<DigitalChannel> list = new HashSet<DigitalChannel>();
         new public static IList<DigitalChannel> List { get { return list.ToList().AsReadOnly(); } }
-        private DigitalChannel(string name, int value) : base(name, value, typeof(byte)) { 
+        private DigitalChannel(string name, int value) : base(name, value, typeof(bool)) { 
             list.Add(this); 
         }
         static public implicit operator DigitalChannel(string chName)

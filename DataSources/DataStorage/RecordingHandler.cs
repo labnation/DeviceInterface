@@ -97,11 +97,21 @@ namespace LabNation.DeviceInterface.DataSources
 
                     if (dataType != typeof(DecoderOutput))
                     { // for simple datatypes
-                        arrayWriter = matFileWriter.OpenArray(dataType, matlabFriendlyVariableName, true);
+                        //matlab doesn't support bools -> save as bytes
+                        if (dataType == typeof(bool))
+                            arrayWriter = matFileWriter.OpenArray(typeof(byte), matlabFriendlyVariableName, true);
+                        else
+                            arrayWriter = matFileWriter.OpenArray(dataType, matlabFriendlyVariableName, true);                            
+                        
                         for (int i = 0; i < recording.acqInfo.Count; i++)
                         {
                             Array acqData = pair.Value.GetDataOfNextAcquisition();
-                            arrayWriter.AddRow(acqData);
+
+                            //convert when basetype is not supported by matlab file format
+                            if (dataType == typeof(bool))
+                                arrayWriter.AddRow(Array.ConvertAll((bool[])acqData, b => b ? (byte)1 : (byte)0));
+                            else
+                                arrayWriter.AddRow(acqData);
                         }
                         arrayWriter.FinishArray(dataType);
                     }
@@ -123,22 +133,25 @@ namespace LabNation.DeviceInterface.DataSources
                             List<byte> values = new List<byte>();
 
                             DecoderOutput[] acqData = (DecoderOutput[])pair.Value.GetDataOfNextAcquisition();
-                            foreach (DecoderOutput decOut in acqData)
+                            if (acqData != null)
                             {
-                                startIndices.Add(decOut.StartIndex);
-                                endIndices.Add(decOut.EndIndex);
-                                texts.Add(decOut.Text);
-                                if (decOut is DecoderOutputEvent)
+                                foreach (DecoderOutput decOut in acqData)
                                 {
-                                    decoderOutputTypes.Add(0);
-                                    values.Add(0);
-                                }
-                                else
-                                {
-                                    decoderOutputTypes.Add(1);
-                                    if (!(decOut is DecoderOutputValue<byte>))
-                                        throw new Exception("Storage of decoder values other than bytes not yet supported!");
-                                    values.Add((decOut as DecoderOutputValue<byte>).Value);
+                                    startIndices.Add(decOut.StartIndex);
+                                    endIndices.Add(decOut.EndIndex);
+                                    texts.Add(decOut.Text);
+                                    if (decOut is DecoderOutputEvent)
+                                    {
+                                        decoderOutputTypes.Add(0);
+                                        values.Add(0);
+                                    }
+                                    else
+                                    {
+                                        decoderOutputTypes.Add(1);
+                                        if (!(decOut is DecoderOutputValue<byte>))
+                                            throw new Exception("Storage of decoder values other than bytes not yet supported!");
+                                        values.Add((decOut as DecoderOutputValue<byte>).Value);
+                                    }
                                 }
                             }
 
@@ -155,24 +168,27 @@ namespace LabNation.DeviceInterface.DataSources
                         arrayWriter = matFileWriter.OpenArray(typeof(int), matlabFriendlyVariableName + "_DecoderOutputTypes", true);
                         foreach (var row in allDecoderOutputTypes)
                         {
-                            row.Capacity = highestRank;
-                            arrayWriter.AddRow(row.ToArray());
+                            int[] arr = row.ToArray();
+                            Array.Resize(ref arr, highestRank);
+                            arrayWriter.AddRow(arr);
                         }
                         arrayWriter.FinishArray(typeof(int));
 
                         arrayWriter = matFileWriter.OpenArray(typeof(int), matlabFriendlyVariableName + "_StartIndex", true);
                         foreach (var row in allStartIndices)
                         {
-                            row.Capacity = highestRank;
-                            arrayWriter.AddRow(row.ToArray());
+                            int[] arr = row.ToArray();
+                            Array.Resize(ref arr, highestRank);
+                            arrayWriter.AddRow(arr);
                         }
                         arrayWriter.FinishArray(typeof(int));
 
                         arrayWriter = matFileWriter.OpenArray(typeof(int), matlabFriendlyVariableName + "_EndIndex", true);
                         foreach (var row in allEndIndices)
                         {
-                            row.Capacity = highestRank;
-                            arrayWriter.AddRow(row.ToArray());
+                            int[] arr = row.ToArray();
+                            Array.Resize(ref arr, highestRank);
+                            arrayWriter.AddRow(arr);
                         }
                         arrayWriter.FinishArray(typeof(int));
 
@@ -197,8 +213,9 @@ namespace LabNation.DeviceInterface.DataSources
                         arrayWriter = matFileWriter.OpenArray(typeof(byte), matlabFriendlyVariableName + "_Value", true);
                         foreach (var row in allValues)
                         {
-                            row.Capacity = highestRank;
-                            arrayWriter.AddRow(row.ToArray());
+                            byte[] arr = row.ToArray();
+                            Array.Resize(ref arr, highestRank);
+                            arrayWriter.AddRow(arr);
                         }
                         arrayWriter.FinishArray(typeof(byte));
                     }
