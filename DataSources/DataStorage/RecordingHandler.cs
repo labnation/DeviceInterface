@@ -84,7 +84,7 @@ namespace LabNation.DeviceInterface.DataSources
         {
             string filename = Utils.GetTempFileName(".mat");
             MatlabFileWriter matFileWriter = new MatlabFileWriter(filename);
-            matFileWriter.Write("Description", "Scope data");
+            matFileWriter.Write("Description", "SmartScope storage - data recorded on " + DateTime.Now.ToString());
 
             Type dataType;
             MatLabFileArrayWriter arrayWriter;
@@ -238,10 +238,14 @@ namespace LabNation.DeviceInterface.DataSources
 
             //Store acquisition times
             dataType = typeof(double);
-            arrayWriter = matFileWriter.OpenArray(dataType, "acquisitionStartTime", true);
+            arrayWriter = matFileWriter.OpenArray(dataType, "AcquisitionStartTimeInSeconds", true);
             UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
             arrayWriter.AddRow(recording.acqInfo.Select(x => (double)(x.firstSampleTime - timeOrigin) / (double)1.0e9).ToArray());
             arrayWriter.FinishArray(dataType);
+            
+            //store sampleFrequency
+            matFileWriter.Write("SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod);
+
             if (progress != null)
                 progress(.9f);
 
