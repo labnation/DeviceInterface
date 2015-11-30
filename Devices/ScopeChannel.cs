@@ -79,7 +79,7 @@ namespace LabNation.DeviceInterface.Devices
                 return list.ToList().AsReadOnly();
             }
         }
-        private AnalogChannelRaw(AnalogChannel ch) : base(ch.Name, ch.Value, typeof(byte)) { }
+        private AnalogChannelRaw(AnalogChannel ch) : base(ch.Name+"Raw", ch.Value, typeof(byte)) { }
     }
 
     public static class ChannelHelpers
