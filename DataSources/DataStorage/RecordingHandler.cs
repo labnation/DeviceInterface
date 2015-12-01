@@ -225,14 +225,6 @@ namespace LabNation.DeviceInterface.DataSources
                 }
             }
 
-            #if false
-            //Store time axis
-            dataType = typeof(double);
-            arrayWriter = matFileWriter.OpenArray(dataType, "time", true);
-            for (int i = 0; i < recording.acqInfo.Count; i++)
-                arrayWriter.AddRow(getTimeAxis(recording, i, 1));
-            arrayWriter.FinishArray(dataType);
-            #endif
             if (progress != null)
                 progress(.6f);
 
@@ -263,75 +255,102 @@ namespace LabNation.DeviceInterface.DataSources
             return filename;
         }
 
-        public class RecordingRecord
-        {
-            public RecordingRecord() {}
-            public RecordingRecord(double sampleTime)
-            {
-                this.sampleTime = sampleTime;
-            }
-
-            public double? sampleTime{get;set;}
-            public float? chA {get; set;}
-            public float? chB {get; set;}
-            public byte? logicAnalyser {get; set;}
-        }
-
-        public sealed class RecordingRecordMapper : CsvClassMap<RecordingRecord>
-        {
-            public RecordingRecordMapper()
-            {
-                Map(x=>x.sampleTime).Name("SampleTime");
-                Map(x => x.chA).Name("Channel A");
-                Map(x => x.chB).Name("Channel B");
-                Map(x => x.logicAnalyser).Name("Logic Analyser");
-            }
-        }
-
         private static string StoreCsv(RecordingScope recording, Action<float> progress)
         {
             string filename = Utils.GetTempFileName(".csv");
-            StreamWriter textWriter = File.CreateText(filename);
-            CsvWriter csvFileWriter = new CsvWriter(textWriter);
+            StreamWriter streamWriter = File.CreateText(filename);
+            string delimiter = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
-            //Construct records
-            List<RecordingRecord> records = new List<RecordingRecord>();
-            int nSamples = 0;
+            streamWriter.WriteLine("Description"+delimiter+ "SmartScope storage - data recorded on " + DateTime.Now.ToString());
+            
+            //acq IDs + their starttime
             UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
-            for(int i =0; i< recording.acqInfo.Count(); i++)
-            {
-                var acqInfo = recording.acqInfo[i];
-                records.Add(new RecordingRecord((double)(acqInfo.firstSampleTime - timeOrigin) / (double)1.0e9));
-                for(int j = 1; j < acqInfo.samples; j++)
-                    records.Add(new RecordingRecord());
-                nSamples += acqInfo.samples;
-            }
+            streamWriter.Write("AcquisitionID"+delimiter);
+            for (int i = 0; i < recording.acqInfo.Count; i++)
+                streamWriter.Write(i.ToString() + delimiter);
+            streamWriter.WriteLine();
+            streamWriter.Write("AcquisitionStartTimeInSeconds" + delimiter);
+            streamWriter.WriteLine(String.Join(delimiter, recording.acqInfo.Select(x => ((double)(x.firstSampleTime - timeOrigin) / (double)1.0e9).ToString()).ToArray()));            
 
-
+            Type dataType;
+            int nbrOfSamples = 0;
             foreach (var pair in recording.channelBuffers)
             {
-                object data = pair.Value.GetDataOfNextAcquisition();
-                float[] floatData = null;
-                byte[] byteData = null;
-                if(data.GetType() == typeof(float[]))
-                    floatData = (float[])data;
-                if(data.GetType() == typeof(byte[]))
-                    byteData = (byte[])data;
-
-                for(int i = 0; i < nSamples; i++)
+                if (pair.Value.BytesStored() > 0)
                 {
-                    if(pair.Key == AnalogChannel.ChA && floatData.Length == nSamples)
-                        records[i].chA = floatData[i];
-					else if(pair.Key == AnalogChannel.ChB && floatData.Length == nSamples)
-                        records[i].chB = floatData[i];
-					else if(pair.Key == LogicAnalyserChannel.LA && byteData.Length == nSamples)
-                        records[i].logicAnalyser = byteData[i];
+                    string variableName = pair.Value.GetName().Replace("-", "_").Replace(" ", "");                    
+
+                    dataType = pair.Value.GetDataType();                    
+                    { // for simple datatypes                        
+                        for (int i = 0; i < recording.acqInfo.Count; i++)
+                        {
+                            Array acqData = pair.Value.GetDataOfNextAcquisition();
+                            nbrOfSamples = (int)Math.Max(nbrOfSamples, acqData.Length);
+
+                            if (dataType != typeof(DecoderOutput))
+                            {                                
+                                string stringData = "Datatype not supported for CSV output";
+                                if (dataType == typeof(float))
+                                    stringData = String.Join(delimiter, ((float[])acqData).Select(x => x.ToString()).ToArray());
+                                else if (dataType == typeof(byte))
+                                    stringData = String.Join(delimiter, ((byte[])acqData).Select(x => x.ToString()).ToArray());
+                                else if (dataType == typeof(int))
+                                    stringData = String.Join(delimiter, ((int[])acqData).Select(x => x.ToString()).ToArray());
+                                if (dataType == typeof(bool))
+                                    stringData = String.Join(delimiter, ((bool[])acqData).Select(x => x.ToString()).ToArray());
+                                streamWriter.WriteLine(variableName + "_Acq" + i.ToString("00000") + delimiter + stringData);
+                            }
+                            else
+                            {// in case of decoder output
+                                DecoderOutput[] decOut = (DecoderOutput[])acqData;
+                                var unsupportedOutputs = decOut.Where(x => !(x is DecoderOutputEvent || x is DecoderOutputValue<byte>)).ToList();
+                                if (unsupportedOutputs.Count > 0)
+                                    streamWriter.WriteLine("Decoder " + variableName + " contains types which are not supported for CSV export. Please request support on the forum.");
+                                else
+                                { //only DecoderOutputEvent or DecoderOutputValue<byte>
+
+                                    string startIndices = String.Join(delimiter, (decOut).Select(x => x.StartIndex.ToString()).ToArray());
+                                    string endIndices = String.Join(delimiter, (decOut).Select(x => x.EndIndex.ToString()).ToArray());
+                                    string texts = String.Join(delimiter, (decOut).Select(x => x.Text).ToArray());
+                                    string values = String.Join(delimiter, (decOut).Select(x => (x is DecoderOutputEvent) ? "" : (x as DecoderOutputValue<byte>).Value.ToString()).ToArray());
+
+                                    streamWriter.WriteLine(variableName + "_Acq" + i.ToString("00000") + "_StartIndices" + delimiter + startIndices);
+                                    streamWriter.WriteLine(variableName + "_Acq" + i.ToString("00000") + "_EndIndices" + delimiter + endIndices);
+                                    streamWriter.WriteLine(variableName + "_Acq" + i.ToString("00000") + "_Texts" + delimiter + texts);
+                                    streamWriter.WriteLine(variableName + "_Acq" + i.ToString("00000") + "_Values" + delimiter + values);
+
+                                    //create visual record
+                                    streamWriter.Write(variableName + "_Acq" + i.ToString("00000") + "_Visual" + delimiter);
+                                    int currentIndex = 0;
+                                    for (int x = 0; x < decOut.Length; x++)
+                                    {
+                                        //put . in between communications
+                                        for (int y = currentIndex; y < decOut[x].StartIndex; y++)
+                                            streamWriter.Write("."+delimiter);
+
+                                        streamWriter.Write(decOut[x].Text);
+                                        if (decOut[x] is DecoderOutputValue<byte>)
+                                            streamWriter.Write(": " + (decOut[x] as DecoderOutputValue<byte>).Value.ToString());
+                                        streamWriter.Write(delimiter);
+
+                                        //put ---- till communication is finished
+                                        for (int y = decOut[x].StartIndex + 1; y < decOut[x].EndIndex; y++)
+                                            streamWriter.Write("---------"+delimiter);
+
+                                        currentIndex = decOut[x].EndIndex;
+                                    }
+                                    //put . till the end
+                                    for (int y = currentIndex; y < nbrOfSamples; y++)
+                                        streamWriter.Write("." + delimiter);
+                                    streamWriter.WriteLine(); //end visual record
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            csvFileWriter.Configuration.RegisterClassMap<RecordingRecordMapper>();
-            csvFileWriter.Configuration.HasExcelSeparator=true;
-            csvFileWriter.WriteRecords(records);
-            textWriter.Close();
+
+            streamWriter.Close();
             return filename;
         }
 
