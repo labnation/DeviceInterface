@@ -9,8 +9,9 @@ namespace LabNation.DeviceInterface.DataSources
     {
         Type GetDataType();
         String GetName();
-        void AddData(Array data);
+        int AddData(Array data);
         Array GetDataOfNextAcquisition();
+        void Rewind();
         long BytesStored();
         void Destroy();
     }

@@ -40,14 +40,6 @@ namespace LabNation.DeviceInterface.DataSources
             Type t = typeof(Channel);
             foreach (Channel ch in Channel.List)
                 channelBuffers.Add(ch, new ChannelBuffer("Channel" + ch.Name, ch));
-
-            /*
-            foreach (AnalogChannel ch in AnalogChannel.List)
-                channelBuffers.Add(ch, new ChannelBufferFloat("Channel" + ch.Name));
-
-            foreach (LogicAnalyserChannel ch in LogicAnalyserChannel.List)
-                channelBuffers.Add(ch, new ChannelBufferByte("LogicAnalyser" + ch.Name));
-             */
         }
 
         ~RecordingScope()
@@ -89,7 +81,7 @@ namespace LabNation.DeviceInterface.DataSources
             if (!channelBuffers.ContainsKey(ch))
                 return;
 
-            channelBuffers[ch].AddData(data);
+            AcquisitionsRecorded = (int)Math.Max(AcquisitionsRecorded, channelBuffers[ch].AddData(data));
         }
 
         public void Record(DataPackageScope ScopeData, EventArgs e)
@@ -103,7 +95,7 @@ namespace LabNation.DeviceInterface.DataSources
                 foreach (var kvp in channelBuffers)
                 {
                     if (ScopeData.GetData(DataSourceType.Viewport, kvp.Key) != null)
-                        kvp.Value.AddData(ScopeData.GetData(DataSourceType.Viewport, kvp.Key).array);
+                        AcquisitionsRecorded = (int)Math.Abs(kvp.Value.AddData(ScopeData.GetData(DataSourceType.Viewport, kvp.Key).array));
                 } 
                 DataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
 
@@ -121,8 +113,6 @@ namespace LabNation.DeviceInterface.DataSources
 
                     settings[kvp.Key].Add(kvp.Value);
                 }
-
-                AcquisitionsRecorded++;
             }
         }
     }

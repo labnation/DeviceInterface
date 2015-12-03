@@ -261,6 +261,176 @@ namespace LabNation.DeviceInterface.DataSources
             StreamWriter streamWriter = File.CreateText(filename);
             string delimiter = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
+            /* Header definition */
+            //description
+            string[] column0 = new string[2] {"Description" , "SmartScope storage - data recorded on " + DateTime.Now.ToString() };
+            
+            //acq IDs + their starttime
+            UInt64 timeOrigin = recording.acqInfo[0].firstSampleTime;
+            string[] column1 = new string[recording.acqInfo.Count+1];
+            column1[0] = "AcquisitionID";            
+            string[] column2 = new string[recording.acqInfo.Count+1];
+            column2[0] = "AcquisitionStartTimeInSeconds";
+            for (int i = 0; i < recording.acqInfo.Count; i++)
+            {
+                column1[i+1] = i.ToString();
+                column2[i+1] = (((double)recording.acqInfo[i].firstSampleTime - (double)timeOrigin)/(double)1.0e9).ToString();
+            }
+
+            //sample period
+            string[] column3 = new string[2] { "SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod.ToString() };
+
+            List<string[]> headerColumns = new List<string[]>();
+            headerColumns.Add(column0);
+            headerColumns.Add(column1);
+            headerColumns.Add(column2);
+            headerColumns.Add(column3);
+
+            /* First row */
+
+            Type dataType;
+            int nbrOfSamples = 0;
+            int nbrColumns = 0;
+            
+            //first row: header columns
+            foreach (string[] headerColumn in headerColumns)
+                streamWriter.Write(headerColumn[0] + delimiter);
+
+            //first row: channel names
+            foreach (var pair in recording.channelBuffers)
+            {
+                if (pair.Value.BytesStored() > 0)
+                {
+                    dataType = pair.Value.GetDataType();
+                    Array acqData = pair.Value.GetDataOfNextAcquisition();
+                    nbrOfSamples = (int)Math.Max(nbrOfSamples, acqData.Length);
+                    string variableName = pair.Value.GetName().Replace("-", "_").Replace(" ", "");
+
+                    if (dataType != typeof(DecoderOutput))
+                    {
+                        for (int a = 0; a < recording.AcquisitionsRecorded; a++)
+                        {
+                            streamWriter.Write(variableName + "_Acq" + a.ToString("00000") + delimiter);
+                            nbrColumns++;
+                        }
+                    }
+                    else
+                    {
+                        for (int a = 0; a < recording.AcquisitionsRecorded; a++)
+                        {
+                            streamWriter.Write(variableName + "_Acq" + a.ToString("00000") + "_StartIndices" +delimiter);
+                            streamWriter.Write(variableName + "_Acq" + a.ToString("00000") + "_EndIndices" +delimiter);
+                            streamWriter.Write(variableName + "_Acq" + a.ToString("00000") + "_Texts" + delimiter);
+                            streamWriter.Write(variableName + "_Acq" + a.ToString("00000") + "_Values" + delimiter);
+                            nbrColumns++; //only count each decoder as 1 column
+                        }
+                    }
+                }
+            }
+            streamWriter.WriteLine();
+
+            /* All other rows */
+
+            //coming up: data!
+            int sampleCounter = 0;
+            int maxElementsInRAM = 1000000; //defining max RAM consumption. Higher will go faster but consume more RAM!
+            int bufferSize = maxElementsInRAM / nbrColumns; 
+            Dictionary<Array, Type> buffers = new Dictionary<Array, Type>();
+            while (sampleCounter < nbrOfSamples)
+            {                
+                buffers.Clear();
+                
+                //pop data from streams into buffers
+                foreach (var pair in recording.channelBuffers)
+                {                    
+                    if (pair.Value.BytesStored() > 0)
+                    {
+                        dataType = pair.Value.GetDataType();
+                        pair.Value.Rewind();
+                        for (int a = 0; a < recording.AcquisitionsRecorded; a++)
+                        {
+                            Array acqData = pair.Value.GetDataOfNextAcquisition();
+
+                            int toBufferNow = 0;
+                            if (acqData != null) //should never be the case, just here for code safey
+                                toBufferNow = (int)Math.Min(bufferSize, acqData.Length - sampleCounter);
+                            if (toBufferNow < 0)
+                                toBufferNow = 0;
+
+                            Array buffer = Array.CreateInstance(dataType, toBufferNow);
+                            if (toBufferNow > 0)
+                                Array.Copy(acqData, sampleCounter, buffer, 0, toBufferNow);
+                            buffers.Add(buffer, dataType);
+                        }
+                    }
+                }                
+
+                //now write all buffers from RAM to disk
+                for (int i = 0; i < bufferSize; i++)
+                {
+                    progress((float)(sampleCounter+i) / (float)nbrOfSamples);
+
+                    //first write header columns
+                    foreach (string[] headerColumn in headerColumns)
+                    {
+                        if (headerColumn.Length > 1 + sampleCounter + i)
+                            streamWriter.Write(headerColumn[1 + sampleCounter + i] + delimiter);
+                        else
+                            streamWriter.Write(delimiter);
+                    }
+
+                    //write all data columns
+                    foreach (var kvp in buffers)
+                    {
+                        Array acqData = kvp.Key;
+                        dataType = kvp.Value;
+                        if (dataType != typeof(DecoderOutput))
+                        {
+                            if (acqData.Length >= i + 1)
+                            {
+                                streamWriter.Write(acqData.GetValue(i).ToString() + delimiter);
+                            }
+                            else
+                            {
+                                streamWriter.Write(delimiter);
+                            }
+                        }
+                        else
+                        {//DecoderOutput
+                            if (acqData.Length >= i + 1)
+                            {
+                                DecoderOutput decOut = (DecoderOutput)acqData.GetValue(i);
+                                streamWriter.Write(decOut.StartIndex.ToString() + delimiter);
+                                streamWriter.Write(decOut.EndIndex.ToString() + delimiter);
+                                streamWriter.Write(decOut.Text.ToString() + delimiter);
+                                if (decOut is DecoderOutputValue<byte>)
+                                    streamWriter.Write((decOut as DecoderOutputValue<byte>).Value.ToString() + delimiter);
+                                else
+                                    streamWriter.Write(delimiter);
+                            }
+                            else
+                            {
+                                streamWriter.Write(delimiter + delimiter + delimiter + delimiter);
+                            }
+                        }
+                    }
+                    streamWriter.WriteLine();
+                }
+
+                //update while loop constraint
+                sampleCounter += bufferSize;
+            }
+
+            streamWriter.Close();
+            return filename;
+        }
+
+        private static string StoreCsv1(RecordingScope recording, Action<float> progress)
+        {
+            string filename = Utils.GetTempFileName(".csv");
+            StreamWriter streamWriter = File.CreateText(filename);
+            string delimiter = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
             streamWriter.WriteLine("Description"+delimiter+ "SmartScope storage - data recorded on " + DateTime.Now.ToString());
             
             //acq IDs + their starttime

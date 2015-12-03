@@ -22,6 +22,7 @@ namespace LabNation.DeviceInterface.DataSources
         protected int readBufferSize = 2048;
         private bool writing = true;
         BinaryFormatter bin = new BinaryFormatter();
+        private int acquisitionsStored = 0;
 
         public ChannelBuffer(string name, Channel channel)
         {
@@ -53,15 +54,15 @@ namespace LabNation.DeviceInterface.DataSources
             return internalDataType;
         }
 
-        public void AddData(Array data)
+        public int AddData(Array data)
         {
-            if (data == null) return;
+            if (data == null) return acquisitionsStored;
             //if (data.Length == 0) return; //also need to add if data is empty! because otherwise this channel will have less entries in csv/matlab than other channels
 
             //thread safety! it's possible that data is still added once the reading has begun, completely corrupting the stream position
             //code should only enter when there's something wrong with thread safety, but here for safety
             if (!writing)
-                return; 
+                return acquisitionsStored; 
 
             lock (streamLock)
             {
@@ -76,6 +77,8 @@ namespace LabNation.DeviceInterface.DataSources
                 newStream.Position = 0;
                 newStream.CopyTo(stream);
             }
+
+            return ++acquisitionsStored;
         }
 
         private void CopyStream(Stream input, Stream output, int bytes)
@@ -88,6 +91,11 @@ namespace LabNation.DeviceInterface.DataSources
                 output.Write(buffer, 0, read);
                 bytes -= read;
             }
+        }
+
+        public void Rewind()
+        {
+            stream.Seek(0, SeekOrigin.Begin);
         }
 
         public Array GetDataOfNextAcquisition()
