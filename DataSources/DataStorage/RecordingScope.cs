@@ -46,12 +46,8 @@ namespace LabNation.DeviceInterface.DataSources
         {
             Dispose(false);
         }
-#if DEBUG
-        public
-#else
-        internal
-#endif
-        struct AcquisitionInfo
+        
+        public struct AcquisitionInfo
         {
             public int samples;
             public double samplePeriod;
