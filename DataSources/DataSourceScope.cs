@@ -24,9 +24,9 @@ namespace LabNation.DeviceInterface.DataSources
 
         // Recording variables
         public RecordingScope Recording { get; private set; }
-        private TimeSpan RecordingInterval;
+        public TimeSpan RecordingInterval { get; set; }
         private DateTime RecordingLastAcquisitionTimestamp;
-        private int RecordingAcquisitionsPerInterval;
+        public int RecordingAcquisitionsPerInterval { get; set; }
         private int RecordingAcquisitionsThisInterval;
 
         private bool running = false;
@@ -70,6 +70,7 @@ namespace LabNation.DeviceInterface.DataSources
         internal DataSource(IScope scope)
         {
             this.scope = scope;
+            this.RecordingAcquisitionsPerInterval = 1;
         }
         
         public bool IsRunning { get { return dataFetchThread != null && dataFetchThread.IsAlive; } }
@@ -155,22 +156,13 @@ namespace LabNation.DeviceInterface.DataSources
 
         public bool StartRecording()
         {
-            return StartRecording(TimeSpan.Zero, 0);
-        }
-
-        public bool StartRecording(TimeSpan timeInterval, int acquisitionsPerInterval)
-        {
-
             if (Recording != null)
             {
                 Logger.Warn("Can't start recording since a previous recording still exists");
                 return false;
             }
 
-
             this.RecordingLastAcquisitionTimestamp = DateTime.Now; 
-            this.RecordingInterval = timeInterval;
-            this.RecordingAcquisitionsPerInterval = acquisitionsPerInterval;
             this.RecordingAcquisitionsThisInterval = 0;
             
             Recording = new RecordingScope();
