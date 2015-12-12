@@ -339,6 +339,7 @@ namespace LabNation.DeviceInterface.DataSources
             while (sampleCounter < nbrOfSamples)
             {                
                 buffers.Clear();
+                int toBufferNow = 0;
                 
                 //pop data from streams into buffers
                 foreach (var pair in recording.channelBuffers)
@@ -350,8 +351,7 @@ namespace LabNation.DeviceInterface.DataSources
                         for (int a = 0; a < recording.AcquisitionsRecorded; a++)
                         {
                             Array acqData = pair.Value.GetDataOfNextAcquisition();
-
-                            int toBufferNow = 0;
+                            
                             if (acqData != null) //should never be the case, just here for code safey
                                 toBufferNow = (int)Math.Min(bufferSize, acqData.Length - sampleCounter);
                             if (toBufferNow < 0)
@@ -366,7 +366,7 @@ namespace LabNation.DeviceInterface.DataSources
                 }                
 
                 //now write all buffers from RAM to disk
-                for (int i = 0; i < bufferSize; i++)
+                for (int i = 0; i < toBufferNow; i++)
                 {
                     progress((float)(sampleCounter+i) / (float)nbrOfSamples);
 
@@ -425,7 +425,7 @@ namespace LabNation.DeviceInterface.DataSources
             return filename;
         }
 
-        private static string StoreCsv1(RecordingScope recording, Action<float> progress)
+        private static string StoreCsvHorizontal(RecordingScope recording, Action<float> progress)
         {
             string filename = Utils.GetTempFileName(".csv");
             StreamWriter streamWriter = File.CreateText(filename);
