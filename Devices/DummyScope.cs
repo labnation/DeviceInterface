@@ -453,7 +453,7 @@ namespace LabNation.DeviceInterface.Devices {
                 int triggerIndex = 0;
                 Dictionary<AnalogChannel, List<float>> waveAnalog = new Dictionary<AnalogChannel, List<float>>();
                 foreach(AnalogChannel ch in AnalogChannel.List)
-                    waveAnalog.Add(ch, new List<float>());
+                    waveAnalog.Add(ch, new List<float>((int)waveLength));
                 List<byte> waveDigital = new List<byte>();
 
                 bool triggerDetected = false;
@@ -473,6 +473,13 @@ namespace LabNation.DeviceInterface.Devices {
                     }
 
                     acquistionId++;
+
+                    //Stop trying to find a trigger at some point to avoid running out of memory
+                    if (waveAnalog.Where(x => x.Value.Count > GENERATION_LENGTH_MAX).Count() > 0 || waveDigital.Count > GENERATION_LENGTH_MAX)
+                    {
+                        System.Threading.Thread.Sleep(10);
+                        return null;
+                    }
 
                     foreach (AnalogChannel channel in AnalogChannel.List)
                     {
@@ -536,12 +543,6 @@ namespace LabNation.DeviceInterface.Devices {
                         triggerIndex = triggerHoldoffInSamples;
                         awaitingTrigger = false;
                         break;
-                    }
-                    //Stop trying to find a trigger at some point to avoid running out of memory
-                    if (waveAnalog.First().Value.Count > GENERATION_LENGTH_MAX)
-                    {
-                        System.Threading.Thread.Sleep(10);
-                        return null;
                     }
 
                     var timePassed = new TimeSpan((long)(waveLengthCurrent * SamplePeriodCurrent * 1e7));
