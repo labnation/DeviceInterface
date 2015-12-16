@@ -283,28 +283,7 @@ namespace LabNation.DeviceInterface.Devices {
                 forceTrigger = true;
             }
         }
-        public uint TriggerWidth
-        {
-            set
-            {
-                triggerWidth = value;
-            }
-            get
-            {
-                return triggerWidth;
-            }
-        }
-        public float TriggerThreshold
-        {
-            set
-            {
-                triggerThreshold = value;
-            }
-            get
-            {
-                return triggerThreshold;
-            }
-        }
+
         public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {
             set
@@ -723,23 +702,36 @@ namespace LabNation.DeviceInterface.Devices {
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
 			// - if negative, start looking at index 0
 			triggerIndex = 0;
-            float invertor = (trigger.direction == TriggerDirection.RISING) ? 1f : -1f;
             uint halfWidth = width / 2;
-            uint preconditionCounter = 0;
-            uint postconditionCounter = 0;
+            uint preconditionCounterRising = 0;
+            uint preconditionCounterFalling = 0;
+            uint postconditionCounterRising = 0;
+            uint postconditionCounterFalling = 0;
 			for (int i = Math.Max (0, holdoff); i < wave.Length - width - outputWaveLength; i++) {
-                bool preconditionMet = preconditionCounter == halfWidth;
-                if (preconditionMet)
+                bool preconditionRisingMet = preconditionCounterRising == halfWidth;
+                bool preconditionFallingMet = preconditionCounterFalling == halfWidth;
+                if (preconditionRisingMet)
                 {
-                    if (invertor * wave[i] >= invertor * trigger.level + threshold)
-                        postconditionCounter++;
+                    if (wave[i] >= trigger.level + threshold)
+                        postconditionCounterRising++;
+                }
+                else if (preconditionFallingMet)
+                {
+                    if (wave[i] <= trigger.level - threshold)
+                        postconditionCounterFalling++;
                 }
                 else
                 {
-                    if (invertor * wave[i] < invertor * trigger.level)
-                        preconditionCounter++;
+                    if (wave[i] < trigger.level)
+                        preconditionCounterRising++;
+                    if (wave[i] > trigger.level)
+                        preconditionCounterFalling++;
                 }
-                if (preconditionMet && postconditionCounter == halfWidth)
+                if (
+                    (preconditionRisingMet && postconditionCounterRising == halfWidth && trigger.direction != TriggerDirection.FALLING) 
+                ||
+                    (preconditionFallingMet && postconditionCounterFalling == halfWidth && trigger.direction != TriggerDirection.RISING) 
+                )
                 {
                     int triggerIndexTmp = (int)(i + width / 2);
                     if (triggerIndexTmp - holdoff + outputWaveLength <= wave.Length)

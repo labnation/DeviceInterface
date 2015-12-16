@@ -409,9 +409,6 @@ namespace LabNation.DeviceInterface.Devices
             }
 
             DigitalOutput = 0;
-            TriggerWidth = 2;
-            //TriggerThreshold = 3;
-            FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set(3);
 
             SetAwgStretching(0);
             SetViewPort(0, 10e-3);

@@ -318,7 +318,6 @@ namespace LabNation.DeviceInterface.Devices
                 double level = 0;
                 if (coefficients != null)
                     level = (ProbeScaleHostToScope(value.channel, value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
-                level -= FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte() / 2.0;
                 if (level < 0) level = 0;
                 if (level > 255) level = 255;
 
@@ -340,6 +339,14 @@ namespace LabNation.DeviceInterface.Devices
                         (((int)triggerAnalog.direction << 4) & 0x30)
                         )
                 );
+                /* Set type */
+                FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                    (byte)(
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xFC) +
+                        (((int)triggerAnalog.type) & 0x03)
+                        )
+                );
+                UpdateTriggerPulseWidth();
                 //Logger.Debug(" Set trigger channel to " + Enum.GetName(typeof(TriggerDirection), triggerAnalog.direction));
             }
             get
@@ -357,7 +364,7 @@ namespace LabNation.DeviceInterface.Devices
                 REG offsetRegister = ch == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
                 double level = 0;
                 if (coefficients != null) {
-                    level = FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte() + FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].GetByte() / 2.0;
+                    level = FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte();
                     level = level * coefficients[0] + coefficients[1] * FpgaSettingsMemory[offsetRegister].GetByte() + coefficients[2];
                     level = ProbeScaleScopeToHost(ch, (float)level);
                 }
@@ -440,6 +447,22 @@ namespace LabNation.DeviceInterface.Devices
             return AnalogChannel.List.Single(x => x.Value == chNumber);
         }
 
+        private void UpdateTriggerPulseWidth()
+        {
+            UInt32 pwMax = this.triggerAnalog.pulseWidthMax == double.PositiveInfinity ? UInt32.MaxValue : (UInt32)(this.triggerAnalog.pulseWidthMax / BASE_SAMPLE_PERIOD);
+            pwMax &= 0x1FFFFFF;
+            UInt32 pwMin = this.triggerAnalog.pulseWidthMin == double.PositiveInfinity ? UInt32.MaxValue : (UInt32)(this.triggerAnalog.pulseWidthMin / BASE_SAMPLE_PERIOD);
+            pwMin &= 0x1FFFFFF;
+            FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B0].Set((byte)(pwMin >> 0));
+            FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B1].Set((byte)(pwMin >> 8));
+            FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B2].Set((byte)(pwMin >> 16));
+            FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B0].Set((byte)(pwMax >> 0));
+            FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B1].Set((byte)(pwMax >> 8));
+            FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B2].Set((byte)(pwMax >> 16));
+            this.triggerAnalog.pulseWidthMax = pwMax * BASE_SAMPLE_PERIOD;
+            this.triggerAnalog.pulseWidthMin = pwMin * BASE_SAMPLE_PERIOD;
+        }
+
         /// <summary>
         /// Choose between rising or falling trigger
         /// </summary>
@@ -448,40 +471,6 @@ namespace LabNation.DeviceInterface.Devices
         {
             triggerAnalog.direction = direction;
             TriggerAnalog = this.triggerAnalog;
-        }
-        public uint TriggerWidth
-        {
-            set
-            {
-                FpgaSettingsMemory[REG.TRIGGER_WIDTH].Set((byte)value);
-                TriggerHoldOff = this.holdoff;
-            }
-            get
-            {
-                return (uint)FpgaSettingsMemory[REG.TRIGGER_WIDTH].GetByte();
-            }
-        }
-
-        public float TriggerThreshold
-        {
-            set
-            {
-                Logger.Warn("Trigger threshold is not implemented!");
-                return;
-                //throw new NotImplementedException("Forget it");
-                triggerThreshold = value;
-                double level = 0;
-                double[] coefficients = channelSettings[GetTriggerChannel()].coefficients;
-                if (coefficients != null)
-                    level = (ProbeScaleHostToScope(triggerAnalog.channel, triggerThreshold) - coefficients[2]) / coefficients[0];
-                if (level < 0) level = 0;
-                if (level > 255) level = 255;
-                FpgaSettingsMemory[REG.TRIGGER_THRESHOLD].Set((byte)level);
-            }
-            get
-            {
-                return triggerThreshold;
-            }
         }
 
         public AcquisitionMode AcquisitionMode
@@ -777,11 +766,17 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        internal static int TriggerDelay(TriggerModes mode, uint triggerWidth, int inputDecimation)
+        internal static int TriggerDelay(TriggerModes mode, int inputDecimation)
         {
             if(mode == TriggerModes.Digital)
-                return (((int)triggerWidth) >> inputDecimation) + 1;
-            return (((int)triggerWidth) >> inputDecimation) + 4;
+                return (((int)4) >> inputDecimation) + 1;
+            if (inputDecimation == 0)
+                return 7;
+            if (inputDecimation == 1)
+                return 4;
+            if (inputDecimation == 2)
+                return 2;
+            return 1;
         }
 
         public double TriggerHoldOff
@@ -793,7 +788,7 @@ namespace LabNation.DeviceInterface.Devices
                 else
                     this.holdoff = value;
                 Int32 samples = (int)(this.holdoff / SamplePeriod);
-                samples += TriggerDelay(TriggerMode, TriggerWidth, SubSampleRate);
+                samples += TriggerDelay(TriggerMode, SubSampleRate);
                 //FIXME-FPGA bug
                 if (samples >= AcquisitionDepth)
                 {

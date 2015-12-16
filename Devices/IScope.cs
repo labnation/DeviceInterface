@@ -35,7 +35,8 @@ namespace LabNation.DeviceInterface.Devices
     }
 
     public enum TriggerModes { Analog, Digital, External };
-    public enum TriggerDirection { RISING = 0, FALLING = 1 };
+    public enum TriggerDirection { RISING = 0, FALLING = 1, ANY = 2 };
+    public enum TriggerTypes { Edge = 0, Timeout = 1, Pulse = 2 };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
     public enum DigitalTriggerValue { L, H, R, F, X };
@@ -56,6 +57,9 @@ namespace LabNation.DeviceInterface.Devices
         /// Trigger level in volt
         /// </summary>
         public float level;
+        public TriggerTypes type = TriggerTypes.Edge;
+        public double pulseWidthMin = 0.0;
+        public double pulseWidthMax = double.PositiveInfinity;
 
         public AnalogTriggerValue Copy()
         {
@@ -93,8 +97,6 @@ namespace LabNation.DeviceInterface.Devices
         TriggerModes TriggerMode { get; }
         AnalogTriggerValue TriggerAnalog { get; set; }
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
-        uint TriggerWidth { get; set; }
-        float TriggerThreshold { get; set; }
         bool SendOverviewBuffer { get; set; }
         void ForceTrigger();
         event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;

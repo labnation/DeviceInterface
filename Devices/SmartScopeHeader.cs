@@ -184,7 +184,7 @@ namespace LabNation.DeviceInterface.Devices
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
-                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.TriggerDelay(TriggerMode, GetRegister(REG.TRIGGER_WIDTH), GetRegister(REG.INPUT_DECIMATION));
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.TriggerDelay(TriggerMode, GetRegister(REG.INPUT_DECIMATION));
             TriggerHoldoffSamples = holdoffSamples;
             TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }
