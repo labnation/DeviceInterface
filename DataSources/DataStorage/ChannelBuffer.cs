@@ -23,6 +23,7 @@ namespace LabNation.DeviceInterface.DataSources
         private bool writing = true;
         BinaryFormatter bin = new BinaryFormatter();
         private int acquisitionsStored = 0;
+        public int SamplesStored { get; private set; }
 
         public ChannelBuffer(string name, Channel channel)
         {
@@ -33,6 +34,7 @@ namespace LabNation.DeviceInterface.DataSources
             this.writer = new BinaryWriter(this.stream);
             this.reader = new BinaryReader(this.stream);
             this.internalDataType = channel.DataType;
+            this.SamplesStored = 0;
         }
 
         public void Destroy()
@@ -54,7 +56,7 @@ namespace LabNation.DeviceInterface.DataSources
             return internalDataType;
         }
 
-        public int AddData(Array data)
+        public int AddData(Array data, int chunkSize)
         {
             if (data == null) return acquisitionsStored;
             //if (data.Length == 0) return; //also need to add if data is empty! because otherwise this channel will have less entries in csv/matlab than other channels
@@ -62,12 +64,19 @@ namespace LabNation.DeviceInterface.DataSources
             //thread safety! it's possible that data is still added once the reading has begun, completely corrupting the stream position
             //code should only enter when there's something wrong with thread safety, but here for safety
             if (!writing)
-                return acquisitionsStored; 
+                return acquisitionsStored;
+
+            Array dataToStore = data;
+            if (chunkSize != data.Length)
+            {
+                dataToStore = Array.CreateInstance(data.GetType().GetElementType(), chunkSize);
+                Array.Copy(data, data.Length - chunkSize, dataToStore, 0, chunkSize);
+            }
 
             lock (streamLock)
             {
                 MemoryStream newStream = new MemoryStream();                
-                bin.Serialize(newStream, data);
+                bin.Serialize(newStream, dataToStore);
 
                 //first write how many elements will be added for this acquisition
                 byte[] appendLength = BitConverter.GetBytes(newStream.Length);
@@ -77,6 +86,8 @@ namespace LabNation.DeviceInterface.DataSources
                 newStream.Position = 0;
                 newStream.CopyTo(stream);
             }
+
+            SamplesStored += chunkSize;
 
             return ++acquisitionsStored;
         }

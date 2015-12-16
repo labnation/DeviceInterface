@@ -7,9 +7,10 @@ namespace LabNation.DeviceInterface.DataSources
 {
     internal interface IChannelBuffer
     {
+        int SamplesStored { get; }
         Type GetDataType();
         String GetName();
-        int AddData(Array data);
+        int AddData(Array data, int chunkSize);
         Array GetDataOfNextAcquisition();
         void Rewind();
         long BytesStored();

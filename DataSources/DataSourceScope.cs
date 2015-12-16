@@ -154,7 +154,7 @@ namespace LabNation.DeviceInterface.DataSources
             Logger.Debug("Data fetch thread stopped");
         }
 
-        public bool StartRecording()
+        public bool StartRecording(bool scopeIsRolling)
         {
             if (Recording != null)
             {
@@ -165,7 +165,7 @@ namespace LabNation.DeviceInterface.DataSources
             this.RecordingLastAcquisitionTimestamp = DateTime.Now; 
             this.RecordingAcquisitionsThisInterval = 0;
             
-            Recording = new RecordingScope();
+            Recording = new RecordingScope(scopeIsRolling);
 
             return true;
         }

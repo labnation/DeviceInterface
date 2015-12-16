@@ -15,6 +15,7 @@ namespace LabNation.DeviceInterface.DataSources
         public long DataStorageSize { get; private set; }
         bool disposed = false;
         private bool busy;
+        public bool IsRollingRecording { get; private set; }
         private object busyLock = new object();
         public bool Busy
         {
@@ -31,7 +32,8 @@ namespace LabNation.DeviceInterface.DataSources
             }
         }
 
-        public RecordingScope() {
+        public RecordingScope(bool scopeIsRolling) {
+            this.IsRollingRecording = scopeIsRolling;
             busy = true;
             acqInfo = new List<AcquisitionInfo>();
             channelBuffers = new Dictionary<Channel, IChannelBuffer>();
@@ -72,12 +74,12 @@ namespace LabNation.DeviceInterface.DataSources
             GC.SuppressFinalize(this);
         }
 
-        public void Record(Channel ch, Array data)
+        public void Record(Channel ch, Array data, int chunkSize)
         {
             if (!channelBuffers.ContainsKey(ch))
                 return;
 
-            AcquisitionsRecorded = (int)Math.Max(AcquisitionsRecorded, channelBuffers[ch].AddData(data));
+            AcquisitionsRecorded = (int)Math.Max(AcquisitionsRecorded, channelBuffers[ch].AddData(data, data.Length));
         }
 
         public void Record(DataPackageScope ScopeData, EventArgs e)
@@ -91,7 +93,10 @@ namespace LabNation.DeviceInterface.DataSources
                 foreach (var kvp in channelBuffers)
                 {
                     if (ScopeData.GetData(DataSourceType.Viewport, kvp.Key) != null)
-                        AcquisitionsRecorded = (int)Math.Abs(kvp.Value.AddData(ScopeData.GetData(DataSourceType.Viewport, kvp.Key).array));
+                    {
+                        Array dataArray = ScopeData.GetData(DataSourceType.Viewport, kvp.Key).array;
+                        AcquisitionsRecorded = (int)Math.Abs(kvp.Value.AddData(dataArray, ScopeData.LatestChunkSize));
+                    }
                 } 
                 DataStorageSize = channelBuffers.Select(x => x.Value.BytesStored()).Sum();
 

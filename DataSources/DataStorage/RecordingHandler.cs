@@ -66,7 +66,10 @@ namespace LabNation.DeviceInterface.DataSources
             switch (format)
             {
                 case StorageFileFormat.MATLAB:
-                    filename = StoreMatlab(recording, progress);
+                    if (recording.IsRollingRecording)
+                        filename = StoreMatlabRolling(recording, progress);
+                    else
+                        filename = StoreMatlabNonRolling(recording, progress);
                     break;
                 case StorageFileFormat.CSV:
                     filename = StoreCsv(recording, progress);
@@ -80,7 +83,7 @@ namespace LabNation.DeviceInterface.DataSources
             return new StorageFile() { info = new FileInfo(filename), format = format };
         }
 
-        private static string StoreMatlab(RecordingScope recording, Action<float> progress)
+        private static string StoreMatlabNonRolling(RecordingScope recording, Action<float> progress)
         {
             string filename = Utils.GetTempFileName(".mat");
             MatlabFileWriter matFileWriter = new MatlabFileWriter(filename);
@@ -235,6 +238,73 @@ namespace LabNation.DeviceInterface.DataSources
             arrayWriter.AddRow(recording.acqInfo.Select(x => (double)(x.firstSampleTime - timeOrigin) / (double)1.0e9).ToArray());
             arrayWriter.FinishArray(dataType);
             
+            //store sampleFrequency
+            matFileWriter.Write("SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod);
+
+            if (progress != null)
+                progress(.9f);
+
+            //Store settings
+            //FIXME: a struct would be better than just dropping all the variables straight in the top level
+            foreach (var kvp in recording.settings)
+            {
+                dataType = typeof(double);
+                arrayWriter = matFileWriter.OpenArray(dataType, kvp.Key, true);
+                arrayWriter.AddRow(kvp.Value.ToArray());
+                arrayWriter.FinishArray(dataType);
+            }
+
+            matFileWriter.Close();
+            return filename;
+        }
+
+        private static string StoreMatlabRolling(RecordingScope recording, Action<float> progress)
+        {
+            string filename = Utils.GetTempFileName(".mat");
+            MatlabFileWriter matFileWriter = new MatlabFileWriter(filename);
+            matFileWriter.Write("Description", "SmartScope storage - data recorded on " + DateTime.Now.ToString());
+
+            Type dataType;
+            MatLabFileArrayWriter arrayWriter;
+            for (int i = 0; i < recording.channelBuffers.Count; i++)
+            {   var pair = recording.channelBuffers.ElementAt(i);
+
+                if (pair.Value.BytesStored() > 0)
+                {
+                    dataType = pair.Value.GetDataType();
+                    string matlabFriendlyVariableName = pair.Value.GetName().Replace("-", "_").Replace(" ", "");
+
+                    if (dataType != typeof(DecoderOutput))
+                    { // for simple datatypes
+                        //gather full array
+                        Array totalArray = Array.CreateInstance(dataType, pair.Value.SamplesStored);
+                        int pointer = 0;
+                        for (int j = 0; j < recording.acqInfo.Count; j++)
+                        {
+                            Array acqData = pair.Value.GetDataOfNextAcquisition();
+                            if (dataType == typeof(bool))
+                                acqData = Array.ConvertAll((bool[])totalArray, b => b ? (byte)1 : (byte)0);
+                            Array.Copy(acqData, 0, totalArray, pointer, acqData.Length);
+                            pointer += acqData.Length;
+                        }
+
+                        //matlab doesn't support bools -> save as bytes
+                        if (dataType == typeof(bool))
+                            arrayWriter = matFileWriter.OpenArray(typeof(byte), matlabFriendlyVariableName, true);
+                        else
+                            arrayWriter = matFileWriter.OpenArray(dataType, matlabFriendlyVariableName, true);                        
+                        arrayWriter.AddRow(totalArray);                        
+                        arrayWriter.FinishArray(dataType);
+                    }
+
+                    if (progress != null)
+                        progress((float)i/(float)recording.channelBuffers.Count);
+                }
+            }
+
+            if (progress != null)
+                progress(.6f);
+
             //store sampleFrequency
             matFileWriter.Write("SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod);
 

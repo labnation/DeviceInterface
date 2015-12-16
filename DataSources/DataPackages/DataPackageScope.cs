@@ -58,7 +58,8 @@ namespace LabNation.DeviceInterface.DataSources
 
         public Type ScopeType { get; private set; }
 
-        private Dictionary<DataSourceType, Dictionary<Channel, ChannelData>> data;        
+        private Dictionary<DataSourceType, Dictionary<Channel, ChannelData>> data;
+        public int LatestChunkSize { get; private set; }        
 
 #if DEBUG
         internal SmartScopeHeader header = null;
@@ -145,6 +146,7 @@ namespace LabNation.DeviceInterface.DataSources
 
             int arrayToAddElements = Math.Min(arrayToAdd.Length, MaxElements);
             int arrayWeHadElements = arrayWeHad == null ? 0 : Math.Min(arrayWeHad.array.Length, MaxElements - arrayToAddElements);
+            this.LatestChunkSize = arrayToAddElements;
 
             //When adding all elements from new array, don't bother copying things togehter
             if (arrayWeHadElements <= 0 && arrayToAddElements == arrayToAdd.Length)
