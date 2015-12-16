@@ -427,9 +427,11 @@ namespace LabNation.DeviceInterface.DataSources
                             if (toBufferNow < 0)
                                 toBufferNow = 0;
 
-                            Array buffer = Array.CreateInstance(dataType, toBufferNow);
+                            Array buffer = Array.CreateInstance(dataType, toBufferNow);                            
                             if (toBufferNow > 0)
                                 Array.Copy(acqData, sampleCounter, buffer, 0, toBufferNow);
+                            if (dataType == typeof(bool))
+                                buffer = Array.ConvertAll((bool[])buffer, b => b ? (byte)1 : (byte)0);
                             buffers.Add(buffer, dataType);
                         }
                     }
