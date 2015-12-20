@@ -145,11 +145,15 @@ namespace LabNation.DeviceInterface.DataSources
                 Logger.Error("Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
+            int lastID = 0;
             while (running && scope.Ready)
             {
                 LatestDataPackage = scope.GetScopeData();
-                if (LatestDataPackage != null)
+                if (LatestDataPackage != null && lastID != LatestDataPackage.Identifier)
+                {
+                    lastID = LatestDataPackage.Identifier;
                     this.fireDataAvailableEvents();
+                }
             }
             Logger.Debug("Data fetch thread stopped");
         }
