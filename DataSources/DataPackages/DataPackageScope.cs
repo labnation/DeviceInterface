@@ -115,6 +115,11 @@ namespace LabNation.DeviceInterface.DataSources
             if (arr == null)
                 return;
 
+            //TODO: check with Jasper if this is OK to do!
+            //Why this return should be here: when the following condition is true, data which might already be processed (eg timesmoothing) is being overwritten by native data.
+            if (data[type].ContainsKey(ch))
+                return;
+
             lock (dataLock)
             {
                 if (arr.GetType().GetElementType() != ChannelDataTypes[ch.GetType()])
