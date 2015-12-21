@@ -7,6 +7,8 @@ using LabNation.DeviceInterface.DataSources;
 
 namespace LabNation.DeviceInterface.Devices
 {
+    public delegate void AcquisitionTransferFinishedHandler(IScope scope, EventArgs e);
+
     public sealed class ProbeDivision 
     {
         public static List<ProbeDivision> divs = new List<ProbeDivision>();
@@ -65,7 +67,7 @@ namespace LabNation.DeviceInterface.Devices
     {
         DataPackageScope GetScopeData();
         DataSources.DataSource DataSourceScope { get; }
-
+        
         bool Rolling { get; set; }
         bool Running { get; set; }
         bool CanRoll { get; }
@@ -91,6 +93,7 @@ namespace LabNation.DeviceInterface.Devices
         float TriggerThreshold { get; set; }
         bool SendOverviewBuffer { get; set; }
         void ForceTrigger();
+        event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
 
         /* Channel specifics */
         void SetCoupling(AnalogChannel channel, Coupling coupling);
@@ -111,6 +114,7 @@ namespace LabNation.DeviceInterface.Devices
         void SetViewPort(double offset, double timespan);
         double ViewPortTimeSpan { get; }
         double ViewPortOffset { get; }
+        bool SuspendViewportUpdates { get; set; }
         
         void CommitSettings();
     }

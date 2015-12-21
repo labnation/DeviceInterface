@@ -116,7 +116,7 @@ namespace LabNation.DeviceInterface.Devices
                     toggleAcquisitionUpdateStrobe();
                     DiscardPreviousAcquisition = true;
                 }
-                if(viewUpdateRequired)
+                if (viewUpdateRequired && !SuspendViewportUpdates)
                     toggleViewUpdateStrobe();
                 
             }

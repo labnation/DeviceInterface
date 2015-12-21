@@ -32,6 +32,8 @@ namespace LabNation.DeviceInterface.Devices
         Rom rom;
         private bool flashed = false;
         private bool deviceReady = false;
+        public bool SuspendViewportUpdates { get; set; }
+        public event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
 
         private List<DeviceMemory> memories = new List<DeviceMemory>();
 #if DEBUG
@@ -127,6 +129,7 @@ namespace LabNation.DeviceInterface.Devices
         internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
             this.hardwareInterface = usbInterface;
+            this.SuspendViewportUpdates = false;
             AwgOutOfRange = false;
             deviceReady = false;
 
@@ -612,10 +615,16 @@ namespace LabNation.DeviceInterface.Devices
                 }
 
                 float fullAcquisitionDumpProgress = (header.PackageOffset + 1) * (float)header.Samples / header.AcquisitionDepth;
+
+                //update FullAcquisitionFetchProgress and fire event when finished
+                float previousAcqTransferProgress = currentDataPackage.FullAcquisitionFetchProgress;
                 currentDataPackage.FullAcquisitionFetchProgress = fullAcquisitionDumpProgress;
+                if (currentDataPackage.FullAcquisitionFetchProgress == 1 && previousAcqTransferProgress < 1)
+                    if (OnAcquisitionTransferFinished != null)
+                        OnAcquisitionTransferFinished(this, new EventArgs());
+
                 return currentDataPackage;
             }
-
 
             if (header.ImpossibleDump)
                 return null;

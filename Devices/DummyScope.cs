@@ -39,6 +39,8 @@ namespace LabNation.DeviceInterface.Devices {
         private object acquisitionSettingsLock = new object();
         private bool forceTrigger = false;
         private int acquistionId = 0;
+        public bool SuspendViewportUpdates { get; set; }
+        public event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
 
         Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog;
         byte[] acquisitionBufferDigital = null;
