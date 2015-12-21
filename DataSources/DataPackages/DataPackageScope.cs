@@ -59,8 +59,9 @@ namespace LabNation.DeviceInterface.DataSources
         public Type ScopeType { get; private set; }
 
         private Dictionary<DataSourceType, Dictionary<Channel, ChannelData>> data;
-        public int LatestChunkSize { get; private set; }        
-
+        public int LatestChunkSize { get; private set; }
+        public DateTime LastDataUpdate { get; private set; }
+        
 #if DEBUG
         internal SmartScopeHeader header = null;
 #endif
@@ -77,6 +78,7 @@ namespace LabNation.DeviceInterface.DataSources
             int viewportSamples, Int64 viewportOffsetSamples,
             double holdoff, Int64 holdoffSamples, bool rolling, int identifier, double viewportExcess = 0)
         {
+            this.LastDataUpdate = DateTime.Now;
             this.ScopeType = scopeType;
             this.Identifier = identifier;
             this.AcquisitionSamples = acquiredSamples;
@@ -115,17 +117,13 @@ namespace LabNation.DeviceInterface.DataSources
             if (arr == null)
                 return;
 
-            //TODO: check with Jasper if this is OK to do!
-            //Why this return should be here: when the following condition is true, data which might already be processed (eg timesmoothing) is being overwritten by native data.
-            if (data[type].ContainsKey(ch))
-                return;
-
             lock (dataLock)
             {
                 if (arr.GetType().GetElementType() != ChannelDataTypes[ch.GetType()])
                     throw new Exception("Invalid data type " + arr.GetType().GetElementType().ToString() + " for channel of type " + ch.GetType().ToString());
 
                 data[type][ch] = new ChannelData(type, ch, arr, partial, samplePeriod[type], offset[type]);
+                this.LastDataUpdate = DateTime.Now;
             }
         }
 
