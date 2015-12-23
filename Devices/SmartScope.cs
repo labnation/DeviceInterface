@@ -595,6 +595,7 @@ namespace LabNation.DeviceInterface.Devices
                 {
                     //Here we don't use AddData since we want to assign the whole acqbuf in memory
                     // at once instead of growing it as it comes in.
+                    // Need to update datapackage timestamp though!
                     ChannelData target = currentDataPackage.GetData(DataSourceType.Acquisition, ch);
                     Array targetArray;
                     if (target == null)
@@ -611,7 +612,7 @@ namespace LabNation.DeviceInterface.Devices
                     {
                         targetArray = target.array;
                     }
-                    Array.ConstrainedCopy(receivedData[ch], 0, targetArray, header.PackageOffset * header.Samples, receivedData[ch].Length);
+                    Array.ConstrainedCopy(receivedData[ch], 0, targetArray, header.PackageOffset * header.Samples, receivedData[ch].Length);                    
                 }
 
                 float fullAcquisitionDumpProgress = (header.PackageOffset + 1) * (float)header.Samples / header.AcquisitionDepth;
@@ -620,8 +621,11 @@ namespace LabNation.DeviceInterface.Devices
                 float previousAcqTransferProgress = currentDataPackage.FullAcquisitionFetchProgress;
                 currentDataPackage.FullAcquisitionFetchProgress = fullAcquisitionDumpProgress;
                 if (currentDataPackage.FullAcquisitionFetchProgress == 1 && previousAcqTransferProgress < 1)
+                {
+                    currentDataPackage.UpdateTimestamp();
                     if (OnAcquisitionTransferFinished != null)
                         OnAcquisitionTransferFinished(this, new EventArgs());
+                }
 
                 return currentDataPackage;
             }

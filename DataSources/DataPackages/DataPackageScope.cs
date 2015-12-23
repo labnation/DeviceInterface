@@ -110,7 +110,12 @@ namespace LabNation.DeviceInterface.DataSources
                 { AnalogChannel.ChA, float.PositiveInfinity },
                 { AnalogChannel.ChB, float.PositiveInfinity },
             };
-        }       
+        }
+
+        internal void UpdateTimestamp()
+        {
+            LastDataUpdate = DateTime.Now;
+        }
 
         internal void SetData(DataSourceType type, Channel ch, Array arr, bool partial = false)
         {
