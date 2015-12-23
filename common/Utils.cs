@@ -599,6 +599,7 @@ namespace LabNation.Common
                 case 2: return "M" + unit;
                 case 3: return "G" + unit;
                 case 4: return "T" + unit;
+                case 5: return "P" + unit;
                 default: return unit;
             }
         }
