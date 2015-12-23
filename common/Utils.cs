@@ -259,13 +259,16 @@ namespace LabNation.Common
                 return previousValue;
         }
 
-
-        public static bool[] Schmitt(float[] analogData, float? thresholdHigh = null, float? thresholdLow = null)
+        public static bool[] Schmitt(float[] analogData)
+        {
+            return Schmitt(analogData, analogData.Min(), analogData.Max());
+        }
+        public static bool[] Schmitt(float[] analogData, float minValue, float maxValue)
         {
             if (analogData == null) return null;
 
-            float H = thresholdHigh.HasValue ? thresholdHigh.Value : analogData.Min() + (analogData.Max() - analogData.Min()) * 0.7f;
-            float L = thresholdLow.HasValue ? thresholdLow.Value : analogData.Min() + (analogData.Max() - analogData.Min()) * 0.3f;
+            float H = minValue + (maxValue - minValue) * 0.7f;
+            float L = minValue + (maxValue - minValue) * 0.3f;
 
             bool[] digitalData = new bool[analogData.Length];
             bool digitalDataPrevious = analogData[0] >= H;
