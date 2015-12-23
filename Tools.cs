@@ -218,7 +218,7 @@ namespace LabNation.DeviceInterface
                     if (currMaxVal < highMarginValue) break;
 
                     Dictionary<int, bool> risingNFallingEdges;
-                    ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError, out risingNFallingEdges);
+                    ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError, out risingNFallingEdges, currMinVal, currMaxVal);
                     if (!double.IsNaN(frequency) && (finalFrequencies[kvp.Key] == double.MaxValue))
                         finalFrequencies[kvp.Key] = frequency;
                 }               
@@ -311,7 +311,7 @@ namespace LabNation.DeviceInterface
             }
         }
 
-        public static void ComputeFrequencyDutyCycle(ChannelData data, out double frequency, out double frequencyError, out double dutyCycle, out double dutyCycleError, out Dictionary<int, bool> risingNFallingEdges)
+        public static void ComputeFrequencyDutyCycle(ChannelData data, out double frequency, out double frequencyError, out double dutyCycle, out double dutyCycleError, out Dictionary<int, bool> risingNFallingEdges, float minVoltage, float maxVoltage)
         {
             frequency = double.NaN;
             frequencyError = double.NaN;    
@@ -319,7 +319,7 @@ namespace LabNation.DeviceInterface
             dutyCycleError = double.NaN;
             risingNFallingEdges = new Dictionary<int, bool>();
 
-            bool[] digitized = data.array.GetType().GetElementType() == typeof(bool) ? (bool[])data.array : LabNation.Common.Utils.Schmitt((float[])data.array);
+            bool[] digitized = data.array.GetType().GetElementType() == typeof(bool) ? (bool[])data.array : LabNation.Common.Utils.Schmitt((float[])data.array, minVoltage, maxVoltage);
 
             List<double> edgePeriod = new List<double>();
             List<double> highPeriod = new List<double>();
