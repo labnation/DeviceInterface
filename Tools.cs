@@ -376,19 +376,28 @@ namespace LabNation.DeviceInterface
                 return;
             }
 
-            double average = edgePeriod.Average();
+            //take median
+            edgePeriod.Sort();
+            double median = edgePeriod.ElementAt((int)edgePeriod.Count / 2);
 
             if (highPeriod.Count > 0 && lowPeriod.Count > 0)
             {
-                dutyCycle = highPeriod.Average() / average;
-                dutyCycle += 1.0 - lowPeriod.Average() / average;
+                dutyCycle = highPeriod.Average() / median;
+                dutyCycle += 1.0 - lowPeriod.Average() / median;
                 dutyCycle *= 50;
             }
+            if (dutyCycle < 0)
+                dutyCycle = 0;
+            if (dutyCycle > 100)
+                dutyCycle = 100;
 
-
-            double f = 1 / average;
+            //reject if more than 5% of are more than 50% off
+            float rejectRatio = 0.05f;
+            float errorRatio = 0.5f;
+            double f = 1 / median;
             double fError = edgePeriod.Select(x => Math.Abs(1 / x - f)).Max();
-            if (fError > f * 0.6)
+            List<double> outliers = edgePeriod.Where(x => Math.Abs(x - median) > median * errorRatio).ToList();
+            if (fError > f * 0.6 && outliers.Count > edgePeriod.Count * rejectRatio)
                 return;
             frequency = f;
             frequencyError = fError;
