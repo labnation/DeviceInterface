@@ -257,12 +257,16 @@ namespace LabNation.DeviceInterface
             float lowVBoundary = minVoltage + amp*(1f-pct)/2f;
             float highVBoundary = maxVoltage - amp*(1f-pct)/2f;
 
+            //copy for fast access -- ElementAt is terribly slow!!
+            int[] risingNFallingEdgesIndices = risingNFallingEdges.Keys.ToArray();
+            bool[] risingNFallingEdgesBools = risingNFallingEdges.Values.ToArray();
+
             for (int i = 1; i < risingNFallingEdges.Count-1; i++)
             {
-                bool risingEdge = risingNFallingEdges.ElementAt(i).Value;
-                int prevCrossIndex = risingNFallingEdges.ElementAt(i-1).Key;
-                int currCrossIndex = risingNFallingEdges.ElementAt(i).Key;
-                int nextCrossIndex = risingNFallingEdges.ElementAt(i+1).Key;
+                bool risingEdge = risingNFallingEdgesBools[i];
+                int prevCrossIndex = risingNFallingEdgesIndices[i - 1];
+                int currCrossIndex = risingNFallingEdgesIndices[i];
+                int nextCrossIndex = risingNFallingEdgesIndices[i + 1];
                 
                 if (risingEdge) //rising edge
                 {
