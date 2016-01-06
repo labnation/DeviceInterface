@@ -502,6 +502,9 @@ namespace LabNation.DeviceInterface.Devices
 				buffer = hardwareInterface.GetData (BYTES_PER_BURST);
 			} catch (ScopeIOException) {
 				return null;
+			} catch (Exception e) {
+				Logger.Error ("Error while trying to get scope data: " + e.Message);
+				return null;
 			}
 			if (buffer == null)
 				return null;
