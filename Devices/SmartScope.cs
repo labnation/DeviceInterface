@@ -79,8 +79,27 @@ namespace LabNation.DeviceInterface.Devices
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
         private const int ACQUISITION_DEPTH_MIN = 128; //Size of RAM
-        private const int ACQUISITION_DEPTH_MAX = 512 * 1024;//4 * 1024 * 1024; //Size of RAM
+        private const int ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024; //Size of RAM
         private const int ACQUISITION_DEPTH_DEFAULT = 512 * 1024;
+        private uint acquisitionDepthUserMaximum = ACQUISITION_DEPTH_DEFAULT;
+        public uint AcquisitionDepthUserMaximum
+        {
+            get
+            {
+                return acquisitionDepthUserMaximum;
+            }
+            set
+            {
+                if (value > ACQUISITION_DEPTH_MAX)
+                    acquisitionDepthUserMaximum = ACQUISITION_DEPTH_MAX;
+                else if (value < ACQUISITION_DEPTH_MIN)
+                    acquisitionDepthUserMaximum = ACQUISITION_DEPTH_MIN;
+                else
+                    acquisitionDepthUserMaximum = value;
+
+                VIEW_DECIMATION_MAX = (int)Math.Log(acquisitionDepthUserMaximum / OVERVIEW_BUFFER_SIZE, 2);
+            }
+        }
         private const int BYTES_PER_BURST = 64;
         private const int BYTES_PER_SAMPLE = 2;
         private const int SAMPLES_PER_BURST = BYTES_PER_BURST / BYTES_PER_SAMPLE; //one byte per channel
@@ -89,7 +108,7 @@ namespace LabNation.DeviceInterface.Devices
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
         private const int INPUT_DECIMATION_MIN_FOR_ROLLING_MODE = 7;
         internal const int INPUT_DECIMATION_MAX = 9;
-        private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_MAX / OVERVIEW_BUFFER_SIZE, 2);
+        private static int VIEW_DECIMATION_MAX = (int)Math.Log(ACQUISITION_DEPTH_DEFAULT / OVERVIEW_BUFFER_SIZE, 2);
         private const int BURSTS_MAX = 64;
         List<byte> adcTimingValues = new List<byte>() { 0, 1, 2, 3, 5, 6, 7 };
         private byte AdcTimingValue { 

@@ -563,7 +563,7 @@ namespace LabNation.DeviceInterface.Devices
         }
         public double AcquisitionLengthMax
         {
-            get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * Math.Pow(2, INPUT_DECIMATION_MAX); }
+            get { return AcquisitionDepthUserMaximum * BASE_SAMPLE_PERIOD * Math.Pow(2, INPUT_DECIMATION_MAX); }
         }
 
         public bool PreferPartial { 
@@ -583,8 +583,8 @@ namespace LabNation.DeviceInterface.Devices
                 if (acquisitionDepthPower < 0)
                     acquisitionDepthPower = 0;
 
-                if (samples > ACQUISITION_DEPTH_MAX)
-                    AcquisitionDepth = ACQUISITION_DEPTH_MAX;
+                if (samples > AcquisitionDepthUserMaximum)
+                    AcquisitionDepth = AcquisitionDepthUserMaximum;
                 else
                     AcquisitionDepth = (uint)(OVERVIEW_BUFFER_SIZE * Math.Pow(2, acquisitionDepthPower));
                 acquisitionDepthPower = (int)Math.Log(AcquisitionDepth / OVERVIEW_BUFFER_SIZE, 2);
@@ -612,8 +612,8 @@ namespace LabNation.DeviceInterface.Devices
         {
             set
             {
-                if (value > ACQUISITION_DEPTH_MAX)
-                    value = ACQUISITION_DEPTH_MAX;
+                if (value > AcquisitionDepthUserMaximum)
+                    value = AcquisitionDepthUserMaximum;
                 double multiple = Math.Ceiling((double)value / OVERVIEW_BUFFER_SIZE);
                 double power = Math.Log(multiple, 2);
                 FpgaSettingsMemory[REG.ACQUISITION_DEPTH].Set((int)power);

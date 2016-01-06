@@ -93,6 +93,8 @@ namespace LabNation.DeviceInterface.Devices {
             return (Int32)(time / (BASE_SAMPLE_PERIOD * Math.Pow(2, inputDecimation)));
         }
 
+        public uint AcquisitionDepthUserMaximum { get; set; }
+
         public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get; private set; }
 
         //Trigger

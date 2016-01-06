@@ -78,6 +78,7 @@ namespace LabNation.DeviceInterface.Devices
         void Resume();
 
         /* Acquisition & Trigger */
+        uint AcquisitionDepthUserMaximum { get; set; }
         bool PreferPartial { get; set; }
         AcquisitionMode AcquisitionMode { set; }
         double AcquisitionLength { get; set; }
