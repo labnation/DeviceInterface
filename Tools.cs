@@ -302,17 +302,17 @@ namespace LabNation.DeviceInterface
                         if (endIndex - beginIndex - 1 > 1)
                             fallTimes.Add((endIndex - beginIndex - 1) * samplePeriod);
                 }
-
-                if (riseTimes.Count == 0)
-                    riseTime = double.NaN;
-                else
-                    riseTime = riseTimes.Average();
-
-                if (fallTimes.Count == 0)
-                    fallTime = double.NaN;
-                else
-                    fallTime = fallTimes.Average();
             }
+
+            if (riseTimes.Count == 0)
+                riseTime = double.NaN;
+            else
+                riseTime = riseTimes.Average();
+
+            if (fallTimes.Count == 0)
+                fallTime = double.NaN;
+            else
+                fallTime = fallTimes.Average();
         }
 
         public static void ComputeFrequencyDutyCycle(ChannelData data, out double frequency, out double frequencyError, out double dutyCycle, out double dutyCycleError, out Dictionary<int, bool> risingNFallingEdges, float minVoltage, float maxVoltage)
