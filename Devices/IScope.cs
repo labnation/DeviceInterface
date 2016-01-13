@@ -94,7 +94,7 @@ namespace LabNation.DeviceInterface.Devices
         int SubSampleRate { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
-        TriggerModes TriggerMode { get; }
+        TriggerModes TriggerMode { get; set; }
         AnalogTriggerValue TriggerAnalog { get; set; }
         Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
         bool SendOverviewBuffer { get; set; }

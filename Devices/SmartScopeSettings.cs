@@ -328,8 +328,8 @@ namespace LabNation.DeviceInterface.Devices
                 //Logger.Debug(" Set trigger channel to " + (triggerAnalog.channel == AnalogChannel.ChA ? " CH A" : "CH B"));
                 FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                     (byte)(
-                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF3) +
-                        (triggerAnalog.channel.Value << 2)
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xFB) +
+                        ((triggerAnalog.channel.Value << 2) & 0x04)
                             ));
 
                 /* Set Direction */
@@ -358,7 +358,7 @@ namespace LabNation.DeviceInterface.Devices
                     return v;
 
                 TriggerDirection dir = (TriggerDirection)((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x30) >> 4);
-                AnalogChannel ch = AnalogChannel.List.Single(x=>x.Value == ((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2));
+                AnalogChannel ch = AnalogChannel.List.Single(x=>x.Value == ((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x04) >> 2));
 
                 double[] coefficients = channelSettings[ch].coefficients;
                 REG offsetRegister = ch == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
@@ -410,8 +410,19 @@ namespace LabNation.DeviceInterface.Devices
             {
                 if (LogicAnalyserEnabled && triggerAnalog.channel.Equals(ChannelSacrificedForLogicAnalyser))
                     return TriggerModes.Digital;
+                if (((FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() >> 3) & 0x01) == 1)
+                    return TriggerModes.External;
                 return TriggerModes.Analog;
-
+            }
+            set
+            {
+                if (value == TriggerModes.Digital)
+                    throw new Exception("Can't set trigger mode directly to digital mode, set it by setting the digital trigger condition");
+                FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
+                    (byte)(
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF7) +
+                        value == TriggerModes.External ? 0x08 : 0
+                            ));
             }
         }
 
@@ -443,7 +454,7 @@ namespace LabNation.DeviceInterface.Devices
 
         public AnalogChannel GetTriggerChannel()
         {         
-            int chNumber = (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x0C) >> 2;
+            int chNumber = (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0x04) >> 2;
             return AnalogChannel.List.Single(x => x.Value == chNumber);
         }
 

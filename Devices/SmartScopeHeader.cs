@@ -163,7 +163,7 @@ namespace LabNation.DeviceInterface.Devices
 
             AnalogTrigger = new AnalogTriggerValue()
             {
-                channel = AnalogChannel.List.First(x => x.Value ==  ((GetRegister(REG.TRIGGER_MODE) >> 2) & 0x03)),
+                channel = AnalogChannel.List.First(x => x.Value ==  ((GetRegister(REG.TRIGGER_MODE) >> 2) & 0x01)),
                 direction = (TriggerDirection)((GetRegister(REG.TRIGGER_MODE) >> 4) & 0x03),
             };
             ChannelSacrificedForLogicAnalyser = GetStrobe(STR.LA_CHANNEL) ? AnalogChannel.ChB : AnalogChannel.ChA;
