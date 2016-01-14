@@ -94,6 +94,15 @@ namespace LabNation.DeviceInterface.Devices {
         }
 
         public uint AcquisitionDepthUserMaximum { get; set; }
+        public uint AcquisitionDepthMax
+        {
+            get { return (uint)ACQUISITION_DEPTH_MAX; }
+        }
+        public uint InputDecimationMax
+        {
+            get { return (uint)9; }
+        }
+        public int SubSampleRate { get { return 0; } }
 
         public Dictionary<AnalogChannel, DummyScopeChannelConfig> ChannelConfig { get; private set; }
 

@@ -85,6 +85,9 @@ namespace LabNation.DeviceInterface.Devices
         double SamplePeriod { get; }
         double AcquisitionLengthMax { get; }
         double AcquisitionLengthMin { get; }
+        uint AcquisitionDepthMax { get; }
+        uint InputDecimationMax { get; }
+        int SubSampleRate { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
         TriggerModes TriggerMode { get; }
@@ -95,7 +98,7 @@ namespace LabNation.DeviceInterface.Devices
         bool SendOverviewBuffer { get; set; }
         void ForceTrigger();
         event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
-
+        
         /* Channel specifics */
         void SetCoupling(AnalogChannel channel, Coupling coupling);
         Coupling GetCoupling(AnalogChannel channel);

@@ -565,6 +565,14 @@ namespace LabNation.DeviceInterface.Devices
         {
             get { return AcquisitionDepthUserMaximum * BASE_SAMPLE_PERIOD * Math.Pow(2, INPUT_DECIMATION_MAX); }
         }
+        public uint AcquisitionDepthMax
+        {
+            get { return (uint)ACQUISITION_DEPTH_MAX; }
+        }
+        public uint InputDecimationMax
+        {
+            get { return (uint)INPUT_DECIMATION_MAX; }
+        }
 
         public bool PreferPartial { 
             get { return StrobeMemory[STR.VIEW_SEND_PARTIAL].GetBool(); }
