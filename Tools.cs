@@ -68,12 +68,15 @@ namespace LabNation.DeviceInterface
             //s.AcquisitionDepth = 4096;
             scope.TriggerHoldOff = 0;
             scope.SendOverviewBuffer = false;
-            
-            AnalogTriggerValue atv = new AnalogTriggerValue();
-            atv.channel = AnalogChannel.ChA;
-            atv.direction = TriggerDirection.RISING;
-            atv.level = 5000;
-            scope.TriggerAnalog = atv;
+
+            TriggerValue trigger = new TriggerValue()
+            {
+                source = TriggerSource.Analog,
+                channel = AnalogChannel.ChA,
+                edge = TriggerEdge.RISING,
+                level = 5000,
+            };
+            scope.TriggerValue = trigger;
 
             foreach (AnalogChannel ch in AnalogChannel.List)
                 scope.SetCoupling(ch, Coupling.DC);

@@ -34,36 +34,47 @@ namespace LabNation.DeviceInterface.Devices
         }
     }
 
-    public enum TriggerModes { Analog, Digital, External };
-    public enum TriggerDirection { RISING = 0, FALLING = 1, ANY = 2 };
-    public enum TriggerTypes { Edge = 0, Timeout = 1, Pulse = 2 };
+    public enum TriggerSource { Analog = 0, External = 1 };
+    public enum TriggerEdge { RISING = 0, FALLING = 1, ANY = 2 };
+    public enum TriggerMode { Edge = 0, Timeout = 1, Pulse = 2, Digital = 3 };
     public enum Coupling { AC, DC };
     public enum AcquisitionMode { SINGLE = 2, NORMAL = 1, AUTO = 0};
     public enum DigitalTriggerValue { L, H, R, F, X };
     /// <summary>
-    /// Describes an analog trigger
+    /// Describes an entire trigger condition
     /// </summary>
-    public class AnalogTriggerValue
+    public class TriggerValue
     {
         /// <summary>
-        /// Trigger channel
+        /// Trigger mode (pulse,edge,timeout,digi)
         /// </summary>
-        public AnalogChannel channel;
+        public TriggerMode mode = TriggerMode.Edge;
         /// <summary>
-        /// The direction
+        /// Trigger source (analog/ext)
         /// </summary>
-        public TriggerDirection direction;
+        public TriggerSource source = TriggerSource.Analog;
         /// <summary>
-        /// Trigger level in volt
+        /// Analog mode channel
+        /// </summary>
+        public AnalogChannel channel = AnalogChannel.ChA;
+        /// <summary>
+        /// Digital mode setting
+        /// </summary>
+        public Dictionary<DigitalChannel, DigitalTriggerValue> digital;
+        /// <summary>
+        /// The direction for analog/ext trigger
+        /// </summary>
+        public TriggerEdge edge = TriggerEdge.RISING;
+        /// <summary>
+        /// Trigger level in volt for analog mode
         /// </summary>
         public float level;
-        public TriggerTypes type = TriggerTypes.Edge;
         public double pulseWidthMin = 0.0;
         public double pulseWidthMax = double.PositiveInfinity;
 
-        public AnalogTriggerValue Copy()
+        public TriggerValue Copy()
         {
-            return (AnalogTriggerValue)this.MemberwiseClone();
+            return (TriggerValue)this.MemberwiseClone();
         }
     }
 
@@ -94,9 +105,7 @@ namespace LabNation.DeviceInterface.Devices
         int SubSampleRate { get; }
         uint AcquisitionDepth { get; set; }
         double TriggerHoldOff { get; set; }
-        TriggerModes TriggerMode { get; set; }
-        AnalogTriggerValue TriggerAnalog { get; set; }
-        Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital { set; }
+        TriggerValue TriggerValue { get; set; }
         bool SendOverviewBuffer { get; set; }
         void ForceTrigger();
         event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
@@ -113,7 +122,7 @@ namespace LabNation.DeviceInterface.Devices
         ProbeDivision GetProbeDivision(AnalogChannel ch);
 
         /* Logic Analyser */
-        bool LogicAnalyserEnabled { get; set; }
+        bool LogicAnalyserEnabled { get; }
         AnalogChannel ChannelSacrificedForLogicAnalyser { set; }
 
         /* Viewport */        

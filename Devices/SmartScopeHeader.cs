@@ -117,17 +117,7 @@ namespace LabNation.DeviceInterface.Devices
 
         internal bool LogicAnalyserEnabled { get; private set; }
         internal AnalogChannel ChannelSacrificedForLogicAnalyser { get; private set; }
-        public AnalogTriggerValue AnalogTrigger { get; private set; }
-        internal TriggerModes TriggerMode
-        {
-            get
-            {
-                if (LogicAnalyserEnabled && AnalogTrigger.channel.Equals(ChannelSacrificedForLogicAnalyser))
-                    return TriggerModes.Digital;
-                return TriggerModes.Analog;
-
-            }
-        }
+        public TriggerValue TriggerValue { get; private set; }
 
         internal readonly int Channels = 2;
         internal int AcquisitionId { get; private set; }
@@ -161,11 +151,26 @@ namespace LabNation.DeviceInterface.Devices
             Armed           = Utils.IsBitSet(data[10], 6);
             FullAcquisitionDump = Utils.IsBitSet(data[10], 7);
 
-            AnalogTrigger = new AnalogTriggerValue()
+
+            byte modeByte = GetRegister(REG.TRIGGER_MODE);
+            TriggerValue = new TriggerValue()
             {
-                channel = AnalogChannel.List.First(x => x.Value ==  ((GetRegister(REG.TRIGGER_MODE) >> 2) & 0x01)),
-                direction = (TriggerDirection)((GetRegister(REG.TRIGGER_MODE) >> 4) & 0x03),
+                mode = (TriggerMode)(modeByte & 0x03),
+                channel = AnalogChannel.List.Single(x => x.Value == ((modeByte >> 2) & 0x01)),
+                source = (TriggerSource)((modeByte >> 3) & 0x01),
+                edge = (TriggerEdge)((modeByte >> 4) & 0x03),
             };
+            TriggerValue.pulseWidthMin = (
+                    (GetRegister(REG.TRIGGER_PW_MIN_B0) << 0) &
+                    (GetRegister(REG.TRIGGER_PW_MIN_B1) << 8) &
+                    (GetRegister(REG.TRIGGER_PW_MIN_B2) << 16)
+                    ) * SmartScope.BASE_SAMPLE_PERIOD;
+            TriggerValue.pulseWidthMax = (
+                    (GetRegister(REG.TRIGGER_PW_MAX_B0) << 0) &
+                    (GetRegister(REG.TRIGGER_PW_MAX_B1) << 8) &
+                    (GetRegister(REG.TRIGGER_PW_MAX_B2) << 16)
+                    ) * SmartScope.BASE_SAMPLE_PERIOD;
+
             ChannelSacrificedForLogicAnalyser = GetStrobe(STR.LA_CHANNEL) ? AnalogChannel.ChB : AnalogChannel.ChA;
             LogicAnalyserEnabled = GetStrobe(STR.LA_ENABLE);
             
@@ -184,7 +189,7 @@ namespace LabNation.DeviceInterface.Devices
             Int64 holdoffSamples = GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
-                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.TriggerDelay(TriggerMode, GetRegister(REG.INPUT_DECIMATION));
+                                    (GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - SmartScope.TriggerDelay(TriggerValue.mode, GetRegister(REG.INPUT_DECIMATION));
             TriggerHoldoffSamples = holdoffSamples;
             TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION)));
         }

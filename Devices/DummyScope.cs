@@ -111,11 +111,12 @@ namespace LabNation.DeviceInterface.Devices {
         private uint triggerWidth = 10;
         private float triggerThreshold = 0;
 
-        AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
+        TriggerValue triggerValue = new TriggerValue
         {
+            source = TriggerSource.Analog,
             channel = AnalogChannel.ChA,
             level = 0f,
-            direction = TriggerDirection.RISING
+            edge = TriggerEdge.RISING
         };
 		
         private struct DigitalTrigger {
@@ -248,10 +249,13 @@ namespace LabNation.DeviceInterface.Devices {
 
         public bool SendOverviewBuffer { get; set; }
 
-        public AnalogTriggerValue TriggerAnalog
+        public TriggerValue TriggerValue
         {
-            get { return this.triggerAnalog.Copy(); }
-            set { this.triggerAnalog = value; }
+            get { return this.triggerValue.Copy(); }
+            set { 
+                this.triggerValue = value;
+                TriggerDigital = this.triggerValue.digital;
+            }
         }
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {
@@ -284,7 +288,7 @@ namespace LabNation.DeviceInterface.Devices {
             }
         }
 
-        public Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
+        private Dictionary<DigitalChannel, DigitalTriggerValue> TriggerDigital
         {
             set
             {
@@ -461,7 +465,7 @@ namespace LabNation.DeviceInterface.Devices {
                         SamplePeriodCurrent = SamplePeriod;
                         waveLengthCurrent = waveLength;
                         logicAnalyserChannelCurrent = logicAnalyserChannel;
-                        logicAnalyserEnabledCurrent = logicAnalyserEnabled;
+                        logicAnalyserEnabledCurrent = LogicAnalyserEnabled;
                     }
 
                     acquistionId++;
@@ -507,13 +511,15 @@ namespace LabNation.DeviceInterface.Devices {
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
                         triggerTimeout = GENERATION_LENGTH_MAX * SamplePeriodCurrent; //Give up after 10ms
 
-                    if (logicAnalyserEnabledCurrent && this.TriggerMode == TriggerModes.Digital)
+                    if (logicAnalyserEnabledCurrent && this.triggerValue.mode == TriggerMode.Digital)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
                     }
                     else
                     {
-                        triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerAnalog.channel].ToArray(), triggerAnalog,
+                        if (triggerValue.source != TriggerSource.Analog)
+                            throw new Exception("Doing analog trigger but mode is not set to analog!");
+                        triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerValue.channel].ToArray(), triggerValue,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
                             acquisitionDepthCurrent, out triggerIndex);
                     }
@@ -665,20 +671,11 @@ namespace LabNation.DeviceInterface.Devices {
             ChannelConfig[channel].noise = noiseAmplitude;
 		}
 
-        //FIXME: implement this
-        private bool logicAnalyserEnabled = false;
         public bool LogicAnalyserEnabled
         {
-            set
-            {
-                lock (acquisitionSettingsLock)
-                {
-                    this.logicAnalyserEnabled = value;
-                }
-            }
             get
             {
-                return this.logicAnalyserEnabled;
+                return this.logicAnalyserChannel != null;
             }
         }
         private AnalogChannel logicAnalyserChannel = AnalogChannel.ChB;
@@ -696,7 +693,7 @@ namespace LabNation.DeviceInterface.Devices {
 		#endregion
 
         #region Helpers
-        private static bool DoTriggerAnalog (float [] wave, AnalogTriggerValue trigger, int holdoff, float threshold, uint width, uint outputWaveLength, out int triggerIndex)
+        private static bool DoTriggerAnalog (float [] wave, TriggerValue trigger, int holdoff, float threshold, uint width, uint outputWaveLength, out int triggerIndex)
 		{
 			//Hold off:
 			// - if positive, start looking for trigger at that index, so we are sure to have that many samples before the trigger
@@ -728,9 +725,9 @@ namespace LabNation.DeviceInterface.Devices {
                         preconditionCounterFalling++;
                 }
                 if (
-                    (preconditionRisingMet && postconditionCounterRising == halfWidth && trigger.direction != TriggerDirection.FALLING) 
+                    (preconditionRisingMet && postconditionCounterRising == halfWidth && trigger.edge != TriggerEdge.FALLING) 
                 ||
-                    (preconditionFallingMet && postconditionCounterFalling == halfWidth && trigger.direction != TriggerDirection.RISING) 
+                    (preconditionFallingMet && postconditionCounterFalling == halfWidth && trigger.edge != TriggerEdge.RISING) 
                 )
                 {
                     int triggerIndexTmp = (int)(i + width / 2);
@@ -779,6 +776,5 @@ namespace LabNation.DeviceInterface.Devices {
         }
         #endregion
 
-        public TriggerModes TriggerMode { get; set; }
     }
 }

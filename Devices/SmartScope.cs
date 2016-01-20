@@ -124,10 +124,12 @@ namespace LabNation.DeviceInterface.Devices
         private bool acquiringWhenPaused = false;
 
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
-        private AnalogTriggerValue triggerAnalog = new AnalogTriggerValue
+        private TriggerValue triggerValue = new TriggerValue
         {
+            source = TriggerSource.Analog,
             channel = AnalogChannel.ChA,
-            direction = TriggerDirection.RISING,
+            edge = TriggerEdge.RISING,
+            mode = TriggerMode.Edge,
             level = 0.0f
         };
 
@@ -316,7 +318,8 @@ namespace LabNation.DeviceInterface.Devices
             SendOverviewBuffer = false;
             PreferPartial = false;
             SetTriggerByte(127);
-            LogicAnalyserEnabled = false;
+            //Disable Logic Analyser
+            ChannelSacrificedForLogicAnalyser = null;
             Running = true;
             Logger.Info("Calibrating ADC timing");
             CommitSettings();
