@@ -61,6 +61,7 @@ namespace LabNation.DeviceInterface.DataSources
         private Dictionary<DataSourceType, Dictionary<Channel, ChannelData>> data;
         public int LatestChunkSize { get; private set; }
         public DateTime LastDataUpdate { get; private set; }
+        public TriggerValue TriggerValue { get; private set; }
         
 #if DEBUG
         internal SmartScopeHeader header = null;
@@ -76,8 +77,10 @@ namespace LabNation.DeviceInterface.DataSources
             Type scopeType,
             uint acquiredSamples, double acqSamplePeriod, 
             int viewportSamples, Int64 viewportOffsetSamples,
-            double holdoff, Int64 holdoffSamples, bool rolling, int identifier, double viewportExcess = 0)
+            double holdoff, Int64 holdoffSamples, bool rolling, int identifier, TriggerValue triggerValue, 
+            double viewportExcess = 0)
         {
+            this.TriggerValue = triggerValue.Copy();
             this.LastDataUpdate = DateTime.Now;
             this.ScopeType = scopeType;
             this.Identifier = identifier;

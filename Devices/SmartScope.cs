@@ -126,11 +126,12 @@ namespace LabNation.DeviceInterface.Devices
         private Dictionary<AnalogChannel, GainCalibration> channelSettings = new Dictionary<AnalogChannel,GainCalibration>();
         private TriggerValue triggerValue = new TriggerValue
         {
-            source = TriggerSource.Analog,
+            source = TriggerSource.Channel,
             channel = AnalogChannel.ChA,
             edge = TriggerEdge.RISING,
             mode = TriggerMode.Edge,
-            level = 0.0f
+            level = 0.0f,
+            digital = new Dictionary<DigitalChannel,DigitalTriggerValue>() //initialised in constructor
         };
 
 #if DEBUG
@@ -149,6 +150,8 @@ namespace LabNation.DeviceInterface.Devices
 
         internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
+            foreach (DigitalChannel dch in DigitalChannel.List)
+                triggerValue.digital.Add(dch, DigitalTriggerValue.X);
             this.hardwareInterface = usbInterface;
             this.SuspendViewportUpdates = false;
             AwgOutOfRange = false;
@@ -682,7 +685,7 @@ namespace LabNation.DeviceInterface.Devices
                     header.AcquisitionDepth, header.SamplePeriod,
                     header.ViewportLength, header.ViewportOffsetSamples,
                     header.TriggerHoldoff, header.TriggerHoldoffSamples, header.Rolling,
-                    header.AcquisitionId, header.ViewportExcess);
+                    header.AcquisitionId, header.TriggerValue, header.ViewportExcess);
             }
 
 #if DEBUG

@@ -34,7 +34,7 @@ namespace LabNation.DeviceInterface.Devices
         }
     }
 
-    public enum TriggerSource { Analog = 0, External = 1 };
+    public enum TriggerSource { Channel = 0, External = 1 };
     public enum TriggerEdge { RISING = 0, FALLING = 1, ANY = 2 };
     public enum TriggerMode { Edge = 0, Timeout = 1, Pulse = 2, Digital = 3 };
     public enum Coupling { AC, DC };
@@ -52,7 +52,7 @@ namespace LabNation.DeviceInterface.Devices
         /// <summary>
         /// Trigger source (analog/ext)
         /// </summary>
-        public TriggerSource source = TriggerSource.Analog;
+        public TriggerSource source = TriggerSource.Channel;
         /// <summary>
         /// Analog mode channel
         /// </summary>
@@ -71,6 +71,19 @@ namespace LabNation.DeviceInterface.Devices
         public float level;
         public double pulseWidthMin = 0.0;
         public double pulseWidthMax = double.PositiveInfinity;
+
+        public TriggerValue() { }
+        public TriggerValue(TriggerValue t)
+        {
+            mode = t.mode;
+            source = t.source;
+            channel = t.channel;
+            digital = new Dictionary<DigitalChannel, DigitalTriggerValue>(t.digital);
+            edge = t.edge;
+            level = t.level;
+            pulseWidthMax = t.pulseWidthMax;
+            pulseWidthMin = t.pulseWidthMin;
+        }
 
         public TriggerValue Copy()
         {

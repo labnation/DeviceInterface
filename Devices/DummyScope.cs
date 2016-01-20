@@ -113,7 +113,7 @@ namespace LabNation.DeviceInterface.Devices {
 
         TriggerValue triggerValue = new TriggerValue
         {
-            source = TriggerSource.Analog,
+            source = TriggerSource.Channel,
             channel = AnalogChannel.ChA,
             level = 0f,
             edge = TriggerEdge.RISING
@@ -517,7 +517,7 @@ namespace LabNation.DeviceInterface.Devices {
                     }
                     else
                     {
-                        if (triggerValue.source != TriggerSource.Analog)
+                        if (triggerValue.source != TriggerSource.Channel)
                             throw new Exception("Doing analog trigger but mode is not set to analog!");
                         triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerValue.channel].ToArray(), triggerValue,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
@@ -593,7 +593,7 @@ namespace LabNation.DeviceInterface.Devices {
             p = new DataPackageScope(this.GetType(),
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
                     viewportSamples, (Int64)(ViewPortOffset / SamplePeriodCurrent),
-                    TriggerHoldoffCurrent, (Int64)(TriggerHoldoffCurrent/SamplePeriodCurrent), false, acquistionId);
+                    TriggerHoldoffCurrent, (Int64)(TriggerHoldoffCurrent/SamplePeriodCurrent), false, acquistionId, TriggerValue);
             p.samplePeriod[DataSourceType.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[DataSourceType.Viewport] = ViewPortOffset;
 

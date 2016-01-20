@@ -117,7 +117,7 @@ namespace LabNation.DeviceInterface.Devices
 
         internal bool LogicAnalyserEnabled { get; private set; }
         internal AnalogChannel ChannelSacrificedForLogicAnalyser { get; private set; }
-        public TriggerValue TriggerValue { get; private set; }
+        internal TriggerValue TriggerValue { get; private set; }
 
         internal readonly int Channels = 2;
         internal int AcquisitionId { get; private set; }

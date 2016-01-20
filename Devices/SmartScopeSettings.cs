@@ -148,7 +148,11 @@ namespace LabNation.DeviceInterface.Devices
             int offsetInt = (int)(-(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1]);
 
             FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1])));
-            //Logger.Debug(String.Format("Yoffset Ch {0} set to {1} V = byteval {2}", channel, GetYOffset(channel), FpgaSettingsMemory[r].GetByte()));
+            yOffset[channel] = GetYOffset(channel);
+            if (channel == triggerValue.channel && triggerValue.mode != TriggerMode.Digital)
+            {
+                TriggerValue = this.triggerValue;
+            }            
         }
 
         private float ConvertYOffsetByteToVoltage(AnalogChannel channel, byte value)
@@ -205,12 +209,6 @@ namespace LabNation.DeviceInterface.Devices
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
             SetYOffset(channel, yOffset[channel]);
-            yOffset[channel] = GetYOffset(channel);
-            if (channel == triggerValue.channel)
-            {
-                TriggerValue = this.triggerValue;
-                //SetTriggerThreshold(this.triggerThreshold);
-            }
         }
 
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division)
@@ -315,7 +313,7 @@ namespace LabNation.DeviceInterface.Devices
                 /* Set mode */
                 FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                     (byte)(
-                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xFC) &
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xFC) |
                         ((byte)this.triggerValue.mode & 0x03) 
                 ));
 
@@ -324,7 +322,7 @@ namespace LabNation.DeviceInterface.Devices
                 {
                     FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                         (byte)(
-                            (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xFB) +
+                            (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xFB) |
                             ((triggerValue.channel.Value << 2) & 0x04)
                                 ));
                 }
@@ -332,14 +330,14 @@ namespace LabNation.DeviceInterface.Devices
                 /* Set source */
                 FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                     (byte)(
-                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF7) &
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xF7) |
                         (((byte)this.triggerValue.source << 3) & 0x08)
                 ));
 
                 /* Set Edge */
                 FpgaSettingsMemory[REG.TRIGGER_MODE].Set(
                     (byte)(
-                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) +
+                        (FpgaSettingsMemory[REG.TRIGGER_MODE].GetByte() & 0xCF) |
                         (((int)triggerValue.edge << 4) & 0x30)
                         )
                 );
@@ -358,6 +356,8 @@ namespace LabNation.DeviceInterface.Devices
                     //Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
                     FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);   
                 }
+
+                TriggerDigital = triggerValue.digital;
 
                 UpdateTriggerPulseWidth();
             }
@@ -383,13 +383,13 @@ namespace LabNation.DeviceInterface.Devices
                 v.level = (float)level;
 
                 v.pulseWidthMin = (
-                    (FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B0].GetByte() << 0) &
-                    (FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B1].GetByte() << 8) &
+                    (FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B0].GetByte() << 0) +
+                    (FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B1].GetByte() << 8) +
                     (FpgaSettingsMemory[REG.TRIGGER_PW_MIN_B2].GetByte() << 16)
                     ) * BASE_SAMPLE_PERIOD;
                 v.pulseWidthMax = (
-                    (FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B0].GetByte() << 0) &
-                    (FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B1].GetByte() << 8) &
+                    (FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B0].GetByte() << 0) +
+                    (FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B1].GetByte() << 8) +
                     (FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B2].GetByte() << 16)
                     ) * BASE_SAMPLE_PERIOD;
 

@@ -71,7 +71,8 @@ namespace LabNation.DeviceInterface
 
             TriggerValue trigger = new TriggerValue()
             {
-                source = TriggerSource.Analog,
+                mode = TriggerMode.Edge,
+                source = TriggerSource.Channel,
                 channel = AnalogChannel.ChA,
                 edge = TriggerEdge.RISING,
                 level = 5000,

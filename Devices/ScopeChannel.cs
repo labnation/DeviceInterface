@@ -50,6 +50,7 @@ namespace LabNation.DeviceInterface.Devices
         }
         static public implicit operator AnalogChannel(string chName)
         {
+            if (chName == null) return null;
             return list.Where(x => x == chName).First();
         }
         static public explicit operator AnalogChannelRaw(AnalogChannel ch)
