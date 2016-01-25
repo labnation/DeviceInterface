@@ -353,11 +353,14 @@ namespace LabNation.DeviceInterface.DataSources
             //sample period
             string[] column3 = new string[2] { "SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod.ToString() };
 
+            string[] column4 = new string[3] { "SampleTime", "0", @"""=E2+D$2""" };
+
             List<string[]> headerColumns = new List<string[]>();
             headerColumns.Add(column0);
             headerColumns.Add(column1);
             headerColumns.Add(column2);
             headerColumns.Add(column3);
+            headerColumns.Add(column4);
 
             /* First row */
 
@@ -516,12 +519,15 @@ namespace LabNation.DeviceInterface.DataSources
             column1[0] = "AcquisitionID";
 
             //sample period
-            string[] column2 = new string[2] { "SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod.ToString() };
+            string[] column2 = new string[] { "SamplePeriodInSeconds", recording.acqInfo[0].samplePeriod.ToString() };
+
+            string[] column3 = new string[3] { "SampleTime", "0", @"""=D2+C$2""" };
 
             List<string[]> headerColumns = new List<string[]>();
             headerColumns.Add(column0);
             headerColumns.Add(column1);
             headerColumns.Add(column2);
+            headerColumns.Add(column3);
 
             /* First row */
 
