@@ -837,7 +837,7 @@ namespace LabNation.DeviceInterface.Devices
                 bool laEnabled = channelSacrificedForLogicAnalyser != null;
                 StrobeMemory[STR.LA_ENABLE].Set(laEnabled);
                 if (laEnabled)
-                    StrobeMemory[STR.AWG_ENABLE].Set(false);
+                    StrobeMemory[STR.GENERATOR_TO_AWG].Set(false);
             }
         }
 

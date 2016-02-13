@@ -7,18 +7,21 @@ namespace LabNation.DeviceInterface.Devices
 {
     public interface IWaveGenerator : IDevice
     {
-        bool AwgOutOfRange { get; }
-        void SetAwgData(double[] data);
-        void SetAwgEnabled(bool enable);
-        int GetAwgStretcherForFrequency(double frequency);
-        int GetAwgNumberOfSamplesForFrequency(double frequency);
-        void SetAwgNumberOfSamples(int n);
-        int GetAwgNumberOfSamples();
-        void SetAwgStretching(int decimation);
-        int GetAwgStretching();
-        double GetAwgFrequencyMax();
-        double GetAwgFrequencyMin();
-        void SetAwgFrequency(double frequency);
-        double GetAwgFrequency();
+        bool DataOutOfRange { get; }
+        void SetGeneratorData(double[] data);
+        void SetGeneratorData(int[] data);
+        void SetGeneratorData(byte[] data);
+        void SetGeneratorToAnalogEnabled(bool enable);
+        void SetGeneratorToDigitalEnabled(bool enable);
+        int GetGeneratorStretcherForFrequency(double frequency);
+        int GetGeneratorNumberOfSamplesForFrequency(double frequency);
+        void SetGeneratorNumberOfSamples(int n);
+        int GetGeneratorNumberOfSamples();
+        void SetGeneratorStretching(int decimation);
+        int GetGeneratorStretching();
+        double GetGeneratorFrequencyMax();
+        double GetGeneratorFrequencyMin();
+        void SetGeneratorFrequency(double frequency);
+        double GetGeneratorFrequency();
     }
 }

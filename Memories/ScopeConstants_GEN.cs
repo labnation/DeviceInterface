@@ -46,10 +46,9 @@ namespace LabNation.DeviceInterface.Memories
 		DIGITAL_TRIGGER_HIGH = 31,
 		DIGITAL_TRIGGER_LOW = 32,
 		DIGITAL_OUT = 33,
-		AWG_DEBUG = 34,
-		AWG_DECIMATION = 35,
-		AWG_SAMPLES_B0 = 36,
-		AWG_SAMPLES_B1 = 37,
+		GENERATOR_DECIMATION = 34,
+		GENERATOR_SAMPLES_B0 = 35,
+		GENERATOR_SAMPLES_B1 = 36,
     }
 
 #if DEBUG
@@ -61,7 +60,7 @@ namespace LabNation.DeviceInterface.Memories
     {
 		GLOBAL_RESET = 0,
 		INIT_SPI_TRANSFER = 1,
-		AWG_ENABLE = 2,
+		GENERATOR_TO_AWG = 2,
 		LA_ENABLE = 3,
 		SCOPE_ENABLE = 4,
 		SCOPE_UPDATE = 5,
@@ -79,10 +78,10 @@ namespace LabNation.DeviceInterface.Memories
 		ENABLE_RAM = 17,
 		DOUT_3V_5V = 18,
 		EN_OPAMP_B = 19,
-		AWG_DEBUG = 20,
-		DIGI_DEBUG = 21,
-		ROLL = 22,
-		LA_CHANNEL = 23,
+		GENERATOR_TO_DIGITAL = 20,
+		ROLL = 21,
+		LA_CHANNEL = 22,
+		GENERATOR_ENABLE = 23,
     }
 
 #if DEBUG

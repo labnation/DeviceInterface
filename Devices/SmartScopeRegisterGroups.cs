@@ -51,11 +51,9 @@ namespace LabNation.DeviceInterface.Devices
         };
         internal static readonly STR[] AcquisitionStrobes = new STR[]
         {
-			STR.AWG_ENABLE,
 			STR.LA_ENABLE,
 			STR.CHA_DCCOUPLING,
 			STR.CHB_DCCOUPLING,
-            STR.DIGI_DEBUG,
             STR.ROLL,
             STR.LA_CHANNEL
         };

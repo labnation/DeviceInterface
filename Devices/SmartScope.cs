@@ -154,7 +154,7 @@ namespace LabNation.DeviceInterface.Devices
                 triggerValue.digital.Add(dch, DigitalTriggerValue.X);
             this.hardwareInterface = usbInterface;
             this.SuspendViewportUpdates = false;
-            AwgOutOfRange = false;
+            DataOutOfRange = false;
             deviceReady = false;
 
             foreach (DigitalChannel d in DigitalChannel.List)
@@ -416,9 +416,9 @@ namespace LabNation.DeviceInterface.Devices
 
             DigitalOutput = 0;
 
-            SetAwgStretching(0);
+            SetGeneratorStretching(0);
             SetViewPort(0, 10e-3);
-            SetAwgNumberOfSamples(AWG_SAMPLES_MAX);
+            SetGeneratorNumberOfSamples(AWG_SAMPLES_MAX);
 
             //Part 2: perform actual writes                
             StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
