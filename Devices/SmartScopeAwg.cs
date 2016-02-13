@@ -20,118 +20,149 @@ namespace LabNation.DeviceInterface.Devices
         /// Set the data with which the AWG runs
         /// </summary>
         /// <param name="data">AWG data</param>
-        public void SetGeneratorData(double[] data)
+        public double[] GeneratorDataDouble
         {
-            int[] converted = data.Select(x => (int)(x / 3.3 * 255)).ToArray();
-            SetGeneratorData(converted);
-        }
-        
-        public void SetGeneratorData(int[] data)
-        {
-            if (!Connected) return;
-            if (data.Length < AWG_SAMPLES_MIN)
-                throw new ValidationException(String.Format("While setting AWG data: data buffer can't be shorter than {0} samples, got {1}", AWG_SAMPLES_MIN, data.Length));
-
-            if (data.Length > AWG_SAMPLES_MAX)
-                throw new ValidationException(String.Format("While setting AWG data: data buffer can't be longer than {0} samples, got {1}", AWG_SAMPLES_MAX, data.Length));
-            
-            DataOutOfRange = data.Where(x => x > byte.MaxValue || x < byte.MinValue).Count() > 0;
-            byte[] convertedBytes = data.Select(x => (byte)Math.Min(255, Math.Max(0, x))).ToArray();
-            pSetGeneratorData(convertedBytes);
-        }
-
-        public void SetGeneratorData(byte[] data)
-        {
-            DataOutOfRange = false;
-            pSetGeneratorData(data);
-        }
-
-        private void pSetGeneratorData(byte[] data)
-        {
-            SetGeneratorNumberOfSamples(data.Length);
-            hardwareInterface.SetControllerRegister(Hardware.ScopeController.AWG, 0, data);
-        }
-
-        public void SetGeneratorNumberOfSamples(int n)
-        {
-            if (n < AWG_SAMPLES_MIN)
-                throw new ValidationException(String.Format("While setting AWG data: data buffer can't be shorter than {0} samples, got {1}", AWG_SAMPLES_MIN, n));
-
-            if (n > AWG_SAMPLES_MAX)
-                throw new ValidationException(String.Format("While setting AWG data: data buffer can't be longer than {0} samples, got {1}", AWG_SAMPLES_MAX, n));
-
-            FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B0].WriteImmediate((byte)(n - 1));
-            FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B1].WriteImmediate((byte)((n - 1) >> 8));
-        }
-
-        public int GetGeneratorNumberOfSamples()
-        {
-            return (FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B0].GetByte() + (FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B1].GetByte() << 8)) + 1;
-        }
-
-        public void SetGeneratorStretching(int stretching)
-        {
-            if (stretching > 255 || stretching < 0)
+            set
             {
-                throw new ValidationException(String.Format("AWG stretching out of range [0,255] - got {0}", stretching));
+                int[] converted = value.Select(x => (int)(x / 3.3 * 255)).ToArray();
+                GeneratorDataInt = converted;
             }
-            FpgaSettingsMemory[REG.GENERATOR_DECIMATION].Set((byte)stretching);
         }
 
-        public int GetGeneratorStretching()
+        public int[] GeneratorDataInt
         {
-            return FpgaSettingsMemory[REG.GENERATOR_DECIMATION].GetByte();
+            set
+            {
+                if (!Connected) return;
+                if (value.Length < AWG_SAMPLES_MIN)
+                    throw new ValidationException(String.Format("While setting AWG data: data buffer can't be shorter than {0} samples, got {1}", AWG_SAMPLES_MIN, value.Length));
+
+                if (value.Length > AWG_SAMPLES_MAX)
+                    throw new ValidationException(String.Format("While setting AWG data: data buffer can't be longer than {0} samples, got {1}", AWG_SAMPLES_MAX, value.Length));
+
+                DataOutOfRange = value.Where(x => x > byte.MaxValue || x < byte.MinValue).Count() > 0;
+                byte[] convertedBytes = value.Select(x => (byte)Math.Min(255, Math.Max(0, x))).ToArray();
+                GeneratorDataByte = convertedBytes;
+            }
         }
 
-        public void SetGeneratorToAnalogEnabled(bool enable)
+        public byte[] GeneratorDataByte
         {
-            //Disable logic analyser in case AWG is being enabled
-            if (!Connected) return;
-            if (enable)
-                StrobeMemory[STR.LA_ENABLE].WriteImmediate(false);
-            StrobeMemory[STR.GENERATOR_TO_AWG].WriteImmediate(enable);
+            set
+            {
+                DataOutOfRange = false;
+                GeneratorData = value;
+            }
         }
 
-        public void SetGeneratorToDigitalEnabled(bool enable)
+        private byte[] GeneratorData
         {
-            //Disable logic analyser in case AWG is being enabled
-            if (!Connected) return;
-            StrobeMemory[STR.GENERATOR_TO_DIGITAL].WriteImmediate(enable);
+            set
+            {
+                GeneratorNumberOfSamples = value.Length;
+                hardwareInterface.SetControllerRegister(Hardware.ScopeController.AWG, 0, value);
+            }
         }
 
-        public double GetGeneratorFrequencyMax()
+        public int GeneratorNumberOfSamples
         {
-            return 1.0 / (AWG_SAMPLES_MIN * AWG_SAMPLE_PERIOD_0);
+            set
+            {
+                if (value < AWG_SAMPLES_MIN)
+                    throw new ValidationException(String.Format("While setting AWG data: data buffer can't be shorter than {0} samples, got {1}", AWG_SAMPLES_MIN, value));
+
+                if (value > AWG_SAMPLES_MAX)
+                    throw new ValidationException(String.Format("While setting AWG data: data buffer can't be longer than {0} samples, got {1}", AWG_SAMPLES_MAX, value));
+
+                FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B0].WriteImmediate((byte)(value - 1));
+                FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B1].WriteImmediate((byte)((value - 1) >> 8));
+            }
+            get
+            {
+                return (FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B0].GetByte() + (FpgaSettingsMemory[REG.GENERATOR_SAMPLES_B1].GetByte() << 8)) + 1;
+            }
         }
-        public double GetGeneratorFrequencyMin()
+
+        public int GeneratorStretching
         {
-            return 1.0 / ((AWG_SAMPLES_MAX - 1) * AWG_SAMPLE_PERIOD_0 * (AWG_STRETCHER_MAX + 1));
+            set
+            {
+                if (value > 255 || value < 0)
+                {
+                    throw new ValidationException(String.Format("AWG stretching out of range [0,255] - got {0}", value));
+                }
+                FpgaSettingsMemory[REG.GENERATOR_DECIMATION].Set((byte)value);
+            }
+            get
+            {
+                return FpgaSettingsMemory[REG.GENERATOR_DECIMATION].GetByte();
+            }
         }
-        public int GetGeneratorStretcherForFrequency(double frequency)
+
+        public bool GeneratorToAnalogEnabled
         {
-            if (frequency > GetGeneratorFrequencyMax() || frequency < GetGeneratorFrequencyMin())
-                throw new ValidationException(String.Format("AWG frequency {0} out of range [{1},{2}]", frequency, GetGeneratorFrequencyMin(), GetGeneratorFrequencyMax()));
+            set
+            {
+                //Disable logic analyser in case AWG is being enabled
+                if (!Connected) return;
+                if (value)
+                    StrobeMemory[STR.LA_ENABLE].WriteImmediate(false);
+                StrobeMemory[STR.GENERATOR_TO_AWG].WriteImmediate(value);
+            }
+        }
+
+        public bool GeneratorToDigitalEnabled
+        {
+            set
+            {
+                //Disable logic analyser in case AWG is being enabled
+                if (!Connected) return;
+                StrobeMemory[STR.GENERATOR_TO_DIGITAL].WriteImmediate(value);
+            }
+        }
+
+        public double GeneratorFrequencyMax
+        {
+            get
+            {
+                return 1.0 / (AWG_SAMPLES_MIN * AWG_SAMPLE_PERIOD_0);
+            }
+        }
+        public double GeneratorFrequencyMin
+        {
+            get
+            {
+                return 1.0 / ((AWG_SAMPLES_MAX - 1) * AWG_SAMPLE_PERIOD_0 * (AWG_STRETCHER_MAX + 1));
+            }
+        }
+        public int GeneratorStretcherForFrequency(double frequency)
+        {
+            if (frequency > GeneratorFrequencyMax || frequency < GeneratorFrequencyMin)
+                throw new ValidationException(String.Format("AWG frequency {0} out of range [{1},{2}]", frequency, GeneratorFrequencyMin, GeneratorFrequencyMax));
 
             double numberOfSamplesAtFullRate = Math.Floor(1 / (AWG_SAMPLE_PERIOD_0 * frequency));
             return (int)Math.Floor(numberOfSamplesAtFullRate / AWG_SAMPLES_MAX); ;
         }
-        public int GetGeneratorNumberOfSamplesForFrequency(double frequency)
+        public int GeneratorNumberOfSamplesForFrequency(double frequency)
         {
-            if (frequency > GetGeneratorFrequencyMax() || frequency < GetGeneratorFrequencyMin())
-                throw new ValidationException(String.Format("AWG frequency {0} out of range [{1},{2}]", frequency, GetGeneratorFrequencyMin(), GetGeneratorFrequencyMax()));
+            if (frequency > GeneratorFrequencyMax || frequency < GeneratorFrequencyMin)
+                throw new ValidationException(String.Format("AWG frequency {0} out of range [{1},{2}]", frequency, GeneratorFrequencyMin, GeneratorFrequencyMax));
 
             double numberOfSamplesAtFullRate = Math.Floor(1 / (AWG_SAMPLE_PERIOD_0 * frequency));
-            int stretcher = GetGeneratorStretcherForFrequency(frequency);
+            int stretcher = GeneratorStretcherForFrequency(frequency);
             return (int)Math.Floor(numberOfSamplesAtFullRate / (stretcher + 1));
         }
-        public void SetGeneratorFrequency(double frequency)
+        public double GeneratorFrequency
         {
-            SetGeneratorStretching(GetGeneratorStretcherForFrequency(frequency));
-            SetGeneratorNumberOfSamples(GetGeneratorNumberOfSamplesForFrequency(frequency));
-        }
-        public double GetGeneratorFrequency()
-        {
-            return 1 / (AWG_SAMPLE_PERIOD_0 * (GetGeneratorStretching() + 1) * GetGeneratorNumberOfSamples());
+            set
+            {
+                GeneratorStretching = GeneratorStretcherForFrequency(value);
+                GeneratorNumberOfSamples = GeneratorNumberOfSamplesForFrequency(value);
+            }
+            get
+            {
+                return 1 / (AWG_SAMPLE_PERIOD_0 * (GeneratorStretching + 1) * GeneratorNumberOfSamples);
+            }
         }
     }
 }

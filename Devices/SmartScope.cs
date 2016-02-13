@@ -416,9 +416,9 @@ namespace LabNation.DeviceInterface.Devices
 
             DigitalOutput = 0;
 
-            SetGeneratorStretching(0);
+            GeneratorStretching = 0;
             SetViewPort(0, 10e-3);
-            SetGeneratorNumberOfSamples(AWG_SAMPLES_MAX);
+            GeneratorNumberOfSamples = AWG_SAMPLES_MAX;
 
             //Part 2: perform actual writes                
             StrobeMemory[STR.GLOBAL_RESET].WriteImmediate(true);
