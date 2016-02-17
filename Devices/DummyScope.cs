@@ -14,7 +14,7 @@ namespace LabNation.DeviceInterface.Devices {
 
     public class DummyScopeChannelConfig
     {
-        public WaveForm waveform;
+        public AnalogWaveForm waveform;
         public double amplitude;
         public Coupling coupling;
         public double dcOffset;
@@ -155,7 +155,7 @@ namespace LabNation.DeviceInterface.Devices {
                         frequency = 10e3,
                         phase = 0,
                         dutyCycle = 0.5f,
-                        waveform = WaveForm.TRIANGLE,
+                        waveform = AnalogWaveForm.TRIANGLE,
                         probeDivision = ProbeDivision.X1,
                     }
                 },
@@ -168,7 +168,7 @@ namespace LabNation.DeviceInterface.Devices {
                         frequency = 10e3,
                         phase = 0,
                         dutyCycle = 0.5f,
-                        waveform = WaveForm.SINE,
+                        waveform = AnalogWaveForm.SINE,
                         probeDivision = ProbeDivision.X1,
                     }
                 }
@@ -654,7 +654,7 @@ namespace LabNation.DeviceInterface.Devices {
         {
             ChannelConfig[channel].dutyCycle = dc > 1 ? 1 : dc < 0 ? 0 : dc;
         }
-        public void SetDummyWaveForm(AnalogChannel channel, WaveForm w)
+        public void SetDummyWaveForm(AnalogChannel channel, AnalogWaveForm w)
 		{
             ChannelConfig[channel].waveform = w;
 		}

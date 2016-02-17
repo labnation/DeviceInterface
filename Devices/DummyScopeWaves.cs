@@ -6,18 +6,19 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Devices
 {
-    public enum WaveForm { SINE, COSINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE,
+    public enum AnalogWaveForm { SINE, COSINE, SQUARE, SAWTOOTH, TRIANGLE, SAWTOOTH_SINE, MULTISINE,
 #if DEBUG 
         HALF_BIG_HALF_UGLY 
 #endif
     };
+    public enum DigitalWaveForm { Counter, OneHot, Marquee };
 
     partial class DummyScope
     {
         public string Serial { get { return "DUMMY"; } }
         public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, DummyScopeChannelConfig config )
         {
-            WaveForm waveForm = config.waveform;
+            AnalogWaveForm waveForm = config.waveform;
             double frequency = config.frequency;
             double amplitude = config.amplitude;
             double phase = config.phase;
@@ -26,29 +27,29 @@ namespace LabNation.DeviceInterface.Devices
 
             float[] wave = new float[waveLength];
             switch(waveForm) {
-                case WaveForm.SINE:
+                case AnalogWaveForm.SINE:
                     wave = DummyScope.WaveSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
-                case WaveForm.COSINE:
+                case AnalogWaveForm.COSINE:
                     wave = DummyScope.WaveCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
-                case WaveForm.SQUARE:
+                case AnalogWaveForm.SQUARE:
                     wave = DummyScope.WaveSquare(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, dutyCycle);
                     break;
-                case WaveForm.SAWTOOTH:
+                case AnalogWaveForm.SAWTOOTH:
                     wave = DummyScope.WaveSawTooth(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
-                case WaveForm.TRIANGLE:
+                case AnalogWaveForm.TRIANGLE:
                     wave = DummyScope.WaveTriangle(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
-                case WaveForm.SAWTOOTH_SINE:
+                case AnalogWaveForm.SAWTOOTH_SINE:
                     wave = DummyScope.WaveSawtoothSine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
-                case WaveForm.MULTISINE:
+                case AnalogWaveForm.MULTISINE:
                     wave = DummyScope.WaveMultiCosine(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase, new float[] {1, 2, 4, 8 });
                     break;
 #if DEBUG
-                case WaveForm.HALF_BIG_HALF_UGLY:
+                case AnalogWaveForm.HALF_BIG_HALF_UGLY:
                     wave = DummyScope.WaveHalfBigHalfUgly(waveLength, samplePeriod, timeOffset, frequency, amplitude, phase);
                     break;
 #endif
@@ -144,7 +145,7 @@ namespace LabNation.DeviceInterface.Devices
             float[] wave = Utils.CombineArrays(wave1, wave2, sumFloat);
             return wave;
         }
-
+        
         public static float[] WaveHalfBigHalfUgly(uint awgPoints, double awgSamplePeriod, double timeOffset, double frequency, double amplitude, double phase)
         {
             float[] wave1 = DummyScope.WaveSine(awgPoints, awgSamplePeriod, timeOffset, frequency * 21f, amplitude, phase + 0 * 168);
@@ -191,6 +192,39 @@ namespace LabNation.DeviceInterface.Devices
             return finalWave;
         }
 
+        public static byte[] WaveCounter(byte min, byte max)
+        {
+            byte[] counter = new byte[max - min + 1];
+            byte count = min;
+            for (int i = 0; i < counter.Length; i++)
+                counter[i] = count++;
+            return counter;
+        }
+
+        public static byte[] WaveOneHot(int numberOfBits)
+        {
+            if (numberOfBits < 1 || numberOfBits > 8)
+                throw new Exception("Number of bits out of range for one-hot digital sequence");
+
+            byte[] counter = new byte[numberOfBits];
+            for (int i = 0; i < counter.Length; i++)
+                counter[i] = (byte)(1 << i);
+            return counter;
+        }
+
+        public static byte[] WaveMarquee(int numberOfBits)
+        {
+            if (numberOfBits < 1 || numberOfBits > 8)
+                throw new Exception("Number of bits out of range for one-hot digital sequence");
+
+            int mask = (int)Math.Pow(2, numberOfBits) - 1;
+            int full = mask << numberOfBits;
+            byte[] counter = new byte[numberOfBits * 2];
+            for (int i = 0; i < counter.Length; i++)
+                counter[i] = (byte)((full >> (numberOfBits * 2 - i)) & mask);
+            return counter;
+        }
+        
         public bool Ready { get { return true; } }
 
         private static void AddNoise(float[] output, double noiseAmplitude)
