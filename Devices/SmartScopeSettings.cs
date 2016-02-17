@@ -414,11 +414,16 @@ namespace LabNation.DeviceInterface.Devices
         {
             set
             {
-                this.triggerDigital = value;
-                int rising = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R ? 1 : 0) << x.Key.Value));
-                int falling = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
-                int high = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H ? 1 : 0) << x.Key.Value));
-                int low = value.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L ? 1 : 0) << x.Key.Value));
+                if(value == null) {
+                    this.triggerDigital = new Dictionary<DigitalChannel, DigitalTriggerValue>();
+                    foreach(DigitalChannel ch in DigitalChannel.List)
+                        this.triggerDigital[ch] = DigitalTriggerValue.X;
+                } else 
+                    this.triggerDigital = value;
+                int rising = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R ? 1 : 0) << x.Key.Value));
+                int falling = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
+                int high = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H ? 1 : 0) << x.Key.Value));
+                int low = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.L ? 1 : 0) << x.Key.Value));
                 FpgaSettingsMemory[REG.DIGITAL_TRIGGER_RISING].Set((byte)rising);
                 FpgaSettingsMemory[REG.DIGITAL_TRIGGER_FALLING].Set((byte)falling);
                 FpgaSettingsMemory[REG.DIGITAL_TRIGGER_HIGH].Set((byte)high);
