@@ -13,10 +13,10 @@ namespace LabNation.DeviceInterface.Devices
         byte[] GeneratorDataByte { set; }
         bool GeneratorToAnalogEnabled { set; get; }
         bool GeneratorToDigitalEnabled { set; get; }
-        UInt32 GeneratorStretcherForFrequency(double frequency);
+        Int32 GeneratorStretcherForFrequency(double frequency);
         int GeneratorNumberOfSamplesForFrequency(double frequency);
         int GeneratorNumberOfSamples { set; get; }
-        UInt32 GeneratorStretching { set; get; }
+        Int32 GeneratorStretching { set; get; }
         double GeneratorFrequencyMax { get; }
         double GeneratorFrequencyMin { get; }
         double GeneratorFrequency { get; set;  }

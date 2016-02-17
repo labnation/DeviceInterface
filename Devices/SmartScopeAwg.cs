@@ -13,7 +13,7 @@ namespace LabNation.DeviceInterface.Devices
         const double AWG_SAMPLE_PERIOD_0 = 10e-9; //10ns
         const int AWG_SAMPLES_MAX = 2048;
         const int AWG_SAMPLES_MIN = 1;
-        const UInt32 AWG_STRETCHER_MAX = UInt32.MaxValue;
+        const Int32 AWG_STRETCHER_MAX = 256*256*256-1;
         public bool DataOutOfRange { get; private set; }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        public UInt32 GeneratorStretching
+        public Int32 GeneratorStretching
         {
             set
             {
@@ -94,15 +94,13 @@ namespace LabNation.DeviceInterface.Devices
                 FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B0].Set((byte)(value & 0xFF));
                 FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B1].Set((byte)((value >> 8) & 0xFF));
                 FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B2].Set((byte)((value >> 16) & 0xFF));
-                FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B3].Set((byte)((value >> 24) & 0xFF));
             }
             get
             {
                 return 
-                    (UInt32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B0].GetByte()      ) +
-                    (UInt32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B1].GetByte() <<  8) +
-                    (UInt32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B2].GetByte() << 16) +
-                    (UInt32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B3].GetByte() << 24);
+                    (Int32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B0].GetByte()      ) +
+                    (Int32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B1].GetByte() <<  8) +
+                    (Int32)(FpgaSettingsMemory[REG.GENERATOR_DECIMATION_B2].GetByte() << 16);
             }
         }
 
@@ -150,13 +148,13 @@ namespace LabNation.DeviceInterface.Devices
                 return 1.0 / ((AWG_SAMPLES_MAX - 1) * AWG_SAMPLE_PERIOD_0 * ((double)(AWG_STRETCHER_MAX) + 1));
             }
         }
-        public UInt32 GeneratorStretcherForFrequency(double frequency)
+        public Int32 GeneratorStretcherForFrequency(double frequency)
         {
             if (frequency > GeneratorFrequencyMax || frequency < GeneratorFrequencyMin)
                 throw new ValidationException(String.Format("AWG frequency {0} out of range [{1},{2}]", frequency, GeneratorFrequencyMin, GeneratorFrequencyMax));
 
             double numberOfSamplesAtFullRate = Math.Floor(1 / (AWG_SAMPLE_PERIOD_0 * frequency));
-            return (UInt32)Math.Floor(numberOfSamplesAtFullRate / AWG_SAMPLES_MAX); ;
+            return (Int32)Math.Floor(numberOfSamplesAtFullRate / AWG_SAMPLES_MAX); ;
         }
         public int GeneratorNumberOfSamplesForFrequency(double frequency)
         {
@@ -164,7 +162,7 @@ namespace LabNation.DeviceInterface.Devices
                 throw new ValidationException(String.Format("AWG frequency {0} out of range [{1},{2}]", frequency, GeneratorFrequencyMin, GeneratorFrequencyMax));
 
             double numberOfSamplesAtFullRate = Math.Floor(1 / (AWG_SAMPLE_PERIOD_0 * frequency));
-            UInt32 stretcher = GeneratorStretcherForFrequency(frequency);
+            Int32 stretcher = GeneratorStretcherForFrequency(frequency);
             return (int)Math.Floor(numberOfSamplesAtFullRate / (stretcher + 1));
         }
         public double GeneratorFrequency
@@ -186,7 +184,7 @@ namespace LabNation.DeviceInterface.Devices
         {
             set {
                 double samples = value / AWG_SAMPLE_PERIOD_0;
-                UInt32 samplesRounded = (UInt32)Math.Floor(samples);
+                Int32 samplesRounded = (Int32)Math.Floor(samples);
                 GeneratorStretching = samplesRounded;
             }
             get {
