@@ -11,7 +11,7 @@ namespace LabNation.DeviceInterface.Devices
         HALF_BIG_HALF_UGLY 
 #endif
     };
-    public enum DigitalWaveForm { Counter, OneHot, Marquee };
+    public enum DigitalWaveForm { Counter, OneHot, Marquee, Pulse };
 
     partial class DummyScope
     {
@@ -224,6 +224,15 @@ namespace LabNation.DeviceInterface.Devices
                 counter[i] = (byte)((full >> (numberOfBits * 2 - i)) & mask);
             return counter;
         }
+
+		public static byte[] WavePulse(double dutyCycle)
+		{
+			byte[] pulse = new byte[100];
+			int highUntilIndex = (int)Math.Floor (dutyCycle * pulse.Length);
+			for (int i = 0; i < highUntilIndex; i++)
+				pulse [i] = 0xff;
+			return pulse;
+		}
         
         public bool Ready { get { return true; } }
 
