@@ -681,6 +681,11 @@ namespace LabNation.DeviceInterface.Devices
                     Logger.Warn("Got an off-set package but didn't get any date before");
                     return null;
                 }
+                /* FIXME: integrate into header*/
+                AnalogChannel triggerChannel = header.TriggerValue.channel;
+                byte[] triggerLevel = new byte[] { header.GetRegister(REG.TRIGGER_LEVEL) };
+                float[] triggerLevelFloat = triggerLevel.ConvertByteToVoltage(header.ChannelSettings(this.rom)[triggerChannel], header.GetRegister(triggerChannel.YOffsetRegister()), probeSettings[triggerChannel]);
+                header.TriggerValue.level = triggerLevelFloat[0];
                 currentDataPackage = new DataPackageScope(this.GetType(),
                     header.AcquisitionDepth, header.SamplePeriod,
                     header.ViewportLength, header.ViewportOffsetSamples,
