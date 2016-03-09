@@ -9,7 +9,7 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.DataSources
 {
-    public delegate void NewDataAvailableHandler(DataPackageScope dataPackage, DataSource dataSource, EventArgs e);
+    public delegate void NewDataAvailableHandler(DataPackageScope dataPackage, DataSource dataSource);
 
     public class DataSource
     {
@@ -48,7 +48,7 @@ namespace LabNation.DeviceInterface.DataSources
             {
 #if DEBUG
                 if (BeforeNewDataAvailable != null)
-                    BeforeNewDataAvailable(LatestDataPackage, this, new EventArgs());
+                    BeforeNewDataAvailable(LatestDataPackage, this);
 #endif
                 if (Recording != null && Recording.Busy)
                 {
@@ -56,13 +56,13 @@ namespace LabNation.DeviceInterface.DataSources
                     {
                         Record(LatestDataPackage, new EventArgs());
                         if (OnNewDataAvailable != null)
-                            OnNewDataAvailable(LatestDataPackage, this, new EventArgs());
+                            OnNewDataAvailable(LatestDataPackage, this);
                     }
                 }
                 else
                 {
                     if (OnNewDataAvailable != null)
-                        OnNewDataAvailable(LatestDataPackage, this, new EventArgs());
+                        OnNewDataAvailable(LatestDataPackage, this);
                 }
             }
         }
