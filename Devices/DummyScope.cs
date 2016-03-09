@@ -597,6 +597,7 @@ namespace LabNation.DeviceInterface.Devices {
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
                     viewportSamples, (Int64)(ViewPortOffset / SamplePeriodCurrent),
                     TriggerHoldoffCurrent, (Int64)(TriggerHoldoffCurrent/SamplePeriodCurrent), false, acquistionId, TriggerValue);
+            p.FullAcquisitionFetchProgress = 1f;
             p.samplePeriod[ChannelDataSourceScope.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[ChannelDataSourceScope.Viewport] = ViewPortOffset;
 
@@ -607,6 +608,7 @@ namespace LabNation.DeviceInterface.Devices {
                 if(SendOverviewBuffer)
                     p.SetData(ChannelDataSourceScope.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetData(ChannelDataSourceScope.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
+                p.SetData(ChannelDataSourceScope.Acquisition, ch, acquisitionBufferAnalog[ch]);
 
                 //set dummy minmax values
                 p.SaturationLowValue[ch] = float.MinValue;
@@ -618,6 +620,7 @@ namespace LabNation.DeviceInterface.Devices {
                 if (SendOverviewBuffer)
                     p.SetData(ChannelDataSourceScope.Overview, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetData(ChannelDataSourceScope.Viewport, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
+                p.SetData(ChannelDataSourceScope.Acquisition, LogicAnalyserChannel.LA, acquisitionBufferDigital);
             }
 
             if (acquisitionMode == AcquisitionMode.SINGLE)
