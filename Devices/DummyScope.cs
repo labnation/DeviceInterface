@@ -203,6 +203,9 @@ namespace LabNation.DeviceInterface.Devices {
                     this.acquisitionMode = value;
                 }
             }
+			get {
+				return this.acquisitionMode;
+			}
         }
 
         public bool Running {
