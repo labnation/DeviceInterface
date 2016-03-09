@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.DataSources
 {
-    internal interface IChannelBuffer
+    public interface IChannelBuffer
     {
         int SamplesStored { get; }
         Type GetDataType();

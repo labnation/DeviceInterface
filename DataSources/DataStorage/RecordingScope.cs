@@ -8,9 +8,9 @@ namespace LabNation.DeviceInterface.DataSources
 {
     public class RecordingScope : IDisposable
     { 
-        internal Dictionary<Channel, IChannelBuffer> channelBuffers;
+        public Dictionary<Channel, IChannelBuffer> channelBuffers;
         public List<AcquisitionInfo> acqInfo;
-        internal Dictionary<string, List<double>> settings;
+        public Dictionary<string, List<double>> settings;
         public int AcquisitionsRecorded { get; private set; }
         public long DataStorageSize { get; private set; }
         bool disposed = false;
