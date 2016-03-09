@@ -718,25 +718,33 @@ namespace LabNation.DeviceInterface.Devices {
                     if (wave[i] >= trigger.level + threshold)
                         postconditionCounterRising++;
                 }
-                else if (preconditionFallingMet)
+                else
+                    postconditionCounterRising = 0;
+
+                if (preconditionFallingMet)
                 {
                     if (wave[i] <= trigger.level - threshold)
                         postconditionCounterFalling++;
                 }
                 else
+                    postconditionCounterFalling = 0;
+
+                if (wave[i] < trigger.level && !preconditionRisingMet)
                 {
-                    if (wave[i] < trigger.level)
-                        preconditionCounterRising++;
-                    if (wave[i] > trigger.level)
-                        preconditionCounterFalling++;
+                    preconditionCounterRising++;
                 }
+                if (wave[i] > trigger.level && !preconditionFallingMet)
+                {
+                    preconditionCounterFalling++;
+                }
+
                 if (
                     (preconditionRisingMet && postconditionCounterRising == halfWidth && trigger.edge != TriggerEdge.FALLING) 
                 ||
                     (preconditionFallingMet && postconditionCounterFalling == halfWidth && trigger.edge != TriggerEdge.RISING) 
                 )
                 {
-                    int triggerIndexTmp = (int)(i + width / 2);
+                    int triggerIndexTmp = (int)(i - width / 2);
                     if (triggerIndexTmp - holdoff + outputWaveLength <= wave.Length)
                     {
                         triggerIndex = triggerIndexTmp;
