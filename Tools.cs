@@ -119,8 +119,8 @@ namespace LabNation.DeviceInterface
                 }
 
                 //check if min or max need to be updated (only in case this measurement was not saturated)
-                float[] dataA = (float[])p.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array;
-                float[] dataB = (float[])p.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array;
+                float[] dataA = (float[])p.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array;
+                float[] dataB = (float[])p.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array;
                 float minA = dataA.Min();
                 float maxA = dataA.Max();
                 float minB = dataB.Min();
@@ -162,8 +162,8 @@ namespace LabNation.DeviceInterface
             pFine = FetchLastFrame(scope); //needs this second fetch as well to get voltage conversion on ChanB right?!?
             
             Dictionary<AnalogChannel, float[]> dataFine = new Dictionary<AnalogChannel, float[]>();
-            dataFine.Add(AnalogChannel.ChA, (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array);
-            dataFine.Add(AnalogChannel.ChB, (float[])pFine.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array);
+            dataFine.Add(AnalogChannel.ChA, (float[])pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array);
+            dataFine.Add(AnalogChannel.ChB, (float[])pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array);
             
             Dictionary<AnalogChannel, float> minimumValues = new Dictionary<AnalogChannel, float>();
             Dictionary<AnalogChannel, float> maximumValues = new Dictionary<AnalogChannel, float>();
@@ -208,8 +208,8 @@ namespace LabNation.DeviceInterface
                 DataPackageScope pHor = FetchLastFrame(scope);
                 pHor = FetchLastFrame(scope);
                 Dictionary<AnalogChannel, float[]> timeData = new Dictionary<AnalogChannel, float[]>();
-                timeData.Add(AnalogChannel.ChA, (float[])pHor.GetData(DataSourceType.Viewport, AnalogChannel.ChA).array);
-                timeData.Add(AnalogChannel.ChB, (float[])pHor.GetData(DataSourceType.Viewport, AnalogChannel.ChB).array);
+                timeData.Add(AnalogChannel.ChA, (float[])pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array);
+                timeData.Add(AnalogChannel.ChB, (float[])pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array);
 
                 foreach (var kvp in timeData)
                 {
@@ -222,7 +222,7 @@ namespace LabNation.DeviceInterface
                     if (currMaxVal < highMarginValue) break;
 
                     Dictionary<int, bool> risingNFallingEdges;
-                    ComputeFrequencyDutyCycle(pHor.GetData(DataSourceType.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError, out risingNFallingEdges, currMinVal, currMaxVal);
+                    ComputeFrequencyDutyCycle(pHor.GetData(ChannelDataSourceScope.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError, out risingNFallingEdges, currMinVal, currMaxVal);
                     if (!double.IsNaN(frequency) && (finalFrequencies[kvp.Key] == double.MaxValue))
                         finalFrequencies[kvp.Key] = frequency;
                 }               

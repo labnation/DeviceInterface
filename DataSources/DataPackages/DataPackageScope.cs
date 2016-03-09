@@ -7,18 +7,43 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.DataSources
 {
-    public enum DataSourceType
+    public class ChannelDataSource
     {
-        Acquisition,
-        Viewport,
-        Overview,
-        ETSVoltages,
-        ETSTimestamps
+        public string Name { get; protected set; }
+        public int Value { get; protected set; }
+        public static explicit operator int(ChannelDataSource ch) { return ch.Value; }
+
+        private static HashSet<ChannelDataSource> list = new HashSet<ChannelDataSource>();
+        public static IList<ChannelDataSource> List { get { return list.ToList().AsReadOnly(); } }
+        public ChannelDataSource(string name, int value)
+        {
+            this.Name = name;
+            this.Value = value;
+            list.Add(this);
+        }
+
+        static public implicit operator string(ChannelDataSource ds)
+        {
+            return ds == null ? null : ds.GetType().Name + "-" + ds.Name;
+        }
+    }
+    public sealed class ChannelDataSourceScope : ChannelDataSource
+    {
+        private static HashSet<ChannelDataSourceScope> list = new HashSet<ChannelDataSourceScope>();
+        new public static IList<ChannelDataSourceScope> List { get { return list.ToList().AsReadOnly(); } }
+        private ChannelDataSourceScope(string name, int value)
+            : base(name, value)
+        {
+            list.Add(this);
+        }
+        public static readonly ChannelDataSourceScope Acquisition = new ChannelDataSourceScope("Acquisition", 0);
+        public static readonly ChannelDataSourceScope Viewport = new ChannelDataSourceScope("Viewport", 1);
+        public static readonly ChannelDataSourceScope Overview = new ChannelDataSourceScope("Overview", 2);
     }
 
     public class ChannelData
     {
-        public DataSourceType source { get; private set; } 
+        public ChannelDataSource source { get; private set; } 
         public Channel channel { get; private set; }
         /// <summary>
         /// Underlying data. WARNING: do not modify its elements. If modification is required,
@@ -29,7 +54,7 @@ namespace LabNation.DeviceInterface.DataSources
         public double samplePeriod { get; private set; }
         public double timeOffset { get; private set; }
         
-        public ChannelData(DataSourceType t, Channel channel, Array data, bool partial, double samplePeriod, double timeOffset = 0)
+        public ChannelData(ChannelDataSource t, Channel channel, Array data, bool partial, double samplePeriod, double timeOffset = 0)
         {
             this.partial = partial;
             this.source = t;
@@ -58,7 +83,7 @@ namespace LabNation.DeviceInterface.DataSources
 
         public Type ScopeType { get; private set; }
 
-        private Dictionary<DataSourceType, Dictionary<Channel, ChannelData>> data;
+        private Dictionary<ChannelDataSourceScope, Dictionary<Channel, ChannelData>> data;
         public int LatestChunkSize { get; private set; }
         public DateTime LastDataUpdate { get; private set; }
         public TriggerValue TriggerValue { get; private set; }
@@ -68,8 +93,8 @@ namespace LabNation.DeviceInterface.DataSources
 #endif
 
         public Dictionary<string, double> Settings { get; private set; }
-        public Dictionary<DataSourceType, double> samplePeriod;
-        public Dictionary<DataSourceType, double> offset;
+        public Dictionary<ChannelDataSource, double> samplePeriod;
+        public Dictionary<ChannelDataSource, double> offset;
         public Dictionary<Channel, float> SaturationLowValue = new Dictionary<Channel, float>();
         public Dictionary<Channel, float> SaturationHighValue = new Dictionary<Channel, float>();
 
@@ -90,22 +115,22 @@ namespace LabNation.DeviceInterface.DataSources
             this.ViewportExcess = viewportExcess;
             this.ViewportOffsetSamples = viewportOffsetSamples;
 
-            samplePeriod = new Dictionary<DataSourceType, double>() {
-                { DataSourceType.Acquisition, acqSamplePeriod },
-                { DataSourceType.Overview, acquiredSamples / OVERVIEW_SAMPLES * acqSamplePeriod },
+            samplePeriod = new Dictionary<ChannelDataSource, double>() {
+                { ChannelDataSourceScope.Acquisition, acqSamplePeriod },
+                { ChannelDataSourceScope.Overview, acquiredSamples / OVERVIEW_SAMPLES * acqSamplePeriod },
             };
 
-            offset = new Dictionary<DataSourceType, double>() {
-                { DataSourceType.Acquisition, 0 },
-                { DataSourceType.Overview, 0 },
+            offset = new Dictionary<ChannelDataSource, double>() {
+                { ChannelDataSourceScope.Acquisition, 0 },
+                { ChannelDataSourceScope.Overview, 0 },
             };
 
             this.Holdoff = holdoff;
             this.Rolling = rolling;
             this.HoldoffSamples = holdoffSamples;
 
-            data = new Dictionary<DataSourceType, Dictionary<Channel, ChannelData>>();
-            foreach(DataSourceType t in Enum.GetValues(typeof(DataSourceType)))
+            data = new Dictionary<ChannelDataSourceScope, Dictionary<Channel, ChannelData>>();
+            foreach(ChannelDataSourceScope t in ChannelDataSourceScope.List)
                 data[t] = new Dictionary<Channel, ChannelData>();
 
             Settings = new Dictionary<string,double>();
@@ -120,7 +145,7 @@ namespace LabNation.DeviceInterface.DataSources
             LastDataUpdate = DateTime.Now;
         }
 
-        internal void SetData(DataSourceType type, Channel ch, Array arr, bool partial = false)
+        internal void SetData(ChannelDataSourceScope type, Channel ch, Array arr, bool partial = false)
         {
             if (arr == null)
                 return;
@@ -135,25 +160,19 @@ namespace LabNation.DeviceInterface.DataSources
             }
         }
 
-        internal void AddData(DataSourceType type, Channel ch, Array arrayToAdd)
+        internal void AddData(ChannelDataSourceScope type, Channel ch, Array arrayToAdd)
         {           
             ChannelData arrayWeHad = GetData(type, ch);
 
             int MaxElements;
-            switch (type)
-            {
-                case DataSourceType.Acquisition:
-                    MaxElements = (int)AcquisitionSamples;
-                    break;
-                case DataSourceType.Overview:
-                    MaxElements = OVERVIEW_SAMPLES;
-                    break;
-                case DataSourceType.Viewport:
-                    MaxElements = ViewportSamples;
-                    break;
-                default:
-                    throw new Exception("Unhandled type");
-            }
+            if(type == ChannelDataSourceScope.Acquisition)
+                MaxElements = (int)AcquisitionSamples;
+            else if(type == ChannelDataSourceScope.Overview)
+                MaxElements = OVERVIEW_SAMPLES;
+            else if (type == ChannelDataSourceScope.Viewport)
+                MaxElements = ViewportSamples;
+            else
+                throw new Exception("Unhandled type");
 
             int arrayToAddElements = Math.Min(arrayToAdd.Length, MaxElements);
             int arrayWeHadElements = arrayWeHad == null ? 0 : Math.Min(arrayWeHad.array.Length, MaxElements - arrayToAddElements);
@@ -172,7 +191,7 @@ namespace LabNation.DeviceInterface.DataSources
             Array.Copy(arrayToAdd, arrayToAdd.Length - arrayToAddElements, arrayResult, arrayWeHadElements, arrayToAddElements);
             SetData(type, ch, arrayResult, arrayResult.Length < MaxElements);
         }
-        public ChannelData GetData(DataSourceType type, Channel ch)
+        public ChannelData GetData(ChannelDataSourceScope type, Channel ch)
         {
             lock (dataLock)
             {
@@ -183,7 +202,7 @@ namespace LabNation.DeviceInterface.DataSources
             }
             return null;
         }
-        private ChannelData ExtractBitsFromLogicAnalyser(DigitalChannel ch, DataSourceType t)
+        private ChannelData ExtractBitsFromLogicAnalyser(DigitalChannel ch, ChannelDataSourceScope t)
         {
             lock (dataLock)
             {
@@ -202,7 +221,7 @@ namespace LabNation.DeviceInterface.DataSources
         /// </summary>
         public int Identifier { get; private set; }
 
-        public double AcquisitionLength { get { return AcquisitionSamples * samplePeriod[DataSourceType.Acquisition]; } }
+        public double AcquisitionLength { get { return AcquisitionSamples * samplePeriod[ChannelDataSourceScope.Acquisition]; } }
 
         /// <summary>
         /// The number of samples acquired
@@ -241,6 +260,6 @@ namespace LabNation.DeviceInterface.DataSources
         /// </summary>
         public int ViewportSamples { get; private set; }
         public Int64 ViewportOffsetSamples { get; private set; }
-        public double ViewportTimespan { get { return samplePeriod[DataSourceType.Viewport] * ViewportSamples; } } 
+        public double ViewportTimespan { get { return samplePeriod[ChannelDataSourceScope.Viewport] * ViewportSamples; } } 
     }
 }

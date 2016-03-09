@@ -92,9 +92,9 @@ namespace LabNation.DeviceInterface.DataSources
                 }
                 foreach (var kvp in channelBuffers)
                 {
-                    if (ScopeData.GetData(DataSourceType.Viewport, kvp.Key) != null)
+                    if (ScopeData.GetData(ChannelDataSourceScope.Viewport, kvp.Key) != null)
                     {
-                        Array dataArray = ScopeData.GetData(DataSourceType.Viewport, kvp.Key).array;
+                        Array dataArray = ScopeData.GetData(ChannelDataSourceScope.Viewport, kvp.Key).array;
                         AcquisitionsRecorded = (int)Math.Abs(kvp.Value.AddData(dataArray, ScopeData.LatestChunkSize));
                     }
                 } 
@@ -105,7 +105,7 @@ namespace LabNation.DeviceInterface.DataSources
                     {
                         firstSampleTime = (ulong)(DateTime.Now.TimeOfDay.TotalMilliseconds*1000000.0),
                         samples = ScopeData.ViewportSamples,
-                        samplePeriod = ScopeData.samplePeriod[DataSourceType.Viewport]
+                        samplePeriod = ScopeData.samplePeriod[ChannelDataSourceScope.Viewport]
                     });
                 foreach (var kvp in ScopeData.Settings)
                 {

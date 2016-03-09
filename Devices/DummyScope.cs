@@ -597,16 +597,16 @@ namespace LabNation.DeviceInterface.Devices {
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
                     viewportSamples, (Int64)(ViewPortOffset / SamplePeriodCurrent),
                     TriggerHoldoffCurrent, (Int64)(TriggerHoldoffCurrent/SamplePeriodCurrent), false, acquistionId, TriggerValue);
-            p.samplePeriod[DataSourceType.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
-            p.offset[DataSourceType.Viewport] = ViewPortOffset;
+            p.samplePeriod[ChannelDataSourceScope.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
+            p.offset[ChannelDataSourceScope.Viewport] = ViewPortOffset;
 
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
                 if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
                     continue;
                 if(SendOverviewBuffer)
-                    p.SetData(DataSourceType.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
-                p.SetData(DataSourceType.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
+                    p.SetData(ChannelDataSourceScope.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
+                p.SetData(ChannelDataSourceScope.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
 
                 //set dummy minmax values
                 p.SaturationLowValue[ch] = float.MinValue;
@@ -616,8 +616,8 @@ namespace LabNation.DeviceInterface.Devices {
             if (logicAnalyserEnabledCurrent)
             {
                 if (SendOverviewBuffer)
-                    p.SetData(DataSourceType.Overview, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
-                p.SetData(DataSourceType.Viewport, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
+                    p.SetData(ChannelDataSourceScope.Overview, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
+                p.SetData(ChannelDataSourceScope.Viewport, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
             }
 
             if (acquisitionMode == AcquisitionMode.SINGLE)
