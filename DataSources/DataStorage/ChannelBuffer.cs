@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using LabNation.Interfaces;
 using LabNation.DeviceInterface.Devices;
 using System.Runtime.Serialization.Formatters.Binary;
 
