@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -236,10 +236,12 @@ namespace LabNation.DeviceInterface.Devices {
             set
             {
 				if (value) {
+					double origAcqLength = AcquisitionLength;
 					if (waveSource == WaveSource.AUDIO)
 						BASE_SAMPLE_PERIOD = 1f / 44100f;
 					else
 						BASE_SAMPLE_PERIOD = 10e-9;
+					AcquisitionLength = origAcqLength;
 					StopPending = false;
 					if (waveSource == WaveSource.AUDIO && !this.acquisitionRunning)
 						InitAudioJack ();
@@ -421,19 +423,24 @@ namespace LabNation.DeviceInterface.Devices {
             set
             {
                 double samples = value / BASE_SAMPLE_PERIOD;
-                double ratio = (double)samples / OVERVIEW_LENGTH;
-                int log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
-                if (log2OfRatio < 0)
-                    log2OfRatio = 0;
-                if (log2OfRatio > ACQUISITION_DEPTH_POWER_MAX)
-                    log2OfRatio = ACQUISITION_DEPTH_POWER_MAX;
-                AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow(2, log2OfRatio));
+				if (waveSource == WaveSource.AUDIO) {
+					AcquisitionDepth = (uint)samples;
+					decimation = 0;
+				} else {
+					double ratio = (double)samples / OVERVIEW_LENGTH;
+					int log2OfRatio = (int)Math.Ceiling (Math.Log (ratio, 2));
+					if (log2OfRatio < 0)
+						log2OfRatio = 0;
+					if (log2OfRatio > ACQUISITION_DEPTH_POWER_MAX)
+						log2OfRatio = ACQUISITION_DEPTH_POWER_MAX;
+					AcquisitionDepth = (uint)(OVERVIEW_LENGTH * Math.Pow (2, log2OfRatio));
 
-                ratio = samples / AcquisitionDepth;
-                log2OfRatio = (int)Math.Ceiling(Math.Log(ratio, 2));
-                if (log2OfRatio < 0)
-                    log2OfRatio = 0;
-                decimation = (uint)log2OfRatio;
+					ratio = samples / AcquisitionDepth;
+					log2OfRatio = (int)Math.Ceiling (Math.Log (ratio, 2));
+					if (log2OfRatio < 0)
+						log2OfRatio = 0;
+					decimation = (uint)log2OfRatio;
+				}
             }
         }
 
@@ -449,7 +456,7 @@ namespace LabNation.DeviceInterface.Devices {
                     else
                     {
                         double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
-                        if (log2OfRatio != (int)log2OfRatio)
+						if (log2OfRatio != (int)log2OfRatio && waveSource != WaveSource.AUDIO)
                             throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
                         if (value > ACQUISITION_DEPTH_MAX)
                             acquisitionDepth = ACQUISITION_DEPTH_MAX;
@@ -475,6 +482,13 @@ namespace LabNation.DeviceInterface.Devices {
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
+
+			List<AnalogChannel> channelsToAcquireDataFor = new List<AnalogChannel> ();
+			if (waveSource == WaveSource.AUDIO)
+				channelsToAcquireDataFor.Add (AnalogChannel.ChA);
+			else
+				channelsToAcquireDataFor.AddRange (AnalogChannel.List);
+			
             if (acquisitionRunning)
             {
                 lock (viewportUpdateLock)
@@ -514,7 +528,7 @@ namespace LabNation.DeviceInterface.Devices {
                         return null;
                     }
 
-                    foreach (AnalogChannel channel in AnalogChannel.List)
+					foreach (AnalogChannel channel in channelsToAcquireDataFor)
                     {
                         if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                             continue;
@@ -575,7 +589,7 @@ namespace LabNation.DeviceInterface.Devices {
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
-						triggerTimeout = SamplePeriodCurrent * acquisitionDepthCurrent * 2.0; //Give up after twice the acqbuffer timespan
+						triggerTimeout = SamplePeriodCurrent * acquisitionDepthCurrent * 1.0; //Give up after twice the acqbuffer timespan
 
                     ///detect whether this section contains a trigger
                     //detect digital trigger
@@ -622,7 +636,7 @@ namespace LabNation.DeviceInterface.Devices {
                 }
 
                 //crop wave to only displayable part and store in buffer    
-                foreach(AnalogChannel channel in AnalogChannel.List)
+				foreach(AnalogChannel channel in channelsToAcquireDataFor)
                 {
                     if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                         continue;
@@ -673,7 +687,7 @@ namespace LabNation.DeviceInterface.Devices {
             p.samplePeriod[ChannelDataSourceScope.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[ChannelDataSourceScope.Viewport] = ViewPortOffset;
 
-            foreach (AnalogChannel ch in AnalogChannel.List)
+			foreach (AnalogChannel ch in channelsToAcquireDataFor)
             {
                 if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
                     continue;
@@ -686,9 +700,10 @@ namespace LabNation.DeviceInterface.Devices {
                 p.SaturationLowValue[ch] = float.MinValue;
                 p.SaturationHighValue[ch] = float.MaxValue;
 
-                //set 20mV as resolution, which is needed for some processors (like freqdetection). Don't go too low, as ETS uses this in its difference detector
-                p.Resolution[ch] = 0.020f;
+				//set 1mV as resolution, which is needed for some processors (like freqdetection)
+				p.Resolution[ch] = 0.001f;
             }
+
 
             if (logicAnalyserEnabledCurrent)
             {
@@ -721,10 +736,12 @@ namespace LabNation.DeviceInterface.Devices {
 		public WaveSource waveSource { get { return waveSourceInternal;} 
 			set{ 
 				waveSourceInternal = value;
+				double origAcqLength = AcquisitionLength;
 				if (value == WaveSource.AUDIO)
 					BASE_SAMPLE_PERIOD = 1f / 44100f;
 				else
 					BASE_SAMPLE_PERIOD = 10e-9;
+				AcquisitionLength = origAcqLength;
 
 				if (acquisitionRunning) {
 					if (value == WaveSource.AUDIO)
