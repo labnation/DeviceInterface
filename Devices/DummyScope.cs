@@ -5,11 +5,13 @@ using System.Text;
 using LabNation.DeviceInterface.DataSources;
 using LabNation.Common;
 using LabNation.DeviceInterface.Memories;
+using Android.Media;
 
 namespace LabNation.DeviceInterface.Devices {
 	public enum WaveSource {
 		FILE,
-		GENERATOR
+		GENERATOR,
+		AUDIO
 	}
 
     public class DummyScopeChannelConfig
@@ -45,6 +47,9 @@ namespace LabNation.DeviceInterface.Devices {
         Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog;
         byte[] acquisitionBufferDigital = null;
 
+		//audio jack parts
+		private int audioBufferLengthInBytes;
+		private AudioRecord audioJack = null;
         
         //milliseconds of latency to simulate USB request delay
         private Dictionary<AnalogChannel, float> yOffset = new Dictionary<AnalogChannel, float>() {
@@ -208,16 +213,44 @@ namespace LabNation.DeviceInterface.Devices {
 			}
         }
 
+		private void InitAudioJack()
+		{
+			audioBufferLengthInBytes = AudioRecord.GetMinBufferSize (44100, ChannelIn.Mono, Android.Media.Encoding.Pcm16bit);
+			audioJack = new AudioRecord (AudioSource.Mic, 44100, ChannelIn.Mono, Android.Media.Encoding.Pcm16bit, audioBufferLengthInBytes);
+			audioJack.StartRecording ();
+		}
+
+		private void KillAudioJack()
+		{
+			try
+			{
+				audioJack.Stop();
+				audioJack.Release();
+			}
+			catch { 
+				//do nothing, this was anyhow just an attempt to release the audio jack in a clean way
+			}
+		}
+
         public bool Running {
             set
             {
-                if (value)
-                {
-                    StopPending = false;
-                    this.acquisitionRunning = value;
-                }
-                else
-                    StopPending = true;
+				if (value) {
+					if (waveSource == WaveSource.AUDIO)
+						BASE_SAMPLE_PERIOD = 1f / 44100f;
+					else
+						BASE_SAMPLE_PERIOD = 10e-9;
+					StopPending = false;
+					if (waveSource == WaveSource.AUDIO && !this.acquisitionRunning)
+						InitAudioJack ();
+					this.acquisitionRunning = value;
+				} else {
+					if (this.acquisitionRunning && audioJack != null)
+					{
+						KillAudioJack ();
+					}
+					StopPending = true;
+				}
             }
 
             get { return this.acquisitionRunning; } 
@@ -496,30 +529,61 @@ namespace LabNation.DeviceInterface.Devices {
                             case WaveSource.FILE:
                                 wave = GetWaveFromFile(channel, waveLengthCurrent, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
                                 break;
-                            default:
-                                throw new Exception("Unsupported wavesource");
+						case WaveSource.AUDIO:
+							//fetch audio data
+							if (audioJack == null) return null;
+							byte[] audioData = new byte[audioBufferLengthInBytes];
+							int bytesRead = audioJack.Read (audioData, 0, audioBufferLengthInBytes); //2 bytes per sample
+							int watchdog = 0;
+							while (bytesRead <= 0 && watchdog++ < 1000) {
+								System.Threading.Thread.Sleep (1);
+								bytesRead = audioJack.Read (audioData, 0, audioBufferLengthInBytes); //2 bytes per sample
+							}
 
+							//convert bytes to shorts
+							short[] sampleData = new short[audioData.Length / 2];
+							Buffer.BlockCopy (audioData, 0, sampleData, 0, sampleData.Length * 2);
+
+							//and then into floats
+							wave = new float[sampleData.Length];
+							for (int i = 0; i < wave.Length; i++)
+								wave [i] = (float)sampleData [i] / (float)short.MaxValue;
+
+							//in case of large zoomouts, decimation will be > 0
+							//FIXME: this is not the best location to do this. time-errors will accumulate. better to do this on eventual wave. but then trigger index etc needs to be adjusted     
+							int skip = 1 << (int)decimation;
+							wave = wave.Where((x, i) => i % skip == 0).ToArray();
+
+							break;
+                        default:
+                            throw new Exception("Unsupported wavesource");
                         }
-                        if (ChannelConfig[channel].coupling == Coupling.AC)
-                            DummyScope.RemoveDcComponent(ref wave, ChannelConfig[channel].frequency, SamplePeriodCurrent);
-                        else
-                            DummyScope.AddDcComponent(ref wave, (float)ChannelConfig[channel].dcOffset);
-                        DummyScope.AddNoise(wave, ChannelConfig[channel].noise);
+
+						//coupling, noise injection in SW
+						if (waveSource != WaveSource.AUDIO) {
+							if (ChannelConfig [channel].coupling == Coupling.AC)
+								DummyScope.RemoveDcComponent (ref wave, ChannelConfig [channel].frequency, SamplePeriodCurrent);
+							else
+								DummyScope.AddDcComponent (ref wave, (float)ChannelConfig [channel].dcOffset);
+							DummyScope.AddNoise (wave, ChannelConfig [channel].noise);
+						}
                         waveAnalog[channel].AddRange(wave);
                     }
-                    if(logicAnalyserEnabledCurrent)
+					if(waveSource != WaveSource.AUDIO && logicAnalyserEnabledCurrent)
                         waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
 
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
-                        triggerTimeout = GENERATION_LENGTH_MAX * SamplePeriodCurrent; //Give up after 10ms
+						triggerTimeout = SamplePeriodCurrent * acquisitionDepthCurrent * 2.0; //Give up after twice the acqbuffer timespan
 
                     ///detect whether this section contains a trigger
                     //detect digital trigger
                     if (logicAnalyserEnabledCurrent && this.triggerValue.mode == TriggerMode.Digital)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
+						if (waveSource == WaveSource.AUDIO)
+							triggerDetected = false;
                     }
                     else
                     //detect analog trigger
@@ -653,7 +717,23 @@ namespace LabNation.DeviceInterface.Devices {
 
 		#region dummy scope settings
 
-        public WaveSource waveSource { get ; set; }
+		public WaveSource waveSourceInternal;
+		public WaveSource waveSource { get { return waveSourceInternal;} 
+			set{ 
+				waveSourceInternal = value;
+				if (value == WaveSource.AUDIO)
+					BASE_SAMPLE_PERIOD = 1f / 44100f;
+				else
+					BASE_SAMPLE_PERIOD = 10e-9;
+
+				if (acquisitionRunning) {
+					if (value == WaveSource.AUDIO)
+						InitAudioJack ();
+					else
+						KillAudioJack ();
+				}
+			} 
+		}		
 
         public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
 		{
