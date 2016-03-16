@@ -131,7 +131,6 @@ namespace LabNation.DeviceInterface.Devices
             edge = TriggerEdge.RISING,
             mode = TriggerMode.Edge,
             level = 0.0f,
-            digital = new Dictionary<DigitalChannel,DigitalTriggerValue>() //initialised in constructor
         };
 
 #if DEBUG
@@ -150,8 +149,6 @@ namespace LabNation.DeviceInterface.Devices
 
         internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
-            foreach (DigitalChannel dch in DigitalChannel.List)
-                triggerValue.digital.Add(dch, DigitalTriggerValue.X);
             this.hardwareInterface = usbInterface;
             this.SuspendViewportUpdates = false;
             DataOutOfRange = false;

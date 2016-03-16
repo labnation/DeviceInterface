@@ -60,7 +60,17 @@ namespace LabNation.DeviceInterface.Devices
         /// <summary>
         /// Digital mode setting
         /// </summary>
-        public Dictionary<DigitalChannel, DigitalTriggerValue> digital;
+        private Dictionary<DigitalChannel, DigitalTriggerValue> digital = new Dictionary<DigitalChannel,DigitalTriggerValue>();
+        public Dictionary<DigitalChannel, DigitalTriggerValue> Digital
+        {
+            get { return digital; }
+            set
+            {
+                if (value == null)
+                    throw new Exception("Can't set trigger's digital value with null");
+                digital = value;
+            }
+        }
         /// <summary>
         /// The direction for analog/ext trigger
         /// </summary>
@@ -72,13 +82,17 @@ namespace LabNation.DeviceInterface.Devices
         public double pulseWidthMin = 0.0;
         public double pulseWidthMax = double.PositiveInfinity;
 
-        public TriggerValue() { }
-        public TriggerValue(TriggerValue t)
+        public TriggerValue() 
+        {
+            foreach (DigitalChannel ch in DigitalChannel.List)
+                Digital[ch] = DigitalTriggerValue.X;
+        }
+        public TriggerValue(TriggerValue t) : this ()
         {
             mode = t.mode;
             source = t.source;
             channel = t.channel;
-            digital = new Dictionary<DigitalChannel, DigitalTriggerValue>(t.digital);
+            Digital = new Dictionary<DigitalChannel, DigitalTriggerValue>(t.Digital);
             edge = t.edge;
             level = t.level;
             pulseWidthMax = t.pulseWidthMax;

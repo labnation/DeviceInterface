@@ -357,7 +357,7 @@ namespace LabNation.DeviceInterface.Devices
                     FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);   
                 }
 
-                TriggerDigital = triggerValue.digital;
+                TriggerDigital = triggerValue.Digital;
 
                 UpdateTriggerPulseWidth();
             }
@@ -393,7 +393,7 @@ namespace LabNation.DeviceInterface.Devices
                     (FpgaSettingsMemory[REG.TRIGGER_PW_MAX_B2].GetByte() << 16)
                     ) * BASE_SAMPLE_PERIOD;
 
-                v.digital = TriggerDigital;
+                v.Digital = TriggerDigital;
 
                 return v;
             }
@@ -414,12 +414,7 @@ namespace LabNation.DeviceInterface.Devices
         {
             set
             {
-                if(value == null) {
-                    this.triggerDigital = new Dictionary<DigitalChannel, DigitalTriggerValue>();
-                    foreach(DigitalChannel ch in DigitalChannel.List)
-                        this.triggerDigital[ch] = DigitalTriggerValue.X;
-                } else 
-                    this.triggerDigital = value;
+                this.triggerDigital = value;
                 int rising = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.R ? 1 : 0) << x.Key.Value));
                 int falling = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.F ? 1 : 0) << x.Key.Value));
                 int high = this.triggerDigital.Aggregate(0, (r, x) => r + ((x.Value == DigitalTriggerValue.H ? 1 : 0) << x.Key.Value));

@@ -257,7 +257,7 @@ namespace LabNation.DeviceInterface.Devices {
             get { return this.triggerValue.Copy(); }
             set { 
                 this.triggerValue = value;
-                TriggerDigital = this.triggerValue.digital;
+                TriggerDigital = this.triggerValue.Digital;
             }
         }
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
