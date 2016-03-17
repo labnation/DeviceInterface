@@ -42,15 +42,20 @@ Implements `IDevice`, provides properties and methods to control the wave genera
 ## Memories and registers
 To use DeviceInterface, you don't actually need to understand these internals, so this is just a rough sketch of the functionality.
 
-`DeviceMemory`, containing as set of `MemoryRegister`, is the abstract class used to implement all devices inside of the SmartScope.
+All 'smart' chips (PIC, FPGA, ADC) inside the SmartScope have their registers, typically bytes. These are the 'parameters' of certain functionalities of these chips. Examples:
 
-`ByteMemory` inherits from `DeviceMemory`, providing an indexer `[]` returning `ByteRegister`.
+* FGPA: the TRIGGER_LEVEL register defines the voltage of the analog trigger level (FPGA register 7, see [the FPGA register list](https://github.com/labnation/DeviceInterface/blob/master/Memories/ScopeConstants_GEN.cs))
+* ADC: bits 5 and 4 of register 6 in the ADC defines whether its data is in two's complement or simply offset  binary (see the MAX19506 datasheet p22)
 
-Most memories are of the type `ByteMemory`
+Therefore, some logic is required to convert from physical values to register values (eg GUI trigger slider to TRIGGER_LEVEL bytevalue). These conversions are implemented in DeviceInterface (see the [TriggerValue setter method in SmartScopeSettings.cs](https://github.com/labnation/DeviceInterface/blob/master/Devices/SmartScopeSettings.cs)).
 
 `MemoryRegister` represents a register inside of a device. For efficiency's sake, they are cached, meaning the change of a register is not immediately written through to the device. Instead, you can change a bunch of registers and finally call `Commit()` on the containing  `DeviceMemory` object to effectuate the register changes. To circumvent this chaching mechanism, use `MemoryRegister.WriteImmediate()`.
 
 The same goes for `MemoryRegister.Get()`: the cached value is returned. To first update the cache, use `MemoryRegiter.Read().Get()`.
+
+* `DeviceMemory`, containing as set of `MemoryRegister`, is the abstract class used to implement all devices inside of the SmartScope.
+* `ByteMemory` inherits from `DeviceMemory`, providing an indexer `[]` returning `ByteRegister`.
+* Most memories are of the type `ByteMemory`
 
 ## Hardware Interfaces
 There's no need to understand this part to use the library, so here's just a concise explanation of the mechanisms.
