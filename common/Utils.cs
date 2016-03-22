@@ -748,7 +748,6 @@ namespace LabNation.Common
                     Logger.Debug(String.Format("Found device with VID:PID {0:X4}:{1:X4} with serial {2}", VID, PID, serial));
                     return true;
                 }
-                Logger.Debug(String.Format("Device with PID:VID {0:X4}:{1:X4} not found", PID, VID));
                 return false;
             }
             catch (ManagementException e)
