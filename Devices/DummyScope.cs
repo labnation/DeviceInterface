@@ -152,7 +152,11 @@ namespace LabNation.DeviceInterface.Devices {
 
 		internal DummyScope () : base ()
 		{
-            waveSource = WaveSource.GENERATOR;
+#if ANDROID
+			waveSource = WaveSource.AUDIO;
+#else
+			waveSource = WaveSource.GENERATOR;
+#endif
             ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>() 
             {
                 { AnalogChannel.ChA, new DummyScopeChannelConfig()
@@ -828,7 +832,8 @@ namespace LabNation.DeviceInterface.Devices {
             uint preconditionCounterFalling = 0;
             uint postconditionCounterRising = 0;
             uint postconditionCounterFalling = 0;
-			for (int i = Math.Max (0, holdoff); i < wave.Length - width - outputWaveLength; i++) {
+			int startIndex = Math.Max (0, holdoff);
+			for (int i = startIndex; i < wave.Length - width - outputWaveLength + startIndex; i++) {
                 bool preconditionRisingMet = preconditionCounterRising == halfWidth;
                 bool preconditionFallingMet = preconditionCounterFalling == halfWidth;
                 if (preconditionRisingMet)
