@@ -116,6 +116,20 @@ namespace LabNation.DeviceInterface.Devices
                     if (connectHandler != null)
                         connectHandler(device, true);
                 }
+                else if (device is SmartScope)
+                {
+                    if (connectHandler != null)
+                        connectHandler(device, false);
+                    SmartScope master = device as SmartScope;
+                    ISmartScopeUsbInterface masterInterface = master.hardwareInterface;
+                    master.Dispose();
+
+                    //Instantiate 4 channel smartscope
+                    Logger.Debug("Turning scope into 4 channel scope");
+                    device = new SmartScope4Channel(masterInterface, hardwareInterface);
+                    if (connectHandler != null)
+                        connectHandler(device, true);
+                }
             }
             else 
             {
@@ -133,6 +147,19 @@ namespace LabNation.DeviceInterface.Devices
 					Logger.Debug("DeviceManager: calling connect for fallback device");
                     if (connectHandler != null)
                         connectHandler(fallbackDevice, true);
+                }
+                if (device is SmartScope4Channel)
+                {
+                    Logger.Debug("Reducing 4 channel scope to regular smartscope");
+                    SmartScope4Channel ss4chan = (device as SmartScope4Channel);
+                    ISmartScopeUsbInterface interfaceLeft = ss4chan.smartScopes.
+                        Select(x => x.Value.hardwareInterface).
+                            Where(x => x != hardwareInterface).First();
+
+                    ss4chan.Dispose();
+                    device = new SmartScope(interfaceLeft);
+                    if (connectHandler != null)
+                        connectHandler(device, true);
                 }
             }
         }

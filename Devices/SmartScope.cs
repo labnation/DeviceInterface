@@ -21,7 +21,7 @@ namespace LabNation.DeviceInterface.Devices
 #if DEBUG
         public
 #else
-        private
+        internal
 #endif
         ISmartScopeUsbInterface hardwareInterface;
 #if DEBUG
