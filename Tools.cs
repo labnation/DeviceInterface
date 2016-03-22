@@ -110,7 +110,6 @@ namespace LabNation.DeviceInterface
 
                 //fetch data
                 DataPackageScope p = FetchLastFrame(scope);
-                p = FetchLastFrame(scope); //needs this second fetch as well to get voltage conversion on ChanB right?!?
 
                 if (p == null)
                 {
@@ -129,7 +128,7 @@ namespace LabNation.DeviceInterface
                 if (minA != p.SaturationLowValue[AnalogChannel.ChA] && minA != p.SaturationHighValue[AnalogChannel.ChA] && minValues[0] > minA) minValues[0] = minA;
                 if (minB != p.SaturationLowValue[AnalogChannel.ChB] && minB != p.SaturationHighValue[AnalogChannel.ChB] && minValues[1] > minB) minValues[1] = minB;
                 if (maxA != p.SaturationLowValue[AnalogChannel.ChA] && maxA != p.SaturationHighValue[AnalogChannel.ChA] && maxValues[0] < maxA) maxValues[0] = maxA;
-                if (maxB != p.SaturationLowValue[AnalogChannel.ChB] && maxB != p.SaturationHighValue[AnalogChannel.ChB] && maxValues[1] < maxB) maxValues[1] = maxB;          
+                if (maxB != p.SaturationLowValue[AnalogChannel.ChB] && maxB != p.SaturationHighValue[AnalogChannel.ChB] && maxValues[1] < maxB) maxValues[1] = maxB;
             }
 
             //calc ideal voltage range and offset
@@ -157,9 +156,11 @@ namespace LabNation.DeviceInterface
             scope.SetYOffset(AnalogChannel.ChB, -desiredOffsets[1]);
             scope.CommitSettings();
 
+            System.Threading.Thread.Sleep(100);
+            scope.ForceTrigger();
+
             //now get data in order to find accurate lowHigh levels (as in coarse mode this was not accurate)
             DataPackageScope pFine = FetchLastFrame(scope);
-            pFine = FetchLastFrame(scope); //needs this second fetch as well to get voltage conversion on ChanB right?!?
             
             Dictionary<AnalogChannel, float[]> dataFine = new Dictionary<AnalogChannel, float[]>();
             dataFine.Add(AnalogChannel.ChA, (float[])pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array);
@@ -193,7 +194,8 @@ namespace LabNation.DeviceInterface
             float currTimeRange = minTimeRange;
             bool continueLooping = true;
             if (isFlatline.Where(x => x.Value).ToList().Count == isFlatline.Count) //no need to find frequency in case of 2 DC signals
-                continueLooping = false; 
+                continueLooping = false;
+            int remeasureCounter = 0; // in case of spikes, we try to remeasure until captured. But slow sines can cause this to go wild
             while (continueLooping)
             {
                 progress += .04f;
@@ -205,12 +207,15 @@ namespace LabNation.DeviceInterface
                 scope.SetViewPort(0, scope.AcquisitionLength);
                 scope.CommitSettings();
 
+                System.Threading.Thread.Sleep(100);
+                scope.ForceTrigger();
+
                 DataPackageScope pHor = FetchLastFrame(scope);
-                pHor = FetchLastFrame(scope);
                 Dictionary<AnalogChannel, float[]> timeData = new Dictionary<AnalogChannel, float[]>();
                 timeData.Add(AnalogChannel.ChA, (float[])pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array);
                 timeData.Add(AnalogChannel.ChB, (float[])pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array);
 
+                bool notCapturedFullAmplitude = false;
                 foreach (var kvp in timeData)
                 {
                     //make sure entire amplitude is in view
@@ -218,24 +223,35 @@ namespace LabNation.DeviceInterface
                     float currMaxVal = kvp.Value.Max();
                     float lowMarginValue = minimumValues[kvp.Key] + amplitudes[kvp.Key] * 0.1f;
                     float highMarginValue = maximumValues[kvp.Key] - amplitudes[kvp.Key] * 0.1f;
-                    if (currMinVal > lowMarginValue) break;
-                    if (currMaxVal < highMarginValue) break;
+                    if (currMinVal > lowMarginValue || currMaxVal < highMarginValue)
+                    {
+                        notCapturedFullAmplitude = true;
+                        continue;
+                    }
 
                     Dictionary<int, bool> risingNFallingEdges;
                     ComputeFrequencyDutyCycle(pHor.GetData(ChannelDataSourceScope.Viewport, kvp.Key), out frequency, out frequencyError, out dutyCycle, out dutyCycleError, out risingNFallingEdges, currMinVal, currMaxVal);
                     if (!double.IsNaN(frequency) && (finalFrequencies[kvp.Key] == double.MaxValue))
                         finalFrequencies[kvp.Key] = frequency;
-                }               
+                }
 
-                //update and check whether we've found what we were looking for
-                currTimeRange *= 100f;
-                bool freqFoundForAllActiveWaves = true;
-                foreach (var kvp in timeData)
-                    if (!isFlatline[kvp.Key] && finalFrequencies[kvp.Key] == double.MaxValue)
-                        freqFoundForAllActiveWaves = false;
-                continueLooping = !freqFoundForAllActiveWaves;
-                if (currTimeRange > maxTimeRange) 
-                    continueLooping = false;
+                if (notCapturedFullAmplitude && remeasureCounter++ < 5)
+                {
+                    //need to re-measure, so don't increment
+                }
+                else
+                {
+                    remeasureCounter = 0;
+                    //update and check whether we've found what we were looking for
+                    currTimeRange *= 100f;
+                    bool freqFoundForAllActiveWaves = true;
+                    foreach (var kvp in timeData)
+                        if (!isFlatline[kvp.Key] && finalFrequencies[kvp.Key] == double.MaxValue)
+                            freqFoundForAllActiveWaves = false;
+                    continueLooping = !freqFoundForAllActiveWaves;
+                    if (currTimeRange > maxTimeRange)
+                        continueLooping = false;
+                }                
             } 
 
             //in case of flatline or very low freq, initial value will not have changed
