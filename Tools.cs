@@ -118,17 +118,28 @@ namespace LabNation.DeviceInterface
                 }
 
                 //check if min or max need to be updated (only in case this measurement was not saturated)
-                float[] dataA = (float[])p.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array;
-                float[] dataB = (float[])p.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array;
+				ChannelData cdA = p.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA);
+				ChannelData cdB = p.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB);
+				float[] dataA;
+				float[] dataB;
+				if (cdA != null) 
+					dataA = (float[])cdA.array;
+				else
+					dataA = new float[1] { 0 };
+				if (cdB != null) 
+					dataB = (float[])cdB.array;
+				else
+					dataB = new float[1] { 0 };
+
                 float minA = dataA.Min();
                 float maxA = dataA.Max();
                 float minB = dataB.Min();
                 float maxB = dataB.Max();
 
-                if (minA != p.SaturationLowValue[AnalogChannel.ChA] && minA != p.SaturationHighValue[AnalogChannel.ChA] && minValues[0] > minA) minValues[0] = minA;
-                if (minB != p.SaturationLowValue[AnalogChannel.ChB] && minB != p.SaturationHighValue[AnalogChannel.ChB] && minValues[1] > minB) minValues[1] = minB;
-                if (maxA != p.SaturationLowValue[AnalogChannel.ChA] && maxA != p.SaturationHighValue[AnalogChannel.ChA] && maxValues[0] < maxA) maxValues[0] = maxA;
-                if (maxB != p.SaturationLowValue[AnalogChannel.ChB] && maxB != p.SaturationHighValue[AnalogChannel.ChB] && maxValues[1] < maxB) maxValues[1] = maxB;
+				if (p.SaturationLowValue.ContainsKey(AnalogChannel.ChA) &&  minA != p.SaturationLowValue[AnalogChannel.ChA] && minA != p.SaturationHighValue[AnalogChannel.ChA] && minValues[0] > minA) minValues[0] = minA;
+				if (p.SaturationLowValue.ContainsKey(AnalogChannel.ChB) && minB != p.SaturationLowValue[AnalogChannel.ChB] && minB != p.SaturationHighValue[AnalogChannel.ChB] && minValues[1] > minB) minValues[1] = minB;
+				if (p.SaturationLowValue.ContainsKey(AnalogChannel.ChA) && maxA != p.SaturationLowValue[AnalogChannel.ChA] && maxA != p.SaturationHighValue[AnalogChannel.ChA] && maxValues[0] < maxA) maxValues[0] = maxA;
+				if (p.SaturationLowValue.ContainsKey(AnalogChannel.ChB) && maxB != p.SaturationLowValue[AnalogChannel.ChB] && maxB != p.SaturationHighValue[AnalogChannel.ChB] && maxValues[1] < maxB) maxValues[1] = maxB;
             }
 
             //calc ideal voltage range and offset
@@ -163,8 +174,10 @@ namespace LabNation.DeviceInterface
             DataPackageScope pFine = FetchLastFrame(scope);
             
             Dictionary<AnalogChannel, float[]> dataFine = new Dictionary<AnalogChannel, float[]>();
-            dataFine.Add(AnalogChannel.ChA, (float[])pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array);
-            dataFine.Add(AnalogChannel.ChB, (float[])pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array);
+			ChannelData cdAFine = pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA);
+			ChannelData cdBFine = pFine.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB);
+			if (cdAFine != null) dataFine.Add(AnalogChannel.ChA, (float[])cdAFine.array);
+			if (cdBFine != null) dataFine.Add(AnalogChannel.ChB, (float[])cdBFine.array);
             
             Dictionary<AnalogChannel, float> minimumValues = new Dictionary<AnalogChannel, float>();
             Dictionary<AnalogChannel, float> maximumValues = new Dictionary<AnalogChannel, float>();
@@ -183,7 +196,7 @@ namespace LabNation.DeviceInterface
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // HORIZONTAL == FREQUENCY
             
-            const float minTimeRange = 500f * 0.00000001f;//500 samples over full hor span
+            float minTimeRange = 500f * (float)scope.SamplePeriod;
             const float maxTimeRange = 1f;            
 
             double frequency, frequencyError, dutyCycle, dutyCycleError;
@@ -207,13 +220,15 @@ namespace LabNation.DeviceInterface
                 scope.SetViewPort(0, scope.AcquisitionLength);
                 scope.CommitSettings();
 
-                System.Threading.Thread.Sleep(100);
+                System.Threading.Thread.Sleep(1000);
                 scope.ForceTrigger();
 
                 DataPackageScope pHor = FetchLastFrame(scope);
                 Dictionary<AnalogChannel, float[]> timeData = new Dictionary<AnalogChannel, float[]>();
-                timeData.Add(AnalogChannel.ChA, (float[])pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA).array);
-                timeData.Add(AnalogChannel.ChB, (float[])pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB).array);
+				ChannelData cdAHor = pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChA);
+				ChannelData cdBHor = pHor.GetData(ChannelDataSourceScope.Viewport, AnalogChannel.ChB);
+				if (cdAHor != null) timeData.Add(AnalogChannel.ChA, (float[])cdAHor.array);
+				if (cdBHor != null) timeData.Add(AnalogChannel.ChB, (float[])cdBHor.array);
 
                 bool notCapturedFullAmplitude = false;
                 foreach (var kvp in timeData)
