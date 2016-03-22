@@ -8,7 +8,7 @@ namespace LabNation.DeviceInterface.DataSources
 {
     public class RecordingScope : IDisposable
     { 
-        public Dictionary<Channel, IChannelBuffer> channelBuffers;
+        public Dictionary<Channel, ChannelBuffer> channelBuffers;
         public List<AcquisitionInfo> acqInfo;
         public Dictionary<string, List<double>> settings;
         public int AcquisitionsRecorded { get; private set; }
@@ -36,7 +36,7 @@ namespace LabNation.DeviceInterface.DataSources
             this.IsRollingRecording = scopeIsRolling;
             busy = true;
             acqInfo = new List<AcquisitionInfo>();
-            channelBuffers = new Dictionary<Channel, IChannelBuffer>();
+            channelBuffers = new Dictionary<Channel, ChannelBuffer>();
             settings = new Dictionary<string, List<double>>();
 
             Type t = typeof(Channel);
@@ -60,7 +60,7 @@ namespace LabNation.DeviceInterface.DataSources
         {
             if (!disposed)
             {
-                foreach (IChannelBuffer b in this.channelBuffers.Values)
+                foreach (ChannelBuffer b in this.channelBuffers.Values)
                     b.Destroy();
                 if (disposing)
                     this.channelBuffers = null;

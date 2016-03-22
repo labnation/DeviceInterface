@@ -8,7 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace LabNation.DeviceInterface.DataSources
 {
-    internal class ChannelBuffer:IChannelBuffer
+    public class ChannelBuffer
     {
         private string name;
         private string filename;
