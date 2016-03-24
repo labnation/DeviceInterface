@@ -701,6 +701,10 @@ namespace LabNation.DeviceInterface.Devices {
             p.samplePeriod[ChannelDataSourceScope.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[ChannelDataSourceScope.Viewport] = ViewPortOffset;
 
+			//copy values, needed for ETS to work properly
+			p.samplePeriod [ChannelDataSourceScope.Overview] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
+			p.offset [ChannelDataSourceScope.Overview] = ViewPortOffset;
+
 			foreach (AnalogChannel ch in channelsToAcquireDataFor)
             {
                 if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
@@ -714,8 +718,8 @@ namespace LabNation.DeviceInterface.Devices {
                 p.SaturationLowValue[ch] = float.MinValue;
                 p.SaturationHighValue[ch] = float.MaxValue;
 
-				//set 1mV as resolution, which is needed for some processors (like freqdetection)
-				p.Resolution[ch] = 0.001f;
+                //set 20mV as resolution, which is needed for some processors (like freqdetection). Don't go too low, as ETS uses this in its difference detector
+                p.Resolution[ch] = 0.020f;
             }
 
 
