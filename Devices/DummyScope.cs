@@ -613,6 +613,9 @@ namespace LabNation.DeviceInterface.Devices {
                 //set dummy minmax values
                 p.SaturationLowValue[ch] = float.MinValue;
                 p.SaturationHighValue[ch] = float.MaxValue;
+
+                //set 20mV as resolution, which is needed for some processors (like freqdetection). Don't go too low, as ETS uses this in its difference detector
+                p.Resolution[ch] = 0.020f;
             }
 
             if (logicAnalyserEnabledCurrent)
