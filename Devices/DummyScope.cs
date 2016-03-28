@@ -162,7 +162,7 @@ namespace LabNation.DeviceInterface.Devices {
                 { AnalogChannel.ChB, new DummyScopeChannelConfig() 
                     {
                         amplitude = 1,
-                        noise = 0.05,
+                        noise = 0.015,
                         coupling = Coupling.DC,
                         dcOffset = 0.0,
                         frequency = 10e3,
