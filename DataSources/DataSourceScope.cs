@@ -22,55 +22,18 @@ namespace LabNation.DeviceInterface.DataSources
 
         private Thread dataFetchThread;
 
-        // Recording variables
-        public RecordingScope Recording { get; private set; }
-        public TimeSpan RecordingInterval { get; set; }
-        private DateTime RecordingLastAcquisitionTimestamp;
-        public int RecordingAcquisitionsPerInterval { get; set; }
-        private int RecordingAcquisitionsThisInterval;
-
         private bool running = false;
         private bool paused = false;
 
-        public bool RecordingBusy
-        {
-            get
-            {
-                if (Recording == null) return false;
-                return Recording.Busy;
-            }
-        }
-
-        public int AcquisitionsRecorded { get { return Recording.AcquisitionsRecorded; } }
-        
         private void fireDataAvailableEvents()
         {
-            {
-#if DEBUG
-                if (BeforeNewDataAvailable != null)
-                    BeforeNewDataAvailable(LatestDataPackage, this);
-#endif
-                if (Recording != null && Recording.Busy)
-                {
-                    lock (Recording) //need this lock, as otherwise Recording can be disposed and streams closed between now and when decoder outputs are to be saved
-                    {
-                        Record(LatestDataPackage, new EventArgs());
-                        if (OnNewDataAvailable != null)
-                            OnNewDataAvailable(LatestDataPackage, this);
-                    }
-                }
-                else
-                {
-                    if (OnNewDataAvailable != null)
-                        OnNewDataAvailable(LatestDataPackage, this);
-                }
-            }
+            if (OnNewDataAvailable != null)
+                OnNewDataAvailable(LatestDataPackage, this);
         }
         
         internal DataSource(IScope scope)
         {
             this.scope = scope;
-            this.RecordingAcquisitionsPerInterval = 1;
         }
         
         public bool IsRunning { get { return dataFetchThread != null && dataFetchThread.IsAlive; } }
@@ -132,7 +95,6 @@ namespace LabNation.DeviceInterface.DataSources
 
         internal void Reset()
         {
-            DestroyRecording();
             Stop();
         }
 
@@ -154,73 +116,5 @@ namespace LabNation.DeviceInterface.DataSources
             Logger.Debug("Data fetch thread stopped");
         }
 
-        public bool StartRecording(bool scopeIsRolling)
-        {
-            if (Recording != null)
-            {
-                Logger.Warn("Can't start recording since a previous recording still exists");
-                return false;
-            }
-
-            this.RecordingLastAcquisitionTimestamp = DateTime.Now; 
-            this.RecordingAcquisitionsThisInterval = 0;
-            
-            Recording = new RecordingScope(scopeIsRolling);
-
-            return true;
-        }
-
-        private void Record(DataPackageScope dataPackage, EventArgs e)
-        {
-            //Only do the whole acquisitions per interval checking if the interval
-            //and acqs per interval is greater than zero
-            if (RecordingInterval > TimeSpan.Zero && RecordingAcquisitionsPerInterval > 0)
-            {
-                DateTime now = DateTime.Now;
-                if (now.Subtract(RecordingLastAcquisitionTimestamp) > RecordingInterval)
-                {
-                    this.RecordingAcquisitionsThisInterval = 0;
-                    this.RecordingLastAcquisitionTimestamp = now;
-                }
-
-                //exit in case enough acquisitions have already been stored this interval
-                if (++this.RecordingAcquisitionsThisInterval > this.RecordingAcquisitionsPerInterval)
-                    return;
-            }
-            Recording.Record(dataPackage, e);
-        }
-
-        public bool StopRecording()
-        {
-            if (Recording == null)
-            {
-                Logger.Warn("Can't stop recording since no recording exists");
-                return false;
-            }
-            if (!Recording.Busy)
-            {
-                Logger.Info("Recording stop requested but was already stopped");
-                return false;
-            }
-            
-            Recording.Busy = false;
-            if (Recording.acqInfo.Count == 0)
-            {
-                Recording.Dispose();
-                Recording = null;
-                return false;
-            }
-            return true;
-        }
-
-        public void DestroyRecording()
-        {
-            if (Recording != null)
-            {
-                StopRecording();
-                Recording.Dispose();
-                Recording = null;
-            }
-        }
     }
 }
