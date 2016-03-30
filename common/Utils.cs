@@ -603,6 +603,30 @@ namespace LabNation.Common
                 default: return unit;
             }
         }
+		static public string siRound(double number)
+		{
+			string prefix = "k";
+			double divider = 1000;
+			if (number > 1000) {
+				divider = 1000000;
+				prefix = "M";
+			}
+			if (number > 1000000) {
+				divider = 1000000000;
+				prefix = "G";
+			}
+			
+			//Then scale it to si scale
+			double divided = number/divider;
+
+			string str;
+			if (divided >= 1)
+				str = divided.ToString("0");
+			else
+				str = divided.ToString(".0");
+
+			return str + prefix;
+		}
             
         public static IEnumerable<double> EnumerableRange(double min, double max, int steps)
         {
