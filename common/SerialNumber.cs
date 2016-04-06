@@ -51,6 +51,7 @@ namespace LabNation.Common
             SmartScope_A14     = (MODEL_SMARTSCOPE * MODEL_OFFSET) + (1 * GENERATION_OFFSET) + 4,
             SmartScope_A15     = (MODEL_SMARTSCOPE * MODEL_OFFSET) + (1 * GENERATION_OFFSET) + 5,
             SmartScope_A16     = (MODEL_SMARTSCOPE * MODEL_OFFSET) + (1 * GENERATION_OFFSET) + 6,
+            SmartScope_A17     = (MODEL_SMARTSCOPE * MODEL_OFFSET) + (1 * GENERATION_OFFSET) + 7,
         }
 
         public static void LogModelsAndPlants()
