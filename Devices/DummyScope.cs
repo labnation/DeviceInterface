@@ -71,6 +71,7 @@ namespace LabNation.DeviceInterface.Devices {
         private uint acquisitionDepthCurrent;
         private bool logicAnalyserEnabledCurrent;
         private AnalogChannel logicAnalyserChannelCurrent;
+		private DataPackageScope lastCommittedDataPackage = null;
         		
         private uint waveLength { get { return 2 * acquisitionDepth; } }
         internal double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
@@ -518,6 +519,12 @@ namespace LabNation.DeviceInterface.Devices {
 
                 //loop until trigger condition is met
                 while(true) {
+					//in case the stop button has been pressed, this section makes sure the last-shown acquisition is kept on the display (otherwise it is replaced by a new acquisition)
+					if ((StopPending || !acquisitionRunning) && (lastCommittedDataPackage != null)) {
+						acquisitionRunning = false;
+						return lastCommittedDataPackage;
+					}
+
                     AcquisitionMode AcquisitionModeCurrent;
                     lock (acquisitionSettingsLock)
                     {
@@ -734,6 +741,7 @@ namespace LabNation.DeviceInterface.Devices {
             if (acquisitionMode == AcquisitionMode.SINGLE)
                 acquisitionRunning = false;
 
+			lastCommittedDataPackage = p;
             return p;
         }
 
