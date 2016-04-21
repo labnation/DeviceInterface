@@ -234,7 +234,6 @@ namespace LabNation.DeviceInterface.Devices
                 LogWait("FPGA flashed...");
                 InitializeMemories();
                 LogWait("Memories initialized...");
-                Logger.Debug("FPGA ROM MSB:LSB = " + FpgaRom[ROM.FW_MSB].Read().GetByte() + ":" + FpgaRom[ROM.FW_LSB].Read().GetByte());
 
                 Logger.Debug(String.Format("FPGA FW version = 0x{0:x}", GetFpgaFirmwareVersion()));
 
@@ -348,8 +347,9 @@ namespace LabNation.DeviceInterface.Devices
                     return;
                 }
             }
-
+#if !DEBUG
             throw new ScopeIOException("failed to calibrate ADC");
+#endif
         }
 
         private bool TestAdcRamp()
