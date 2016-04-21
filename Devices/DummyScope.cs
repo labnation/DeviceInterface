@@ -520,8 +520,8 @@ namespace LabNation.DeviceInterface.Devices {
                     }
                     else
                     {
-                        if (triggerValue.source != TriggerSource.Channel)
-                            throw new Exception("Doing analog trigger but mode is not set to analog!");
+                        if (triggerValue.source == TriggerSource.External)
+                            triggerDetected = false;
                         triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerValue.channel].ToArray(), triggerValue,
                             triggerHoldoffInSamples, triggerThreshold, triggerWidth,
                             acquisitionDepthCurrent, out triggerIndex);
