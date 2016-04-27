@@ -325,7 +325,7 @@ namespace LabNation.DeviceInterface.Devices
             Running = true;
             Logger.Info("Calibrating ADC timing");
             CommitSettings();
-
+            return;
             //If the adc timing value is not the default (being 0, the first one in the list)
             // it means it was read from ROM. Try working with that value first.
             if (AdcTimingValue != adcTimingValues[0])
