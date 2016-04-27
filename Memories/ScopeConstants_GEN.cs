@@ -75,14 +75,16 @@ namespace LabNation.DeviceInterface.Memories
 		CHA_DCCOUPLING = 12,
 		CHB_DCCOUPLING = 13,
 		ENABLE_ADC = 14,
-		OVERFLOW_DETECT = 15,
-		ENABLE_NEG = 16,
-		ENABLE_RAM = 17,
-		DOUT_3V_5V = 18,
-		EN_OPAMP_B = 19,
-		GENERATOR_TO_DIGITAL = 20,
-		ROLL = 21,
-		LA_CHANNEL = 22,
+		ENABLE_NEG = 15,
+		ENABLE_RAM = 16,
+		DOUT_3V_5V = 17,
+		EN_OPAMP_B = 18,
+		GENERATOR_TO_DIGITAL = 19,
+		ROLL = 20,
+		LA_CHANNEL = 21,
+		FOUR_CHAN_ENA = 22,
+		FOUR_CHAN_MASTER = 23,
+		FOUR_CHAN_SYNC = 24,
     }
 
 #if DEBUG
@@ -92,14 +94,12 @@ namespace LabNation.DeviceInterface.Memories
 #endif
 	 enum ROM
     {
-		FW_MSB = 0,
-		FW_LSB = 1,
-		FW_GIT0 = 2,
-		FW_GIT1 = 3,
-		FW_GIT2 = 4,
-		FW_GIT3 = 5,
-		SPI_RECEIVED_VALUE = 6,
-		STROBES = 7,
+		FW_GIT0 = 0,
+		FW_GIT1 = 1,
+		FW_GIT2 = 2,
+		FW_GIT3 = 3,
+		SPI_RECEIVED_VALUE = 4,
+		STROBES = 5,
     }
 
 }
