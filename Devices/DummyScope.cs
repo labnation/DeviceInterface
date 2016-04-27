@@ -452,7 +452,7 @@ namespace LabNation.DeviceInterface.Devices {
                 int triggerHoldoffInSamples = 0;
                 int triggerIndex = 0;
                 Dictionary<AnalogChannel, List<float>> waveAnalog = new Dictionary<AnalogChannel, List<float>>();
-                foreach(AnalogChannel ch in AnalogChannel.List)
+                foreach(AnalogChannel ch in AvailableChannels)
                     waveAnalog.Add(ch, new List<float>((int)waveLength));
                 List<byte> waveDigital = new List<byte>();
 
@@ -481,7 +481,7 @@ namespace LabNation.DeviceInterface.Devices {
                         return null;
                     }
 
-                    foreach (AnalogChannel channel in AnalogChannel.List)
+                    foreach (AnalogChannel channel in AvailableChannels)
                     {
                         if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                             continue;
@@ -551,7 +551,7 @@ namespace LabNation.DeviceInterface.Devices {
                     timeOffset = timeOffset.Add(timePassed);
                 }
                     
-                foreach(AnalogChannel channel in AnalogChannel.List)
+                foreach(AnalogChannel channel in AvailableChannels)
                 {
                     if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                         continue;
@@ -602,7 +602,7 @@ namespace LabNation.DeviceInterface.Devices {
             p.samplePeriod[ChannelDataSourceScope.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[ChannelDataSourceScope.Viewport] = ViewPortOffset;
 
-            foreach (AnalogChannel ch in AnalogChannel.List)
+            foreach (AnalogChannel ch in AvailableChannels)
             {
                 if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
                     continue;
