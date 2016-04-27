@@ -30,6 +30,18 @@ namespace LabNation.DeviceInterface.Devices
         SmartScope first { get { return smartScopes[Position.First]; } }
         SmartScope second { get { return smartScopes[Position.Second]; } }
 
+        private IScope ScopeOf(AnalogChannel ch)
+        {
+            if (ch.Order < 2) return first;
+            return second;
+        }
+        private AnalogChannel ChMod2(AnalogChannel ch)
+        {
+            return 
+                ch == AnalogChannel.ChD ? AnalogChannel.ChB :
+                ch == AnalogChannel.ChC ? AnalogChannel.ChA :
+                ch;
+        }
         List<AnalogChannel> availableChannels = new List<AnalogChannel>() { AnalogChannel.ChA, AnalogChannel.ChB, AnalogChannel.ChC, AnalogChannel.ChD };
         public List<AnalogChannel> AvailableChannels { get { return availableChannels; } }
 
@@ -150,15 +162,30 @@ namespace LabNation.DeviceInterface.Devices
             get { return first.TriggerHoldOff; }
             set { ss.ForEach(x => x.TriggerHoldOff = value); }
         }
+        private TriggerValue triggerValue;
         public TriggerValue TriggerValue
         {
             get { 
                 //OK need logic here to adjust channel numbers
-                return first.TriggerValue; 
+                throw new NotImplementedException();
             }
-            set { 
-                // FIXME as abive
-                ss.ForEach(x => x.TriggerValue= value); 
+            set {
+                if (value.source != TriggerSource.Channel || value.mode == TriggerMode.Digital)
+                    throw new Exception("Only analog channel triggering supported for now in 4 channel mode");
+                this.triggerValue = value.Copy();
+                TriggerValue tvAdjusted = value.Copy();
+                tvAdjusted.channel = ChMod2(tvAdjusted.channel);
+                
+                SmartScope master = (SmartScope)ScopeOf(value.channel);
+                SmartScope slave = master == first ? second : first;
+                master.TriggerValue = tvAdjusted;
+                slave.TriggerValue = new Devices.TriggerValue() { 
+                    mode = TriggerMode.Edge,
+                    source = TriggerSource.External,
+                    edge = TriggerEdge.RISING
+                };
+                master.Set4ChannelMode(true, true);
+                slave.Set4ChannelMode(true, false);
             }
         }
         public bool SendOverviewBuffer
@@ -175,37 +202,39 @@ namespace LabNation.DeviceInterface.Devices
         /* Channel specifics */
         public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {
-            first.SetCoupling(channel, coupling);
+            ScopeOf(channel).SetCoupling(ChMod2(channel), coupling);
         }
         public Coupling GetCoupling(AnalogChannel channel)
         {
-            return first.GetCoupling(channel);
+            return ScopeOf(channel).GetCoupling(ChMod2(channel));
         }
         public void SetVerticalRange(AnalogChannel channel, float minimum, float maximum)
         {
-            first.SetVerticalRange(channel, minimum, maximum);
+            ScopeOf(channel).SetVerticalRange(ChMod2(channel), minimum, maximum);
         }
 
         public void SetYOffset(AnalogChannel channel, float offset)
         {
-            first.SetYOffset(channel, offset);
+            ScopeOf(channel).SetYOffset(ChMod2(channel), offset);
         }
         public float GetYOffset(AnalogChannel channel)
         {
-            return first.GetYOffset(channel);
+            return ScopeOf(channel).GetYOffset(ChMod2(channel));
         }
         public float GetYOffsetMax(AnalogChannel ch)
         {
-            return first.GetYOffsetMax(ch);
+            return ScopeOf(ch).GetYOffsetMax(ChMod2(ch));
         }
         public float GetYOffsetMin(AnalogChannel ch)
         {
-            return first.GetYOffsetMin(ch);
+            return ScopeOf(ch).GetYOffsetMin(ChMod2(ch));
         }
-        public void SetProbeDivision(AnalogChannel ch, ProbeDivision division) { }
+        public void SetProbeDivision(AnalogChannel ch, ProbeDivision division) {
+            ScopeOf(ch).SetProbeDivision(ChMod2(ch), division);
+        }
         public ProbeDivision GetProbeDivision(AnalogChannel ch) 
         {
-            return first.GetProbeDivision(ch);
+            return ScopeOf(ch).GetProbeDivision(ChMod2(ch));
         }
 
         /* Logic Analyser */
