@@ -712,11 +712,14 @@ namespace LabNation.DeviceInterface.Devices {
 			p.samplePeriod [ChannelDataSourceScope.Overview] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
 			p.offset [ChannelDataSourceScope.Overview] = ViewPortOffset;
 
+			if (acquisitionBufferAnalog.Count == 0)
+				return lastCommittedDataPackage;
+
 			foreach (AnalogChannel ch in channelsToAcquireDataFor)
             {
                 if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
                     continue;
-                if(SendOverviewBuffer)
+				if(SendOverviewBuffer)
                     p.SetData(ChannelDataSourceScope.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
                 p.SetData(ChannelDataSourceScope.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
                 p.SetData(ChannelDataSourceScope.Acquisition, ch, acquisitionBufferAnalog[ch]);
