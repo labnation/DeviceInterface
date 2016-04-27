@@ -60,8 +60,8 @@ namespace LabNation.DeviceInterface.Devices
 
         public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
         public static readonly AnalogChannel ChB = new AnalogChannel("B", 1);
-        public static readonly AnalogChannel ChC = new AnalogChannel("C", 0);
-        public static readonly AnalogChannel ChD = new AnalogChannel("D", 1);
+        public static readonly AnalogChannel ChC = new AnalogChannel("C", 2);
+        public static readonly AnalogChannel ChD = new AnalogChannel("D", 3);
     }
 
     public class AnalogChannelRaw : Channel
