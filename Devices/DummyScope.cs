@@ -848,7 +848,8 @@ namespace LabNation.DeviceInterface.Devices {
             uint postconditionCounterRising = 0;
             uint postconditionCounterFalling = 0;
 			int startIndex = Math.Max (0, holdoff);
-			for (int i = startIndex; i < wave.Length - width - outputWaveLength + startIndex; i++) {
+			int maxI = (int)Math.Min (wave.Length - width - outputWaveLength + startIndex, wave.Length);
+			for (int i = startIndex; i < maxI; i++) {
                 bool preconditionRisingMet = preconditionCounterRising == halfWidth;
                 bool preconditionFallingMet = preconditionCounterFalling == halfWidth;
                 if (preconditionRisingMet)
