@@ -91,6 +91,17 @@ namespace LabNation.DeviceInterface.Devices
         {
             return (AnalogChannelRaw)ch;
         }
+        public static Channel To4Channel(this Channel ch)
+        {
+            if (ch is AnalogChannel)
+            {
+                return ch == AnalogChannel.ChA ? AnalogChannel.ChC : AnalogChannel.ChD;
+            } else if (ch is AnalogChannelRaw) { 
+                return ch == AnalogChannel.ChA.Raw() ? AnalogChannel.ChC.Raw() : AnalogChannel.ChD.Raw();
+            } else {
+                throw new Exception("Can't convert channel " + ch.Name + " to 2 channel mode");
+            }
+        }
     }
 
     public sealed class DigitalChannel : Channel {

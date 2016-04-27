@@ -62,6 +62,7 @@ namespace LabNation.DeviceInterface.Devices
             smartScopes = new Dictionary<Position,SmartScope>();
             smartScopes.Add(Position.First, new SmartScope(usbInterfaceFirst));
             smartScopes.Add(Position.Second, new SmartScope(usbInterfaceSecond));
+            this.dataSourceScope = new DataSource(this);
         }
 
         private bool paused = false;
@@ -95,7 +96,10 @@ namespace LabNation.DeviceInterface.Devices
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
         public DataPackageScope GetScopeData()
 		{
-            return smartScopes[Position.First].GetScopeData();
+            DataPackageScope p1 = smartScopes[Position.First].GetScopeData();
+            DataPackageScope p2 = smartScopes[Position.Second].GetScopeData();
+            if (p1 == null) return null;
+            return p1.MergeWith(p2);
         }
         
         public bool Ready { get { return ss.Select(x => x.Ready).Aggregate(true, (acc, x) => acc && x); } }
@@ -184,8 +188,10 @@ namespace LabNation.DeviceInterface.Devices
                     source = TriggerSource.External,
                     edge = TriggerEdge.RISING
                 };
-                master.Set4ChannelMode(true, true);
+                //First set slave mode, to ensure not having 2 masters
                 slave.Set4ChannelMode(true, false);
+
+                master.Set4ChannelMode(true, true);
             }
         }
         public bool SendOverviewBuffer
@@ -264,7 +270,8 @@ namespace LabNation.DeviceInterface.Devices
             return dm;
         }
 
-        public DataSources.DataSource DataSourceScope { get { return first.DataSourceScope; } }
+        private DataSource dataSourceScope ;
+        public DataSource DataSourceScope { get { return dataSourceScope; } }
 
     }
 }

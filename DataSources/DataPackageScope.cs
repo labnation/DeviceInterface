@@ -83,7 +83,7 @@ namespace LabNation.DeviceInterface.DataSources
 
         public Type ScopeType { get; private set; }
 
-        private Dictionary<ChannelDataSourceScope, Dictionary<Channel, ChannelData>> data;
+        internal Dictionary<ChannelDataSourceScope, Dictionary<Channel, ChannelData>> data;
         public int LatestChunkSize { get; private set; }
         public DateTime LastDataUpdate { get; private set; }
         public TriggerValue TriggerValue { get; private set; }
@@ -137,6 +137,47 @@ namespace LabNation.DeviceInterface.DataSources
             Resolution = new Dictionary<AnalogChannel, float>();
             foreach(AnalogChannel ch in AnalogChannel.List)
                 Resolution.Add(ch, float.PositiveInfinity);
+        }
+
+        internal DataPackageScope MergeWith(DataPackageScope p)
+        {
+            if (p == null) return this;
+
+            try
+            {
+                Exception mismatch = new Exception("package mismatch in merge");
+                if (p.AcquisitionLength != this.AcquisitionLength) throw mismatch;
+                if (p.AcquisitionSamples != this.AcquisitionSamples) throw mismatch;
+                if (p.Holdoff != this.Holdoff) throw mismatch;
+                if (p.HoldoffSamples != this.HoldoffSamples) throw mismatch;
+                if (p.Rolling != this.Rolling) throw mismatch;
+                if (p.ViewportSamples != this.ViewportSamples) throw mismatch;
+                if (p.ViewportTimespan != this.ViewportTimespan) throw mismatch;
+                //FIXME: check if packages have same configuration, if they match in acquisition ID and so forth
+                lock (p.dataLock)
+                {
+                    foreach (var ChannelDatas in p.data)
+                    {
+
+                        foreach (var kvp in ChannelDatas.Value)
+                        {
+                            //Increment channel from A/B to C/D
+                            Channel newChannel = kvp.Key.To4Channel();
+                            this.SetData(ChannelDatas.Key, newChannel, kvp.Value.array);
+                        }
+                    }
+                }
+                this.SaturationLowValue[AnalogChannel.ChC] = p.SaturationLowValue[AnalogChannel.ChA];
+                this.SaturationLowValue[AnalogChannel.ChD] = p.SaturationLowValue[AnalogChannel.ChB];
+
+                this.SaturationHighValue[AnalogChannel.ChC] = p.SaturationHighValue[AnalogChannel.ChA];
+                this.SaturationHighValue[AnalogChannel.ChD] = p.SaturationHighValue[AnalogChannel.ChB];
+            }
+            catch (Exception e)
+            {
+                Logger.Debug("While merging, mismatch found in packages");
+            }
+            return this;
         }
 
         internal void UpdateTimestamp()
