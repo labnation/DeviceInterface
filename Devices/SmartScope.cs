@@ -763,6 +763,12 @@ namespace LabNation.DeviceInterface.Devices
         public bool Ready { get { return this.Connected && this.deviceReady && !(this.hardwareInterface == null || this.hardwareInterface.Destroyed); } }
 
         #endregion
+
+        public void Set4ChannelMode(bool enable, bool master)
+        {
+            this.StrobeMemory[STR.FOUR_CHAN_ENA].WriteImmediate(enable);
+            this.StrobeMemory[STR.FOUR_CHAN_MASTER].WriteImmediate(master);
+        }
     }
 
     internal static class Helpers
