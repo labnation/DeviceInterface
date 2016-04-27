@@ -138,6 +138,7 @@ namespace LabNation.DeviceInterface.Devices
         event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
         
         /* Channel specifics */
+        List<AnalogChannel> AvailableChannels { get; }
         void SetCoupling(AnalogChannel channel, Coupling coupling);
         Coupling GetCoupling(AnalogChannel channel);
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);

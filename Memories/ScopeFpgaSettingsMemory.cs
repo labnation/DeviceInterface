@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LabNation.DeviceInterface.Hardware;
+using LabNation.DeviceInterface.Devices;
 
 namespace LabNation.DeviceInterface.Memories
 {
@@ -15,7 +16,7 @@ namespace LabNation.DeviceInterface.Memories
     {
         public ISmartScopeUsbInterface hwInterface;
 
-        public ScopeFpgaSettingsMemory(ISmartScopeUsbInterface hwInterface)
+        public ScopeFpgaSettingsMemory(IDevice dev, ISmartScopeUsbInterface hwInterface) : base(dev)
         {
             this.hwInterface = hwInterface;
 

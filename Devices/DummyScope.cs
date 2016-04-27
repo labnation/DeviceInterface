@@ -30,7 +30,8 @@ namespace LabNation.DeviceInterface.Devices {
 #if DEBUG
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
-
+        List<AnalogChannel> availableChannels = new List<AnalogChannel>() { AnalogChannel.ChA, AnalogChannel.ChB };
+        public List<AnalogChannel> AvailableChannels { get { return availableChannels; } }
         public DataSources.DataSource DataSourceScope { get; private set; }
 		private DateTime timeOrigin;
 		//Wave settings

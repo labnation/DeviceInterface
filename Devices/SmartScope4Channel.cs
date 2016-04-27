@@ -19,16 +19,19 @@ namespace LabNation.DeviceInterface.Devices
     public partial class SmartScope4Channel : IScope, IDisposable
     {
         public event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
-        public enum Function { Master, Slave };
+        public enum Position { First, Second };
 #if DEBUG
         public
 #else
         private
 #endif
-        Dictionary<Function, SmartScope> smartScopes;
+        Dictionary<Position, SmartScope> smartScopes;
         List<SmartScope> ss { get { return smartScopes.Values.ToList(); } }
-        SmartScope master { get { return smartScopes[Function.Master]; } }
-        SmartScope slave { get { return smartScopes[Function.Slave]; } }
+        SmartScope first { get { return smartScopes[Position.First]; } }
+        SmartScope second { get { return smartScopes[Position.Second]; } }
+
+        List<AnalogChannel> availableChannels = new List<AnalogChannel>() { AnalogChannel.ChA, AnalogChannel.ChB, AnalogChannel.ChC, AnalogChannel.ChD };
+        public List<AnalogChannel> AvailableChannels { get { return availableChannels; } }
 
         #if ANDROID
         Context context;
@@ -38,15 +41,15 @@ namespace LabNation.DeviceInterface.Devices
         {
             get
             {
-                return "Master: " + smartScopes[Function.Master].Serial + "\nSlave: " + smartScopes[Function.Slave].Serial;
+                return "1: " + smartScopes[Position.First].Serial + "\n2: " + smartScopes[Position.Second].Serial;
             }
         }
 
-        internal SmartScope4Channel(ISmartScopeUsbInterface usbInterfaceMaster, ISmartScopeUsbInterface usbInterfaceSlave) : base()
+        internal SmartScope4Channel(ISmartScopeUsbInterface usbInterfaceFirst, ISmartScopeUsbInterface usbInterfaceSecond) : base()
         {
-            smartScopes = new Dictionary<Function,SmartScope>();
-            smartScopes.Add(Function.Master, new SmartScope(usbInterfaceMaster));
-            smartScopes.Add(Function.Slave, new SmartScope(usbInterfaceSlave));
+            smartScopes = new Dictionary<Position,SmartScope>();
+            smartScopes.Add(Position.First, new SmartScope(usbInterfaceFirst));
+            smartScopes.Add(Position.Second, new SmartScope(usbInterfaceSecond));
         }
 
         private bool paused = false;
@@ -80,7 +83,7 @@ namespace LabNation.DeviceInterface.Devices
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
         public DataPackageScope GetScopeData()
 		{
-            return smartScopes[Function.Master].GetScopeData();
+            return smartScopes[Position.First].GetScopeData();
         }
         
         public bool Ready { get { return ss.Select(x => x.Ready).Aggregate(true, (acc, x) => acc && x); } }
@@ -113,7 +116,7 @@ namespace LabNation.DeviceInterface.Devices
         /* Acquisition & Trigger */
         public uint AcquisitionDepthUserMaximum
         {
-            get { return master.AcquisitionDepthUserMaximum; }
+            get { return first.AcquisitionDepthUserMaximum; }
             set { ss.ForEach(x => x.AcquisitionDepthUserMaximum = value); }
         }
         public bool PreferPartial
@@ -123,35 +126,35 @@ namespace LabNation.DeviceInterface.Devices
         }
         public AcquisitionMode AcquisitionMode
         {
-            get { return master.AcquisitionMode; }
+            get { return first.AcquisitionMode; }
             set { ss.ForEach(x => x.AcquisitionMode = value); }
         }
         public double AcquisitionLength
         {
-            get { return master.AcquisitionLength; }
+            get { return first.AcquisitionLength; }
             set { ss.ForEach(x => x.AcquisitionLength = value); }
         }
-        public double SamplePeriod { get { return master.SamplePeriod; } }
-        public double AcquisitionLengthMax { get { return master.AcquisitionLengthMax; } }
-        public double AcquisitionLengthMin { get { return master.AcquisitionLengthMin; } }
-        public uint AcquisitionDepthMax { get { return master.AcquisitionDepthMax; } }
-        public uint InputDecimationMax { get { return master.InputDecimationMax; } }
-        public int SubSampleRate { get { return master.SubSampleRate; } }
+        public double SamplePeriod { get { return first.SamplePeriod; } }
+        public double AcquisitionLengthMax { get { return first.AcquisitionLengthMax; } }
+        public double AcquisitionLengthMin { get { return first.AcquisitionLengthMin; } }
+        public uint AcquisitionDepthMax { get { return first.AcquisitionDepthMax; } }
+        public uint InputDecimationMax { get { return first.InputDecimationMax; } }
+        public int SubSampleRate { get { return first.SubSampleRate; } }
         public uint AcquisitionDepth
         {
-            get { return master.AcquisitionDepth; }
+            get { return first.AcquisitionDepth; }
             set { ss.ForEach(x => x.AcquisitionDepth = value); } 
         }
         public double TriggerHoldOff
         {
-            get { return master.TriggerHoldOff; }
+            get { return first.TriggerHoldOff; }
             set { ss.ForEach(x => x.TriggerHoldOff = value); }
         }
         public TriggerValue TriggerValue
         {
             get { 
                 //OK need logic here to adjust channel numbers
-                return master.TriggerValue; 
+                return first.TriggerValue; 
             }
             set { 
                 // FIXME as abive
@@ -160,7 +163,7 @@ namespace LabNation.DeviceInterface.Devices
         }
         public bool SendOverviewBuffer
         {
-            get { return master.SendOverviewBuffer; }
+            get { return first.SendOverviewBuffer; }
             set { ss.ForEach(x => x.SendOverviewBuffer = value); }
         }
         public void ForceTrigger()
@@ -172,37 +175,37 @@ namespace LabNation.DeviceInterface.Devices
         /* Channel specifics */
         public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {
-            master.SetCoupling(channel, coupling);
+            first.SetCoupling(channel, coupling);
         }
         public Coupling GetCoupling(AnalogChannel channel)
         {
-            return master.GetCoupling(channel);
+            return first.GetCoupling(channel);
         }
         public void SetVerticalRange(AnalogChannel channel, float minimum, float maximum)
         {
-            master.SetVerticalRange(channel, minimum, maximum);
+            first.SetVerticalRange(channel, minimum, maximum);
         }
 
         public void SetYOffset(AnalogChannel channel, float offset)
         {
-            master.SetYOffset(channel, offset);
+            first.SetYOffset(channel, offset);
         }
         public float GetYOffset(AnalogChannel channel)
         {
-            return master.GetYOffset(channel);
+            return first.GetYOffset(channel);
         }
         public float GetYOffsetMax(AnalogChannel ch)
         {
-            return master.GetYOffsetMax(ch);
+            return first.GetYOffsetMax(ch);
         }
         public float GetYOffsetMin(AnalogChannel ch)
         {
-            return master.GetYOffsetMin(ch);
+            return first.GetYOffsetMin(ch);
         }
         public void SetProbeDivision(AnalogChannel ch, ProbeDivision division) { }
         public ProbeDivision GetProbeDivision(AnalogChannel ch) 
         {
-            return master.GetProbeDivision(ch);
+            return first.GetProbeDivision(ch);
         }
 
         /* Logic Analyser */
@@ -214,8 +217,8 @@ namespace LabNation.DeviceInterface.Devices
         {
             ss.ForEach(x => x.SetViewPort(offset, timespan));
         }
-        public double ViewPortTimeSpan { get { return master.ViewPortTimeSpan; } }
-        public double ViewPortOffset { get { return master.ViewPortOffset; } }
+        public double ViewPortTimeSpan { get { return first.ViewPortTimeSpan; } }
+        public double ViewPortOffset { get { return first.ViewPortOffset; } }
         public bool SuspendViewportUpdates
         {
             get { return ss.Select(x => x.SuspendViewportUpdates).Aggregate(true, (acc, x) => acc && x); }
@@ -232,7 +235,7 @@ namespace LabNation.DeviceInterface.Devices
             return dm;
         }
 
-        public DataSources.DataSource DataSourceScope { get { return master.DataSourceScope; } }
+        public DataSources.DataSource DataSourceScope { get { return first.DataSourceScope; } }
 
     }
 }

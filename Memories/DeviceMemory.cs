@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using LabNation.DeviceInterface.Hardware;
 using LabNation.Common;
+using LabNation.DeviceInterface.Devices;
 
 namespace LabNation.DeviceInterface.Memories
 {
@@ -19,7 +20,12 @@ namespace LabNation.DeviceInterface.Memories
 
         abstract public void Write(uint address);
         abstract public void Read(uint address);
+        public IDevice Device { get; private set; }
 
+        public DeviceMemory(IDevice dev)
+        {
+            this.Device = dev;
+        }
         /// <summary>
         /// Writes away all registers with the Dirty flag set
         /// </summary>

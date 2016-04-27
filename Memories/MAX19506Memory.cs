@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LabNation.DeviceInterface.Devices;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,7 +34,7 @@ namespace LabNation.DeviceInterface.Memories
         private ScopeStrobeMemory strobeMemory;
         private ScopeFpgaRom fpgaRom;
 
-        internal MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
+        internal MAX19506Memory(IDevice dev, ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom) : base(dev)
         {
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;

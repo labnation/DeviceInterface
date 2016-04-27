@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using LabNation.DeviceInterface.Hardware;
 using LabNation.Common;
+using LabNation.DeviceInterface.Devices;
 
 namespace LabNation.DeviceInterface.Memories
 {
@@ -16,7 +17,7 @@ namespace LabNation.DeviceInterface.Memories
     {
         private ISmartScopeUsbInterface hwInterface;
 
-        public ScopeFpgaRom(ISmartScopeUsbInterface hwInterface)
+        public ScopeFpgaRom(IDevice dev, ISmartScopeUsbInterface hwInterface) : base(dev)
         {
             this.hwInterface = hwInterface;
                         

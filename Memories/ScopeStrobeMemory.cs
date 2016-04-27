@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LabNation.DeviceInterface.Devices;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,7 @@ namespace LabNation.DeviceInterface.Memories
         private ScopeFpgaSettingsMemory writeMemory;
         private ScopeFpgaRom readMemory;
 
-        public ScopeStrobeMemory(ScopeFpgaSettingsMemory writeMemory, ScopeFpgaRom readMemory)
+        public ScopeStrobeMemory(IDevice dev, ScopeFpgaSettingsMemory writeMemory, ScopeFpgaRom readMemory) : base(dev)
         {
             this.writeMemory = writeMemory;
             this.readMemory = readMemory;

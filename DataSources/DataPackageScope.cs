@@ -134,10 +134,9 @@ namespace LabNation.DeviceInterface.DataSources
                 data[t] = new Dictionary<Channel, ChannelData>();
 
             Settings = new Dictionary<string,double>();
-            Resolution = new Dictionary<AnalogChannel, float>() {
-                { AnalogChannel.ChA, float.PositiveInfinity },
-                { AnalogChannel.ChB, float.PositiveInfinity },
-            };
+            Resolution = new Dictionary<AnalogChannel, float>();
+            foreach(AnalogChannel ch in AnalogChannel.List)
+                Resolution.Add(ch, float.PositiveInfinity);
         }
 
         internal void UpdateTimestamp()

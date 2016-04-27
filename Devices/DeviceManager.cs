@@ -120,13 +120,13 @@ namespace LabNation.DeviceInterface.Devices
                 {
                     if (connectHandler != null)
                         connectHandler(device, false);
-                    SmartScope master = device as SmartScope;
-                    ISmartScopeUsbInterface masterInterface = master.hardwareInterface;
-                    master.Dispose();
+                    SmartScope first = device as SmartScope;
+                    ISmartScopeUsbInterface firstInterface = first.hardwareInterface;
+                    first.Dispose();
 
                     //Instantiate 4 channel smartscope
                     Logger.Debug("Turning scope into 4 channel scope");
-                    device = new SmartScope4Channel(masterInterface, hardwareInterface);
+                    device = new SmartScope4Channel(firstInterface, hardwareInterface);
                     if (connectHandler != null)
                         connectHandler(device, true);
                 }

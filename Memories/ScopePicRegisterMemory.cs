@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LabNation.DeviceInterface.Hardware;
+using LabNation.DeviceInterface.Devices;
 
 namespace LabNation.DeviceInterface.Memories
 {
@@ -25,7 +26,7 @@ namespace LabNation.DeviceInterface.Memories
     {
         private ISmartScopeUsbInterface hwInterface;
 
-        public ScopePicRegisterMemory(ISmartScopeUsbInterface hwInterface)
+        public ScopePicRegisterMemory(IDevice dev, ISmartScopeUsbInterface hwInterface) : base(dev)
         {
             this.hwInterface = hwInterface;
                         

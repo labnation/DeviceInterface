@@ -40,6 +40,9 @@ namespace LabNation.DeviceInterface.Devices
         public List<DeviceMemory> GetMemories() { return memories; }
 #endif
 
+        List<AnalogChannel> availableChannels = new List<AnalogChannel>() { AnalogChannel.ChA, AnalogChannel.ChB };
+        public List<AnalogChannel> AvailableChannels { get { return availableChannels; } }
+
 #if DEBUG 
         public Memories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public Memories.ScopeFpgaRom FpgaRom { get; private set; }
@@ -267,11 +270,11 @@ namespace LabNation.DeviceInterface.Devices
         {
             memories.Clear();
             //Create memories
-            PicMemory = new Memories.ScopePicRegisterMemory(hardwareInterface);
-            FpgaSettingsMemory = new Memories.ScopeFpgaSettingsMemory(hardwareInterface);
-            FpgaRom = new Memories.ScopeFpgaRom(hardwareInterface);
-            StrobeMemory = new Memories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
-            AdcMemory = new Memories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
+            PicMemory = new Memories.ScopePicRegisterMemory(this, hardwareInterface);
+            FpgaSettingsMemory = new Memories.ScopeFpgaSettingsMemory(this, hardwareInterface);
+            FpgaRom = new Memories.ScopeFpgaRom(this, hardwareInterface);
+            StrobeMemory = new Memories.ScopeStrobeMemory(this, FpgaSettingsMemory, FpgaRom);
+            AdcMemory = new Memories.MAX19506Memory(this, FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI
             memories.Add(PicMemory);
             memories.Add(FpgaRom);
