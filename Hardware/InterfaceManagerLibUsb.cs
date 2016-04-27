@@ -6,6 +6,7 @@ using System.Threading;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using LibUsbDotNet.DeviceNotify;
+using LibUsbDotNet.LudnMonoLibUsb;
 using C=LabNation.Common;
 
 namespace LabNation.DeviceInterface.Hardware
@@ -86,25 +87,26 @@ namespace LabNation.DeviceInterface.Hardware
         {
             if (interfaces.Count > 0 && onConnect != null)
             {
-                onConnect(interfaces.First().Value, true);
+				foreach(ISmartScopeUsbInterface iface in interfaces.Values)
+					onConnect(iface, true);
                 return;
             }
             foreach (int PID in PIDs)
             {
-                UsbDeviceFinder scopeUsbFinder = new UsbDeviceFinder(VID, PID);
-                UsbDevice scopeUsbDevice = UsbDevice.OpenUsbDevice(scopeUsbFinder);
-                if (scopeUsbDevice != null)
-                {
-                    try
-                    {
-                        DeviceFound(scopeUsbDevice);
-                    }
-                    catch (Exception e)
-                    {
-						C.Logger.Error("Device was found but failed to register: " + e.Message);
-                    }
-                    break;
-                }
+				UsbDevice scopeUsbDevice;
+				List<UsbRegistry> devReg = UsbDevice.AllDevices.Where(x => x.Pid == PID && x.Vid == VID).ToList();
+				foreach (UsbRegistry r in devReg) {
+					C.Logger.Debug ("Dev found: " + r.DeviceInterfaceGuids);
+					r.Open (out scopeUsbDevice);
+					if (scopeUsbDevice != null) {
+						try {
+							DeviceFound ((MonoUsbDevice)scopeUsbDevice);
+						} catch (Exception e) {
+							C.Logger.Error ("Device was found but failed to register: " + e.Message);
+						}
+						break;
+					}
+				}
             }
         }
 
@@ -119,22 +121,22 @@ namespace LabNation.DeviceInterface.Hardware
 			UsbDevice.Exit();
 		}
 
-	    private void DeviceFound(LibUsbDotNet.UsbDevice scopeUsbDevice)
+	    private void DeviceFound(MonoUsbDevice scopeUsbDevice)
         {
             string serial = null;
+			string location = null;
             try
             {
                 SmartScopeUsbInterfaceLibUsb f = new SmartScopeUsbInterfaceLibUsb(scopeUsbDevice);
                 //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
                 serial = scopeUsbDevice.Info.SerialString;
-                if (serial == "" || serial == null)
-                    throw new ScopeIOException("This device doesn't have a serial number, can't work with that");
-                if (interfaces.ContainsKey(serial)) {
-                    Common.Logger.Warn("Can't re-register device with this serial " + serial);
+				location = string.Format("{0}.{1}", scopeUsbDevice.BusNumber, scopeUsbDevice.DeviceAddress);
+                if (interfaces.ContainsKey(location)) {
+                    Common.Logger.Warn("Can't re-register device with this location " + location);
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 }
-                C.Logger.Warn("Device found with serial [" + serial + "]");
-                interfaces.Add(serial, f);
+				C.Logger.Warn("Device found with serial [" + serial + "] at location [" + location + "]");
+                interfaces.Add(location, f);
 
                 if (onConnect != null)
                     onConnect(f, true);
@@ -143,37 +145,41 @@ namespace LabNation.DeviceInterface.Hardware
             {
 				C.Logger.Error("Error while opening device: " + e.Message);
                 if (serial != null)
-                    interfaces.Remove(serial);
+                    interfaces.Remove(location);
             }
         }
 
         //called at init, and each time a system event occurs
         private void OnDeviceNotifyEvent(object sender, DeviceNotifyEventArgs e)
         {
+			LibUsbDotNet.DeviceNotify.Linux.LinuxUsbDeviceNotifyInfo notInfo = e.Device as LibUsbDotNet.DeviceNotify.Linux.LinuxUsbDeviceNotifyInfo;
+			C.Logger.Debug ("Looking for dev at bus/addr {0}/{1}", notInfo.BusNumber, notInfo.DeviceAddress);
+
             switch (e.EventType)
             {
-                case EventType.DeviceArrival:
-				C.Logger.Debug("LibUSB device arrival");
-                    if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains(e.Device.IdProduct))
-                    {
-					C.Logger.Info("Not taking this device, PID/VID not a smartscope");
-                        return;
-                    }
-
-                    UsbDeviceFinder usbFinder = new UsbDeviceFinder(e.Device.IdVendor, e.Device.IdProduct);
-                    UsbDevice usbDevice = UsbDevice.OpenUsbDevice(usbFinder);
-                    if(usbDevice != null)
-                        DeviceFound(usbDevice);
+				case EventType.DeviceArrival:
+					C.Logger.Debug ("LibUSB device arrival");
+					if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains (e.Device.IdProduct)) {
+						C.Logger.Info ("Not taking this device, PID/VID not a smartscope");
+						return;
+					}
+					UsbRegDeviceList devreg = UsbDevice.AllDevices;
+					for(int i = 0; i < devreg.Count ; i ++)
+					{
+						if (devreg[i].Device is MonoUsbDevice) {
+							MonoUsbDevice r = (MonoUsbDevice)devreg[i].Device;
+							if (r.BusNumber == notInfo.BusNumber && r.DeviceAddress == notInfo.DeviceAddress) {
+								DeviceFound (r);
+								return;
+							}
+						} 
+					}
                     break;
                 case EventType.DeviceRemoveComplete:
-                    C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct));
+					C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1},Bus:{2},Addr:{3}]", e.Device.IdVendor, e.Device.IdProduct, notInfo.BusNumber, notInfo.DeviceAddress));
                     if (e.Device != null && e.Device.IdVendor == VID && PIDs.Contains(e.Device.IdProduct))
                     {
-                        //Cos sometimes we fail to get the serial
-                        if(e.Device.SerialNumber == "" || e.Device.SerialNumber == null)
-                            RemoveDevice(interfaces.First().Key);
-                        else
-                            RemoveDevice(e.Device.SerialNumber);
+						RemoveDevice(string.Format("{0}.{1}", notInfo.BusNumber, notInfo.DeviceAddress));
                     }
                     break;
                 default:
@@ -182,19 +188,19 @@ namespace LabNation.DeviceInterface.Hardware
             }
         }
 
-        private void RemoveDevice(object serial)
+        private void RemoveDevice(object location)
         {
-            C.Logger.Warn("Removing device with serial [" + serial + "]");
-            if (!interfaces.ContainsKey(serial)) {
+            C.Logger.Warn("Removing device at location [" + location + "]");
+            if (!interfaces.ContainsKey(location)) {
                 C.Logger.Warn("OMG this device is not registered?!");
                 return;
             }
 
             if (onConnect != null)
-                onConnect(interfaces[serial], false);
+                onConnect(interfaces[location], false);
 
-            interfaces[serial].Destroy();
-            interfaces.Remove(serial);
+            interfaces[location].Destroy();
+            interfaces.Remove(location);
 
         }
     }
