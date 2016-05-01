@@ -710,7 +710,7 @@ namespace LabNation.DeviceInterface.Devices {
 
 			//copy values, needed for ETS to work properly
 			p.samplePeriod [ChannelDataSourceScope.Overview] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
-			p.offset [ChannelDataSourceScope.Overview] = ViewPortOffset;
+			p.offset [ChannelDataSourceScope.Overview] = 0;
 
 			if (acquisitionBufferAnalog.Count == 0)
 				return lastCommittedDataPackage;
