@@ -121,6 +121,8 @@ namespace LabNation.DeviceInterface.Devices
 
         internal readonly int Channels = 2;
         internal int AcquisitionId { get; private set; }
+        internal int TriggerId { get; private set; }
+        internal bool ExternalClockAbsent { get; private set; }
         
         //FIXME: we really shouldn't be needing the freqcomp mode in here
         internal SmartScopeHeader(byte[] data)
@@ -175,6 +177,8 @@ namespace LabNation.DeviceInterface.Devices
             LogicAnalyserEnabled = GetStrobe(STR.LA_ENABLE);
             
             AcquisitionId = data[11];
+            TriggerId = data[12] & 0x0F;
+            ExternalClockAbsent = (data[12] & 0x80) == 0x80;
             SamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION));
             ViewportSamplePeriod = SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, GetRegister(REG.INPUT_DECIMATION) + GetRegister(REG.VIEW_DECIMATION));
 
