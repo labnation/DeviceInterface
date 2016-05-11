@@ -138,6 +138,7 @@ namespace LabNation.DeviceInterface.Devices
 
 #if DEBUG
         public bool DebugDigital { get; set; }
+        public bool DisableVoltageConversion { get; set; }
 #endif
 
         public string Serial
@@ -568,7 +569,7 @@ namespace LabNation.DeviceInterface.Devices
             byte[] minMaxBytes = new byte[] { 0, 255 };
             Dictionary<Channel, float[]> minMaxVoltages = new Dictionary<Channel, float[]>();
             foreach (AnalogChannel ch in analogChannels)
-                minMaxVoltages.Add(ch, minMaxBytes.ConvertByteToVoltage(header.ChannelSettings(this.rom)[ch], header.GetRegister(ch.YOffsetRegister()), probeSettings[ch]));
+                minMaxVoltages.Add(ch, minMaxBytes.ConvertByteToVoltage(header.ChannelSettings(this.rom)[ch], header.GetRegister(ch.YOffsetRegister()), probeSettings[ch], DisableVoltageConversion));
 
             if (header.OverviewBuffer)
             {
@@ -684,7 +685,7 @@ namespace LabNation.DeviceInterface.Devices
                 /* FIXME: integrate into header*/
                 AnalogChannel triggerChannel = header.TriggerValue.channel;
                 byte[] triggerLevel = new byte[] { header.GetRegister(REG.TRIGGER_LEVEL) };
-                float[] triggerLevelFloat = triggerLevel.ConvertByteToVoltage(header.ChannelSettings(this.rom)[triggerChannel], header.GetRegister(triggerChannel.YOffsetRegister()), probeSettings[triggerChannel]);
+                float[] triggerLevelFloat = triggerLevel.ConvertByteToVoltage(header.ChannelSettings(this.rom)[triggerChannel], header.GetRegister(triggerChannel.YOffsetRegister()), probeSettings[triggerChannel], DisableVoltageConversion);
                 header.TriggerValue.level = triggerLevelFloat[0];
                 currentDataPackage = new DataPackageScope(this.GetType(),
                     header.AcquisitionDepth, header.SamplePeriod,
@@ -751,7 +752,8 @@ namespace LabNation.DeviceInterface.Devices
                     result[ch] = splitRaw[j].ConvertByteToVoltage(
                         header.ChannelSettings(this.rom)[ch],
                         header.GetRegister(ch.YOffsetRegister()),
-                        probeSettings[ch]);
+                        probeSettings[ch],
+                        DisableVoltageConversion);
                 }
                 result[ch.Raw()] = splitRaw[j];
             }
@@ -773,8 +775,14 @@ namespace LabNation.DeviceInterface.Devices
 
     internal static class Helpers
     {
-        public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, ProbeDivision division)
+        public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, ProbeDivision division, bool DisableVoltageConversion)
         {
+#if DEBUG
+            if (DisableVoltageConversion)
+            {
+                return buffer.Select(x => x * 0.01f).ToArray();
+            }
+#endif
             double[] coefficients = calibration.coefficients;
             float[] voltage = new float[buffer.Length];
 

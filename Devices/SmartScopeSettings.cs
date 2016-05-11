@@ -157,6 +157,11 @@ namespace LabNation.DeviceInterface.Devices
 
         private float ConvertYOffsetByteToVoltage(AnalogChannel channel, byte value)
         {
+#if DEBUG
+            //When voltage conversion is disabled, map 0 ~ 255 to 0.0 ~ 2.55V
+            if (DisableVoltageConversion)
+                return value * 0.01f;
+#endif
             double[] c = channelSettings[channel].coefficients;
             float voltageSet = (float)(-value * c[1] - c[2] - c[0] * 127.0);
             return ProbeScaleScopeToHost(channel, voltageSet);
@@ -275,16 +280,6 @@ namespace LabNation.DeviceInterface.Devices
             FpgaSettingsMemory[r].Set(offset);
         }
 #endif
-
-        private bool disableVoltageConversion = false;
-        /// <summary>
-        /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
-        /// </summary>
-        /// <param name="disable"></param>
-        public void SetDisableVoltageConversion(bool disable)
-        {
-            this.disableVoltageConversion = disable;
-        }
 
         public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {
