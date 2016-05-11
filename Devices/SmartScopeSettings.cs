@@ -340,14 +340,20 @@ namespace LabNation.DeviceInterface.Devices
                 /* Set Level */
                 if (triggerValue.channel != null)
                 {
-                    double[] coefficients = channelSettings[value.channel].coefficients;
-                    REG offsetRegister = value.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
                     double level = 0;
-                    if (coefficients != null)
-                        level = (ProbeScaleHostToScope(value.channel, value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                    if (DisableVoltageConversion)
+                    {
+                        level = value.level * 100.0;
+                    }
+                    else
+                    {
+                        double[] coefficients = channelSettings[value.channel].coefficients;
+                        REG offsetRegister = value.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
+                        if (coefficients != null)
+                            level = (ProbeScaleHostToScope(value.channel, value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                    }
                     if (level < 0) level = 0;
                     if (level > 255) level = 255;
-
                     //Logger.Debug(" Set trigger level to " + trigger.level + "V (" + level + ")");
                     FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);   
                 }
@@ -366,14 +372,23 @@ namespace LabNation.DeviceInterface.Devices
                     source = (TriggerSource)((modeByte >> 3) & 0x01),
                     edge = (TriggerEdge)((modeByte >> 4) & 0x03),
                 };
-                
-                double[] coefficients = channelSettings[v.channel].coefficients;
+
                 REG offsetRegister = v.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
                 double level = 0;
-                if (coefficients != null) {
+                if (DisableVoltageConversion)
+                {
                     level = FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte();
-                    level = level * coefficients[0] + coefficients[1] * FpgaSettingsMemory[offsetRegister].GetByte() + coefficients[2];
-                    level = ProbeScaleScopeToHost(v.channel, (float)level);
+                    level /= 100.0;
+                }
+                else
+                {
+                    double[] coefficients = channelSettings[v.channel].coefficients;
+                    if (coefficients != null)
+                    {
+                        level = FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte();
+                        level = level * coefficients[0] + coefficients[1] * FpgaSettingsMemory[offsetRegister].GetByte() + coefficients[2];
+                        level = ProbeScaleScopeToHost(v.channel, (float)level);
+                    }
                 }
                 v.level = (float)level;
 
