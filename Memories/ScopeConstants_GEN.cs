@@ -84,7 +84,6 @@ namespace LabNation.DeviceInterface.Memories
 		LA_CHANNEL = 21,
 		FOUR_CHAN_ENA = 22,
 		FOUR_CHAN_MASTER = 23,
-		FOUR_CHAN_SYNC = 24,
     }
 
 #if DEBUG
