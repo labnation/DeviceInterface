@@ -30,6 +30,51 @@ namespace LabNation.DeviceInterface.Devices
         SmartScope first { get { return smartScopes[Position.First]; } }
         SmartScope second { get { return smartScopes[Position.Second]; } }
 
+        
+        private class AssembledPackage {
+            static int[] validTriggerIds = { 3, 7, 9, 13 };
+            private static Dictionary<int, AssembledPackage> listDataPackages = new Dictionary<int, AssembledPackage>();
+
+            public static void AddPackage(Position pos, DataPackageScope package)
+            {
+                if(package == null) return;
+                AssembledPackage ass = null;
+                listDataPackages.TryGetValue(package.header.TriggerId, out ass);
+                if (ass == null || (ass.packages.ContainsKey(pos) && ass.packages[pos].Identifier != package.Identifier))
+                {
+                    //Create a new assembledPackage when either
+                    // the assembledpackage doesn't exist yet in the dictionary
+                    // or the acquisition ID of the newly received package
+                    // doesn't match the one we received before
+                    ass = new AssembledPackage();
+                    if(!validTriggerIds.Contains(package.header.TriggerId))
+                        Logger.Warn(String.Format("Invalid trigger id {0}", package.header.TriggerId));
+                    else
+                        listDataPackages[package.header.TriggerId] = ass;
+                }
+                ass.packages[pos] = package;
+                ass.lastUpdate = package.LastDataUpdate;
+                if (ass.packages.Count == 2) //Tiny hardcoding...
+                    ass.complete = true;
+            }
+
+            public static DataPackageScope MostRecentPackage
+            {
+                get
+                {
+                    var asses = listDataPackages.Values.Where(x => x.complete).OrderBy(x => x.lastUpdate);
+                    var ass = asses.LastOrDefault();
+                    return ass == null ? null : ass.Merged;
+                }
+            }
+            public Dictionary<Position, DataPackageScope> packages = new Dictionary<Position,DataPackageScope>();
+            private DateTime lastUpdate;
+            private bool complete = false;
+            private DataPackageScope Merged { get { 
+                return packages[Position.First].MergeWith(packages[Position.Second]); 
+            } }
+        };
+
         private IScope ScopeOf(AnalogChannel ch)
         {
             if (ch.Order < 2) return first;
@@ -96,10 +141,13 @@ namespace LabNation.DeviceInterface.Devices
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
         public DataPackageScope GetScopeData()
 		{
-            DataPackageScope p1 = smartScopes[Position.First].GetScopeData();
-            DataPackageScope p2 = smartScopes[Position.Second].GetScopeData();
-            if (p1 == null) return null;
-            return p1.MergeWith(p2);
+            foreach (Position pos in Enum.GetValues(typeof(Position)))
+            {
+                DataPackageScope p = smartScopes[pos].GetScopeData();
+                AssembledPackage.AddPackage(pos, p);
+            }
+
+            return AssembledPackage.MostRecentPackage;
         }
         
         public bool Ready { get { return ss.Select(x => x.Ready).Aggregate(true, (acc, x) => acc && x); } }
