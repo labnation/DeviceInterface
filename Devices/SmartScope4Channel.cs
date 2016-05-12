@@ -39,7 +39,18 @@ namespace LabNation.DeviceInterface.Devices
             {
                 if(package == null) return;
                 AssembledPackage ass = null;
-                listDataPackages.TryGetValue(package.header.TriggerId, out ass);
+                int triggerId = package.header.TriggerId;
+
+                /* TEST if we misalign */
+                /*
+                if (pos == Position.Second)
+                {
+                    int index = Array.FindIndex(validTriggerIds, x => x == triggerId);
+                    index = (index + 4) % validTriggerIds.Length;
+                    triggerId = validTriggerIds[index];
+                }*/
+
+                listDataPackages.TryGetValue(triggerId, out ass);
                 if (ass == null || (ass.packages.ContainsKey(pos) && ass.packages[pos].Identifier != package.Identifier))
                 {
                     //Create a new assembledPackage when either
@@ -47,10 +58,13 @@ namespace LabNation.DeviceInterface.Devices
                     // or the acquisition ID of the newly received package
                     // doesn't match the one we received before
                     ass = new AssembledPackage();
-                    if(!validTriggerIds.Contains(package.header.TriggerId))
-                        Logger.Warn(String.Format("Invalid trigger id {0}", package.header.TriggerId));
+                    if (!validTriggerIds.Contains(triggerId))
+                    {
+                        Logger.Warn(String.Format("Invalid trigger id {0}", triggerId));
+                        return;
+                    }
                     else
-                        listDataPackages[package.header.TriggerId] = ass;
+                        listDataPackages[triggerId] = ass;
                 }
                 ass.packages[pos] = package;
                 ass.lastUpdate = package.LastDataUpdate;
@@ -70,8 +84,12 @@ namespace LabNation.DeviceInterface.Devices
             public Dictionary<Position, DataPackageScope> packages = new Dictionary<Position,DataPackageScope>();
             private DateTime lastUpdate;
             private bool complete = false;
-            private DataPackageScope Merged { get { 
-                return packages[Position.First].MergeWith(packages[Position.Second]); 
+            private DataPackageScope merged = null;
+            private DataPackageScope Merged { get {
+                if(merged == null)
+                    merged = packages[Position.First].MergeWith(packages[Position.Second]);
+                return merged;
+
             } }
         };
 
@@ -144,6 +162,7 @@ namespace LabNation.DeviceInterface.Devices
             foreach (Position pos in Enum.GetValues(typeof(Position)))
             {
                 DataPackageScope p = smartScopes[pos].GetScopeData();
+
                 AssembledPackage.AddPackage(pos, p);
             }
 
