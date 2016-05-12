@@ -311,7 +311,7 @@ namespace LabNation.DeviceInterface.Devices
         {
             ConfigureAdc();
             AdcMemory[MAX19506.FORMAT_PATTERN].Set(80);
-            AcquisitionDepth = 64 * 1024;
+            AcquisitionDepth = 4 * 1024;
             SetViewPort(0, AcquisitionLength);
             AcquisitionMode = Devices.AcquisitionMode.SINGLE;
             SendOverviewBuffer = false;
