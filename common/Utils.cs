@@ -217,15 +217,7 @@ namespace LabNation.Common
             get
             {
                 return new string[] {
-#if DEBUG && !ANDROID
-					Path.Combine(new string[] { ExecutablePath, "..", "..", "..", "..", "..", 
-                    #if MONOMAC
-					"..", "..", "..",
-                    #endif
-					"Decoders", "Default", "bin", "Debug"} ),
-#else
                     Path.Combine(StoragePath, "Plugins"),
-#endif
                     PluginPathDropbox
                 };
             }
