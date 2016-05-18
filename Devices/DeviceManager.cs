@@ -57,6 +57,8 @@ namespace LabNation.DeviceInterface.Devices
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
 #elif WINUSB
             InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
+#elif IOS
+			//Nothing for the moment
 #else
             InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
 #endif
@@ -93,8 +95,10 @@ namespace LabNation.DeviceInterface.Devices
             running = false;
             if(badDriverDetectionThread != null)
                 badDriverDetectionThread.Join(100);
+#elif IOS
+			//Nothing for the moment
 #else
-            //Linux, MacOS en iOS
+            //Linux, MacOS
             InterfaceManagerLibUsb.Instance.Destroy();
 #endif
         }
