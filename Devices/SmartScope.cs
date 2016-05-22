@@ -147,7 +147,7 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
+        public SmartScope(ISmartScopeUsbInterface usbInterface) : base()
         {
             this.hardwareInterface = usbInterface;
             this.SuspendViewportUpdates = false;

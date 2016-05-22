@@ -5,19 +5,23 @@ using System.Text;
 using System.Threading;
 using LabNation.DeviceInterface.Hardware;
 using LabNation.Common;
+using System.Net;
+using System.Net.Sockets;
+using Mono.Zeroconf;
+
 #if ANDROID
 using Android.Content;
 #endif
 
 namespace LabNation.DeviceInterface.Devices
 {
-    public class DeviceManager
+    public class DeviceManagerGUI
     {
-        DeviceConnectHandler deviceConnectHandler;
-        InterfaceConnectHandler interfaceConnectHandler;
+        DeviceConnectHandler connectHandler;
         public IDevice device { get; private set; }
         public IDevice fallbackDevice { get; private set; }
         Thread pollThread;
+        IPAddress serverIp = null;
 #if WINDOWS
         Thread badDriverDetectionThread;
         bool running = true;
@@ -33,55 +37,88 @@ namespace LabNation.DeviceInterface.Devices
         Context context;
 #endif
 
-        public DeviceManager(
+        public DeviceManagerGUI(
 #if ANDROID
             Context context,
 #endif
-            DeviceConnectHandler deviceConnectHandler
+            DeviceConnectHandler connectHandler
             )
         {
 #if ANDROID
             this.context = context;
 #endif
-            this.deviceConnectHandler = deviceConnectHandler;
+            this.connectHandler = connectHandler;
 
             /* Register fallback device */
             fallbackDevice = new DummyScope();
         }
 
-        public DeviceManager(
-#if ANDROID
-            Context context,
-#endif
-InterfaceConnectHandler interfaceConnectHandler
-            )
+        private void FindZeroConf()
         {
-#if ANDROID
-            this.context = context;
-#endif
-            this.interfaceConnectHandler = interfaceConnectHandler;
+            ServiceBrowser browser = new ServiceBrowser();
 
-            /* Register fallback device */
-            fallbackDevice = new DummyScope();
+            browser.ServiceAdded += delegate(object o, ServiceBrowseEventArgs args)
+            {
+                Console.WriteLine("Found Service: {0}", args.Service.Name);
+                args.Service.Resolved += delegate(object o2, ServiceResolvedEventArgs args2)
+                {
+                    IResolvableService s = (IResolvableService)args2.Service;                    
+                     
+                    if (s.FullName == "SmartScopeServer._sss._tcp.local.")
+                        serverIp = s.HostEntry.AddressList[0];
+                };
+                args.Service.Resolve();
+            };
+
+            //go for it
+            browser.Browse("_sss._tcp", "local");
         }
 
         public void Start(bool async = true)
         {
-            pollThread = new Thread(PollUponStart);
-            pollThread.Name = "Devicemanager Startup poll";
+            FindZeroConf();
+            //serverIp = new IPAddress(new byte[] { 10, 0, 42, 107 });
+
+            int watchdog = 0;
+            while (serverIp == null && watchdog++ < 1000)
+                System.Threading.Thread.Sleep(10);
+
+            if (serverIp == null)
+                throw new Exception("No ZeroConf SmartScopeServer found");
+
+            //pollThread = new Thread(PollUponStart);
+            //pollThread.Name = "Devicemanager Startup poll";
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
 #elif WINUSB
-            InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
+            //InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
 #else
             InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
 #endif
 
-            pollThread.Start();
+            //pollThread.Start();
 
-            if (!async)
-                pollThread.Join();
+            //if (!async)
+                //pollThread.Join();
+
+            TcpClient tcpclnt = new TcpClient();            
+            tcpclnt.Connect(serverIp,25482);
+            NetworkStream stream = tcpclnt.GetStream();
+            SmartScopeUsbInterfaceEthernet interf = new SmartScopeUsbInterfaceEthernet(stream);
+
+            device = new SmartScope(interf);
+            if (connectHandler != null)
+                connectHandler(fallbackDevice, false);
+
+#if WINDOWS
+            lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
+            Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
+#endif
+
+            if (connectHandler != null)
+                connectHandler(device, true);
+
         }
 
         private void PollUponStart()
@@ -121,42 +158,35 @@ InterfaceConnectHandler interfaceConnectHandler
             if(connected) {
                 if(device == null)
                 {
-                    if (interfaceConnectHandler != null)
-                        interfaceConnectHandler(hardwareInterface, true);
+                    device = new SmartScope(hardwareInterface);
+                    if (connectHandler != null)
+                        connectHandler(fallbackDevice, false);
 
-                    if (deviceConnectHandler != null)
-                    {
-                        device = new SmartScope(hardwareInterface);
-                        deviceConnectHandler(fallbackDevice, false);
+					#if WINDOWS
+                    lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
+                    Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
+					#endif
 
-#if WINDOWS
-                        lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
-                        Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
-#endif
-                        deviceConnectHandler(device, true);
-                    }
+                    if (connectHandler != null)
+                        connectHandler(device, true);
                 }
             }
             else 
             {
                 if (device is SmartScope)
                 {
-                    if (interfaceConnectHandler != null)
-                        interfaceConnectHandler(hardwareInterface, false);
-
-                    if (deviceConnectHandler != null)
-                    {
-                        Logger.Debug("DeviceManager: Calling connect handler");
-                        deviceConnectHandler(device, false);
-                        Logger.Debug("DeviceManager: disposing device");
-                        (device as SmartScope).Dispose();
-                        device = null;
-#if WINDOWS
-                        lastSmartScopeDetectedThroughWinUsb = null;
-#endif
-                        Logger.Debug("DeviceManager: calling connect for fallback device");
-                        deviceConnectHandler(fallbackDevice, true);
-                    }
+                	Logger.Debug("DeviceManager: Calling connect handler");
+                    if (connectHandler != null)
+                        connectHandler(device, false);
+					Logger.Debug("DeviceManager: disposing device");
+                    (device as SmartScope).Dispose();
+                    device = null;
+					#if WINDOWS
+                    lastSmartScopeDetectedThroughWinUsb = null;
+					#endif
+					Logger.Debug("DeviceManager: calling connect for fallback device");
+                    if (connectHandler != null)
+                        connectHandler(fallbackDevice, true);
                 }
             }
         }
