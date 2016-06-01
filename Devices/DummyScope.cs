@@ -13,7 +13,9 @@ namespace LabNation.DeviceInterface.Devices {
 	public enum WaveSource {
 		FILE,
 		GENERATOR,
-        AUDIO
+        AUDIO,
+        SMARTSCOPE_USB,
+        SMARTSCOPE_NETWORK
 	}
 
     public class DummyScopeChannelConfig
@@ -28,6 +30,18 @@ namespace LabNation.DeviceInterface.Devices {
         public double noise;
         public int bursts;
         public ProbeDivision probeDivision;
+    }
+
+    //FIXME: need to add full class
+    public class AudioScope
+    {
+        public static string FakeSerial { get { return "AudioScope"; } }
+    }
+
+    //FIXME: need to add full class
+    public class FromFileScope
+    {
+        public static string FakeSerial { get { return "FileScope"; } }
     }
 
 	public partial class DummyScope : IDevice, IScope {

@@ -8,6 +8,7 @@ using LabNation.DeviceInterface.Memories;
 
 namespace LabNation.DeviceInterface.Devices
 {
+    public delegate void InterfaceStatusChangeHandler(DeviceManager devManager, Dictionary<string, WaveSource> connectedList);
     public delegate void DeviceConnectHandler(IDevice device, bool connected);
 
     public interface IDevice
