@@ -748,7 +748,7 @@ namespace LabNation.DeviceInterface.Devices
         internal static int TriggerDelay(TriggerMode mode, int inputDecimation)
         {
             if(mode == TriggerMode.Digital)
-                return (((int)4) >> inputDecimation) + 1;
+                return (((int)4) >> inputDecimation);
             if (inputDecimation == 0)
                 return 7;
             if (inputDecimation == 1)
