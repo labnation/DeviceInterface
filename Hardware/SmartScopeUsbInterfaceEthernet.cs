@@ -14,12 +14,12 @@ namespace LabNation.DeviceInterface.Hardware
     {
         private bool connected = false;
         private IPAddress serverIp;
-        private uint serverPort;
+        private int serverPort;
 #if DEBUGFILE
         StreamWriter debugFile;
 #endif
         BufferedStream stream;
-        public SmartScopeUsbInterfaceEthernet(IPAddress serverIp, uint serverPort)
+        public SmartScopeUsbInterfaceEthernet(IPAddress serverIp, int serverPort)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;

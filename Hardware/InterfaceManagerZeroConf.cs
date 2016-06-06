@@ -15,7 +15,7 @@ namespace LabNation.DeviceInterface.Hardware
         object pollLock = new object();
         bool pollThreadRunning;
         Thread pollThread;
-        const int POLL_INTERVAL=1000;
+        const int POLL_INTERVAL=5000;
         List<IPAddress> detectedServerAddresses = new List<IPAddress>();
         Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet> createdInterfaces = new Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet>();
 
@@ -66,6 +66,8 @@ namespace LabNation.DeviceInterface.Hardware
 
             detectedServerAddresses.Clear();
             FindZeroConf();
+
+            //sleep for some time, allowing servers to be detected
             Thread.Sleep(POLL_INTERVAL);
 
             //handle disconnects
@@ -73,17 +75,17 @@ namespace LabNation.DeviceInterface.Hardware
             foreach (var r in disappearedInterfaces)
             {
                 if (onConnect != null)
-                    onConnect(r.Value, true);
+                    onConnect(r.Value, false);
                 createdInterfaces.Remove(r.Key);
             }
 
             //handle connects
-            Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet> newInterfaces = detectedServerAddresses.Where(x => !createdInterfaces.ContainsKey(x)).ToDictionary(x => x.Key, x => x.Value);
-            foreach (var r in disappearedInterfaces)
+            List<IPAddress> newInterfaces = detectedServerAddresses.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
+            foreach (var n in newInterfaces)
             {
+                createdInterfaces.Add(n, new SmartScopeUsbInterfaceEthernet(n, 25482));
                 if (onConnect != null)
-                    onConnect(r.Value, true);
-                createdInterfaces.Remove(r.Key);
+                    onConnect(createdInterfaces[n], true);
             }       
         }
 
