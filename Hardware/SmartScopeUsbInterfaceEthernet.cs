@@ -35,6 +35,7 @@ namespace LabNation.DeviceInterface.Hardware
             tcpclnt.Connect(this.serverIp, this.serverPort);
             NetworkStream unbufferedStream = tcpclnt.GetStream();
             this.stream = new BufferedStream(unbufferedStream, 1000000);
+            this.connected = true;
         }
 
         public string Serial { 
