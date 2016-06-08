@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 namespace LabNation.Common
 {
 
+	#if !IOS && !ANDROID
     public class ConsoleLogger : FileLogger
     {
         //NOTE: the streamwrite is in fact not used by the parent class,
@@ -19,6 +20,7 @@ namespace LabNation.Common
             this.useConsoleColor = true;
         }
     }
+	#endif
     public class FileLogger
     {
         static List<FileLogger> loggers = new List<FileLogger>();
@@ -27,9 +29,10 @@ namespace LabNation.Common
         ConcurrentQueue<LogMessage> logQueue;
         bool running;
         LogLevel logLevel;
+		#if !IOS && !ANDROID
         protected bool useConsoleColor = false;
         ConsoleColor oldColor = Console.ForegroundColor;
-		
+		#endif
         public FileLogger(StreamWriter writer, LogLevel level)
         {
             this.logLevel = level;
@@ -83,6 +86,7 @@ namespace LabNation.Common
                         message += entry.message + entry.end;
 
                         previousEntry = entry;
+						#if !IOS && !ANDROID
                         if (useConsoleColor && entry.color.HasValue)
                         {
                             oldColor = Console.ForegroundColor;
@@ -91,9 +95,8 @@ namespace LabNation.Common
                             Console.ForegroundColor = oldColor;
                         }
                         else
-                        {
-                            writer.Write(message);
-                        }
+						#endif
+						writer.Write(message);
                     }
                 }
                 writer.Flush();
