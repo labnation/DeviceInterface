@@ -43,7 +43,7 @@ namespace LabNation.DeviceInterface.Hardware
         private async Task<IReadOnlyList<IZeroconfHost>> FindZeroConf()
         {
             IReadOnlyList<IZeroconfHost> results = await
-                ZeroconfResolver.ResolveAsync("SmartScopeServer._sss._tcp.local.");
+                ZeroconfResolver.ResolveAsync("_sss._tcp.local.");
             return results;
         }
 
@@ -63,7 +63,7 @@ namespace LabNation.DeviceInterface.Hardware
 
             hostsTask.Wait();
             IReadOnlyList<IZeroconfHost> hostList = hostsTask.Result;
-            detectedServerAddresses = hostList.Select(x => IPAddress.Parse(x.IPAddress)).ToList();
+			detectedServerAddresses = hostList.Where(x => x.Services.Count > 0).Select(x => IPAddress.Parse(x.IPAddress)).ToList();
 
             //handle disconnects
             Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet> disappearedInterfaces = createdInterfaces.Where(x => !detectedServerAddresses.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
