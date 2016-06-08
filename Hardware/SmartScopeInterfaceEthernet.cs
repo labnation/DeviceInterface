@@ -80,7 +80,7 @@ namespace LabNation.DeviceInterface.Hardware
                 }
             }
 
-            byte[] wrapper = Constants.makeMessage(Constants.Commands.SEND, message.Length);
+            byte[] wrapper = Constants.makeMessage(Constants.Commands.SEND, message);
 
             lock (this)
             {
