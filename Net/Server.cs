@@ -66,15 +66,11 @@ namespace LabNation.DeviceInterface.Net
         private void PostZeroConf()
         {
             RegisterService service = new RegisterService();
-            service.Name = Constants.SERVICE_NAME;
+
+			service.Name = Dns.GetHostName();
             service.RegType = Constants.SERVICE_TYPE;
             service.ReplyDomain = Constants.REPLY_DOMAIN;
             service.Port = Constants.PORT;
-
-            TxtRecord txt_record = new TxtRecord();
-            txt_record.Add("Version", Constants.VERSION);
-
-            service.TxtRecord = txt_record;
             service.Register();
 
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -119,7 +115,7 @@ namespace LabNation.DeviceInterface.Net
 
         private void TcpIpController()
         {
-            debugFile = new StreamWriter("ServerDebug.txt");
+			debugFile = new StreamWriter(Path.Combine(Utils.StoragePath, "ServerDebug.txt"));
 
             TcpListener tcpListener = new TcpListener(IPAddress.Any, Constants.PORT);
             tcpListener.Start();

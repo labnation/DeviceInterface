@@ -8,7 +8,6 @@ namespace LabNation.DeviceInterface.Net
 {
     static class Constants
     {
-        public const string SERVICE_NAME = "SmartScopeServer";
         public const string SERVICE_TYPE = "_sss._tcp";
         public const string REPLY_DOMAIN = "local.";
         public const int PORT = 25482;

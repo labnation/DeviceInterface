@@ -1,3 +1,6 @@
 [submodule "winusb"]
 	path = winusb
 	url = https://github.com/labnation/winusb.git
+[submodule "Mono.Zeroconf"]
+	path = Mono.Zeroconf
+	url = git@github.com:AvolitesMarkDaniel/Mono.Zeroconf.git
