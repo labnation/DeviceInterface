@@ -117,13 +117,13 @@ namespace LabNation.DeviceInterface.Net
         {
 			debugFile = new StreamWriter(Path.Combine(Utils.StoragePath, "ServerDebug.txt"));
 
-            TcpListener tcpListener = new TcpListener(IPAddress.Any, Constants.PORT);
+			TcpListener tcpListener = new TcpListener (IPAddress.Any, Constants.PORT);
             tcpListener.Start();
 
             //this is a blocking call until an incoming connection has been received
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
             Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + Constants.PORT.ToString() + "\n", ConsoleColor.Gray);
-            Socket socket = tcpListener.AcceptSocket();
+			Socket socket = tcpListener.Server.Accept();
 
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
             Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + Constants.PORT.ToString() + "\n\n", ConsoleColor.Gray);
