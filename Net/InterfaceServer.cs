@@ -47,6 +47,7 @@ namespace LabNation.DeviceInterface.Net
             tcpListener.Stop();
             service.Dispose();
             tcpListenerThread.Join(1000);
+			Logger.Debug ("All things stopped");
         }
 
         RegisterService service;
@@ -157,9 +158,6 @@ namespace LabNation.DeviceInterface.Net
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
             Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n\n", ConsoleColor.Gray);
 
-
-
-            byte[] rxBuffer = new byte[Constants.BUF_SIZE];
             while (running)
             {
                 List<Message> msgList = receiveMessage(socket);
@@ -184,8 +182,7 @@ namespace LabNation.DeviceInterface.Net
                     }
                     else if (command == Constants.Commands.SERIAL)
                     {
-                        //byte[] answer = System.Text.Encoding.UTF8.GetBytes(scope.Serial);
-                        byte[] answer = System.Text.Encoding.UTF8.GetBytes("0254301KA16");
+						byte[] answer = System.Text.Encoding.UTF8.GetBytes(hwInterface.Serial);
 
                         socket.Send(answer);
 
@@ -225,7 +222,9 @@ namespace LabNation.DeviceInterface.Net
         private void ReadHispeedData(Socket socket, int readLength)
         {
             byte[] answer = hwInterface.GetData(readLength);
-
+			if (answer == null) {
+				Logger.Error ("Failed to read HSPEED data - null");
+			}
             socket.Send(answer);
 
             bwUp.Update(answer.Length, out strBandwidthUp);
@@ -234,7 +233,9 @@ namespace LabNation.DeviceInterface.Net
         private void ReadControlBytes(Socket socket, byte readLength)
         {
             byte[] answer = hwInterface.ReadControlBytes(readLength);
-
+			if (answer == null) {
+				Logger.Error ("Failed to read data - null");
+			}
             socket.Send(answer);
 
             bwUp.Update(answer.Length, out strBandwidthUp);
