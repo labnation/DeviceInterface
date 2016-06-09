@@ -11,7 +11,7 @@ namespace LabNation.DeviceInterface.Hardware
 {
     public class SmartScopeInterfaceEthernet:ISmartScopeInterface
     {
-		private bool connected { get { return this.tcpclnt.Connected; } }
+		public bool connected { get { return this.tcpclnt.Connected; } }
         private IPAddress serverIp;
         private int serverPort;
         BufferedStream stream;

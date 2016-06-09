@@ -93,24 +93,26 @@ namespace LabNation.DeviceInterface.Hardware
             hostsTask.Wait();
 			List<ServiceLocation> detectedServices = hostsTask.Result.Where(nameFilter).ToList();
 
-            //handle disconnects
-            Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> disappearedInterfaces = 
-                createdInterfaces.Where(x => !detectedServices.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-
-            foreach (var r in disappearedInterfaces)
-            {
-                if (onConnect != null)
-                    onConnect(r.Value, false);
-                createdInterfaces.Remove(r.Key);
-            }
+			foreach (var kvp in createdInterfaces) {
+				if (!kvp.Value.connected) {
+					LabNation.Common.Logger.Info("An ethernet interface was removed");
+					onConnect (kvp.Value, false);
+					createdInterfaces.Remove (kvp.Key);
+				}
+			}
 
             //handle connects
             List<ServiceLocation> newInterfaces = detectedServices.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
-            foreach (var n in newInterfaces)
+			foreach (ServiceLocation loc in detectedServices)
             {
-                createdInterfaces.Add(n, new SmartScopeInterfaceEthernet(n.ip, n.port));
-                if (onConnect != null)
-                    onConnect(createdInterfaces[n], true);
+				if (createdInterfaces.Where (x => x.Key.ip.Equals(loc.ip) && x.Key.port == loc.port).Count() == 0) {
+					// A new interface
+					LabNation.Common.Logger.Info("A new ethernet interface was found");
+					SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port);
+					createdInterfaces.Add(loc, ethif);
+					if (onConnect != null)
+						onConnect(ethif, true);
+				}                
             }       
         }
 
