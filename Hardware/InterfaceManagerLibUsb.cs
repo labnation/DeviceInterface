@@ -133,7 +133,7 @@ namespace LabNation.DeviceInterface.Hardware
                     Common.Logger.Warn("Can't re-register device with this serial " + serial);
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 }
-                C.Logger.Warn("Device found with serial [" + serial + "]");
+                C.Logger.Info("Device found with serial [" + serial + "]");
                 interfaces.Add(serial, f);
 
                 if (onConnect != null)
@@ -184,7 +184,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void RemoveDevice(object serial)
         {
-            C.Logger.Warn("Removing device with serial [" + serial + "]");
+            C.Logger.Info("Removing device with serial [" + serial + "]");
             if (!interfaces.ContainsKey(serial)) {
                 C.Logger.Warn("OMG this device is not registered?!");
                 return;

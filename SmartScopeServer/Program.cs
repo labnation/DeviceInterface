@@ -17,11 +17,11 @@ namespace SmartScopeServer
         [STAThread]
         static void Main(string[] args)
         {
-            ConsoleLogger consoleLog = new ConsoleLogger(LogLevel.DEBUG);
+			ConsoleLogger consoleLog = new ConsoleLogger(LogLevel.INFO);
 
             Monitor interfaceMonitor = new Monitor();
 
-            Logger.LogC(LogLevel.INFO, "--- Press any key to stop server ---\n", ConsoleColor.Green);
+            Logger.LogC(LogLevel.INFO, "--- Press 'q' to stop server ---\n", ConsoleColor.Green);
             
 #if WINDOWS
             //Need the Application thread to enable winusb device detection
@@ -33,12 +33,19 @@ namespace SmartScopeServer
                 Application.DoEvents();
 #endif
                 System.Threading.Thread.Sleep(60);
-                if (Console.KeyAvailable)
-                    break;
+				if (Console.KeyAvailable) {
+					ConsoleKeyInfo key = Console.ReadKey ();
+					if (key.KeyChar == 'q') {
+						Logger.Info ("Quitting");
+						break;
+					}
+				}
             }
             
+			Logger.Info ("Stopping interface monitor");
             interfaceMonitor.Stop();
 
+			Logger.Info ("Stopping console logger");
             consoleLog.Stop();
         }        
     }

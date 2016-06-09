@@ -47,7 +47,6 @@ namespace LabNation.DeviceInterface.Net
             tcpListener.Stop();
             service.Dispose();
             tcpListenerThread.Join(1000);
-			Logger.Debug ("All things stopped");
         }
 
         RegisterService service;

@@ -86,7 +86,7 @@ namespace LabNation.DeviceInterface.Hardware
 		Func<ServiceLocation, bool> nameFilter = new Func<ServiceLocation, bool>(x => x.name == Constants.SERVICE_TYPE + "." + Constants.REPLY_DOMAIN);
         public override void PollDevice()
         {
-            Common.Logger.Warn("Polling ZeroConf");
+            Common.Logger.Info("Polling ZeroConf");
 
 			Task<List<ServiceLocation>> hostsTask = EnumerateAllServicesFromAllHosts();
 
