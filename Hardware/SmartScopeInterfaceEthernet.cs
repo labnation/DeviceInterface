@@ -96,7 +96,10 @@ namespace LabNation.DeviceInterface.Hardware
                 stream.Flush();
 
                 answer = new byte[length];
-                stream.Read(answer, 0, length);
+
+                int offset = 0;
+				while(offset < length)
+					offset += stream.Read(answer, offset, length - offset);
             }
 
             return answer;
@@ -116,7 +119,10 @@ namespace LabNation.DeviceInterface.Hardware
                 stream.Flush();
 
                 answer = new byte[numberOfBytes];
-                stream.Read(answer, 0, numberOfBytes);
+
+				int offset = 0;
+				while(offset < numberOfBytes)
+					offset += stream.Read(answer, offset, numberOfBytes - offset);
             }
 
             return answer;
