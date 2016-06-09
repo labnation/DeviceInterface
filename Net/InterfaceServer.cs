@@ -225,6 +225,7 @@ namespace LabNation.DeviceInterface.Net
 			if (answer == null) {
 				Logger.Error ("Failed to read HSPEED data - null");
 			}
+			Logger.Debug ("HBW package sending {0:d}/{1:d} bytes", answer.Length, readLength);
             socket.Send(answer);
 
             bwUp.Update(answer.Length, out strBandwidthUp);
@@ -236,6 +237,7 @@ namespace LabNation.DeviceInterface.Net
 			if (answer == null) {
 				Logger.Error ("Failed to read data - null");
 			}
+			Logger.Debug ("Read package sending {0:d}/{1:d} bytes", answer.Length, readLength);
             socket.Send(answer);
 
             bwUp.Update(answer.Length, out strBandwidthUp);
