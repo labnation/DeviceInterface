@@ -23,7 +23,7 @@ namespace LabNation.DeviceInterface.Net
             FLUSH = 14,
         }
 
-        internal static byte[] makeMessage(Constants.Commands command, byte[] data = null)
+        internal static byte[] msg(this Constants.Commands command, byte[] data = null)
         {
             int len = 3;
             if (data != null)
@@ -38,11 +38,6 @@ namespace LabNation.DeviceInterface.Net
                 Array.ConstrainedCopy(data, 0, buf, 3, data.Length);
 
             return buf;
-        }
-
-        internal static byte[] msg(this Commands c)
-        {
-            return makeMessage(c);
         }
     }
 

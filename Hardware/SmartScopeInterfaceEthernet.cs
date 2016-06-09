@@ -1,6 +1,4 @@
-﻿//#define DEBUGFILE
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,18 +14,12 @@ namespace LabNation.DeviceInterface.Hardware
 		private bool connected { get { return this.tcpclnt.Connected; } }
         private IPAddress serverIp;
         private int serverPort;
-#if DEBUGFILE
-        StreamWriter debugFile;
-#endif
         BufferedStream stream;
 		TcpClient tcpclnt = new TcpClient();
         public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;
-#if DEBUGFILE
-            debugFile = new StreamWriter("debug.txt");
-#endif
         }
 			
         private void Connect()
@@ -51,14 +43,7 @@ namespace LabNation.DeviceInterface.Hardware
                 lock (this)
                 {
                     stream.Write(message, 0, message.Length);
-
-
-                    if (message[2] == 15)
-                    {
-                        int fsdsf = 0;
-                    }
-
-                    answer = new byte[11];
+					answer = new byte[11];
                     stream.Read(answer, 0, answer.Length);
                 }
 
@@ -71,34 +56,12 @@ namespace LabNation.DeviceInterface.Hardware
             if (!connected)
                 Connect();
 
-            if (message.Length == 6)
-            {
-                if (message[0] == 192 && message[1] == 10 && message[3] == 25 && message[5] == 15)
-                {
-                    int fsd = 0;
-                }
-            }
-
-            byte[] wrapper = Constants.makeMessage(Constants.Commands.SEND, message);
+			byte[] wrapper = Constants.Commands.SEND.msg(message);
 
             lock (this)
             {
                 stream.Write(wrapper, 0, wrapper.Length);
             }
-
-            if (wrapper[2] == 15)
-            {
-                int fsdsf = 0;
-            }
-
-            DateTime now = DateTime.Now;
-#if DEBUGFILE
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < message.Length; i++)
-                sb.Append(i.ToString() + ":" + message[i].ToString("000") + " ");
-            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Written:" + sb);
-            debugFile.Flush();
-#endif
         }
 
         public void WriteControlBytesBulk(byte[] message, bool async)
@@ -124,41 +87,17 @@ namespace LabNation.DeviceInterface.Hardware
         {
             if (!connected)
                 Connect();
-
-            DateTime now = DateTime.Now;
-#if DEBUGFILE
-            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " ReadRequest:" + length.ToString());
-            debugFile.Flush();
-#endif
-
-            byte[] message = new byte[] { 0, 4, 11, (byte)length };
+			
+			byte[] message = Constants.Commands.READ.msg( new byte[] {(byte)length });
             byte[] answer;
             lock (this)
             {
                 stream.Write(message, 0, message.Length);
                 stream.Flush();
 
-
-                if (message[2] == 15)
-                {
-                    int fsdsf = 0;
-                }
-
-                now = DateTime.Now;
-#if DEBUGFILE
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Waiting");
-                debugFile.Flush();
-#endif
-
                 answer = new byte[length];
                 stream.Read(answer, 0, length);
             }
-
-            now = DateTime.Now;
-#if DEBUGFILE
-            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " received:" + BitConverter.ToString(answer));
-            debugFile.Flush();
-#endif
 
             return answer;
         }
@@ -167,18 +106,8 @@ namespace LabNation.DeviceInterface.Hardware
         {
             if (!connected)
                 Connect();
-
-            DateTime now = DateTime.Now;
-#if DEBUGFILE
-            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Data ReadRequest:" + numberOfBytes.ToString());
-            debugFile.Flush();
-#endif
-
-            byte[] message = new byte[] { 0, 5, 12, (byte)(numberOfBytes >> 8), (byte)numberOfBytes };
-            if (message[2] == 15)
-            {
-                int fsdsf = 0;
-            }
+			
+			byte[] message = Constants.Commands.READ_HBW.msg( new byte[] { (byte)(numberOfBytes >> 8), (byte)numberOfBytes });
 
             byte[] answer;
             lock (this)
@@ -186,42 +115,24 @@ namespace LabNation.DeviceInterface.Hardware
                 stream.Write(message, 0, message.Length);
                 stream.Flush();
 
-                now = DateTime.Now;
-#if DEBUGFILE
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Waiting");
-                debugFile.Flush();
-#endif
-
                 answer = new byte[numberOfBytes];
                 stream.Read(answer, 0, numberOfBytes);
             }
-
-            now = DateTime.Now;
-#if DEBUGFILE
-            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " received:" + BitConverter.ToString(answer));
-            debugFile.Flush();
-#endif
 
             return answer;
         }
 
         public bool Destroyed { get { return false; } }
-        public void Destroy()
-        { }
+        public void Destroy() { }
         public void FlushDataPipe()
         {
             if (!connected)
                 Connect();
 
-            byte[] message = new byte[] { 0, 3, 14 };
+			byte[] message = Constants.Commands.FLUSH.msg();
             lock (this)
             {
                 stream.Write(message, 0, message.Length);
-            }
-
-            if (message[2] == 15)
-            {
-                int fsdsf = 0;
             }
         }
     }
