@@ -24,13 +24,8 @@ namespace LabNation.DeviceInterface.Hardware
         FPGA_ROM,
         AWG
     }
-
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    interface ISmartScopeInterface : IHardwareInterface
+		
+    public interface ISmartScopeInterface : IHardwareInterface
     {
         void WriteControlBytes(byte[] message, bool async);
         void WriteControlBytesBulk(byte[] message, bool async);
