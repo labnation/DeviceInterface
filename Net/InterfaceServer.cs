@@ -214,7 +214,6 @@ namespace LabNation.DeviceInterface.Net
                 Console.Write(strBandwidthUp + " KB/s              ");
 
                 Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine();
             }
         }
 
