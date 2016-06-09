@@ -83,6 +83,7 @@ namespace LabNation.DeviceInterface.Hardware
 			return l;
         }
 
+		Func<ServiceLocation, bool> nameFilter = new Func<ServiceLocation, bool>(x => x.name == Constants.SERVICE_TYPE + "." + Constants.REPLY_DOMAIN);
         public override void PollDevice()
         {
             Common.Logger.Warn("Polling ZeroConf");
@@ -90,7 +91,7 @@ namespace LabNation.DeviceInterface.Hardware
 			Task<List<ServiceLocation>> hostsTask = EnumerateAllServicesFromAllHosts();
 
             hostsTask.Wait();
-			List<ServiceLocation> detectedServices = hostsTask.Result.Where(x => x.name == "_sss._tcp.local.").ToList();
+			List<ServiceLocation> detectedServices = hostsTask.Result.Where(nameFilter).ToList();
 
             //handle disconnects
             Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> disappearedInterfaces = 
