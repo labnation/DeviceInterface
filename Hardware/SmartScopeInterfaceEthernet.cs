@@ -13,26 +13,25 @@ namespace LabNation.DeviceInterface.Hardware
 {
     public class SmartScopeInterfaceEthernet:ISmartScopeInterface
     {
-        private bool connected = false;
+		private bool connected { get { return this.tcpclnt.Connected; } }
         private IPAddress serverIp;
         private int serverPort;
 #if DEBUGFILE
         StreamWriter debugFile;
 #endif
         BufferedStream stream;
+		TcpClient tcpclnt = new TcpClient();
         public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;
-            
 #if DEBUGFILE
             debugFile = new StreamWriter("debug.txt");
 #endif
         }
-
+			
         private void Connect()
         {
-            TcpClient tcpclnt = new TcpClient();
             tcpclnt.Connect(this.serverIp, this.serverPort);
             NetworkStream unbufferedStream = tcpclnt.GetStream();
             this.stream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);

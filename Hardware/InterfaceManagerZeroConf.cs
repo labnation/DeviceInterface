@@ -72,31 +72,25 @@ namespace LabNation.DeviceInterface.Hardware
             return results;
         }
 
-        public async Task EnumerateAllServicesFromAllHosts()
+		async Task<List<ServiceLocation>> EnumerateAllServicesFromAllHosts()
         {
             ILookup<string, string> domains = await ZeroconfResolver.BrowseDomainsAsync();
             var responses = await ZeroconfResolver.ResolveAsync(domains.Select(g => g.Key));
-            foreach (var resp in responses)
-                Console.WriteLine(resp);
+			List<ServiceLocation> l = new List<ServiceLocation> ();
+			foreach (var resp in responses)
+				foreach (IService s in resp.Services.Values)
+					l.Add (new ServiceLocation (IPAddress.Parse (resp.IPAddress), s.Port, s.Name));
+			return l;
         }
 
         public override void PollDevice()
         {
             Common.Logger.Warn("Polling ZeroConf");
 
-            Task<IReadOnlyList<IZeroconfHost>> hostsTask = FindZeroConf();
+			Task<List<ServiceLocation>> hostsTask = EnumerateAllServicesFromAllHosts();
 
             hostsTask.Wait();
-            IReadOnlyList<IZeroconfHost> hostList = hostsTask.Result;
-            detectedServices = new List<ServiceLocation>();
-            foreach (IZeroconfHost h in hostList)
-            {
-                IPAddress ip = IPAddress.Parse(h.IPAddress);
-                foreach (IService s in h.Services.Values)
-                {
-                    detectedServices.Add(new ServiceLocation(ip, s.Port, s.Name));
-                }
-            }
+			List<ServiceLocation> detectedServices = hostsTask.Result.Where(x => x.name == "_sss._tcp.local.").ToList();
 
             //handle disconnects
             Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> disappearedInterfaces = 
