@@ -16,61 +16,49 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Net
 {
-    public class Server
+    public class InterfaceServer
     {
         private bool running = true;
-        ISmartScopeInterfaceUsb hwInterface;
+        private short port;
+        internal ISmartScopeInterfaceUsb hwInterface;
 
         BandwidthMonitor bwDown = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         BandwidthMonitor bwUp = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         string strBandwidthDown = "";
         string strBandwidthUp = "";
-        Thread pollThread;
         Thread tcpListenerThread;
         
-        public Server()
+        public InterfaceServer(ISmartScopeInterfaceUsb hwInterface, short port)
         {
-            //post ZeroConf service
-            PostZeroConf();
-
-            //start USB polling thread
-            pollThread = new Thread(PollUponStart);
-            pollThread.Name = "Devicemanager Startup poll";
-
-#if WINUSB
-            InterfaceManagerWinUsb.Instance.onConnect += OnInterfaceConnect;
-#else
-            InterfaceManagerLibUsb.Instance.onConnect += OnInterfaceConnect;
-#endif
-            pollThread.Start();
-            pollThread.Join();
-
+            this.hwInterface = hwInterface;
+            this.port = port;
             //start TCP/IP thread
-            tcpListenerThread = new System.Threading.Thread(TcpIpController)
+            tcpListenerThread = new Thread(TcpIpController)
             {
-                Name = "TCP listener"
+                Name = "TCP listener",
             };
             
             tcpListenerThread.Start();            
         }
 
-        private void PollUponStart()
+        public void Stop()
         {
-#if WINUSB
-            InterfaceManagerWinUsb.Instance.PollDevice();
-#elif !IOS
-            InterfaceManagerLibUsb.Instance.PollDevice();
-#endif
+            debugFile.Close();
+            running = false;
+            tcpListener.Stop();
+            service.Dispose();
+            tcpListenerThread.Join(1000);
         }
 
+        RegisterService service;
         private void PostZeroConf()
         {
-            RegisterService service = new RegisterService();
+            service = new RegisterService();
 
 			service.Name = Dns.GetHostName();
             service.RegType = Constants.SERVICE_TYPE;
             service.ReplyDomain = Constants.REPLY_DOMAIN;
-            service.Port = Constants.PORT;
+            service.Port = this.port;
             service.Register();
 
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -79,54 +67,35 @@ namespace LabNation.DeviceInterface.Net
             Console.WriteLine("ZeroConf service posted");
         }
 
-        public void Stop()
-        {
-            running = false;
-            tcpListenerThread.Join(1000);
-        }
-
-        private void OnInterfaceConnect(ISmartScopeInterfaceUsb hardwareInterface, bool connected)
-        {
-            Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Gray);
-            if (connected)
-            {
-                this.hwInterface = hardwareInterface;
-                Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Green);
-            }
-            else
-            {
-                if (this.hwInterface != null)
-                {
-                    if (this.hwInterface == hardwareInterface)
-                    {
-                        Logger.LogC(LogLevel.INFO, "ignored\n", ConsoleColor.Yellow);
-                    }
-                    else
-                    {
-                        Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Red);
-                        this.hwInterface = null;
-                    }
-                }
-            }
-        }
-
         StreamWriter debugFile;
         byte[] appendArray = null;
 
+        TcpListener tcpListener;
         private void TcpIpController()
         {
 			debugFile = new StreamWriter(Path.Combine(Utils.StoragePath, "ServerDebug.txt"));
 
-			TcpListener tcpListener = new TcpListener (IPAddress.Any, Constants.PORT);
+            tcpListener = new TcpListener(IPAddress.Any, this.port);
             tcpListener.Start();
+
+            PostZeroConf();
 
             //this is a blocking call until an incoming connection has been received
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-            Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + Constants.PORT.ToString() + "\n", ConsoleColor.Gray);
-			Socket socket = tcpListener.Server.Accept();
+            Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + this.port.ToString() + "\n", ConsoleColor.Gray);
+            Socket socket;
+            try
+            {
+                socket = tcpListener.Server.Accept();
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Socket aborted");
+                return;
+            }
 
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-            Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + Constants.PORT.ToString() + "\n\n", ConsoleColor.Gray);
+            Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n\n", ConsoleColor.Gray);
 
             byte[] buffer = new byte[Constants.BUF_SIZE];
             while (running)
@@ -157,9 +126,7 @@ namespace LabNation.DeviceInterface.Net
 
                 if (bytesReceived >= buffer.Length)
                     throw new Exception("TCP/IP socket buffer overflow!");
-
-                bool debug = false;
-
+                
                 if (true)
                 {
                     updateConsole |= bwDown.Update(bytesReceived, out strBandwidthDown);

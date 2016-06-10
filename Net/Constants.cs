@@ -10,7 +10,6 @@ namespace LabNation.DeviceInterface.Net
     {
         public const string SERVICE_TYPE = "_sss._tcp";
         public const string REPLY_DOMAIN = "local.";
-        public const int PORT = 25482;
         public const string VERSION = "0.0.0.1";
         public const int BUF_SIZE = 1024 * 1024;
 
