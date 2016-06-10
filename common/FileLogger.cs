@@ -8,6 +8,17 @@ using System.Collections.Concurrent;
 
 namespace LabNation.Common
 {
+
+    public class ConsoleLogger : FileLogger
+    {
+        //NOTE: the streamwrite is in fact not used by the parent class,
+        // It writes immediately to the console (to use color)
+        public ConsoleLogger(LogLevel level)
+            : base(new StreamWriter(Console.OpenStandardOutput()), level) 
+        {
+            this.useConsoleColor = true;
+        }
+    }
     public class FileLogger
     {
         static List<FileLogger> loggers = new List<FileLogger>();
@@ -16,8 +27,9 @@ namespace LabNation.Common
         ConcurrentQueue<LogMessage> logQueue;
         bool running;
         LogLevel logLevel;
-		private static string originInsert = "\n" + new string (' ', 28);
-
+        protected bool useConsoleColor = false;
+        ConsoleColor oldColor = Console.ForegroundColor;
+		
         public FileLogger(StreamWriter writer, LogLevel level)
         {
             this.logLevel = level;
@@ -55,6 +67,7 @@ namespace LabNation.Common
 
         private void dumpThreadStart()
         {
+            LogMessage previousEntry = new LogMessage(LogLevel.DEBUG, null, "\n");
             while (running || logQueue.Count > 0)
             {
                 while (logQueue.Count > 0)
@@ -62,9 +75,25 @@ namespace LabNation.Common
                     LogMessage entry;
                     if (logQueue.TryDequeue(out entry))
                     {
-                        if (entry.level > logLevel) continue;							
-						string message = entry.timestamp.ToString().PadRight(22) + entry.level.ToString().PadRight(6) + (entry.origin == null ? "" : entry.origin.PadRight(20) + originInsert) + entry.message;
-                        writer.WriteLine(message);
+                        if (entry.level > logLevel) continue;
+                        string message = "";
+                        //Don't print timestamp/origin if last message wasn't ended with newline
+                        if(previousEntry.end == "\n") 
+                            message += entry.timestamp.ToString().PadRight(22) + entry.level.ToString().PadRight(6);
+                        message += entry.message + entry.end;
+
+                        previousEntry = entry;
+                        if (useConsoleColor && entry.color.HasValue)
+                        {
+                            oldColor = Console.ForegroundColor;
+                            Console.ForegroundColor = entry.color.Value;
+                            Console.Write(message);
+                            Console.ForegroundColor = oldColor;
+                        }
+                        else
+                        {
+                            writer.Write(message);
+                        }
                     }
                 }
                 writer.Flush();

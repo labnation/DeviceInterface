@@ -20,12 +20,16 @@ namespace LabNation.Common
         public DateTime timestamp = DateTime.Now;
         public LogLevel level { get; private set; }
         public string message { get; private set; }
-		public string origin { get; private set; }
-		public LogMessage(LogLevel l, string msg, string origin = null)
+        public string end;
+        public ConsoleColor? color = null;
+
+        public LogMessage(LogLevel l, string msg, ConsoleColor? color = null) : this(l, msg, "", color) { }
+		public LogMessage(LogLevel l, string msg, string end = "\n", ConsoleColor? color = null)
         {
             this.message = msg;
             this.level = l;
-			this.origin = origin;
+            this.end = end;
+            this.color = color;
         }
     }
     public class Logger
@@ -45,17 +49,16 @@ namespace LabNation.Common
             if(cb != null)
                 logUpdateCallbacks.Add(cb);
         }
-        private static void Log(LogLevel l, string msg)
+        public static void LogC(LogLevel l, string msg, ConsoleColor? color = null)
+        {
+            Log(l, msg, "", color);
+        }
+        public static void Log(LogLevel l, string msg, string end = "\n", ConsoleColor? color = null )
         {
 			string origin = null;
-			if (LogOrigin) {
-				StackFrame f = new StackFrame (2);
-				MethodBase m = f.GetMethod ();
-				origin = m.DeclaringType + m.Name;
-			}
-			
+
             foreach(var q in logQueues)
-				q.Enqueue(new LogMessage(l, msg, origin));
+				q.Enqueue(new LogMessage(l, msg, end, color));
             foreach (var cb in logUpdateCallbacks)
                 cb();
         }
