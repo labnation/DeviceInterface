@@ -7,6 +7,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using LabNation.DeviceInterface.Net;
 
 namespace LabNation.DeviceInterface.Hardware
 {
@@ -34,7 +35,7 @@ namespace LabNation.DeviceInterface.Hardware
             TcpClient tcpclnt = new TcpClient();
             tcpclnt.Connect(this.serverIp, this.serverPort);
             NetworkStream unbufferedStream = tcpclnt.GetStream();
-            this.stream = new BufferedStream(unbufferedStream, 1000000);
+            this.stream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);
         }
 
         public string Serial { 
@@ -46,7 +47,7 @@ namespace LabNation.DeviceInterface.Hardware
                 if (!BitConverter.IsLittleEndian)
                     throw new Exception("This system is bigEndian -- not supported!");
 
-                byte[] message = new byte[3] { 0, 3, 13 };
+                byte[] message = Constants.Commands.SERIAL.msg();
                 byte[] answer;
                 lock (this)
                 {
@@ -79,14 +80,7 @@ namespace LabNation.DeviceInterface.Hardware
                 }
             }
 
-            byte[] wrapper = new byte[message.Length + 3];
-
-            int totalLength = message.Length + 3;
-            wrapper[0] = (byte)(totalLength >> 8);
-            wrapper[1] = (byte)(totalLength);
-            wrapper[2] = 10;
-            for (int i = 0; i < message.Length; i++)
-                wrapper[i + 3] = message[i];
+            byte[] wrapper = Constants.makeMessage(Constants.Commands.SEND, message.Length);
 
             lock (this)
             {

@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using Zeroconf;
 using System.Threading.Tasks;
+using LabNation.DeviceInterface.Net;
 
 namespace LabNation.DeviceInterface.Hardware
 {
@@ -78,7 +79,7 @@ namespace LabNation.DeviceInterface.Hardware
             List<IPAddress> newInterfaces = detectedServerAddresses.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
             foreach (var n in newInterfaces)
             {
-                createdInterfaces.Add(n, new SmartScopeInterfaceEthernet(n, 25482));
+                createdInterfaces.Add(n, new SmartScopeInterfaceEthernet(n, Constants.PORT));
                 if (onConnect != null)
                     onConnect(createdInterfaces[n], true);
             }       
