@@ -10,11 +10,6 @@ using LabNation.DeviceInterface.Memories;
 #endif
 
 namespace LabNation.DeviceInterface.Devices {
-	public enum WaveSource {
-		FILE,
-		GENERATOR,
-        AUDIO
-	}
 
     public class DummyScopeChannelConfig
     {
@@ -34,6 +29,9 @@ namespace LabNation.DeviceInterface.Devices {
 #if DEBUG
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
+
+        public static string FakeSerial = "DummyGenerator";
+        public string Serial { get { return FakeSerial; } }
 
         public DataSources.DataSource DataSourceScope { get; private set; }
 		private DateTime timeOrigin;

@@ -15,7 +15,6 @@ namespace LabNation.DeviceInterface.Devices
 
     partial class DummyScope
     {
-        public string Serial { get { return "DUMMY"; } }
         public static float[] GenerateWave(uint waveLength, double samplePeriod, double timeOffset, DummyScopeChannelConfig config )
         {
             AnalogWaveForm waveForm = config.waveform;
