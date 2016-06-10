@@ -18,8 +18,32 @@ namespace LabNation.DeviceInterface.Hardware
         bool pollThreadRunning;
         Thread pollThread;
         const int POLL_INTERVAL=5000;
-        List<IPAddress> detectedServerAddresses = new List<IPAddress>();
-        Dictionary<IPAddress, SmartScopeInterfaceEthernet> createdInterfaces = new Dictionary<IPAddress, SmartScopeInterfaceEthernet>();
+        List<ServiceLocation> detectedServices = new List<ServiceLocation>();
+
+        class ServiceLocation {
+            public IPAddress ip;
+            public int port;
+            public string name;
+            public ServiceLocation(IPAddress ip, int port, string name)
+            {
+                this.ip = ip;
+                this.port = port;
+                this.name = name;
+            }
+            public override bool Equals(object s)
+            {
+                if (!(s is ServiceLocation))
+                    return false;
+                ServiceLocation sl = (ServiceLocation)s;
+                return 
+                    this.ip.Equals(sl.ip) &&
+                    this.port == sl.port &&
+                    this.name == sl.name;
+            }
+
+        }
+
+        Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> createdInterfaces = new Dictionary<ServiceLocation, SmartScopeInterfaceEthernet>();
 
         protected override void Initialize()
         {
@@ -64,10 +88,20 @@ namespace LabNation.DeviceInterface.Hardware
 
             hostsTask.Wait();
             IReadOnlyList<IZeroconfHost> hostList = hostsTask.Result;
-			detectedServerAddresses = hostList.Where(x => x.Services.Count > 0).Select(x => IPAddress.Parse(x.IPAddress)).ToList();
+            detectedServices = new List<ServiceLocation>();
+            foreach (IZeroconfHost h in hostList)
+            {
+                IPAddress ip = IPAddress.Parse(h.IPAddress);
+                foreach (IService s in h.Services.Values)
+                {
+                    detectedServices.Add(new ServiceLocation(ip, s.Port, s.Name));
+                }
+            }
 
             //handle disconnects
-            Dictionary<IPAddress, SmartScopeInterfaceEthernet> disappearedInterfaces = createdInterfaces.Where(x => !detectedServerAddresses.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+            Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> disappearedInterfaces = 
+                createdInterfaces.Where(x => !detectedServices.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+
             foreach (var r in disappearedInterfaces)
             {
                 if (onConnect != null)
@@ -76,10 +110,10 @@ namespace LabNation.DeviceInterface.Hardware
             }
 
             //handle connects
-            List<IPAddress> newInterfaces = detectedServerAddresses.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
+            List<ServiceLocation> newInterfaces = detectedServices.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
             foreach (var n in newInterfaces)
             {
-                createdInterfaces.Add(n, new SmartScopeInterfaceEthernet(n, Constants.PORT));
+                createdInterfaces.Add(n, new SmartScopeInterfaceEthernet(n.ip, n.port));
                 if (onConnect != null)
                     onConnect(createdInterfaces[n], true);
             }       
