@@ -23,9 +23,9 @@ namespace LabNation.DeviceInterface.Memories
 #endif
     class ScopePicRegisterMemory : ByteMemory
     {
-        private ISmartScopeUsbInterface hwInterface;
+        private ISmartScopeInterface hwInterface;
 
-        public ScopePicRegisterMemory(ISmartScopeUsbInterface hwInterface)
+        public ScopePicRegisterMemory(ISmartScopeInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         

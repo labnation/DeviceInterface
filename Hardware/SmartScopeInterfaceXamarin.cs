@@ -8,7 +8,7 @@ using Android.Content;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    class SmartScopeUsbInterfaceXamarin: ISmartScopeUsbInterface
+    public class SmartScopeInterfaceXamarin : ISmartScopeInterfaceUsb
     {
         private const int COMMAND_READ_ENDPOINT_SIZE = 16;
         private const short COMMAND_WRITE_ENDPOINT_SIZE = 32;
@@ -18,7 +18,7 @@ namespace LabNation.DeviceInterface.Hardware
         private UsbEndpoint commandWriteEndpoint;
         private UsbDeviceConnection usbConnection;
 
-        public SmartScopeUsbInterfaceXamarin(Context context, UsbManager usbManager, UsbDevice device)
+        public SmartScopeInterfaceXamarin(Context context, UsbManager usbManager, UsbDevice device)
         {               
         	Destroyed = false;
             if(!usbManager.HasPermission(device))

@@ -18,12 +18,8 @@ namespace LabNation.DeviceInterface.Devices
 {
     public partial class SmartScope : IScope, IWaveGenerator, IDisposable
     {
-#if DEBUG
-        public
-#else
-        private
-#endif
-        ISmartScopeUsbInterface hardwareInterface;
+        public IHardwareInterface HardwareInterface { get { return hardwareInterface; } }
+        private ISmartScopeInterface hardwareInterface;
 #if DEBUG
         public
 #else
@@ -141,15 +137,15 @@ namespace LabNation.DeviceInterface.Devices
         {
             get
             {
-                if (hardwareInterface == null)
+                if (HardwareInterface == null)
                     return null;
-                return hardwareInterface.Serial;
+                return HardwareInterface.Serial;
             }
         }
 
-        internal SmartScope(ISmartScopeUsbInterface usbInterface) : base()
+        internal SmartScope(ISmartScopeInterface hwInterface) : base()
         {
-            this.hardwareInterface = usbInterface;
+            this.hardwareInterface = hwInterface;
             this.SuspendViewportUpdates = false;
             DataOutOfRange = false;
             deviceReady = false;
@@ -443,8 +439,8 @@ namespace LabNation.DeviceInterface.Devices
             catch (Exception)
             {
             	Logger.Warn("Reset incomplete - destroying hardware interface");
-            	if(hardwareInterface != null)
-            		hardwareInterface.Destroy();
+            	if(HardwareInterface != null)
+                    hardwareInterface.Destroy();
             }
         }
 
@@ -494,14 +490,14 @@ namespace LabNation.DeviceInterface.Devices
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
         public DataPackageScope GetScopeData()
 		{
-			if (hardwareInterface == null)
+			if (HardwareInterface == null)
 				return null;
 
 			byte[] buffer;
 			SmartScopeHeader header;
             
 			try {
-				buffer = hardwareInterface.GetData (BYTES_PER_BURST);
+                buffer = hardwareInterface.GetData(BYTES_PER_BURST);
 			} catch (ScopeIOException) {
 				return null;
 			} catch (Exception e) {
@@ -636,7 +632,7 @@ namespace LabNation.DeviceInterface.Devices
 				return null;
 
 			try {
-				buffer = hardwareInterface.GetData (BYTES_PER_BURST * header.NumberOfPayloadBursts);
+                buffer = hardwareInterface.GetData(BYTES_PER_BURST * header.NumberOfPayloadBursts);
 			} catch (Exception e) {
 				Logger.Error ("Failed to fetch payload - resetting scope: " + e.Message);
 				Reset ();
@@ -736,8 +732,8 @@ namespace LabNation.DeviceInterface.Devices
         }
 
         //FIXME: this needs proper handling
-        private bool Connected { get { return this.hardwareInterface != null && !this.hardwareInterface.Destroyed && this.flashed; } }
-        public bool Ready { get { return this.Connected && this.deviceReady && !(this.hardwareInterface == null || this.hardwareInterface.Destroyed); } }
+        private bool Connected { get { return this.HardwareInterface != null && !this.hardwareInterface.Destroyed && this.flashed; } }
+        public bool Ready { get { return this.Connected && this.deviceReady && !(this.HardwareInterface == null || this.hardwareInterface.Destroyed); } }
 
         #endregion
     }

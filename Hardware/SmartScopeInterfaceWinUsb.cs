@@ -5,11 +5,11 @@ using System.Text;
 using System.Collections.Concurrent;
 using MadWizard.WinUSBNet;
 using System.Threading;
-using H=LabNation.DeviceInterface.Hardware.SmartScopeUsbInterfaceHelpers;
+using H=LabNation.DeviceInterface.Hardware.SmartScopeInterfaceHelpers;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    internal class SmartScopeUsbInterfaceWinUsb : ISmartScopeUsbInterface
+    public class SmartScopeInterfaceWinUsb : ISmartScopeInterfaceUsb
     {
         public bool Destroyed { get; private set; }
         private object usbLock = new object();
@@ -111,7 +111,7 @@ namespace LabNation.DeviceInterface.Hardware
         private object registerLock = new object();
         private string serial;
 
-        public SmartScopeUsbInterfaceWinUsb(USBDevice usbDevice)
+        public SmartScopeInterfaceWinUsb(USBDevice usbDevice)
         {
             Destroyed = false;
             device = usbDevice;

@@ -10,7 +10,7 @@ using System.IO;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    public class SmartScopeUsbInterfaceEthernet:ISmartScopeUsbInterface
+    public class SmartScopeInterfaceEthernet:ISmartScopeInterface
     {
         private bool connected = false;
         private IPAddress serverIp;
@@ -19,7 +19,7 @@ namespace LabNation.DeviceInterface.Hardware
         StreamWriter debugFile;
 #endif
         BufferedStream stream;
-        public SmartScopeUsbInterfaceEthernet(IPAddress serverIp, int serverPort)
+        public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;

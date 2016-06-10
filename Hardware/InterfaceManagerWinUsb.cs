@@ -11,7 +11,7 @@ using LabNation.Common;
 namespace LabNation.DeviceInterface.Hardware
 {
     //class that provides raw HW access to the device
-    internal class InterfaceManagerWinUsb : InterfaceManager<InterfaceManagerWinUsb>
+    internal class InterfaceManagerWinUsb : InterfaceManager<InterfaceManagerWinUsb, SmartScopeInterfaceWinUsb>
     {
         Form winUsbForm;
         USBNotifier notifier;
@@ -111,7 +111,7 @@ namespace LabNation.DeviceInterface.Hardware
             string serial = null;
             try
             {
-                SmartScopeUsbInterfaceWinUsb f = new SmartScopeUsbInterfaceWinUsb(dev);
+                SmartScopeInterfaceWinUsb f = new SmartScopeInterfaceWinUsb(dev);
                 //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
                 serial = dev.Descriptor.SerialNumber;
                 if (serial == "" || serial == null)

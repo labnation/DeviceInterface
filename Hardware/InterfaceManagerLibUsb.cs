@@ -11,7 +11,7 @@ using C=LabNation.Common;
 namespace LabNation.DeviceInterface.Hardware
 {
     //class that provides raw HW access to the device
-    internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb>
+    internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb, SmartScopeInterfaceLibUsb>
     {   
         #if IOS
         object pollLock = new object();
@@ -124,7 +124,7 @@ namespace LabNation.DeviceInterface.Hardware
             string serial = null;
             try
             {
-                SmartScopeUsbInterfaceLibUsb f = new SmartScopeUsbInterfaceLibUsb(scopeUsbDevice);
+                SmartScopeInterfaceLibUsb f = new SmartScopeInterfaceLibUsb(scopeUsbDevice);
                 //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
                 serial = scopeUsbDevice.Info.SerialString;
                 if (serial == "" || serial == null)

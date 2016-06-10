@@ -6,11 +6,11 @@ using System.Collections.Concurrent;
 using LibUsbDotNet.Main;
 using LibUsbDotNet;
 using System.Threading;
-using H=LabNation.DeviceInterface.Hardware.SmartScopeUsbInterfaceHelpers;
+using H=LabNation.DeviceInterface.Hardware.SmartScopeInterfaceHelpers;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    internal class SmartScopeUsbInterfaceLibUsb : ISmartScopeUsbInterface
+    public class SmartScopeInterfaceLibUsb : ISmartScopeInterfaceUsb
     {
     	public bool Destroyed { get; private set; }
         private object usbLock = new object();
@@ -80,7 +80,7 @@ namespace LabNation.DeviceInterface.Hardware
         private string serial;
         public string Serial { get { return serial; } } 
 
-        public SmartScopeUsbInterfaceLibUsb(UsbDevice usbDevice)
+        public SmartScopeInterfaceLibUsb(UsbDevice usbDevice)
         {
             if (usbDevice is IUsbDevice)
             {

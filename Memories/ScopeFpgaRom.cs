@@ -14,9 +14,9 @@ namespace LabNation.DeviceInterface.Memories
 #endif
     class ScopeFpgaRom : ByteMemory
     {
-        private ISmartScopeUsbInterface hwInterface;
+        private ISmartScopeInterface hwInterface;
 
-        public ScopeFpgaRom(ISmartScopeUsbInterface hwInterface)
+        public ScopeFpgaRom(ISmartScopeInterface hwInterface)
         {
             this.hwInterface = hwInterface;
                         

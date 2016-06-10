@@ -19,7 +19,7 @@ namespace LabNation.DeviceInterface.Net
     public class Server
     {
         private bool running = true;
-        ISmartScopeUsbInterface hwInterface;
+        ISmartScopeInterfaceUsb hwInterface;
 
         BandwidthMonitor bwDown = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         BandwidthMonitor bwUp = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
@@ -46,7 +46,11 @@ namespace LabNation.DeviceInterface.Net
             pollThread.Join();
 
             //start TCP/IP thread
-            tcpListenerThread = new System.Threading.Thread(TcpIpController);
+            tcpListenerThread = new System.Threading.Thread(TcpIpController)
+            {
+                Name = "TCP listener"
+            };
+            
             tcpListenerThread.Start();            
         }
 
@@ -82,10 +86,10 @@ namespace LabNation.DeviceInterface.Net
         public void Stop()
         {
             running = false;
-            tcpListenerThread.Join();
+            tcpListenerThread.Join(1000);
         }
 
-        private void OnInterfaceConnect(ISmartScopeUsbInterface hardwareInterface, bool connected)
+        private void OnInterfaceConnect(ISmartScopeInterfaceUsb hardwareInterface, bool connected)
         {
             Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Gray);
             if (connected)

@@ -5,6 +5,7 @@ using System.Text;
 using LabNation.DeviceInterface.DataSources;
 using LabNation.Common;
 using LabNation.DeviceInterface.Memories;
+using LabNation.DeviceInterface.Hardware;
 #if ANDROID
     using Android.Media;
 #endif
@@ -30,8 +31,36 @@ namespace LabNation.DeviceInterface.Devices {
         public List<DeviceMemory> GetMemories() { return null; }
 #endif
 
-        public static string FakeSerial = "DummyGenerator";
-        public string Serial { get { return FakeSerial; } }
+        public IHardwareInterface HardwareInterface { get { return this.hardwareInterface; }  }
+        public DummyInterface _hardwareInterface;
+        public DummyInterface hardwareInterface
+        {
+            get { return this._hardwareInterface; }
+            set
+            {
+                this._hardwareInterface = value;
+                double origAcqLength = AcquisitionLength;
+                if (value == DummyInterface.Audio)
+                    BASE_SAMPLE_PERIOD = 1f / 44100f;
+                else
+                    BASE_SAMPLE_PERIOD = 10e-9;
+                AcquisitionLength = origAcqLength;
+
+                if (acquisitionRunning)
+                {
+                    if (value == DummyInterface.Audio)
+                        InitAudioJack();
+                    else
+                        KillAudioJack();
+                }
+            }
+        }
+
+        public string Serial { get { return HardwareInterface.Serial; } }
+
+        public bool isAudio { get { return this.HardwareInterface == DummyInterface.Audio; } }
+        public bool isGenerator { get { return this.HardwareInterface == DummyInterface.Generator; } }
+        public bool isFile { get { return this.HardwareInterface == DummyInterface.File; } }
 
         public DataSources.DataSource DataSourceScope { get; private set; }
 		private DateTime timeOrigin;
@@ -149,13 +178,9 @@ namespace LabNation.DeviceInterface.Devices {
 
 		#region constructor / initializer
 
-		internal DummyScope () : base ()
+		internal DummyScope (DummyInterface iface) : base ()
 		{
-#if ANDROID
-			waveSource = WaveSource.AUDIO;
-#else
-			waveSource = WaveSource.GENERATOR;
-#endif
+            this.hardwareInterface = iface;
             ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>() 
             {
                 { AnalogChannel.ChA, new DummyScopeChannelConfig()
@@ -248,13 +273,13 @@ namespace LabNation.DeviceInterface.Devices {
             {
 				if (value) {
 					double origAcqLength = AcquisitionLength;
-					if (waveSource == WaveSource.AUDIO)
+					if (isAudio)
 						BASE_SAMPLE_PERIOD = 1f / 44100f;
 					else
 						BASE_SAMPLE_PERIOD = 10e-9;
 					AcquisitionLength = origAcqLength;
 					StopPending = false;
-					if (waveSource == WaveSource.AUDIO && !this.acquisitionRunning)
+                    if (isAudio && !this.acquisitionRunning)
 						InitAudioJack ();
 					this.acquisitionRunning = value;
 				} else {
@@ -434,7 +459,8 @@ namespace LabNation.DeviceInterface.Devices {
             set
             {
                 double samples = value / BASE_SAMPLE_PERIOD;
-				if (waveSource == WaveSource.AUDIO) {
+                if (isAudio)
+                {
 					AcquisitionDepth = (uint)samples;
 					decimation = 0;
 				} else {
@@ -467,7 +493,7 @@ namespace LabNation.DeviceInterface.Devices {
                     else
                     {
                         double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
-						if (log2OfRatio != (int)log2OfRatio && waveSource != WaveSource.AUDIO)
+                        if (log2OfRatio != (int)log2OfRatio && !isAudio)
                             throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
                         if (value > ACQUISITION_DEPTH_MAX)
                             acquisitionDepth = ACQUISITION_DEPTH_MAX;
@@ -495,7 +521,7 @@ namespace LabNation.DeviceInterface.Devices {
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
 
 			List<AnalogChannel> channelsToAcquireDataFor = new List<AnalogChannel> ();
-			if (waveSource == WaveSource.AUDIO)
+			if (isAudio)
 				channelsToAcquireDataFor.Add (AnalogChannel.ChA);
 			else
 				channelsToAcquireDataFor.AddRange (AnalogChannel.List);
@@ -550,18 +576,15 @@ namespace LabNation.DeviceInterface.Devices {
                         if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                             continue;
                         float[] wave;
-                        switch(waveSource) {
-                            case WaveSource.GENERATOR:
-                                wave = DummyScope.GenerateWave(waveLengthCurrent,
-                                    SamplePeriodCurrent,
-                                    timeOffset.Ticks / 1e7,
-                                    ChannelConfig[channel]);
-                                break;
-                            case WaveSource.FILE:
-                                wave = GetWaveFromFile(channel, waveLengthCurrent, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
-                                break;
+                        if(HardwareInterface == DummyInterface.Generator)
+                            wave = DummyScope.GenerateWave(waveLengthCurrent,
+                                SamplePeriodCurrent,
+                                timeOffset.Ticks / 1e7,
+                                ChannelConfig[channel]);
+                        else if( HardwareInterface == DummyInterface.File)
+                            wave = GetWaveFromFile(channel, waveLengthCurrent, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
 #if ANDROID
-						case WaveSource.AUDIO:
+                        else if( hardwareInterface == DummyInterface.Audio) {
 							//fetch audio data
 							if (audioJack == null) return null;
 							byte[] audioData = new byte[audioBufferLengthInBytes];
@@ -586,14 +609,14 @@ namespace LabNation.DeviceInterface.Devices {
 							int skip = 1 << (int)decimation;
 							wave = wave.Where((x, i) => i % skip == 0).ToArray();
 
-							break;
+						}
 #endif
-                        default:
-                            throw new Exception("Unsupported wavesource");
-                        }
+                        else
+                            throw new Exception("Unsupported dummy interface");
 
 						//coupling, noise injection in SW
-						if (waveSource != WaveSource.AUDIO) {
+                        if (!isAudio)
+                        {
 							if (ChannelConfig [channel].coupling == Coupling.AC)
 								DummyScope.RemoveDcComponent (ref wave, ChannelConfig [channel].frequency, SamplePeriodCurrent);
 							else
@@ -602,7 +625,7 @@ namespace LabNation.DeviceInterface.Devices {
 						}
                         waveAnalog[channel].AddRange(wave);
                     }
-					if(waveSource != WaveSource.AUDIO && logicAnalyserEnabledCurrent)
+                    if (!isAudio && logicAnalyserEnabledCurrent)
                         waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
 
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
@@ -615,7 +638,7 @@ namespace LabNation.DeviceInterface.Devices {
                     if (logicAnalyserEnabledCurrent && this.triggerValue.mode == TriggerMode.Digital)
                     {
                         triggerDetected = DummyScope.DoTriggerDigital(waveDigital.ToArray(), triggerHoldoffInSamples, digitalTrigger, acquisitionDepthCurrent, out triggerIndex);
-						if (waveSource == WaveSource.AUDIO)
+                        if (isAudio)
 							triggerDetected = false;
                     }
                     else
@@ -758,26 +781,6 @@ namespace LabNation.DeviceInterface.Devices {
 		#endregion
 
 		#region dummy scope settings
-
-		public WaveSource waveSourceInternal;
-		public WaveSource waveSource { get { return waveSourceInternal;} 
-			set{ 
-				waveSourceInternal = value;
-				double origAcqLength = AcquisitionLength;
-				if (value == WaveSource.AUDIO)
-					BASE_SAMPLE_PERIOD = 1f / 44100f;
-				else
-					BASE_SAMPLE_PERIOD = 10e-9;
-				AcquisitionLength = origAcqLength;
-
-				if (acquisitionRunning) {
-					if (value == WaveSource.AUDIO)
-						InitAudioJack ();
-					else
-						KillAudioJack ();
-				}
-			} 
-		}		
 
         public void SetDummyWaveAmplitude (AnalogChannel channel, double amplitude)
 		{

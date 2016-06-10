@@ -5,6 +5,8 @@ using System.Text;
 #if DEBUG
 using LabNation.DeviceInterface.Memories;
 #endif
+using LabNation.DeviceInterface.Hardware;
+
 
 namespace LabNation.DeviceInterface.Devices
 {
@@ -17,6 +19,7 @@ namespace LabNation.DeviceInterface.Devices
 #if DEBUG
         List<DeviceMemory> GetMemories();
 #endif
+        IHardwareInterface HardwareInterface { get; }
 
     }
 }

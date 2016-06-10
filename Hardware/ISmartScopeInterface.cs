@@ -5,8 +5,6 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    delegate void OnDeviceConnect(ISmartScopeUsbInterface hardwareInterface, bool connected);
-
     public class ScopeIOException : Exception
     {
         internal ScopeIOException(string msg) : base(msg) { }
@@ -32,10 +30,8 @@ namespace LabNation.DeviceInterface.Hardware
 #else
     internal
 #endif
-    interface ISmartScopeUsbInterface
+    interface ISmartScopeInterface : IHardwareInterface
     {
-        string Serial { get; }
-
         void WriteControlBytes(byte[] message, bool async);
         void WriteControlBytesBulk(byte[] message, bool async);
         void WriteControlBytesBulk(byte[] message, int offset, int length, bool async);

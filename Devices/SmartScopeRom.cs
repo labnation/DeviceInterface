@@ -50,11 +50,11 @@ namespace LabNation.DeviceInterface.Devices
             public byte AdcTimingValue { get; internal set; }
             public List<GainCalibration> gainCalibration { get; private set; }
             public List<FrequencyResponse> frequencyResponse { get; private set; }
-            ISmartScopeUsbInterface hwInterface;
+            ISmartScopeInterface hwInterface;
             public double[] computedMultipliers { get; private set; }
             public double[] computedDividers { get; private set; }
 
-            internal Rom(ISmartScopeUsbInterface hwInterface)
+            internal Rom(ISmartScopeInterface hwInterface)
             {
                 this.hwInterface = hwInterface;
                 Download();

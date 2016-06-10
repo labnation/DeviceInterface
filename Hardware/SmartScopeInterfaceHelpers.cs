@@ -10,7 +10,7 @@ namespace LabNation.DeviceInterface.Hardware
 #else
     internal
 #endif
-    static class SmartScopeUsbInterfaceHelpers
+    static class SmartScopeInterfaceHelpers
     {
         public enum PIC_COMMANDS
         {
@@ -43,7 +43,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         public enum Operation { READ, WRITE, WRITE_BEGIN, WRITE_BODY, WRITE_END };
 
-        public static void GetControllerRegister(this ISmartScopeUsbInterface i, ScopeController ctrl, uint address, uint length, out byte[] data)
+        public static void GetControllerRegister(this ISmartScopeInterface i, ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
@@ -80,7 +80,7 @@ namespace LabNation.DeviceInterface.Hardware
             Array.Copy(readback, readHeaderLength, data, 0, length);
         }
 
-        public static void SetControllerRegister(this ISmartScopeUsbInterface i, ScopeController ctrl, uint address, byte[] data)
+        public static void SetControllerRegister(this ISmartScopeInterface i, ScopeController ctrl, uint address, byte[] data)
         {
             if (data != null && data.Length > I2C_MAX_WRITE_LENGTH)
             {
@@ -118,18 +118,18 @@ namespace LabNation.DeviceInterface.Hardware
             }
         }
 
-        public static void SendCommand(this ISmartScopeUsbInterface i, PIC_COMMANDS cmd, bool async = false)
+        public static void SendCommand(this ISmartScopeInterface i, PIC_COMMANDS cmd, bool async = false)
         {
             byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
             i.WriteControlBytes(toSend, async);
         }
 
-        public static void LoadBootLoader(this ISmartScopeUsbInterface i)
+        public static void LoadBootLoader(this ISmartScopeInterface i)
         {
             SendCommand(i, PIC_COMMANDS.PIC_BOOTLOADER, true);
         }
 
-        public static void Reset(this ISmartScopeUsbInterface i)
+        public static void Reset(this ISmartScopeInterface i)
         {
             SendCommand(i, PIC_COMMANDS.PIC_RESET, true);
 			#if IOS

@@ -11,16 +11,7 @@ using Android.Content;
 
 namespace LabNation.DeviceInterface.Devices
 {
-    public enum WaveSource
-    {
-        FILE,
-        GENERATOR,
-        AUDIO,
-        SMARTSCOPE_USB,
-        SMARTSCOPE_NETWORK
-    }
-
-    public delegate void InterfaceChangeHandler(DeviceManager devManager, List<ISmartScopeUsbInterface> connectedList);
+    public delegate void InterfaceChangeHandler(DeviceManager devManager, List<IHardwareInterface> connectedList);
 
     public class DeviceManager
     {
@@ -30,11 +21,10 @@ namespace LabNation.DeviceInterface.Devices
         public IScope MainDevice { get { return mainDevice; } }
         public bool SmartScopeConnected { get { return mainDevice is SmartScope; } }
         Thread pollThread;
-        private List<ISmartScopeUsbInterface> connectedList = new List<ISmartScopeUsbInterface>(); //list of all connected devices, serial and type provided
-        private List<ISmartScopeUsbInterface> interfaceList = new List<ISmartScopeUsbInterface>(); //list of all detected interfaces. Meaning hardware-only
-        private Dictionary<string, IScope> deviceList = new Dictionary<string, IScope>(); // list of all devices which have actually been created.
+        private List<IHardwareInterface> connectedList = new List<IHardwareInterface>(); //list of all connected devices, serial and type provided
+        private List<IScope> deviceList = new List<IScope>(); // list of all devices which have actually been created.
 
-        public List<ISmartScopeUsbInterface> ConnectedList { get { return this.connectedList; } }
+        public List<IHardwareInterface> ConnectedList { get { return this.connectedList; } }
 
 #if WINDOWS
         Thread badDriverDetectionThread;
@@ -76,8 +66,7 @@ namespace LabNation.DeviceInterface.Devices
             this.DeviceConnected = deviceConnectHandler;
             this.InterfaceChanged = interfaceChangeHandler;
 
-            /* Register always-present devices */
-            deviceList.Add(DummyScope.FakeSerial, new DummyScope());
+            connectedList.Add(DummyInterface.Generator);
             //FIXME: android should add audio-scope here!!!
         }
 
@@ -138,7 +127,7 @@ namespace LabNation.DeviceInterface.Devices
 #endif
         }
 
-        private void OnHardwareConnect(ISmartScopeUsbInterface hardwareInterface, bool connected)
+        private void OnHardwareConnect(IHardwareInterface hardwareInterface, bool connected)
         {
             string serial = hardwareInterface.Serial;
             if(connected) {
@@ -151,17 +140,19 @@ namespace LabNation.DeviceInterface.Devices
 
                 Logger.Debug("DeviceManager: calling connectHandler after new Connect event");
             }
-            else{
+            else
+            {
                 if (connectedList.Contains(hardwareInterface))
                     connectedList.Remove(hardwareInterface);
-                if (deviceList.ContainsKey(serial))
+                IScope device = deviceList.Where(x => x.HardwareInterface == hardwareInterface).FirstOrDefault();
+                if (device != null)
                 {                    
                     //need to dispose smartscope here: when it's being unplugged
                     Logger.Debug("DeviceManager: disposing device");
-                    if (mainDevice is SmartScope)
-                        (mainDevice as SmartScope).Dispose();
+                    if (device is SmartScope)
+                        (device as SmartScope).Dispose();
 
-                    deviceList.Remove(serial);
+                    deviceList.Remove(device);
                 }
 
                 #if WINDOWS
@@ -188,31 +179,28 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        public void SwitchMainDevice(ISmartScopeUsbInterface iface)
+        public void SwitchMainDevice(IHardwareInterface iface)
         {
             if (!connectedList.Contains(iface))
                 return;
 
             //when changing device -> first fire previous device
-            if (mainDevice != null && mainDevice.Serial != iface.Serial)
+            if (mainDevice != null && mainDevice.HardwareInterface != iface)
             {
                 if (DeviceConnected != null)
                     DeviceConnected(mainDevice, false);               
             }
 
             //activate new device
-            if (iface == null)
-                mainDevice = new DummyScope();
-            //FIXME: need to add support for AudioScope, FromFileScope
-            //else if (serial == AudioScope.FakeSerial)
-            //  mainDevice = new AudioScope();
-            else //real SmartScope
+            if (iface is DummyInterface)
+                mainDevice = new DummyScope(iface as DummyInterface);
+            else if(iface is ISmartScopeInterface) //real SmartScope
             {
                 //need to make sure a smartscope is created only once from an interface
-                if (!deviceList.ContainsKey(iface.Serial))
-                    deviceList[iface.Serial] = new SmartScope(iface);
+                if (deviceList.Where(x => x.HardwareInterface == iface).Count() == 0)
+                    deviceList.Add(new SmartScope(iface as ISmartScopeInterface));
 
-                mainDevice = deviceList[iface.Serial];
+                mainDevice = deviceList.Where(x => x.HardwareInterface == iface).First();
             }
 
             if (DeviceConnected != null)

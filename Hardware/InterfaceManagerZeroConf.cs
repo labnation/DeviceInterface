@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 namespace LabNation.DeviceInterface.Hardware
 {
     //class that provides raw HW access to the device
-    internal class InterfaceManagerZeroConf : InterfaceManager<InterfaceManagerZeroConf>
+    internal class InterfaceManagerZeroConf : InterfaceManager<InterfaceManagerZeroConf, SmartScopeInterfaceEthernet>
     {
         object pollLock = new object();
         bool pollThreadRunning;
         Thread pollThread;
         const int POLL_INTERVAL=5000;
         List<IPAddress> detectedServerAddresses = new List<IPAddress>();
-        Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet> createdInterfaces = new Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet>();
+        Dictionary<IPAddress, SmartScopeInterfaceEthernet> createdInterfaces = new Dictionary<IPAddress, SmartScopeInterfaceEthernet>();
 
         protected override void Initialize()
         {
@@ -66,7 +66,7 @@ namespace LabNation.DeviceInterface.Hardware
 			detectedServerAddresses = hostList.Where(x => x.Services.Count > 0).Select(x => IPAddress.Parse(x.IPAddress)).ToList();
 
             //handle disconnects
-            Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet> disappearedInterfaces = createdInterfaces.Where(x => !detectedServerAddresses.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+            Dictionary<IPAddress, SmartScopeInterfaceEthernet> disappearedInterfaces = createdInterfaces.Where(x => !detectedServerAddresses.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
             foreach (var r in disappearedInterfaces)
             {
                 if (onConnect != null)
@@ -78,7 +78,7 @@ namespace LabNation.DeviceInterface.Hardware
             List<IPAddress> newInterfaces = detectedServerAddresses.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
             foreach (var n in newInterfaces)
             {
-                createdInterfaces.Add(n, new SmartScopeUsbInterfaceEthernet(n, 25482));
+                createdInterfaces.Add(n, new SmartScopeInterfaceEthernet(n, 25482));
                 if (onConnect != null)
                     onConnect(createdInterfaces[n], true);
             }       
