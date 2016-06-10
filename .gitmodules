@@ -3,4 +3,4 @@
 	url = https://github.com/labnation/winusb.git
 [submodule "Mono.Zeroconf"]
 	path = Mono.Zeroconf
-	url = ssh://git@github.com/labnation/Mono.Zeroconf.git
+	url = https://github.com/labnation/Mono.Zeroconf.git
