@@ -71,6 +71,7 @@ namespace LabNation.DeviceInterface.Devices
         {
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
+            InterfaceManagerZeroConf.Instance.onConnect += OnDeviceConnect;
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
