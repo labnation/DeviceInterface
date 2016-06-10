@@ -60,9 +60,6 @@ namespace LabNation.DeviceInterface.Hardware
             Common.Logger.Warn("Polling ZeroConf");
 
             Task<IReadOnlyList<IZeroconfHost>> hostsTask = FindZeroConf();
-            
-            //sleep for some time, allowing servers to be detected
-            Thread.Sleep(POLL_INTERVAL);
 
             hostsTask.Wait();
             IReadOnlyList<IZeroconfHost> hostList = hostsTask.Result;
