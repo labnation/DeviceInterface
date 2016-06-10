@@ -5,7 +5,8 @@ using System.Text;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
-using Mono.Zeroconf;
+using Zeroconf;
+using System.Threading.Tasks;
 
 namespace LabNation.DeviceInterface.Hardware
 {
@@ -39,36 +40,33 @@ namespace LabNation.DeviceInterface.Hardware
             }
         }
 
-        private void FindZeroConf()
+        private async Task<IReadOnlyList<IZeroconfHost>> FindZeroConf()
         {
-            ServiceBrowser browser = new ServiceBrowser();
+            IReadOnlyList<IZeroconfHost> results = await
+                ZeroconfResolver.ResolveAsync("SmartScopeServer._sss._tcp.local.");
+            return results;
+        }
 
-            browser.ServiceAdded += delegate(object o, ServiceBrowseEventArgs args)
-            {
-                Console.WriteLine("Found Service: {0}", args.Service.Name);
-                args.Service.Resolved += delegate(object o2, ServiceResolvedEventArgs args2)
-                {
-                    IResolvableService s = (IResolvableService)args2.Service;
-
-                    if (s.FullName == "SmartScopeServer._sss._tcp.local.")
-                        detectedServerAddresses.Add(s.HostEntry.AddressList[0]);
-                };
-                args.Service.Resolve();
-            };
-
-            //go for it
-            browser.Browse("_sss._tcp", "local");
+        public async Task EnumerateAllServicesFromAllHosts()
+        {
+            ILookup<string, string> domains = await ZeroconfResolver.BrowseDomainsAsync();
+            var responses = await ZeroconfResolver.ResolveAsync(domains.Select(g => g.Key));
+            foreach (var resp in responses)
+                Console.WriteLine(resp);
         }
 
         public override void PollDevice()
         {
             Common.Logger.Warn("Polling ZeroConf");
 
-            detectedServerAddresses.Clear();
-            FindZeroConf();
-
+            Task<IReadOnlyList<IZeroconfHost>> hostsTask = FindZeroConf();
+            
             //sleep for some time, allowing servers to be detected
             Thread.Sleep(POLL_INTERVAL);
+
+            hostsTask.Wait();
+            IReadOnlyList<IZeroconfHost> hostList = hostsTask.Result;
+            detectedServerAddresses = hostList.Select(x => IPAddress.Parse(x.IPAddress)).ToList();
 
             //handle disconnects
             Dictionary<IPAddress, SmartScopeUsbInterfaceEthernet> disappearedInterfaces = createdInterfaces.Where(x => !detectedServerAddresses.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
