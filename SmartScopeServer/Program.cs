@@ -21,6 +21,8 @@ namespace SmartScopeServer
             Console.ReadKey();
 
             server.Stop();
+
+            consoleLog.Stop();
         }        
     }
 }
