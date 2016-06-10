@@ -26,12 +26,16 @@ namespace SmartScopeServer
 #if WINDOWS
             //Need the Application thread to enable winusb device detection
             Application.EnableVisualStyles();
+#endif
             while (true)
             {
+#if WINDOWS
                 Application.DoEvents();
-                System.Threading.Thread.Sleep(10);
-            }
 #endif
+                System.Threading.Thread.Sleep(60);
+                if (Console.KeyAvailable)
+                    break;
+            }
             
             interfaceMonitor.Stop();
 
