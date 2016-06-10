@@ -11,20 +11,22 @@ using Mono.Zeroconf;
 using System.IO;
 using System.Net.Sockets;
 using System.Net;
+using System.Threading;
 using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Net
 {
-    class Server
+    public class Server
     {
         private bool running = true;
-        private DeviceManager deviceManager = null;
         ISmartScopeUsbInterface hwInterface;
 
         BandwidthMonitor bwDown = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         BandwidthMonitor bwUp = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         string strBandwidthDown = "";
         string strBandwidthUp = "";
+        Thread pollThread;
+        Thread tcpListenerThread;
         
         public Server()
         {
@@ -32,12 +34,29 @@ namespace LabNation.DeviceInterface.Net
             PostZeroConf();
 
             //start USB polling thread
-            deviceManager = new DeviceManager(OnInterfaceConnect, null);
-            deviceManager.Start();
+            pollThread = new Thread(PollUponStart);
+            pollThread.Name = "Devicemanager Startup poll";
+
+#if WINUSB
+            InterfaceManagerWinUsb.Instance.onConnect += OnInterfaceConnect;
+#else
+            InterfaceManagerLibUsb.Instance.onConnect += OnInterfaceConnect;
+#endif
+            pollThread.Start();
+            pollThread.Join();
 
             //start TCP/IP thread
-            System.Threading.Thread tcpListenerThread = new System.Threading.Thread(TcpIpController);
+            tcpListenerThread = new System.Threading.Thread(TcpIpController);
             tcpListenerThread.Start();            
+        }
+
+        private void PollUponStart()
+        {
+#if WINUSB
+            InterfaceManagerWinUsb.Instance.PollDevice();
+#elif !IOS
+            InterfaceManagerLibUsb.Instance.PollDevice();
+#endif
         }
 
         private void PostZeroConf()
@@ -63,27 +82,32 @@ namespace LabNation.DeviceInterface.Net
         public void Stop()
         {
             running = false;
-            deviceManager.Stop();
-        }        
+            tcpListenerThread.Join();
+        }
 
-        private void OnInterfaceConnect(DeviceManager d, List<ISmartScopeUsbInterface> connectedList)
+        private void OnInterfaceConnect(ISmartScopeUsbInterface hardwareInterface, bool connected)
         {
             Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Gray);
-            if (this.hwInterface != null)
+            if (connected)
             {
-                if(connectedList.Contains(hwInterface)) {
-                    Logger.LogC(LogLevel.INFO, "ignored\n", ConsoleColor.Yellow);
-                } else {
-                    Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Red);
-                    this.hwInterface = null;
+                this.hwInterface = hardwareInterface;
+                Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Green);
+            }
+            else
+            {
+                if (this.hwInterface != null)
+                {
+                    if (this.hwInterface == hardwareInterface)
+                    {
+                        Logger.LogC(LogLevel.INFO, "ignored\n", ConsoleColor.Yellow);
+                    }
+                    else
+                    {
+                        Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Red);
+                        this.hwInterface = null;
+                    }
                 }
             }
-
-            if (connectedList.Where(x => !(x is SmartScopeUsbInterfaceEthernet)).Count() == 0)
-                return;
-
-            this.hwInterface = connectedList.First();
-            Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Green);
         }
 
         StreamWriter debugFile;
