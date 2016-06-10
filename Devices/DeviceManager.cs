@@ -24,9 +24,11 @@ namespace LabNation.DeviceInterface.Devices
 
     public class DeviceManager
     {
-        InterfaceStatusChangeHandler interfaceChangeHandler;
-        DeviceConnectHandler deviceConnectHandler;
-        private IDevice mainDevice = null;
+        public event InterfaceStatusChangeHandler InterfaceChanged;
+        public event DeviceConnectHandler DeviceConnected;
+        private IScope mainDevice = null;
+        public IScope MainDevice { get { return mainDevice; } }
+        public bool SmartScopeConnected { get { return mainDevice is SmartScope; } }
         Thread pollThread;
         private Dictionary<string, WaveSource> connectedList = new Dictionary<string, WaveSource>(); //list of all connected devices, serial and type provided
         private Dictionary<string, ISmartScopeUsbInterface> interfaceList = new Dictionary<string, ISmartScopeUsbInterface>(); //list of all detected interfaces. Meaning hardware-only
@@ -49,6 +51,18 @@ namespace LabNation.DeviceInterface.Devices
         Context context;
 #endif
 
+
+        public DeviceManager(
+#if ANDROID
+            Context context
+#endif
+)
+            : this(
+#if ANDROID
+            context,
+#endif
+            null, null) { }
+
         public DeviceManager(
 #if ANDROID
             Context context,
@@ -59,8 +73,8 @@ namespace LabNation.DeviceInterface.Devices
 #if ANDROID
             this.context = context;
 #endif
-            this.deviceConnectHandler = deviceConnectHandler;
-            this.interfaceChangeHandler = interfaceChangeHandler;
+            this.DeviceConnected = deviceConnectHandler;
+            this.InterfaceChanged = interfaceChangeHandler;
 
             /* Register always-present devices */
             connectedList.Add(DummyScope.FakeSerial, WaveSource.GENERATOR);
@@ -71,16 +85,17 @@ namespace LabNation.DeviceInterface.Devices
         {
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
-            InterfaceManagerZeroConf.Instance.onConnect += OnDeviceConnect;
+
+            InterfaceManagerZeroConf.Instance.onConnect += OnHardwareConnect;
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
-            InterfaceManagerXamarin.Instance.onConnect += OnDeviceConnect;
+            InterfaceManagerXamarin.Instance.onConnect += OnHardwareConnect;
 #elif WINUSB
-            InterfaceManagerWinUsb.Instance.onConnect += OnDeviceConnect;
+            InterfaceManagerWinUsb.Instance.onConnect += OnHardwareConnect;
 #elif IOS
 			//Nothing for the moment
 #else
-            InterfaceManagerLibUsb.Instance.onConnect += OnDeviceConnect;
+            InterfaceManagerLibUsb.Instance.onConnect += OnHardwareConnect;
 #endif
 
             pollThread.Start();
@@ -123,7 +138,7 @@ namespace LabNation.DeviceInterface.Devices
 #endif
         }
 
-        private void OnDeviceConnect(ISmartScopeUsbInterface hardwareInterface, bool connected)
+        private void OnHardwareConnect(ISmartScopeUsbInterface hardwareInterface, bool connected)
         {
             string serial = hardwareInterface.Serial;
             if(connected) {                
@@ -159,8 +174,21 @@ namespace LabNation.DeviceInterface.Devices
                 Logger.Debug("DeviceManager: calling connectHandler after new Disconnect event");
             }
 
-            if (interfaceChangeHandler != null)
-                interfaceChangeHandler(this, connectedList);
+            if (InterfaceChanged != null)
+                InterfaceChanged(this, connectedList);
+            else
+            {
+                //in case no event handlers are specified: connect real smartscope if none was active yet, or switch to dummymode
+                if (connected && !(mainDevice is SmartScope))
+                {
+                    //at this point, no real smartscope was attached, and a USB or ethernet scope was detected
+                    SwitchMainDevice(hardwareInterface.Serial);
+                }
+                else
+                {
+                    SwitchMainDevice(DummyScope.FakeSerial);
+                }
+            }
         }
 
         public void SwitchMainDevice(string serial)
@@ -171,8 +199,8 @@ namespace LabNation.DeviceInterface.Devices
             //when changing device -> first fire previous device
             if (mainDevice != null && mainDevice.Serial != serial)
             {
-                if (deviceConnectHandler != null)
-                    deviceConnectHandler(mainDevice, false);               
+                if (DeviceConnected != null)
+                    DeviceConnected(mainDevice, false);               
             }
 
             //activate new device
@@ -190,8 +218,8 @@ namespace LabNation.DeviceInterface.Devices
                 mainDevice = deviceList[serial];
             }
 
-            if (deviceConnectHandler != null)
-                deviceConnectHandler(mainDevice, true);
+            if (DeviceConnected != null)
+                DeviceConnected(mainDevice, true);
         }
 
 #if WINDOWS
