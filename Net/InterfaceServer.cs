@@ -1,4 +1,4 @@
-﻿#define DEBUGCONSOLE
+﻿//#define DEBUGCONSOLE
 
 using LabNation.DeviceInterface.Devices;
 using LabNation.DeviceInterface.Hardware;
@@ -43,7 +43,6 @@ namespace LabNation.DeviceInterface.Net
 
         public void Stop()
         {
-            debugFile.Close();
             running = false;
             tcpListener.Stop();
             service.Dispose();
@@ -61,28 +60,89 @@ namespace LabNation.DeviceInterface.Net
             service.Port = this.port;
             service.Register();
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("[Network] ");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.WriteLine("ZeroConf service posted");
+            Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
+            Logger.LogC(LogLevel.INFO, "ZeroConf service posted\n", ConsoleColor.Gray);
         }
 
-        StreamWriter debugFile;
-        byte[] appendArray = null;
+        class Message
+        {
+            public int length;
+            public Constants.Commands command;
+            public byte[] data;
+            
+            public static Message FromBuffer(byte[] buffer, int validLength)
+            {
+                if (validLength < 2)
+                    return null;
+                
+                int length = (buffer[0] << 8) + (buffer[1]);
+                if (validLength < length)
+                    return null;
+                if (length == 0)
+                    return null;
+
+                Message m = new Message();
+                m.length = length;
+
+                if (length > 2)
+                    m.command = (Constants.Commands)buffer[2];
+
+                if (length > 3)
+                {
+                    int dataLen = length - 3;
+                    m.data = new byte[dataLen];
+                    Buffer.BlockCopy(buffer, 3, m.data, 0, dataLen);
+                }
+                return m;
+            }
+        }
+
+        byte[] rxBuffer = new byte[Constants.BUF_SIZE];
+        byte[] msgBuffer = new byte[Constants.BUF_SIZE];
+        int msgBufferLength = 0;
+
+        List<Message> receiveMessage(Socket socket)
+        {
+            int bytesReceived = socket.Receive(rxBuffer);
+            Logger.Debug(bytesReceived.ToString() + " bytes received");
+            
+            if (bytesReceived >= rxBuffer.Length)
+                throw new Exception("TCP/IP socket buffer overflow!");
+
+            bwDown.Update(bytesReceived, out strBandwidthDown);
+
+            if (bytesReceived == 0)
+                return null;
+
+            Buffer.BlockCopy(rxBuffer, 0, msgBuffer, msgBufferLength, bytesReceived);
+            msgBufferLength += bytesReceived;
+            
+            // Parsing message and build list
+            List<Message> msgList = new List<Message>();
+            while (true)
+            {
+                Message m = Message.FromBuffer(msgBuffer, msgBufferLength);
+                if (m == null)
+                    break;
+                
+                //Move remaining valid data to beginning
+                msgBufferLength -= m.length;
+                Buffer.BlockCopy(msgBuffer, m.length, msgBuffer, 0, msgBufferLength);                
+                msgList.Add(m);
+            }
+            return msgList;
+        }
 
         TcpListener tcpListener;
         private void TcpIpController()
         {
-			debugFile = new StreamWriter(Path.Combine(Utils.StoragePath, "ServerDebug.txt"));
-
             tcpListener = new TcpListener(IPAddress.Any, this.port);
             tcpListener.Start();
-
-            PostZeroConf();
-
-            //this is a blocking call until an incoming connection has been received
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
             Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + this.port.ToString() + "\n", ConsoleColor.Gray);
+            
+            PostZeroConf();
+
             Socket socket;
             try
             {
@@ -97,76 +157,30 @@ namespace LabNation.DeviceInterface.Net
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
             Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n\n", ConsoleColor.Gray);
 
-            byte[] buffer = new byte[Constants.BUF_SIZE];
+
+
+            byte[] rxBuffer = new byte[Constants.BUF_SIZE];
             while (running)
             {
-                bool updateConsole = false;
-                int bytesProcessed = 0;
-
-#if DEBUGFILE
-                DateTime now1 = DateTime.Now;
-                debugFile.WriteLine(now1.Second.ToString("00") + "-" + now1.Millisecond.ToString("000") + " Waiting for TCP data");
-                debugFile.Flush();
-#endif
-
-                int bytesReceived = socket.Receive(buffer);
-
-                Logger.Debug(bytesReceived.ToString() + " bytes received");
-
-#if DEBUGFILE
-                DateTime now1 = DateTime.Now;
-                debugFile.WriteLine(now1.Second.ToString("00") + "-" + now1.Millisecond.ToString("000") + " Received TCP data (" + bytesReceived.ToString() + " bytes, from "+buffer[0]+" "+buffer[1]+" to "+buffer[bytesReceived-2]+" "+buffer[bytesReceived-1]+")");
-                debugFile.Flush();
-#endif
-
-                if (appendArray != null)
+                List<Message> msgList = receiveMessage(socket);
+                foreach (Message m in msgList)
                 {
-                    AppendData(ref buffer, ref bytesReceived);
-                }
-
-                if (bytesReceived >= buffer.Length)
-                    throw new Exception("TCP/IP socket buffer overflow!");
-                
-                if (true)
-                {
-                    updateConsole |= bwDown.Update(bytesReceived, out strBandwidthDown);
-                }
-
-                int currentMessageLength = 0;
-                while (bytesProcessed < bytesReceived)
-                {
-                    int offset = bytesProcessed;
-                    currentMessageLength = (buffer[offset + 0] << 8) + buffer[offset + 1];
-
-                    int bytesLeftForThisMessage = bytesReceived - bytesProcessed;
-                    if (bytesLeftForThisMessage < currentMessageLength)
-                    {
-                        StoreDataToAppend(buffer, bytesProcessed, bytesLeftForThisMessage);
-                        break;
-                    }
-
-#if DEBUGCONSOLE
-                    {
-                        Console.Write("Current message: ");
-                        for (int i = 0; i < currentMessageLength; i++)
-                            Console.Write(buffer[offset + i].ToString() + " ");
-                        Console.WriteLine();
-                    }
-#endif
-
-                    Constants.Commands command = (Constants.Commands)buffer[offset + 2];
+                    Logger.Debug("MSG [{0:G}] LEN [{1:d}] DATA [{2:s}]", m.command, m.length, BitConverter.ToString(m.data == null || m.data.Length > 32 ? new byte[0] : m.data));
+                    Constants.Commands command = m.command;
 
                     if (command == Constants.Commands.SEND)
                     {
-                        SendControlMessage(buffer, currentMessageLength, offset);
+                        SendControlMessage(m.data);
                     }
                     else if (command == Constants.Commands.READ)
                     {
-                        updateConsole = ReadControlBytes(socket, buffer, updateConsole, offset);
+                        byte length = m.data[0];
+                        ReadControlBytes(socket, length);
                     }
                     else if (command == Constants.Commands.READ_HBW)
                     {
-                        updateConsole = ReadHispeedData(socket, buffer, updateConsole, offset);
+                        int length = (m.data[0] << 8) + (m.data[1]);
+                        ReadHispeedData(socket, length);
                     }
                     else if (command == Constants.Commands.SERIAL)
                     {
@@ -175,7 +189,7 @@ namespace LabNation.DeviceInterface.Net
 
                         socket.Send(answer);
 
-                        updateConsole |= bwUp.Update(answer.Length, out strBandwidthUp);
+                        bwUp.Update(answer.Length, out strBandwidthUp);
                     }
                     else if (command == Constants.Commands.FLUSH)
                     {
@@ -183,206 +197,52 @@ namespace LabNation.DeviceInterface.Net
                     }
                     else
                     {
-#if DEBUGFILE
-                        DateTime now = DateTime.Now;
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 0; i < bytesReceived; i++)
-                            sb.Append(buffer[i].ToString() + " ");
-                        debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " ERROR in packet:" + sb);
-                        debugFile.Flush();
-                        Console.WriteLine();
-                        Console.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " ERROR in packet:" + sb);
-#endif
-                        break;
+                        throw new Exception(String.Format("Unsupported command {0:G}", command));
                     }
-
-                    bytesProcessed += currentMessageLength;
                 }
+                 
+                DateTime time = DateTime.Now;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.Write("\r" + time.Hour.ToString("00") + ":" + time.Minute.ToString("00") + ":" + time.Second.ToString("00") + ":" + time.Millisecond.ToString("000"));
 
-                if (updateConsole)
-                {
-                    DateTime time = DateTime.Now;
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.Write("\r" + time.Hour.ToString("00") + ":" + time.Minute.ToString("00") + ":" + time.Second.ToString("00") + ":" + time.Millisecond.ToString("000"));
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("   Incoming: ");
 
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write("   Incoming: ");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write(strBandwidthDown + " KB/s");
 
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Write(strBandwidthDown + " KB/s");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("    Outgoing: ");
 
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write("    Outgoing: ");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write(strBandwidthUp + " KB/s              ");
 
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write(strBandwidthUp + " KB/s              ");
-
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                }
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine();
             }
         }
 
-        private void AppendData(ref byte[] buffer, ref int bytesReceived)
+        private void ReadHispeedData(Socket socket, int readLength)
         {
-            byte[] newBuffer = new byte[Constants.BUF_SIZE];
-            Buffer.BlockCopy(appendArray, 0, newBuffer, 0, appendArray.Length);
-            Buffer.BlockCopy(buffer, 0, newBuffer, appendArray.Length, bytesReceived);
-
-#if DEBUGCONSOLE
-            Console.WriteLine("AppendArray detected -- copied " + appendArray.Length.ToString() + " elements from appendArray (first element " + appendArray[0].ToString() + ", last element " + appendArray[appendArray.Length - 1].ToString() + ") -- copied " + bytesReceived.ToString() + " elements from new buffer (" + buffer[0].ToString() + " to " + buffer[bytesReceived - 1].ToString() + ")");
-#endif
-#if DEBUGFILE
-            debugFile.WriteLine("AppendArray detected -- copied " + appendArray.Length.ToString() + " elements from appendArray (first element " + appendArray[0].ToString() + ", last element " + appendArray[appendArray.Length - 1].ToString() + ") -- copied " + bytesReceived.ToString() + " elements from new buffer (" + buffer[0].ToString() + " to " + buffer[bytesReceived - 1].ToString() + ")");
-            debugFile.Flush();
-            {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < appendArray.Length; i++)
-                    sb.Append(i.ToString() + ":" + appendArray[i].ToString("000") + " ");
-                debugFile.WriteLine("AppendArray:" + sb);
-                debugFile.Flush();
-
-                sb = new StringBuilder();
-                for (int i = 0; i < bytesReceived; i++)
-                    sb.Append(i.ToString() + ":" + buffer[i].ToString("000") + " ");
-                debugFile.WriteLine("Buffer     :" + sb);
-                debugFile.Flush();
-
-                sb = new StringBuilder();
-                for (int i = 0; i < appendArray.Length + bytesReceived; i++)
-                    sb.Append(i.ToString() + ":" + newBuffer[i].ToString("000") + " ");
-                debugFile.WriteLine("newBuffer  :" + sb);
-                debugFile.Flush();
-            }
-#endif
-            //swap buffer
-            buffer = newBuffer;
-
-            //update bytesReceived
-            bytesReceived += appendArray.Length;
-
-            //delete appendbuffer
-            appendArray = null;
-        }
-
-        private void StoreDataToAppend(byte[] buffer, int bytesProcessed, int bytesLeftForThisMessage)
-        {
-            appendArray = new byte[bytesLeftForThisMessage];
-            Buffer.BlockCopy(buffer, bytesProcessed, appendArray, 0, bytesLeftForThisMessage);
-#if DEBUGCONSOLE
-            Console.WriteLine("Not enough bytes for this message! Created appendArray of "+appendArray.Length.ToString()+" bytes, from "+appendArray[0].ToString()+" to "+appendArray[appendArray.Length-1].ToString());
-#endif
-#if DEBUGFILE
-            debugFile.WriteLine("Not enough bytes for this message! Created appendArray of " + appendArray.Length.ToString() + " bytes, from " + appendArray[0].ToString() + " to " + appendArray[appendArray.Length - 1].ToString());
-            debugFile.Flush();
-            {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < appendArray.Length; i++)
-                    sb.Append(i.ToString() + ":" + appendArray[i].ToString("000") + " ");
-                debugFile.WriteLine("AppendArray:" + sb);
-                debugFile.Flush();
-            }
-#endif
-        }
-
-        private bool ReadHispeedData(Socket socket, byte[] buffer, bool updateConsole, int offset)
-        {
-            int readLength = (int)(buffer[offset + 3] << 8) + (int)buffer[offset + 4];
-#if DEBUGFILE
-            DateTime now = DateTime.Now;
-            debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " Incoming data read request " + readLength.ToString());
-            debugFile.Flush();
-#endif
-
             byte[] answer = hwInterface.GetData(readLength);
 
-#if DEBUGFILE
-            now = DateTime.Now;
-            debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " Data received from smartscope " + answer.Length.ToString());
-            debugFile.Flush();
-#endif
-
             socket.Send(answer);
 
-            updateConsole |= bwUp.Update(answer.Length, out strBandwidthUp);
-
-#if DEBUGFILE
-            now = DateTime.Now;
-            debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " Data sent to TCP");
-            debugFile.Flush();
-#endif
-
-#if DEBUGCONSOLE
-            Console.Write("Answer received from SmartScope:");
-            foreach (byte b in answer)
-                Console.Write(b.ToString() + " ");
-            Console.WriteLine();
-#endif
-            return updateConsole;
+            bwUp.Update(answer.Length, out strBandwidthUp);
         }
 
-        private bool ReadControlBytes(Socket socket, byte[] buffer, bool updateConsole, int offset)
+        private void ReadControlBytes(Socket socket, byte readLength)
         {
-            byte readLength = buffer[offset + 3];
-
-#if DEBUGFILE
-            DateTime now = DateTime.Now;
-            debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " Incoming read request " + readLength.ToString());
-            debugFile.Flush();
-#endif
-
             byte[] answer = hwInterface.ReadControlBytes(readLength);
-#if DEBUGFILE
-            DateTime now5 = DateTime.Now;
-            debugFile.WriteLine(now5.Second.ToString("00") + "-" + now5.Millisecond.ToString("000") + " Received USB data");
-            debugFile.Flush();
-#endif
 
             socket.Send(answer);
 
-            updateConsole |= bwUp.Update(answer.Length, out strBandwidthUp);
-
-#if DEBUGFILE
-            now5 = DateTime.Now;
-            debugFile.WriteLine(now5.Second.ToString("00") + "-" + now5.Millisecond.ToString("000") + " Returned data over TCP: " + BitConverter.ToString(answer));
-            debugFile.Flush();
-            /*Console.Write("Answer received from SmartScope:");
-            foreach (byte b in answer)
-                Console.Write(b.ToString() + " ");
-            Console.WriteLine();*/
-#endif
-            return updateConsole;
+            bwUp.Update(answer.Length, out strBandwidthUp);
         }
 
-        private void SendControlMessage(byte[] buffer, int currentMessageLength, int offset)
+        private void SendControlMessage(byte[] buffer)
         {
-            int sendLength = currentMessageLength - 3;
-            byte[] message = new byte[sendLength];
-            for (int i = 0; i < sendLength; i++)
-                message[i] = buffer[offset + i + 3];
-
-#if DEBUGFILE
-            DateTime now = DateTime.Now;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < message.Length; i++)
-                sb.Append(i.ToString() + ":" + message[i].ToString("000") + " ");
-            debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " Incoming write:" + sb);
-            debugFile.Flush();
-#endif
-
-            hwInterface.WriteControlBytesBulk(message, false);
-
-#if DEBUGFILE
-            DateTime now = DateTime.Now;
-            debugFile.WriteLine(now.Second.ToString("00") + "-" + now.Millisecond.ToString("000") + " Finished writing");
-            debugFile.Flush();
-#endif
-
-#if DEBUGCONSOLE
-            Console.Write("Command sent to SmartScope:");
-            foreach (byte b in message)
-                Console.Write(b.ToString() + " ");
-            Console.WriteLine();
-#endif
+            hwInterface.WriteControlBytesBulk(buffer, false);
         }
     }
 }
