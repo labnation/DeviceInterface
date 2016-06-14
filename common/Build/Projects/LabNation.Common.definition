@@ -6,6 +6,7 @@
         <Version>v4.0.3</Version>
       </Platform>
     </FrameworkVersions>
+    <LangVersion>5</LangVersion>
     <RootNamespace>LabNation.Common</RootNamespace>
     <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
     <CustomDefinitions>
