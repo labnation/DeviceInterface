@@ -153,10 +153,10 @@ namespace LabNation.DeviceInterface.Hardware
             switch (e.EventType)
             {
                 case EventType.DeviceArrival:
-				C.Logger.Debug("LibUSB device arrival");
+					C.Logger.Debug("LibUSB device arrival");
                     if (e.Device == null || e.Device.IdVendor != VID || !PIDs.Contains(e.Device.IdProduct))
                     {
-					C.Logger.Info("Not taking this device, PID/VID not a smartscope");
+						C.Logger.Debug("Not taking this device, PID/VID not a smartscope");
                         return;
                     }
 
@@ -177,7 +177,7 @@ namespace LabNation.DeviceInterface.Hardware
                     }
                     break;
                 default:
-				C.Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
+					C.Logger.Debug("LibUSB unhandled device event [" + Enum.GetName(typeof(EventType), e.EventType) + "]"); 
                     break;
             }
         }
