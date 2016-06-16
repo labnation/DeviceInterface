@@ -57,7 +57,7 @@ namespace LabNation.DeviceInterface.Net
 			service.Name = Dns.GetHostName();
             service.RegType = Constants.SERVICE_TYPE;
             service.ReplyDomain = Constants.REPLY_DOMAIN;
-            service.Port = this.port;
+			service.Port = (short)(((IPEndPoint)tcpListener.LocalEndpoint).Port);
             service.Register();
 
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);

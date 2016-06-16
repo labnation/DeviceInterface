@@ -60,7 +60,7 @@ namespace LabNation.DeviceInterface.Net
             if (connected)
             {
                 Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Green);
-                servers.Add(new InterfaceServer(hardwareInterface, 23548));
+                servers.Add(new InterfaceServer(hardwareInterface, 0));
             }
             else //disconnect
             {
