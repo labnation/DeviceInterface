@@ -17,6 +17,19 @@ namespace LabNation.DeviceInterface.Devices
         public IDevice device { get; private set; }
         public IDevice fallbackDevice { get; private set; }
         Thread pollThread;
+
+        //FIXME: only purpose of following properties is to allow LabView/Matlab polling. Not yet integrating etherscope etc, as this is still under full construction
+        public bool SmartScopeConnected { get { return device is SmartScope; } }
+        public IScope MainDevice
+        {
+            get
+            {
+                if (device is IScope)
+                    return device as IScope;
+                else
+                    return null;
+            }
+        }
 #if WINDOWS
         Thread badDriverDetectionThread;
         bool running = true;
@@ -32,11 +45,18 @@ namespace LabNation.DeviceInterface.Devices
         Context context;
 #endif
 
+        //FIXME: empty constructor, only purpose is to allow LabView/Matlab polling. Not yet integrating etherscope etc, as this is still under full construction
+        public DeviceManager()
+        {
+            fallbackDevice = new DummyScope();
+            Start();
+        }
+
         public DeviceManager(
 #if ANDROID
             Context context,
 #endif
-            DeviceConnectHandler connectHandler
+DeviceConnectHandler connectHandler
             )
         {
 #if ANDROID
@@ -86,14 +106,14 @@ namespace LabNation.DeviceInterface.Devices
 
         public void Stop()
         {
-            if(pollThread != null)
+            if (pollThread != null)
                 pollThread.Join(100);
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
             BadDriver = false;
             running = false;
-            if(badDriverDetectionThread != null)
+            if (badDriverDetectionThread != null)
                 badDriverDetectionThread.Join(100);
 #elif IOS
 			//Nothing for the moment
@@ -105,36 +125,37 @@ namespace LabNation.DeviceInterface.Devices
 
         private void OnDeviceConnect(ISmartScopeUsbInterface hardwareInterface, bool connected)
         {
-            if(connected) {
-                if(device == null)
+            if (connected)
+            {
+                if (device == null)
                 {
                     device = new SmartScope(hardwareInterface);
                     if (connectHandler != null)
                         connectHandler(fallbackDevice, false);
 
-					#if WINDOWS
+#if WINDOWS
                     lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
                     Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
-					#endif
+#endif
 
                     if (connectHandler != null)
                         connectHandler(device, true);
                 }
             }
-            else 
+            else
             {
                 if (device is SmartScope)
                 {
-                	Logger.Debug("DeviceManager: Calling connect handler");
+                    Logger.Debug("DeviceManager: Calling connect handler");
                     if (connectHandler != null)
                         connectHandler(device, false);
-					Logger.Debug("DeviceManager: disposing device");
+                    Logger.Debug("DeviceManager: disposing device");
                     (device as SmartScope).Dispose();
                     device = null;
-					#if WINDOWS
+#if WINDOWS
                     lastSmartScopeDetectedThroughWinUsb = null;
-					#endif
-					Logger.Debug("DeviceManager: calling connect for fallback device");
+#endif
+                    Logger.Debug("DeviceManager: calling connect for fallback device");
                     if (connectHandler != null)
                         connectHandler(fallbackDevice, true);
                 }
