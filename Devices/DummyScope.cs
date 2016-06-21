@@ -470,7 +470,7 @@ namespace LabNation.DeviceInterface.Devices {
                     {
                         double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
 						if (log2OfRatio != (int)log2OfRatio && waveSource != WaveSource.AUDIO)
-                            throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N");
+                            throw new ValidationException("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N  ---  " + log2OfRatio.ToString() + " vs " + ((int)log2OfRatio).ToString());
                         if (value > ACQUISITION_DEPTH_MAX)
                             acquisitionDepth = ACQUISITION_DEPTH_MAX;
                         else
