@@ -18,10 +18,12 @@ namespace SmartScopeServer
         static void Main(string[] args)
         {
 			ConsoleLogger consoleLog = new ConsoleLogger(LogLevel.INFO);
+            Logger.LogC(LogLevel.INFO, "--- Press 'q' to stop server ---\n", ConsoleColor.Green);
+
 
             Monitor interfaceMonitor = new Monitor();
 
-            Logger.LogC(LogLevel.INFO, "--- Press 'q' to stop server ---\n", ConsoleColor.Green);
+            
             
 #if WINDOWS
             //Need the Application thread to enable winusb device detection
