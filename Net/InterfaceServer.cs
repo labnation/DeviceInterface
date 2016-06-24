@@ -24,6 +24,7 @@ namespace LabNation.DeviceInterface.Net
         private bool running = true;
         private short port;
         internal ISmartScopeInterfaceUsb hwInterface;
+        private const int RECEIVE_TIMEOUT = 10000; //10sec
 
         BandwidthMonitor bwDown = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         BandwidthMonitor bwUp = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
@@ -175,7 +176,7 @@ namespace LabNation.DeviceInterface.Net
             while (running)
             {
                 tcpListener.Start();
-                Logger.LogC(LogLevel.INFO, "====================================================================================================================\n", ConsoleColor.Gray);
+                Logger.LogC(LogLevel.INFO, "=================================================================\n", ConsoleColor.Gray);
                 Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
                 Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + this.port.ToString() + "\n", ConsoleColor.Gray);
 
@@ -185,6 +186,7 @@ namespace LabNation.DeviceInterface.Net
                 try
                 {
                     socket = tcpListener.Server.Accept();
+                    socket.ReceiveTimeout = RECEIVE_TIMEOUT;
                 }
                 catch (Exception e)
                 {
