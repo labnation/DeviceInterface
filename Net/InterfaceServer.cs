@@ -76,7 +76,7 @@ namespace LabNation.DeviceInterface.Net
                 service.Dispose();
 
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-            Logger.LogC(LogLevel.INFO, "ZeroConf service retraced\n", ConsoleColor.Gray);
+            Logger.LogC(LogLevel.INFO, "ZeroConf service retracted\n", ConsoleColor.Gray);
         }
 
         class Message
@@ -171,7 +171,7 @@ namespace LabNation.DeviceInterface.Net
         TcpListener tcpListener;
         private void TcpIpController()
         {
-            bool networkError;
+            bool disconnect;
 
 
 #if DEBUGFILE
@@ -206,8 +206,8 @@ namespace LabNation.DeviceInterface.Net
                 Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n", ConsoleColor.Gray);
                 UnregisterZeroConf();
 
-                networkError = false;
-                while (running && !networkError)
+                disconnect = false;
+                while (running && !disconnect)
                 {
                     List<Message> msgList = ReceiveMessage(socket);
 
@@ -275,6 +275,14 @@ namespace LabNation.DeviceInterface.Net
                             {
                                 hwInterface.FlushDataPipe();
                             }
+                            else if (command == Constants.Commands.DISCONNECT)
+                            {
+                                hwInterface.FlushDataPipe();
+                                disconnect = true;
+
+                                Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
+                                Logger.LogC(LogLevel.INFO, "Request to disconnect from " + socket.RemoteEndPoint + this.port.ToString() + "\n", ConsoleColor.Gray);
+                            }
                             else
                             {
                                 throw new Exception(String.Format("Unsupported command {0:G}", command));
@@ -301,7 +309,7 @@ namespace LabNation.DeviceInterface.Net
                     }
                     else
                     {
-                        networkError = true;
+                        disconnect = true;
                         Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
                         Logger.LogC(LogLevel.INFO, "Connection closed\n\n", ConsoleColor.Gray);
                         socket.Close();

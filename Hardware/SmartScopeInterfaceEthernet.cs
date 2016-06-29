@@ -148,13 +148,24 @@ namespace LabNation.DeviceInterface.Hardware
         }
 
         public bool Destroyed { get { return false; } }
-        public void Destroy() { }
+        
+        public void Destroy() 
+        {
+            byte[] message = Constants.Commands.DISCONNECT.msg();
+            lock (this)
+            {
+                stream.Write(message, 0, message.Length);
+                stream.Flush();
+            }
+        }
+
         public void FlushDataPipe()
         {
             byte[] message = Constants.Commands.FLUSH.msg();
             lock (this)
             {
                 stream.Write(message, 0, message.Length);
+                stream.Flush();
             }
         }
     }

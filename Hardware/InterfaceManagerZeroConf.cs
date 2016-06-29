@@ -111,6 +111,9 @@ namespace LabNation.DeviceInterface.Hardware
 
             //propage upwards (to DeviceManager)
             onConnect(hardwareInterface, false);
+
+            //send DISCONNECT command to server
+            hardwareInterface.Destroy();
         }
     }
 }
