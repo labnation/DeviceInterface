@@ -110,6 +110,9 @@ namespace LabNation.DeviceInterface.Devices
 
         public void Stop()
         {
+            //need to stop the ZeroConf polling thread
+            InterfaceManagerZeroConf.Instance.Destroy();
+
             if(pollThread != null)
                 pollThread.Join(100);
 #if ANDROID

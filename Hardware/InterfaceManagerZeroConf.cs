@@ -96,6 +96,9 @@ namespace LabNation.DeviceInterface.Hardware
 
         public void Destroy()
         {
+            foreach (var hw in createdInterfaces)
+                hw.Value.Destroy();
+
             pollThreadRunning = false;
             pollThread.Join(POLL_INTERVAL);
         }
