@@ -22,7 +22,6 @@ namespace LabNation.DeviceInterface.Net
         StreamWriter debugFile;
 #endif
         private bool running = true;
-        private short port;
         internal ISmartScopeInterfaceUsb hwInterface;
         private const int RECEIVE_TIMEOUT = 10000; //10sec
 
@@ -32,13 +31,12 @@ namespace LabNation.DeviceInterface.Net
         string strBandwidthUp = "";
         Thread tcpListenerThread;
         
-        public InterfaceServer(ISmartScopeInterfaceUsb hwInterface, short port)
+        public InterfaceServer(ISmartScopeInterfaceUsb hwInterface)
         {
 #if DEBUGFILE
             debugFile = new StreamWriter("debug.txt");
 #endif
             this.hwInterface = hwInterface;
-            this.port = port;
             //start TCP/IP thread
             tcpListenerThread = new Thread(TcpIpController)
             {
@@ -67,16 +65,14 @@ namespace LabNation.DeviceInterface.Net
 			service.Port = (short)(((IPEndPoint)tcpListener.LocalEndpoint).Port);
             service.Register();
 
-            Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-            Logger.LogC(LogLevel.INFO, "ZeroConf service posted\n", ConsoleColor.Gray);
+            LogMessage(LogTypes.ZEROCONF, "ZeroConf service posted");
         }
         private void UnregisterZeroConf()
         {
             if (service != null)
                 service.Dispose();
 
-            Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-            Logger.LogC(LogLevel.INFO, "ZeroConf service retracted\n", ConsoleColor.Gray);
+            LogMessage(LogTypes.ZEROCONF, "ZeroConf service retracted");
         }
 
         class Message
@@ -126,8 +122,7 @@ namespace LabNation.DeviceInterface.Net
             }
             catch
             {
-                Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                Logger.LogC(LogLevel.ERROR, "Network connection closed unexpectedly => resetting\n", ConsoleColor.Gray);
+                LogMessage(LogTypes.NETWORK, "Network connection closed unexpectedly => resetting");
                 return null; //in case of non-graceful disconnects (crash, network failure)
             }
             
@@ -144,8 +139,7 @@ namespace LabNation.DeviceInterface.Net
 
             if (bytesReceived == 0) //this would indicate a network error
             {
-                Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                Logger.LogC(LogLevel.ERROR, "Nothing received from network socket => resetting\n", ConsoleColor.Gray);
+                LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
                 return null;
             }
 
@@ -184,9 +178,8 @@ namespace LabNation.DeviceInterface.Net
             while (running)
             {
                 tcpListener.Start();
-                Logger.LogC(LogLevel.INFO, "=================================================================\n", ConsoleColor.Gray);
-                Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + this.port.ToString() + "\n", ConsoleColor.Gray);
+                LogMessage(LogTypes.DECORATION, "==================== New session started =======================");
+                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)tcpListener.LocalEndpoint).Port.ToString());                
 
                 RegisterZeroConf();
 
@@ -202,8 +195,7 @@ namespace LabNation.DeviceInterface.Net
                     return;
                 }
 
-                Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n", ConsoleColor.Gray);
+                LogMessage(LogTypes.NETWORK, "Connection accepted from " + socket.RemoteEndPoint);
                 UnregisterZeroConf();
 
                 disconnect = false;
@@ -280,8 +272,7 @@ namespace LabNation.DeviceInterface.Net
                                 hwInterface.FlushDataPipe();
                                 disconnect = true;
 
-                                Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                                Logger.LogC(LogLevel.INFO, "Request to disconnect from " + socket.RemoteEndPoint + this.port.ToString() + "\n", ConsoleColor.Gray);
+                                LogMessage(LogTypes.NETWORK, "Request to disconnect from " + socket.RemoteEndPoint);
                             }
                             else
                             {
@@ -289,6 +280,7 @@ namespace LabNation.DeviceInterface.Net
                             }
                         }
 
+                        bandwidthPrintedLast = true;
                         DateTime time = DateTime.Now;
                         Console.ForegroundColor = ConsoleColor.DarkGray;
                         Console.Write("\r" + time.Hour.ToString("00") + ":" + time.Minute.ToString("00") + ":" + time.Second.ToString("00") + ":" + time.Millisecond.ToString("000"));
@@ -310,14 +302,42 @@ namespace LabNation.DeviceInterface.Net
                     else
                     {
                         disconnect = true;
-                        Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                        Logger.LogC(LogLevel.INFO, "Connection closed\n\n", ConsoleColor.Gray);
+                        LogMessage(LogTypes.NETWORK, "Connection closed");
                         socket.Close();
                         tcpListener.Stop();
                         System.Threading.Thread.Sleep(500);
                     }
                 }
             }
+        }
+
+        enum LogTypes
+        {
+            NETWORK,
+            ZEROCONF,
+            DECORATION,
+        }
+        bool bandwidthPrintedLast = false;        
+        private void LogMessage(LogTypes logType, string message)
+        {
+            if (bandwidthPrintedLast)
+                Logger.LogC(LogLevel.INFO, "\n", ConsoleColor.Yellow);
+
+            switch (logType)
+            {
+                case LogTypes.NETWORK:
+                    Logger.LogC(LogLevel.INFO, "[Network ] ", ConsoleColor.Yellow);
+                    break;
+                case LogTypes.ZEROCONF:
+                    Logger.LogC(LogLevel.INFO, "[ZeroConf] ", ConsoleColor.Cyan);
+                    break;
+                default:
+                    break;
+            }
+
+            Logger.LogC(LogLevel.INFO, message + "\n", ConsoleColor.Gray);
+
+            bandwidthPrintedLast = false;
         }
 
         private void ReadHispeedData(Socket socket, int readLength)

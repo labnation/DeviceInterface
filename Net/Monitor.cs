@@ -56,11 +56,11 @@ namespace LabNation.DeviceInterface.Net
 
         private void OnInterfaceConnect(ISmartScopeInterfaceUsb hardwareInterface, bool connected)
         {
-            Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Gray);
+            Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Green);
             if (connected)
             {
-                Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Green);
-                servers.Add(new InterfaceServer(hardwareInterface, 0));
+                Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Gray);
+                servers.Add(new InterfaceServer(hardwareInterface));
             }
             else //disconnect
             {
@@ -70,12 +70,12 @@ namespace LabNation.DeviceInterface.Net
                     InterfaceServer s = servers.First(x => x.hwInterface == hardwareInterface);
                     servers.Remove(s);
                     s.Stop();
-                    Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Red);
+                    Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Gray);
 
                 }
                 else
                 {
-                    Logger.LogC(LogLevel.INFO, "ignored\n", ConsoleColor.Yellow);
+                    Logger.LogC(LogLevel.INFO, "ignored\n", ConsoleColor.Gray);
                 }
             }
         }
