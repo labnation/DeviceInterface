@@ -17,10 +17,11 @@ namespace LabNation.DeviceInterface.Hardware
         object pollLock = new object();
         bool pollThreadRunning;
         Thread pollThread;
-        const int POLL_INTERVAL=1000;
+        const int POLL_INTERVAL = 1000;
         List<ServiceLocation> detectedServices = new List<ServiceLocation>();
 
-        class ServiceLocation {
+        class ServiceLocation
+        {
             public IPAddress ip;
             public int port;
             public string name;
@@ -35,7 +36,7 @@ namespace LabNation.DeviceInterface.Hardware
                 if (!(s is ServiceLocation))
                     return false;
                 ServiceLocation sl = (ServiceLocation)s;
-                return 
+                return
                     this.ip.Equals(sl.ip) &&
                     this.port == sl.port &&
                     this.name == sl.name;
@@ -58,9 +59,10 @@ namespace LabNation.DeviceInterface.Hardware
             pollThread.Start();
         }
 
-        private void pollThreadStart ()
-		{
-			while (pollThreadRunning) {
+        private void pollThreadStart()
+        {
+            while (pollThreadRunning)
+            {
                 System.Threading.Thread.Sleep(POLL_INTERVAL);
                 PollDevice();
             }
@@ -79,7 +81,7 @@ namespace LabNation.DeviceInterface.Hardware
 
                     ServiceLocation loc = new ServiceLocation(s.HostEntry.AddressList[0], s.Port, s.FullName);
                     LabNation.Common.Logger.Info("A new ethernet interface was found");
-                    SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port);
+                    SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port, OnInterfaceDisconnect);
                     createdInterfaces.Add(loc, ethif);
                     if (onConnect != null)
                         onConnect(ethif, true);
@@ -88,7 +90,7 @@ namespace LabNation.DeviceInterface.Hardware
             };
 
             //go for it!
-            Common.Logger.Info("Polling ZeroConf");   
+            Common.Logger.Info("Polling ZeroConf");
             browser.Browse("_sss._tcp", "local");
         }
 
@@ -96,6 +98,16 @@ namespace LabNation.DeviceInterface.Hardware
         {
             pollThreadRunning = false;
             pollThread.Join(POLL_INTERVAL);
+        }
+
+        private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
+        {
+            //remove from list
+            if (createdInterfaces.ContainsValue(hardwareInterface))
+                createdInterfaces.Remove(createdInterfaces.Single(x => x.Value == hardwareInterface).Key);
+
+            //propage upwards (to DeviceManager)
+            onConnect(hardwareInterface, false);
         }
     }
 }

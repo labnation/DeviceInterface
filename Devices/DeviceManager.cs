@@ -129,7 +129,6 @@ namespace LabNation.DeviceInterface.Devices
 
         private void OnHardwareConnect(IHardwareInterface hardwareInterface, bool connected)
         {
-            string serial = hardwareInterface.Serial;
             if(connected) {
                 connectedList.Add(hardwareInterface);
 

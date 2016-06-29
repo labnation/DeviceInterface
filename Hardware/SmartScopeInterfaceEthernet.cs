@@ -6,20 +6,28 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using LabNation.DeviceInterface.Net;
+using LabNation.DeviceInterface.Hardware;
 
 namespace LabNation.DeviceInterface.Hardware
 {
+    public delegate void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface);
+
     public class SmartScopeInterfaceEthernet:ISmartScopeInterface
     {
+        
 		public bool connected { get { return this.tcpclnt.Connected; } }
         private IPAddress serverIp;
         private int serverPort;
+        private OnInterfaceDisconnect onDisconnect;
         BufferedStream stream;
 		TcpClient tcpclnt = new TcpClient();
-        public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort)
+        public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort, OnInterfaceDisconnect onDisconnect)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;
+            this.onDisconnect = onDisconnect;
+
+            this.Connect();
         }
 			
         private void Connect()
@@ -29,12 +37,26 @@ namespace LabNation.DeviceInterface.Hardware
             this.stream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);
         }
 
+        //method encapsulating stream.Read, as this will throw an error upon ungraceful disconnect
+        private int ProtectedRead(byte[] array, int offset, int count)
+        {
+            try
+            {
+                return stream.Read(array, offset, count);
+            }
+            catch
+            {
+                if (onDisconnect != null)
+                    onDisconnect(this);
+
+                LabNation.Common.Logger.Warn("EthernetInterface Read error -- probably disconnection");
+                return 0;
+            }
+        }
+
         public string Serial { 
             get 
             {
-                if (!connected)
-                    Connect();
-
                 if (!BitConverter.IsLittleEndian)
                     throw new Exception("This system is bigEndian -- not supported!");
 
@@ -44,7 +66,7 @@ namespace LabNation.DeviceInterface.Hardware
                 {
                     stream.Write(message, 0, message.Length);
 					answer = new byte[11];
-                    stream.Read(answer, 0, answer.Length);
+                    ProtectedRead(answer, 0, answer.Length);
                 }
 
                 return System.Text.Encoding.UTF8.GetString(answer, 0, answer.Length);
@@ -53,10 +75,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         public void WriteControlBytes(byte[] message, bool async)
         {
-            if (!connected)
-                Connect();
-
-			byte[] wrapper = Constants.Commands.SEND.msg(message);
+            byte[] wrapper = Constants.Commands.SEND.msg(message);
 
             lock (this)
             {
@@ -85,10 +104,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         public byte[] ReadControlBytes(int length)
         {
-            if (!connected)
-                Connect();
-			
-			byte[] message = Constants.Commands.READ.msg( new byte[] {(byte)length });
+            byte[] message = Constants.Commands.READ.msg( new byte[] {(byte)length });
             byte[] answer;
             lock (this)
             {
@@ -99,7 +115,7 @@ namespace LabNation.DeviceInterface.Hardware
 
                 int offset = 0;
 				while(offset < length)
-					offset += stream.Read(answer, offset, length - offset);
+                    offset += ProtectedRead(answer, offset, length - offset);
             }
 
             return answer;
@@ -107,10 +123,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         public byte[] GetData(int numberOfBytes)
         {
-            if (!connected)
-                Connect();
-			
-			byte[] message = Constants.Commands.READ_HBW.msg( new byte[] { (byte)(numberOfBytes >> 8), (byte)numberOfBytes });
+            byte[] message = Constants.Commands.READ_HBW.msg( new byte[] { (byte)(numberOfBytes >> 8), (byte)numberOfBytes });
 
             byte[] answer;
             lock (this)
@@ -121,8 +134,14 @@ namespace LabNation.DeviceInterface.Hardware
                 answer = new byte[numberOfBytes];
 
 				int offset = 0;
-				while(offset < numberOfBytes)
-					offset += stream.Read(answer, offset, numberOfBytes - offset);
+                while (offset < numberOfBytes)
+                {
+                    int bytesReceived = ProtectedRead(answer, offset, numberOfBytes - offset);
+                    offset += bytesReceived;
+
+                    if (bytesReceived == 0)
+                        return null;
+                }
             }
 
             return answer;
@@ -132,10 +151,7 @@ namespace LabNation.DeviceInterface.Hardware
         public void Destroy() { }
         public void FlushDataPipe()
         {
-            if (!connected)
-                Connect();
-
-			byte[] message = Constants.Commands.FLUSH.msg();
+            byte[] message = Constants.Commands.FLUSH.msg();
             lock (this)
             {
                 stream.Write(message, 0, message.Length);
