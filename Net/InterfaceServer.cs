@@ -57,7 +57,7 @@ namespace LabNation.DeviceInterface.Net
         }
 
         RegisterService service;
-        private void PostZeroConf()
+        private void RegisterZeroConf()
         {
             service = new RegisterService();
 
@@ -69,6 +69,14 @@ namespace LabNation.DeviceInterface.Net
 
             Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
             Logger.LogC(LogLevel.INFO, "ZeroConf service posted\n", ConsoleColor.Gray);
+        }
+        private void UnregisterZeroConf()
+        {
+            if (service != null)
+                service.Dispose();
+
+            Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
+            Logger.LogC(LogLevel.INFO, "ZeroConf service retraced\n", ConsoleColor.Gray);
         }
 
         class Message
@@ -180,7 +188,7 @@ namespace LabNation.DeviceInterface.Net
                 Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
                 Logger.LogC(LogLevel.INFO, "SmartScope Server listening for incoming connections on port " + this.port.ToString() + "\n", ConsoleColor.Gray);
 
-                PostZeroConf();
+                RegisterZeroConf();
 
                 Socket socket;
                 try
@@ -195,7 +203,8 @@ namespace LabNation.DeviceInterface.Net
                 }
 
                 Logger.LogC(LogLevel.INFO, "[Network] ", ConsoleColor.Yellow);
-                Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n\n", ConsoleColor.Gray);
+                Logger.LogC(LogLevel.INFO, "Connection accepted from " + socket.RemoteEndPoint + this.port.ToString() + "\n", ConsoleColor.Gray);
+                UnregisterZeroConf();
 
                 networkError = false;
                 while (running && !networkError)
