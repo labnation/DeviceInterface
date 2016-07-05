@@ -82,9 +82,16 @@ namespace LabNation.DeviceInterface.Hardware
                     ServiceLocation loc = new ServiceLocation(s.HostEntry.AddressList[0], s.Port, s.FullName);
                     LabNation.Common.Logger.Info("A new ethernet interface was found");
                     SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port, OnInterfaceDisconnect);
-                    createdInterfaces.Add(loc, ethif);
-                    if (onConnect != null)
-                        onConnect(ethif, true);
+                    if (ethif.Connected)
+                    {
+                        createdInterfaces.Add(loc, ethif);
+                        if (onConnect != null)
+                            onConnect(ethif, true);
+                    }
+                    else
+                    {
+                        LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
+                    }
                 };
                 args.Service.Resolve();
             };
