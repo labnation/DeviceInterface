@@ -112,7 +112,7 @@ namespace LabNation.DeviceInterface.Hardware
                 if (createdInterfaces.Where(x => x.Key.ip.Equals(loc.ip) && x.Key.port == loc.port).Count() == 0)
                 {
                     // A new interface
-                    LabNation.Common.Logger.Info("A new ethernet interface was found");
+                    LabNation.Common.Logger.Info("A new SmartScopeServer was detected at "+loc.ip.ToString()+":"+loc.port.ToString());
                     SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port, OnInterfaceDisconnect);
                     if (ethif.Connected)
                     {
@@ -122,7 +122,7 @@ namespace LabNation.DeviceInterface.Hardware
                     }
                     else
                     {
-                        LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
+                        LabNation.Common.Logger.Info("... failed connecting to SmartScopeServer at " + loc.ip.ToString() + ":" + loc.port.ToString());
                     }
                 }
             }
