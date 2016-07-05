@@ -16,8 +16,9 @@ namespace LabNation.DeviceInterface.Hardware
     {
         object pollLock = new object();
         bool pollThreadRunning;
+        int polling = 0;
         Thread pollThread;
-        const int POLL_INTERVAL = 1000;
+        const int POLL_INTERVAL = 5000;
         List<ServiceLocation> detectedServices = new List<ServiceLocation>();
 
         class ServiceLocation
@@ -64,7 +65,8 @@ namespace LabNation.DeviceInterface.Hardware
             while (pollThreadRunning)
             {
                 System.Threading.Thread.Sleep(POLL_INTERVAL);
-                PollDevice();
+                if (polling == 0 && createdInterfaces.Count == 0)
+                    PollDevice();
             }
         }
 
@@ -77,6 +79,7 @@ namespace LabNation.DeviceInterface.Hardware
                 Console.WriteLine("Found Service: {0}", args.Service.Name);
                 args.Service.Resolved += delegate(object o2, ServiceResolvedEventArgs args2)
                 {
+                    polling++;
                     IResolvableService s = (IResolvableService)args2.Service;
 
                     ServiceLocation loc = new ServiceLocation(s.HostEntry.AddressList[0], s.Port, s.FullName);
@@ -92,6 +95,7 @@ namespace LabNation.DeviceInterface.Hardware
                     {
                         LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
                     }
+                    polling--;
                 };
                 args.Service.Resolve();
             };
