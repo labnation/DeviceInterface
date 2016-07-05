@@ -97,7 +97,7 @@ namespace LabNation.DeviceInterface.Hardware
 
             foreach (var kvp in createdInterfaces)
             {
-                if (!kvp.Value.connected)
+                if (!kvp.Value.Connected)
                 {
                     LabNation.Common.Logger.Info("An ethernet interface was removed");
                     onConnect(kvp.Value, false);
@@ -114,9 +114,16 @@ namespace LabNation.DeviceInterface.Hardware
                     // A new interface
                     LabNation.Common.Logger.Info("A new ethernet interface was found");
                     SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port, OnInterfaceDisconnect);
-                    createdInterfaces.Add(loc, ethif);
-                    if (onConnect != null)
-                        onConnect(ethif, true);
+                    if (ethif.Connected)
+                    {
+                        createdInterfaces.Add(loc, ethif);
+                        if (onConnect != null)
+                            onConnect(ethif, true);
+                    }
+                    else
+                    {
+                        LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
+                    }
                 }
             }
         }

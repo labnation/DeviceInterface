@@ -15,7 +15,7 @@ namespace LabNation.DeviceInterface.Hardware
     public class SmartScopeInterfaceEthernet:ISmartScopeInterface
     {
         
-		public bool connected { get { return this.tcpclnt.Connected; } }
+		public bool Connected { get { return this.tcpclnt.Connected; } }
         private IPAddress serverIp;
         private int serverPort;
         private OnInterfaceDisconnect onDisconnect;
@@ -32,9 +32,16 @@ namespace LabNation.DeviceInterface.Hardware
 			
         private void Connect()
         {
-            tcpclnt.Connect(this.serverIp, this.serverPort);
-            NetworkStream unbufferedStream = tcpclnt.GetStream();
-            this.stream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);
+            try
+            {
+                tcpclnt.Connect(this.serverIp, this.serverPort);
+                NetworkStream unbufferedStream = tcpclnt.GetStream();
+                this.stream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);
+            }
+            catch
+            {
+                //do nothing; up to calling code to check Connected property of this instance
+            }
         }
 
         //method encapsulating stream.Read, as this will throw an error upon ungraceful disconnect
