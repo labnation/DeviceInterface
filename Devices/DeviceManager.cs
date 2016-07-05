@@ -51,7 +51,7 @@ namespace LabNation.DeviceInterface.Devices
 #if ANDROID
             context,
 #endif
-            null, null) { }
+null, null) { Start();  }
 
         public DeviceManager(
 #if ANDROID
