@@ -1,6 +1,4 @@
-﻿#define DEBUGCONSOLE
-
-using LabNation.DeviceInterface.Devices;
+﻿using LabNation.DeviceInterface.Devices;
 using LabNation.DeviceInterface.Hardware;
 using System;
 using System.Collections.Generic;

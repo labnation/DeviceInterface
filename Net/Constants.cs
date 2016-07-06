@@ -12,6 +12,7 @@ namespace LabNation.DeviceInterface.Net
         public const string REPLY_DOMAIN = "local.";
         public const string VERSION = "0.0.0.1";
         public const int BUF_SIZE = 1024 * 1024;
+        public const int ZEROCONF_INTERVAL = 5000;
 
         //COMMANDS
         public enum Commands

@@ -1,4 +1,4 @@
-﻿#define DEBUGFILE
+﻿//#define DEBUGFILE
 
 using LabNation.DeviceInterface.Devices;
 using LabNation.DeviceInterface.Hardware;
@@ -22,8 +22,10 @@ namespace LabNation.DeviceInterface.Net
         StreamWriter debugFile;
 #endif
         private bool running = true;
+        private Socket socket;
         internal ISmartScopeInterfaceUsb hwInterface;
         private const int RECEIVE_TIMEOUT = 10000; //10sec
+        private string lastZeroConfPrintChar = "|";
 
         BandwidthMonitor bwDown = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
         BandwidthMonitor bwUp = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
@@ -50,29 +52,59 @@ namespace LabNation.DeviceInterface.Net
         {
             running = false;
             tcpListener.Stop();
-            service.Dispose();
+            zeroconfService.Dispose();
             tcpListenerThread.Join(1000);
         }
 
-        RegisterService service;
-        private void RegisterZeroConf()
+        RegisterService zeroconfService;
+        //will post and renew ZeroConf every interval
+        private void ZeroConfThreadStart()
         {
-            service = new RegisterService();
-
-			service.Name = Dns.GetHostName();
-            service.RegType = Constants.SERVICE_TYPE;
-            service.ReplyDomain = Constants.REPLY_DOMAIN;
-			service.Port = (short)(((IPEndPoint)tcpListener.LocalEndpoint).Port);
-            service.Register();
-
-            LogMessage(LogTypes.ZEROCONF, "ZeroConf service posted");
+            while (running && (socket == null || !socket.Connected))
+            {
+                zeroconfService = new RegisterService();
+                lock (zeroconfService)
+                {
+                    UnregisterZeroConf(true);
+                    RegisterZeroConf(true);
+                }
+                Thread.Sleep(Constants.ZEROCONF_INTERVAL);
+            }
         }
-        private void UnregisterZeroConf()
+        private void RegisterZeroConf(bool update = false)
         {
-            if (service != null)
-                service.Dispose();
+            zeroconfService = new RegisterService();
 
-            LogMessage(LogTypes.ZEROCONF, "ZeroConf service retracted");
+			zeroconfService.Name = Dns.GetHostName();
+            zeroconfService.RegType = Constants.SERVICE_TYPE;
+            zeroconfService.ReplyDomain = Constants.REPLY_DOMAIN;
+			zeroconfService.Port = (short)(((IPEndPoint)tcpListener.LocalEndpoint).Port);
+            zeroconfService.Register();
+
+            switch (lastZeroConfPrintChar)
+            {
+                case "|":
+                    lastZeroConfPrintChar = "-";
+                    break;
+                case "-":
+                    lastZeroConfPrintChar = "|";
+                    break;
+                default:
+                    break;
+            }
+
+            if (update)
+                LogMessage(LogTypes.ZEROCONF, "ZeroConf service updated " + lastZeroConfPrintChar, true);
+            else
+                LogMessage(LogTypes.ZEROCONF, "ZeroConf service posted");
+        }
+        private void UnregisterZeroConf(bool update = false)
+        {
+            if (zeroconfService != null)
+                zeroconfService.Dispose();
+
+            if (!update)
+                LogMessage(LogTypes.ZEROCONF, "ZeroConf service retracted");
         }
 
         class Message
@@ -171,7 +203,7 @@ namespace LabNation.DeviceInterface.Net
 #if DEBUGFILE
             tcpListener = new TcpListener(IPAddress.Any, 25482);
 #else
-        tcpListener = new TcpListener(IPAddress.Any, this.port);
+        tcpListener = new TcpListener(IPAddress.Any, 0);
 #endif
 
 
@@ -179,11 +211,12 @@ namespace LabNation.DeviceInterface.Net
             {
                 tcpListener.Start();
                 LogMessage(LogTypes.DECORATION, "==================== New session started =======================");
-                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)tcpListener.LocalEndpoint).Port.ToString());                
+                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)tcpListener.LocalEndpoint).Port.ToString());
 
-                RegisterZeroConf();
-
-                Socket socket;
+                //start zeroconf thread which will post and renew every interval
+                Thread zeroconfThread = new Thread(ZeroConfThreadStart);
+                zeroconfThread.Start();
+                
                 try
                 {
                     socket = tcpListener.Server.Accept();
@@ -195,7 +228,8 @@ namespace LabNation.DeviceInterface.Net
                     return;
                 }
 
-                LogMessage(LogTypes.NETWORK, "Connection accepted from " + socket.RemoteEndPoint);
+                LogMessage(LogTypes.DECORATION, "\n"); //newline required to terminate ZeroConf update line
+                LogMessage(LogTypes.NETWORK, "Connection accepted from " + socket.RemoteEndPoint);                
                 UnregisterZeroConf();
 
                 disconnect = false;
@@ -280,6 +314,7 @@ namespace LabNation.DeviceInterface.Net
                             }
                         }
 
+                        /*
                         bandwidthPrintedLast = true;
                         DateTime time = DateTime.Now;
                         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -298,6 +333,7 @@ namespace LabNation.DeviceInterface.Net
                         Console.Write(strBandwidthUp + " KB/s              ");
 
                         Console.ForegroundColor = ConsoleColor.Gray;
+                         * */
                     }
                     else
                     {
@@ -318,24 +354,29 @@ namespace LabNation.DeviceInterface.Net
             DECORATION,
         }
         bool bandwidthPrintedLast = false;        
-        private void LogMessage(LogTypes logType, string message)
+        private void LogMessage(LogTypes logType, string message, bool update = false)
         {
+            string updateString = "\r";
+            if (!update) updateString = "";
+
             if (bandwidthPrintedLast)
                 Logger.LogC(LogLevel.INFO, "\n", ConsoleColor.Yellow);
 
             switch (logType)
             {
                 case LogTypes.NETWORK:
-                    Logger.LogC(LogLevel.INFO, "[Network ] ", ConsoleColor.Yellow);
+                    Logger.LogC(LogLevel.INFO, updateString + "[Network ] ", ConsoleColor.Yellow);
                     break;
                 case LogTypes.ZEROCONF:
-                    Logger.LogC(LogLevel.INFO, "[ZeroConf] ", ConsoleColor.Cyan);
+                    Logger.LogC(LogLevel.INFO, updateString + "[ZeroConf] ", ConsoleColor.Cyan);
                     break;
                 default:
                     break;
             }
 
-            Logger.LogC(LogLevel.INFO, message + "\n", ConsoleColor.Gray);
+            Logger.LogC(LogLevel.INFO, message, ConsoleColor.Gray);
+            if (!update)
+                Logger.LogC(LogLevel.INFO, "\n", ConsoleColor.Gray);
 
             bandwidthPrintedLast = false;
         }
