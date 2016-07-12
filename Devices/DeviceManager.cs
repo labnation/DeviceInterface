@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define TESTING_LOCALLY
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -76,15 +77,18 @@ null, null) { Start();  }
             pollThread.Name = "Devicemanager Startup poll";
 
             InterfaceManagerZeroConf.Instance.onConnect += OnHardwareConnect;
-#if ANDROID
+#if TESTING_LOCALLY
+#else
+    #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnHardwareConnect;
-#elif WINUSB
+    #elif WINUSB
             InterfaceManagerWinUsb.Instance.onConnect += OnHardwareConnect;
-#elif IOS
+    #elif IOS
 			//Nothing for the moment
-#else
+    #else
             InterfaceManagerLibUsb.Instance.onConnect += OnHardwareConnect;
+#endif
 #endif
 
             pollThread.Start();
@@ -95,16 +99,19 @@ null, null) { Start();  }
 
         private void PollUponStart()
         {
-#if ANDROID
+#if TESTING_LOCALLY
+#else
+    #if ANDROID
             InterfaceManagerXamarin.Instance.PollDevice();
-#elif WINUSB
+    #elif WINUSB
             InterfaceManagerWinUsb.Instance.PollDevice();
             badDriverDetectionThread = new Thread(SearchDeviceFromVidPidThread);
             badDriverDetectionThread.Name = "Bad WINUSB driver detection";
             BadDriver = false;
             badDriverDetectionThread.Start();
-#elif !IOS
+    #elif !IOS
             InterfaceManagerLibUsb.Instance.PollDevice();
+    #endif
 #endif
         }
 
@@ -212,7 +219,10 @@ null, null) { Start();  }
 #if WINDOWS
         public void WinUsbPoll()
         {
+#if TESTING_LOCALLY
+#else
             InterfaceManagerWinUsb.Instance.PollDevice();
+#endif
         }
 
         private void SearchDeviceFromVidPidThread()
