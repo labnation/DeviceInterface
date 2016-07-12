@@ -23,6 +23,7 @@ namespace LabNation.DeviceInterface.Net
             SERIAL = 13,
             FLUSH = 14,
             DISCONNECT = 15,
+            STARTDATALINK = 16,
         }
 
         internal static byte[] msg(this Constants.Commands command, byte[] data = null)

@@ -21,6 +21,13 @@ namespace LabNation.DeviceInterface.Hardware
         private OnInterfaceDisconnect onDisconnect;
         BufferedStream stream;
 		TcpClient tcpclnt = new TcpClient();
+        TcpListener dataListener;
+        Socket dataSocket;
+        private bool dataGatherThreadRunning = true;
+        byte[] latestData = null;
+        byte[] rxBuffer;
+        bool serverDataThreadRunning = false;
+
         public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort, OnInterfaceDisconnect onDisconnect)
         {
             this.serverIp = serverIp;
@@ -28,6 +35,36 @@ namespace LabNation.DeviceInterface.Hardware
             this.onDisconnect = onDisconnect;
 
             this.Connect();
+        }
+
+        private void DataGatherThreadStart()
+        {
+            dataListener = new TcpListener(IPAddress.Any, 0);
+            dataListener.Start();
+
+            //send port number to server
+            int port = ((IPEndPoint)dataListener.LocalEndpoint).Port;
+            byte[] message = Constants.Commands.STARTDATALINK.msg(new byte[] {((byte)(port>>8)), (byte)port});
+            lock (this)
+            {
+                stream.Write(message, 0, message.Length);
+                stream.Flush();
+            }
+
+            dataSocket = dataListener.Server.Accept();
+            Common.Logger.Info("DataSocket connected");
+
+            dataGatherThreadRunning = true;
+            byte[] receivedData = new byte[Constants.BUF_SIZE];
+            while (dataGatherThreadRunning)
+            {                
+                int receivedBytes = dataSocket.Receive(receivedData);
+                int packageSize = receivedData[0] >> 24 + receivedData[1] >> 16 + receivedData[2] >> 8 + receivedData[3];
+
+                byte[] dataBuffer = new byte[receivedBytes - 4];
+                Buffer.BlockCopy(receivedData, 4, dataBuffer, 0, dataBuffer.Length);
+                latestData = dataBuffer;
+            }
         }
 			
         private void Connect()
@@ -130,6 +167,20 @@ namespace LabNation.DeviceInterface.Hardware
 
         public byte[] GetData(int numberOfBytes)
         {
+            if (!serverDataThreadRunning)
+            {
+                serverDataThreadRunning = true;
+                rxBuffer = new byte[Constants.BUF_SIZE];
+
+                //cannot start the polling thread immediately, as the SSS first needs to flash its FPGA
+                System.Threading.Thread dataGatherThread = new System.Threading.Thread(DataGatherThreadStart);
+                dataGatherThread.Name = "EtherScope DataGatherThread";
+                dataGatherThread.Start();            
+            }
+
+            return latestData;
+
+            /*
             byte[] message = Constants.Commands.READ_HBW.msg( new byte[] { (byte)(numberOfBytes >> 8), (byte)numberOfBytes });
 
             byte[] answer;
@@ -152,6 +203,7 @@ namespace LabNation.DeviceInterface.Hardware
             }
 
             return answer;
+             * */
         }
 
         public bool Destroyed { get { return false; } }

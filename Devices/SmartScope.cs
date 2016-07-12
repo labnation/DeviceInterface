@@ -73,7 +73,7 @@ namespace LabNation.DeviceInterface.Devices
         }
         
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
-        private const int OVERVIEW_BUFFER_SIZE = 2048;
+        internal static int OVERVIEW_BUFFER_SIZE = 2048;
         private const int ACQUISITION_DEPTH_MIN = 128; //Size of RAM
         private const int ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024; //Size of RAM
         private const int ACQUISITION_DEPTH_DEFAULT = 512 * 1024;
@@ -96,9 +96,9 @@ namespace LabNation.DeviceInterface.Devices
                 VIEW_DECIMATION_MAX = (int)Math.Log(acquisitionDepthUserMaximum / OVERVIEW_BUFFER_SIZE, 2);
             }
         }
-        private const int BYTES_PER_BURST = 64;
-        private const int BYTES_PER_SAMPLE = 2;
-        private const int SAMPLES_PER_BURST = BYTES_PER_BURST / BYTES_PER_SAMPLE; //one byte per channel
+        internal static int BYTES_PER_BURST = 64;
+        internal static int BYTES_PER_SAMPLE = 2;
+        private int SAMPLES_PER_BURST = BYTES_PER_BURST / BYTES_PER_SAMPLE; //one byte per channel
         private const int MAX_COMPLETION_TRIES = 1;
         //FIXME: this should be automatically parsed from VHDL
         internal static int INPUT_DECIMATION_MAX_FOR_FREQUENCY_COMPENSATION = 4;
@@ -508,7 +508,9 @@ namespace LabNation.DeviceInterface.Devices
 				return null;
 
 			try {
-				header = new SmartScopeHeader (buffer);
+                byte[] headerBytes = new byte[BYTES_PER_BURST];
+                Buffer.BlockCopy(buffer, 0, headerBytes, 0, BYTES_PER_BURST);
+				header = new SmartScopeHeader (headerBytes);
 			} catch (Exception e) {
 #if WINDOWS
                 Logger.Warn("Error parsing header - attempting to fix that");
@@ -543,9 +545,13 @@ namespace LabNation.DeviceInterface.Devices
             foreach (AnalogChannel ch in analogChannels)
                 minMaxVoltages.Add(ch, minMaxBytes.ConvertByteToVoltage(header.ChannelSettings(this.rom)[ch], header.GetRegister(ch.YOffsetRegister()), probeSettings[ch]));
 
+            byte[] dataBytes = null;
             if (header.OverviewBuffer)
             {
-                buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
+                //buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
+                //FIXME: copy protection
+                dataBytes = new byte[OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE];
+                Buffer.BlockCopy(buffer, BYTES_PER_BURST, dataBytes, 0, OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
 
                 if (newAcquisition)
                 {
@@ -554,14 +560,14 @@ namespace LabNation.DeviceInterface.Devices
                     Logger.Warn("Got an overview buffer but no data came in for it before. This is wrong");
                     return null;
                 }
-                if (buffer == null)
+                if (dataBytes == null)
                 {
                     //This is also pretty bad
                     Logger.Warn("Failed to get overview buffer payload. This is bad");
                     return null;
                 }
 
-                receivedData = SplitAndConvert(buffer, analogChannels, header);
+                receivedData = SplitAndConvert(dataBytes, analogChannels, header);
                 foreach (Channel ch in receivedData.Keys)
                 {
                     currentDataPackage.SetData(ChannelDataSourceScope.Overview, ch, receivedData[ch]);
@@ -577,14 +583,18 @@ namespace LabNation.DeviceInterface.Devices
 
             if (header.FullAcquisitionDump)
             {
-                buffer = hardwareInterface.GetData(header.Samples * BYTES_PER_SAMPLE);
-                if (newAcquisition || buffer == null)
+                //buffer = hardwareInterface.GetData(header.Samples * BYTES_PER_SAMPLE);
+                //FIXME: copy protection
+                dataBytes = new byte[header.Samples * BYTES_PER_SAMPLE];
+                Buffer.BlockCopy(buffer, BYTES_PER_BURST, dataBytes, 0, header.Samples * BYTES_PER_SAMPLE);
+
+                if (newAcquisition || dataBytes == null)
                 {
                     Logger.Warn("Got an acquisition buffer but no data came in for it before. This is wrong");
                     return null;
                 }
 
-                receivedData = SplitAndConvert(buffer, analogChannels, header);
+                receivedData = SplitAndConvert(dataBytes, analogChannels, header);
 
                 foreach (Channel ch in receivedData.Keys)
                 {
@@ -632,20 +642,24 @@ namespace LabNation.DeviceInterface.Devices
 				return null;
 
 			try {
-                buffer = hardwareInterface.GetData(BYTES_PER_BURST * header.NumberOfPayloadBursts);
+                //buffer = hardwareInterface.GetData(BYTES_PER_BURST * header.NumberOfPayloadBursts);
+                //FIXME: copy protection
+                dataBytes = new byte[BYTES_PER_BURST * header.NumberOfPayloadBursts];
+                Buffer.BlockCopy(buffer, BYTES_PER_BURST, dataBytes, 0, BYTES_PER_BURST * header.NumberOfPayloadBursts);
 			} catch (Exception e) {
 				Logger.Error ("Failed to fetch payload - resetting scope: " + e.Message);
 				Reset ();
 				return null;
 			}
-                
-			if (buffer == null) {
+
+            if (dataBytes == null)
+            {
 				Logger.Error ("Failed to get payload - resetting");
 				Reset ();
 				return null;
 			}
 
-            receivedData = SplitAndConvert(buffer, analogChannels, header);
+            receivedData = SplitAndConvert(dataBytes, analogChannels, header);
 
             if (newAcquisition)
             {

@@ -22,7 +22,8 @@ namespace LabNation.DeviceInterface.Net
         StreamWriter debugFile;
 #endif
         private bool running = true;
-        private Socket socket;
+        private Socket configSocket;
+        private Socket dataSocket;
         internal ISmartScopeInterfaceUsb hwInterface;
         private const int RECEIVE_TIMEOUT = 10000; //10sec
         private string lastZeroConfPrintChar = "|";
@@ -51,7 +52,7 @@ namespace LabNation.DeviceInterface.Net
         public void Stop()
         {
             running = false;
-            tcpListener.Stop();
+            configListener.Stop();
             zeroconfService.Dispose();
             tcpListenerThread.Join(1000);
         }
@@ -60,7 +61,7 @@ namespace LabNation.DeviceInterface.Net
         //will post and renew ZeroConf every interval
         private void ZeroConfThreadStart()
         {
-            while (running && (socket == null || !socket.Connected))
+            while (running && (configSocket == null || !configSocket.Connected))
             {
                 zeroconfService = new RegisterService();
                 lock (zeroconfService)
@@ -78,7 +79,7 @@ namespace LabNation.DeviceInterface.Net
 			zeroconfService.Name = Dns.GetHostName();
             zeroconfService.RegType = Constants.SERVICE_TYPE;
             zeroconfService.ReplyDomain = Constants.REPLY_DOMAIN;
-			zeroconfService.Port = (short)(((IPEndPoint)tcpListener.LocalEndpoint).Port);
+			zeroconfService.Port = (short)(((IPEndPoint)configListener.LocalEndpoint).Port);
             zeroconfService.Register();
 
             switch (lastZeroConfPrintChar)
@@ -194,7 +195,8 @@ namespace LabNation.DeviceInterface.Net
             return msgList;
         }
 
-        TcpListener tcpListener;
+        TcpListener configListener;
+        TcpClient dataClient = new TcpClient();
         private void TcpIpController()
         {
             bool disconnect;
@@ -203,15 +205,15 @@ namespace LabNation.DeviceInterface.Net
 #if DEBUGFILE
             tcpListener = new TcpListener(IPAddress.Any, 25482);
 #else
-        tcpListener = new TcpListener(IPAddress.Any, 0);
+        configListener = new TcpListener(IPAddress.Any, 0);
 #endif
 
 
             while (running)
             {
-                tcpListener.Start();
+                configListener.Start();
                 LogMessage(LogTypes.DECORATION, "==================== New session started =======================");
-                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)tcpListener.LocalEndpoint).Port.ToString());
+                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)configListener.LocalEndpoint).Port.ToString());
 
                 //start zeroconf thread which will post and renew every interval
                 Thread zeroconfThread = new Thread(ZeroConfThreadStart);
@@ -219,8 +221,8 @@ namespace LabNation.DeviceInterface.Net
                 
                 try
                 {
-                    socket = tcpListener.Server.Accept();
-                    socket.ReceiveTimeout = RECEIVE_TIMEOUT;
+                    configSocket = configListener.Server.Accept();
+                    //configSocket.ReceiveTimeout = RECEIVE_TIMEOUT; simply needs to be re-activated!
                 }
                 catch (Exception e)
                 {
@@ -229,13 +231,13 @@ namespace LabNation.DeviceInterface.Net
                 }
 
                 LogMessage(LogTypes.DECORATION, "\n"); //newline required to terminate ZeroConf update line
-                LogMessage(LogTypes.NETWORK, "Connection accepted from " + socket.RemoteEndPoint);                
-                UnregisterZeroConf();
+                LogMessage(LogTypes.NETWORK, "Connection accepted from " + configSocket.RemoteEndPoint);                
+                UnregisterZeroConf();                
 
                 disconnect = false;
                 while (running && !disconnect)
                 {
-                    List<Message> msgList = ReceiveMessage(socket);
+                    List<Message> msgList = ReceiveMessage(configSocket);
 
                     if (msgList != null) //if no network error
                     {
@@ -267,12 +269,12 @@ namespace LabNation.DeviceInterface.Net
                             else if (command == Constants.Commands.READ)
                             {
                                 byte length = m.data[0];
-                                ReadControlBytes(socket, length);
+                                ReadControlBytes(configSocket, length);
                             }
                             else if (command == Constants.Commands.READ_HBW)
                             {
                                 int length = (m.data[0] << 8) + (m.data[1]);
-                                ReadHispeedData(socket, length);
+                                ReadHispeedData(configSocket, length);
                             }
                             else if (command == Constants.Commands.SERIAL)
                             {
@@ -286,7 +288,7 @@ namespace LabNation.DeviceInterface.Net
                                 }
 #endif
 
-                                socket.Send(answer);
+                                configSocket.Send(answer);
 #if DEBUGFILE
                                 {
                                     DateTime now = DateTime.Now;
@@ -306,7 +308,16 @@ namespace LabNation.DeviceInterface.Net
                                 hwInterface.FlushDataPipe();
                                 disconnect = true;
 
-                                LogMessage(LogTypes.NETWORK, "Request to disconnect from " + socket.RemoteEndPoint);
+                                LogMessage(LogTypes.NETWORK, "Request to disconnect from " + configSocket.RemoteEndPoint);
+                            }
+                            else if (command == Constants.Commands.STARTDATALINK)
+                            {
+                                int port = (m.data[0] << 8) + (m.data[1]);
+                                dataClient.Connect(((IPEndPoint)configSocket.RemoteEndPoint).Address, port);
+                                LogMessage(LogTypes.NETWORK, "Connected data endpoint to " + dataClient.Client.RemoteEndPoint);
+
+                                Thread dataFetchThread = new Thread(DataFetchThreadStart);
+                                dataFetchThread.Start();
                             }
                             else
                             {
@@ -339,11 +350,85 @@ namespace LabNation.DeviceInterface.Net
                     {
                         disconnect = true;
                         LogMessage(LogTypes.NETWORK, "Connection closed");
-                        socket.Close();
-                        tcpListener.Stop();
+                        configSocket.Close();
+                        configListener.Stop();
                         System.Threading.Thread.Sleep(500);
                     }
                 }
+            }
+        }
+
+        private bool dataFetchThreadRunning = true;
+        private void DataFetchThreadStart()
+        {
+            NetworkStream unbufferedStream = dataClient.GetStream();
+            BufferedStream dataNetStream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);
+
+            LogMessage(LogTypes.SYSTEM, "DataFetchThread started");
+            dataFetchThreadRunning = true;
+            while (dataFetchThreadRunning)
+            {
+                //check we have a valid hwInterface
+                if (hwInterface == null)
+                {
+                    dataFetchThreadRunning = false;
+                    throw new Exception("hw exception -- need to handle properly"); //FIXME
+                    break;
+                }
+
+                //get header bytes or die
+                byte[] headerBuffer;
+                try
+                {
+                    headerBuffer = hwInterface.GetData(SmartScope.BYTES_PER_BURST);
+                }
+                catch 
+                {
+                    dataFetchThreadRunning = false;
+                    throw new Exception("getdata exception -- need to handle properly"); //FIXME
+                    break;
+                }
+                if (headerBuffer == null)
+                {
+                    dataFetchThreadRunning = false;
+                    throw new Exception("no data received -- need to handle properly"); //FIXME
+                    break;
+                }
+
+                //parse header
+                SmartScopeHeader header;
+                try
+                {
+                    header = new SmartScopeHeader(headerBuffer);
+                }
+                catch
+                {
+                    dataFetchThreadRunning = false;
+                    throw new Exception("error parsing header -- need to handle properly"); //FIXME
+                    break;
+                }
+
+                //get data payload
+                byte[] dataBuffer = null;
+                if (header.OverviewBuffer)
+                    dataBuffer = hwInterface.GetData(SmartScope.OVERVIEW_BUFFER_SIZE * SmartScope.BYTES_PER_SAMPLE);                
+                else if (header.FullAcquisitionDump)
+                    dataBuffer = hwInterface.GetData(header.Samples * SmartScope.BYTES_PER_SAMPLE);
+                else if (!header.ImpossibleDump && !(header.NumberOfPayloadBursts == 0 || header.TimedOut))
+                    dataBuffer = hwInterface.GetData(header.Samples * SmartScope.BYTES_PER_SAMPLE);
+             
+                //throw it all to client
+                int packageLength = headerBuffer.Length;
+                if (dataBuffer != null)
+                    packageLength += dataBuffer.Length;
+                byte[] packageLengthBArray = new byte[] { (byte)(packageLength >> (8*3)), (byte)(packageLength >> (8*2)), (byte)(packageLength >> 8), (byte)(packageLength)};
+                dataNetStream.Write(packageLengthBArray, 0, packageLengthBArray.Length);
+                dataNetStream.Write(headerBuffer, 0, headerBuffer.Length);
+                if (dataBuffer != null)
+                    dataNetStream.Write(dataBuffer, 0, dataBuffer.Length);
+                dataNetStream.Flush();
+
+                LogMessage(LogTypes.SYSTEM, "Sent datapackage of " + packageLength + "+4 bytes");
             }
         }
 
@@ -352,6 +437,7 @@ namespace LabNation.DeviceInterface.Net
             NETWORK,
             ZEROCONF,
             DECORATION,
+            SYSTEM,
         }
         bool bandwidthPrintedLast = false;        
         private void LogMessage(LogTypes logType, string message, bool update = false)
@@ -369,6 +455,9 @@ namespace LabNation.DeviceInterface.Net
                     break;
                 case LogTypes.ZEROCONF:
                     Logger.LogC(LogLevel.INFO, updateString + "[ZeroConf] ", ConsoleColor.Cyan);
+                    break;
+                case LogTypes.SYSTEM:
+                    Logger.LogC(LogLevel.INFO, updateString + "[System  ] ", ConsoleColor.Magenta);
                     break;
                 default:
                     break;
