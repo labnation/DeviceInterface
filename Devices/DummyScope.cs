@@ -729,9 +729,12 @@ namespace LabNation.DeviceInterface.Devices {
             p.samplePeriod[ChannelDataSourceScope.Viewport] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
             p.offset[ChannelDataSourceScope.Viewport] = ViewPortOffset;
 
-			//copy values, needed for ETS to work properly
-			p.samplePeriod [ChannelDataSourceScope.Overview] = SamplePeriodCurrent * Math.Pow(2, viewportDecimation);
-			p.offset [ChannelDataSourceScope.Overview] = 0;
+			//set values, needed for ETS to work properly
+            if (acquisitionBufferAnalog != null && acquisitionBufferAnalog.ContainsKey(AnalogChannel.ChA))
+            {
+                p.samplePeriod[ChannelDataSourceScope.Overview] = SamplePeriodCurrent * (float)acquisitionBufferAnalog[AnalogChannel.ChA].Length / (float)OVERVIEW_LENGTH;
+                p.offset[ChannelDataSourceScope.Overview] = 0;
+            }
 
 			if (acquisitionBufferAnalog.Count == 0)
 				return lastCommittedDataPackage;
@@ -740,8 +743,11 @@ namespace LabNation.DeviceInterface.Devices {
             {
                 if (logicAnalyserEnabledCurrent && ch == logicAnalyserChannelCurrent)
                     continue;
-				if(SendOverviewBuffer)
-                    p.SetData(ChannelDataSourceScope.Overview, ch, GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
+                if (SendOverviewBuffer)
+                {
+                    Array arr = GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH);
+                    p.SetData(ChannelDataSourceScope.Overview, ch, arr);
+                }
                 p.SetData(ChannelDataSourceScope.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
                 p.SetData(ChannelDataSourceScope.Acquisition, ch, acquisitionBufferAnalog[ch]);
 
