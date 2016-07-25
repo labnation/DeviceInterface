@@ -10,7 +10,6 @@ namespace LabNation.DeviceInterface.Devices
 {
     partial class SmartScope
     {
-
 #if DEBUG
         public
 #else
@@ -434,6 +433,22 @@ namespace LabNation.DeviceInterface.Devices
         {
             if(Ready)
                 StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
+        }
+        
+        public enum DigitalOutputVoltage
+        {
+            V3_0,
+            V5_0
+        };
+
+        public void SetDigitalOutputVoltage(DigitalOutputVoltage voltage)
+        {
+            if (voltage == DigitalOutputVoltage.V3_0)
+                StrobeMemory[STR.DOUT_3V_5V].WriteImmediate(false);
+            else if (voltage == DigitalOutputVoltage.V5_0)
+                StrobeMemory[STR.DOUT_3V_5V].WriteImmediate(true);
+            else
+                throw new Exception("Digital output voltage not implemented");
         }
         
         private void UpdateTriggerPulseWidth()
