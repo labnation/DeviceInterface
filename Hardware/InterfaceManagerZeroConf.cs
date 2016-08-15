@@ -6,7 +6,7 @@ using System.Threading;
 using System.Net;
 using System.Net.Sockets;
 using Zeroconf;
-using System.Threading.Tasks;
+//using System.Threading.Tasks;
 using LabNation.DeviceInterface.Net;
 
 namespace LabNation.DeviceInterface.Hardware
@@ -67,7 +67,7 @@ namespace LabNation.DeviceInterface.Hardware
             }
         }
 
-        private async Task<IReadOnlyList<IZeroconfHost>> FindZeroConf()
+        /*private async Task<IReadOnlyList<IZeroconfHost>> FindZeroConf()
         {
             IReadOnlyList<IZeroconfHost> results = await
                 ZeroconfResolver.ResolveAsync("_sss._tcp.local.");
@@ -83,14 +83,15 @@ namespace LabNation.DeviceInterface.Hardware
                 foreach (IService s in resp.Services.Values)
                     l.Add(new ServiceLocation(IPAddress.Parse(resp.IPAddress), s.Port, s.Name));
             return l;
-        }
+        }*/
 
         Func<ServiceLocation, bool> nameFilter = new Func<ServiceLocation, bool>(x => x.name == Constants.SERVICE_TYPE + "." + Constants.REPLY_DOMAIN);
         public override void PollDevice()
         {
             Common.Logger.Info("Polling ZeroConf");
 
-            Task<List<ServiceLocation>> hostsTask = EnumerateAllServicesFromAllHosts();
+            throw new Exception("Need to implement a Linux-buildable ZeroConf solution");
+            /*Task<List<ServiceLocation>> hostsTask = EnumerateAllServicesFromAllHosts();
 
             hostsTask.Wait();
             List<ServiceLocation> detectedServices = hostsTask.Result.Where(nameFilter).ToList();
@@ -125,7 +126,7 @@ namespace LabNation.DeviceInterface.Hardware
                         LabNation.Common.Logger.Info("... failed connecting to SmartScopeServer at " + loc.ip.ToString() + ":" + loc.port.ToString());
                     }
                 }
-            }
+            }*/
         }
 
         public void Destroy()

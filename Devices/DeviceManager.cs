@@ -75,7 +75,8 @@ null, null) { Start();  }
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
 
-            InterfaceManagerZeroConf.Instance.onConnect += OnHardwareConnect;
+            //disable because of the crash by Wait
+            //InterfaceManagerZeroConf.Instance.onConnect += OnHardwareConnect;
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnHardwareConnect;
