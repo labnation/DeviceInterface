@@ -41,37 +41,40 @@ Implements `IDevice`, provides properties and methods to control the wave genera
 
 
 #### IWaveGenerator usage - Generate digital waves
-When using the SmartScope for generating up to 4 simultaneous customized digital signals, follow procedure:
+When using the SmartScope for generating up to 4 simultaneous customized digital signals, follow this procedure:
 
-1. (optional) To be safe: first disable all outputs
+0) (optional) To be safe: first disable all outputs
 
 ```
 scope.GeneratorToDigitalEnabled = false;
 scope.GeneratorToAnalogEnabled = false;
 ``` 
  
-2. Define and upload custom wave
+1) Define and upload custom wave
 
 ```
 byte[] customWave = new byte[] { 0, 1, 0, 2, 0, 4, 0, 8 };
 scope.GeneratorDataByte = customWave;
 ```
 
-3. Set output frequency (in seconds)
+2) Set output frequency (in seconds)
 
 `scope.GeneratorSamplePeriod = 0.000005;`
 
-4. Set output voltage to 3V or 5V
+3) Set output voltage to 3V or 5V
 
 `scope.SetDigitalOutputVoltage(DigitalOutputVoltage.V3_0);`
 
-5. CommitSettings must be called to make the samplePeriod setting effective
+4) CommitSettings must be called to make the samplePeriod setting effective
 
 `scope.CommitSettings();`
 
-6. Enable digital output
+5) Enable digital output
 
 `scope.GeneratorToDigitalEnabled = true;`
+
+#### IWaveGenerator examples - Generate digital waves
+* Matlab: https://github.com/labnation/DeviceInterface.Matlab/blob/master/SmartScopeDigitalOutput.m
 
 ## Memories and registers
 To use DeviceInterface, you don't actually need to understand these internals, so this is just a rough sketch of the functionality.
@@ -79,7 +82,7 @@ To use DeviceInterface, you don't actually need to understand these internals, s
 All 'smart' chips (PIC, FPGA, ADC) inside the SmartScope have their registers, typically bytes. These are the 'parameters' of certain functionalities of these chips. Examples:
 
 * FGPA: the TRIGGER_LEVEL register defines the voltage of the analog trigger level (FPGA register 7, see [the FPGA register list](https://github.com/labnation/DeviceInterface/blob/master/Memories/ScopeConstants_GEN.cs))
-* ADC: bits 5 and 4 of register 6 in the ADC defines whether its data is in two's complement or simply offset  binary (see the MAX19506 datasheet p22)
+* ADC: bits 5 and 4 of register 6 in the ADC defines wheth er its data is in two's complement or simply offset  binary (see the MAX19506 datasheet p22)
 
 Therefore, some logic is required to convert from physical values to register values (eg GUI trigger slider to TRIGGER_LEVEL bytevalue). These conversions are implemented in DeviceInterface (see the [TriggerValue setter method in SmartScopeSettings.cs](https://github.com/labnation/DeviceInterface/blob/master/Devices/SmartScopeSettings.cs)).
 
