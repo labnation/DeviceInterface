@@ -444,9 +444,9 @@ namespace LabNation.DeviceInterface.Devices
         public void SetDigitalOutputVoltage(DigitalOutputVoltage voltage)
         {
             if (voltage == DigitalOutputVoltage.V3_0)
-                StrobeMemory[STR.DOUT_3V_5V].WriteImmediate(false);
-            else if (voltage == DigitalOutputVoltage.V5_0)
                 StrobeMemory[STR.DOUT_3V_5V].WriteImmediate(true);
+            else if (voltage == DigitalOutputVoltage.V5_0)
+                StrobeMemory[STR.DOUT_3V_5V].WriteImmediate(false);
             else
                 throw new Exception("Digital output voltage not implemented");
         }
