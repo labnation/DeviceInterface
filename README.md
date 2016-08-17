@@ -39,6 +39,40 @@ Provides a `DataSource`, a class which fetches and records scope data in its own
 ### IWaveGenerator
 Implements `IDevice`, provides properties and methods to control the wave generator and upload waveforms.
 
+
+#### IWaveGenerator usage - Generate digital waves
+When using the SmartScope for generating up to 4 simultaneous customized digital signals, follow procedure:
+
+1. (optional) To be safe: first disable all outputs
+
+```
+scope.GeneratorToDigitalEnabled = false;
+scope.GeneratorToAnalogEnabled = false;
+``` 
+ 
+2. Define and upload custom wave
+
+```
+byte[] customWave = new byte[] { 0, 1, 0, 2, 0, 4, 0, 8 };
+scope.GeneratorDataByte = customWave;
+```
+
+3. Set output frequency (in seconds)
+
+`scope.GeneratorSamplePeriod = 0.000005;`
+
+4. Set output voltage to 3V or 5V
+
+`scope.SetDigitalOutputVoltage(DigitalOutputVoltage.V3_0);`
+
+5. CommitSettings must be called to make the samplePeriod setting effective
+
+`scope.CommitSettings();`
+
+6. Enable digital output
+
+`scope.GeneratorToDigitalEnabled = true;`
+
 ## Memories and registers
 To use DeviceInterface, you don't actually need to understand these internals, so this is just a rough sketch of the functionality.
 
