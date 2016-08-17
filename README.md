@@ -39,6 +39,37 @@ Provides a `DataSource`, a class which fetches and records scope data in its own
 ### IWaveGenerator
 Implements `IDevice`, provides properties and methods to control the wave generator and upload waveforms.
 
+#### IWaveGenerator usage - Generate analog waves
+When using the SmartScope for generating a custom analog waveform, follow this procedure:
+
+0) (optional) To be safe: first disable all outputs
+
+```
+scope.GeneratorToDigitalEnabled = false;
+scope.GeneratorToAnalogEnabled = false;
+``` 
+ 
+1) Define and upload custom wave (specified immediately in Voltages, between 0V and 3.3V)
+
+```
+double[] customWave = new double[] { 0, 1.5, 1.88, 2, 1.2, 1, 0.5 };
+scope.GeneratorDataDouble = customWave;
+```
+
+2) Set output frequency (in seconds)
+
+`scope.GeneratorSamplePeriod = 0.000005;`
+
+3) CommitSettings must be called to make the samplePeriod setting effective
+
+`scope.CommitSettings();`
+
+4) Enable analog output
+
+`scope.GeneratorToAnalogEnabled = true;`
+
+#### IWaveGenerator examples - Generate analog waves
+* Matlab: https://github.com/labnation/DeviceInterface.Matlab/blob/master/SmartScopeAnalogOutput.m
 
 #### IWaveGenerator usage - Generate digital waves
 When using the SmartScope for generating up to 4 simultaneous customized digital signals, follow this procedure:
