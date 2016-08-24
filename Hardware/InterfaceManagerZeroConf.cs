@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -132,7 +132,9 @@ namespace LabNation.DeviceInterface.Hardware
         public void Destroy()
         {
             pollThreadRunning = false;
-            pollThread.Join(1000);
+            if(pollThread != null)
+                pollThread.Join(1000);
+
         }
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
