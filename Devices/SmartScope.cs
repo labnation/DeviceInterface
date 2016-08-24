@@ -225,9 +225,33 @@ namespace LabNation.DeviceInterface.Devices
 
                 //Init FPGA
                 LogWait("Starting fpga flashing...", 0);
-                if (!FlashFpga())
+                
+                this.flashed = false;
+                string fwName;
+                byte[] firmware = null;
+                
+                //Get FW contents
+                try
+                {
+                    LabNation.Common.SerialNumber s = new SerialNumber(this.Serial);
+	    			fwName = String.Format("SmartScope_{0}.bin", Base36.Encode((long)s.model, 3).ToUpper());
+                    firmware = Resources.Load(fwName);
+                }
+                catch (Exception e)
+                {
+                    throw new ScopeIOException("Opening FPGA FW file failed\n" + e.Message);
+                }
+                if (firmware == null)
+                    throw new ScopeIOException("Failed to read FW");
+
+                Logger.Info("Got firmware of length " + firmware.Length);
+                if (!SmartScopeFlashHelpers.FlashFpga(this.hardwareInterface, firmware))
                     throw new ScopeIOException("failed to flash FPGA");
+                if (GetFpgaFirmwareVersion() == SmartScopeFlashHelpers.FPGA_VERSION_UNFLASHED)
+                    throw new ScopeIOException("Got firmware version of unflashed FPGA");
                 LogWait("FPGA flashed...");
+                this.flashed = true;
+
                 InitializeMemories();
                 LogWait("Memories initialized...");
 
