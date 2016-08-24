@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -111,11 +111,13 @@ null, null) { Start();  }
 
         public void Stop()
         {
-            //need to stop the ZeroConf polling thread
-            InterfaceManagerZeroConf.Instance.Destroy();
-
+            if (mainDevice != null)
+                mainDevice.DataSourceScope.Stop();
+            
             if(pollThread != null)
                 pollThread.Join(100);
+
+            InterfaceManagerZeroConf.Instance.Destroy();
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
