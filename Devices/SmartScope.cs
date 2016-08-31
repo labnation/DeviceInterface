@@ -36,6 +36,9 @@ namespace LabNation.DeviceInterface.Devices
         public List<DeviceMemory> GetMemories() { return memories; }
 #endif
 
+        private const byte FPGA_I2C_ADDRESS_SETTINGS = 0x0C;
+        private const byte FPGA_I2C_ADDRESS_ROM = 0x0D;
+
 #if DEBUG 
         public Memories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
         public Memories.ScopeFpgaRom FpgaRom { get; private set; }
@@ -288,8 +291,8 @@ namespace LabNation.DeviceInterface.Devices
             memories.Clear();
             //Create memories
             PicMemory = new Memories.ScopePicRegisterMemory(hardwareInterface);
-            FpgaSettingsMemory = new Memories.ScopeFpgaSettingsMemory(hardwareInterface);
-            FpgaRom = new Memories.ScopeFpgaRom(hardwareInterface);
+            FpgaSettingsMemory = new Memories.ScopeFpgaSettingsMemory(hardwareInterface, FPGA_I2C_ADDRESS_SETTINGS);
+            FpgaRom = new Memories.ScopeFpgaRom(hardwareInterface, FPGA_I2C_ADDRESS_ROM);
             StrobeMemory = new Memories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
             AdcMemory = new Memories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);
             //Add them in order we'd like them in the GUI

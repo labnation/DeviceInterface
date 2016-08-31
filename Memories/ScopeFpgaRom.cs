@@ -12,37 +12,16 @@ namespace LabNation.DeviceInterface.Memories
 #else
     internal
 #endif
-    class ScopeFpgaRom : ByteMemory
+    class ScopeFpgaRom : ScopeFpgaI2cMemory
     {
-        private ISmartScopeInterface hwInterface;
-
-        public ScopeFpgaRom(ISmartScopeInterface hwInterface)
+        public ScopeFpgaRom(ISmartScopeInterface hwInterface, byte I2cAddress) : base(hwInterface, I2cAddress, 0, true)
         {
-            this.hwInterface = hwInterface;
-                        
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
 
             int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
             for(uint i = (uint)ROM.STROBES + 1; i < (uint)ROM.STROBES + lastStrobe / 8 + 1; i++)
                 registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
-        }
-
-        public override void Read(uint address)
-        {
-            byte[] data = null;
-            hwInterface.GetControllerRegister(ScopeController.FPGA_ROM, address, 1, out data);
-            if (data == null)
-                return;
-
-            registers[address].Set(data[0]);
-            registers[address].Dirty = false;
-        }
-
-        public override void Write(uint address) 
-        {
-            Read(address);
-            Logger.Warn("Attempting to write to ROM");
         }
 
         public ByteRegister this[ROM r]

@@ -21,7 +21,6 @@ namespace LabNation.DeviceInterface.Hardware
         ROM,
         FLASH,
         FPGA,
-        FPGA_ROM,
         AWG
     }
 		

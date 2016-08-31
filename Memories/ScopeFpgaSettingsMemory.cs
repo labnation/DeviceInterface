@@ -11,31 +11,12 @@ namespace LabNation.DeviceInterface.Memories
 #else
     internal
 #endif
-    class ScopeFpgaSettingsMemory : ByteMemory
+    class ScopeFpgaSettingsMemory : ScopeFpgaI2cMemory
     {
-        public ISmartScopeInterface hwInterface;
-
-        public ScopeFpgaSettingsMemory(ISmartScopeInterface hwInterface)
+        public ScopeFpgaSettingsMemory(ISmartScopeInterface hwInterface, byte I2cAddress) : base(hwInterface, I2cAddress)
         {
-            this.hwInterface = hwInterface;
-
             foreach(REG reg in Enum.GetValues(typeof(REG)))
                 registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
-        }
-
-        public override void Read(uint address)
-        {
-            byte[] data = null;
-            hwInterface.GetControllerRegister(ScopeController.FPGA, address, 1, out data);
-            registers[address].Set(data[0]);
-            registers[address].Dirty = false;
-        }
-
-        public override void Write(uint address)
-        {
-            byte[] data = new byte[] { this[address].GetByte() };
-            hwInterface.SetControllerRegister(ScopeController.FPGA, address, data);
-            registers[address].Dirty = false;
         }
 
         public ByteRegister this[REG r]

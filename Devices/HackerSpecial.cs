@@ -24,6 +24,7 @@ namespace LabNation.DeviceInterface.Devices
 
         public ScopeFpgaRom FpgaRom { get; private set; }
         public ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
+        public ScopeFpgaI2cMemory FpgaUserMemory { get; private set; }
         public HackerSpecial(ISmartScopeInterface iface)
         {
             this.iface = iface;
@@ -31,10 +32,17 @@ namespace LabNation.DeviceInterface.Devices
             this.Serial = iface.Serial;
 
             memories.Clear();
-            FpgaSettingsMemory = new ScopeFpgaSettingsMemory(iface);
-            FpgaRom = new ScopeFpgaRom(iface);
+            byte FPGA_I2C_ADDRESS_SETTINGS = 0x0C;
+            byte FPGA_I2C_ADDRESS_ROM = 0x0D;
+            byte FPGA_I2C_ADDRESS_USER = 0x0E;
+
+            FpgaSettingsMemory = new ScopeFpgaSettingsMemory(iface, FPGA_I2C_ADDRESS_SETTINGS);
+            FpgaRom = new ScopeFpgaRom(iface, FPGA_I2C_ADDRESS_ROM);
+            FpgaUserMemory = new ScopeFpgaI2cMemory(iface, FPGA_I2C_ADDRESS_USER, 256);
+
             memories.Add(FpgaSettingsMemory);
             memories.Add(FpgaRom);
+            memories.Add(FpgaUserMemory);
 
             //Get FW contents
             string fwName = "SmartScopeHackerSpecial.bin";
