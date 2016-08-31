@@ -84,7 +84,8 @@ null, deviceConnectHandler) { }
             {
                 foreach (var kvp in interfaceActivatorOverride)
                 {
-                    if (kvp.Key is IHardwareInterface && kvp.Value is IDevice)
+                    if (kvp.Key.GetInterfaces().Contains(typeof(IHardwareInterface)) 
+                        && kvp.Value.GetInterfaces().Contains(typeof(IDevice)))
                     {
                         this.InterfaceActivators[kvp.Key] = kvp.Value;
                     }
