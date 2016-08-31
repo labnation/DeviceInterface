@@ -17,14 +17,16 @@ namespace LabNation.DeviceInterface.Devices
     {
         public event InterfaceChangeHandler InterfaceChanged;
         public event DeviceConnectHandler DeviceConnected;
-        private IScope mainDevice = null;
-        public IScope MainDevice { get { return mainDevice; } }
-        public bool SmartScopeConnected { get { return mainDevice is SmartScope; } }
+        private IDevice activeDevice = null;
+        public IDevice ActiveDevice { get { return activeDevice; } }
         Thread pollThread;
         private List<IHardwareInterface> connectedList = new List<IHardwareInterface>(); //list of all connected devices, serial and type provided
-        private List<IScope> deviceList = new List<IScope>(); // list of all devices which have actually been created.
 
         public List<IHardwareInterface> ConnectedList { get { return this.connectedList; } }
+        private Dictionary<Type, Type> InterfaceActivators = new Dictionary<Type, Type>() {
+            { typeof(DummyInterface), typeof(DummyScope) },
+            { typeof(ISmartScopeInterface), typeof(SmartScope) }
+        };
 
 #if WINDOWS
         Thread badDriverDetectionThread;
@@ -51,13 +53,26 @@ namespace LabNation.DeviceInterface.Devices
 #if ANDROID
             context,
 #endif
-null, null) { Start();  }
+null, null) { }
+
+        public DeviceManager(
+#if ANDROID
+            Context context
+#endif
+            DeviceConnectHandler deviceConnectHandler
+)
+            : this(
+#if ANDROID
+            context,
+#endif
+null, deviceConnectHandler) { }
 
         public DeviceManager(
 #if ANDROID
             Context context,
 #endif
-            InterfaceChangeHandler interfaceChangeHandler, DeviceConnectHandler deviceConnectHandler
+            InterfaceChangeHandler interfaceChangeHandler, DeviceConnectHandler deviceConnectHandler, 
+            Dictionary<Type, Type> interfaceActivatorOverride = null
             )
         {
 #if ANDROID
@@ -65,9 +80,16 @@ null, null) { Start();  }
 #endif
             this.DeviceConnected = deviceConnectHandler;
             this.InterfaceChanged = interfaceChangeHandler;
-
-            connectedList.Add(DummyInterface.Generator);
-            //FIXME: android should add audio-scope here!!!
+            if (interfaceActivatorOverride != null)
+            {
+                foreach (var kvp in interfaceActivatorOverride)
+                {
+                    if (kvp.Key is IHardwareInterface && kvp.Value is IDevice)
+                    {
+                        this.InterfaceActivators[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
         }
 
         public void Start(bool async = true)
@@ -76,17 +98,20 @@ null, null) { Start();  }
             pollThread.Name = "Devicemanager Startup poll";
 
             //disable because of the crash by Wait
-            //InterfaceManagerZeroConf.Instance.onConnect += OnHardwareConnect;
+            //InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
-            InterfaceManagerXamarin.Instance.onConnect += OnHardwareConnect;
+            InterfaceManagerXamarin.Instance.onConnect += OnInterfaceChanged;
 #elif WINUSB
-            InterfaceManagerWinUsb.Instance.onConnect += OnHardwareConnect;
+            InterfaceManagerWinUsb.Instance.onConnect += OnInterfaceChanged;
 #elif IOS
 			//Nothing for the moment
 #else
-            InterfaceManagerLibUsb.Instance.onConnect += OnHardwareConnect;
+            InterfaceManagerLibUsb.Instance.onConnect += OnInterfaceChanged;
 #endif
+
+            OnInterfaceChanged(DummyInterface.Generator, true);
+            //FIXME: android should add audio-scope here!!!
 
             pollThread.Start();
 
@@ -111,13 +136,13 @@ null, null) { Start();  }
 
         public void Stop()
         {
-            if (mainDevice != null)
-                mainDevice.DataSourceScope.Stop();
+            if (activeDevice != null && activeDevice is IScope)
+                (activeDevice as IScope).DataSourceScope.Stop();
             
             if(pollThread != null)
                 pollThread.Join(100);
 
-            InterfaceManagerZeroConf.Instance.Destroy();
+            //InterfaceManagerZeroConf.Instance.Destroy();
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
@@ -133,83 +158,84 @@ null, null) { Start();  }
 #endif
         }
 
-        private void OnHardwareConnect(IHardwareInterface hardwareInterface, bool connected)
+        private void OnInterfaceChanged(IHardwareInterface hardwareInterface, bool connected)
         {
             if(connected) {
                 connectedList.Add(hardwareInterface);
 
                 #if WINDOWS
                 lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
-                Logger.Debug(String.Format("Update winusb detection time to {0}", lastSmartScopeDetectedThroughWinUsb));
 				#endif
-
-                Logger.Debug("DeviceManager: calling connectHandler after new Connect event");
             }
             else
             {
                 if (connectedList.Contains(hardwareInterface))
                     connectedList.Remove(hardwareInterface);
-                IScope device = deviceList.Where(x => x.HardwareInterface == hardwareInterface).FirstOrDefault();
-                if (device != null)
-                {                    
-                    //need to dispose smartscope here: when it's being unplugged
-                    Logger.Debug("DeviceManager: disposing device");
-                    if (device is SmartScope)
-                        (device as SmartScope).Dispose();
-
-                    deviceList.Remove(device);
-                }
-
+                
                 #if WINDOWS
                 lastSmartScopeDetectedThroughWinUsb = null;
 				#endif
-
-                Logger.Debug("DeviceManager: calling connectHandler after new Disconnect event");
             }
 
+            /* If application handles interface preferences, pass it the updated
+             * list of connected interfaces for it to decide who to call SetActiveDevice
+             * with
+             */
             if (InterfaceChanged != null)
                 InterfaceChanged(this, connectedList);
+            /* Else activate the lastly connected interface */
             else
-            {
-                //in case no event handlers are specified: connect real smartscope if none was active yet, or switch to dummymode
-                if (connected && !(mainDevice is SmartScope))
-                {
-                    //at this point, no real smartscope was attached, and a USB or ethernet scope was detected
-                    SwitchMainDevice(hardwareInterface);
-                }
-                else
-                {
-                    SwitchMainDevice(null);
-                }
-            }
+                SetActiveDevice(connectedList.Last());
         }
 
-        public void SwitchMainDevice(IHardwareInterface iface)
+        public void SetActiveDevice(IHardwareInterface iface)
         {
             if (!connectedList.Contains(iface))
                 return;
 
-            //when changing device -> first fire previous device
-            if (mainDevice != null && mainDevice.HardwareInterface != iface)
+            // Don't handle a second activation if the interface
+            // has already been activated
+            if (activeDevice != null && activeDevice.HardwareInterface == iface)
+                return;
+
+            // Activate new device
+            Type DeviceType = null;
+            Type ifaceType = iface.GetType();
+            foreach (Type t in this.InterfaceActivators.Keys)
             {
+                if (ifaceType == t || ifaceType.IsSubclassOf(t) || ifaceType.GetInterfaces().Contains(t))
+                {
+                    DeviceType = InterfaceActivators[t];
+                    break;
+                }
+            }
+
+            if (DeviceType == null)
+            {
+                Logger.Error("Unsupported interface type " + iface.GetType().FullName);
+                return;
+            }
+
+            try
+            {
+                IDevice newDevice = (IDevice)Activator.CreateInstance(DeviceType, iface);
+                
+                if (activeDevice != null)
+                {
+                    if (DeviceConnected != null)
+                        DeviceConnected(activeDevice, false);
+                    if (activeDevice is IDisposable)
+                        (activeDevice as IDisposable).Dispose();
+                }
+
+                activeDevice = newDevice;
                 if (DeviceConnected != null)
-                    DeviceConnected(mainDevice, false);               
+                    DeviceConnected(activeDevice, true);
             }
-
-            //activate new device
-            if (iface is DummyInterface)
-                mainDevice = new DummyScope(iface as DummyInterface);
-            else if(iface is ISmartScopeInterface) //real SmartScope
+            catch(Exception e)
             {
-                //need to make sure a smartscope is created only once from an interface
-                if (deviceList.Where(x => x.HardwareInterface == iface).Count() == 0)
-                    deviceList.Add(new SmartScope(iface as ISmartScopeInterface));
-
-                mainDevice = deviceList.Where(x => x.HardwareInterface == iface).First();
+                Logger.Error("Failed to create device: " + e.Message);
             }
-
-            if (DeviceConnected != null)
-                DeviceConnected(mainDevice, true);
         }
 
 #if WINDOWS

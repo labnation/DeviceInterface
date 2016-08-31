@@ -178,7 +178,7 @@ namespace LabNation.DeviceInterface.Devices {
 
 		#region constructor / initializer
 
-		internal DummyScope (DummyInterface iface) : base ()
+		public DummyScope (DummyInterface iface) : base ()
 		{
             this.hardwareInterface = iface;
             ChannelConfig = new Dictionary<AnalogChannel, DummyScopeChannelConfig>() 

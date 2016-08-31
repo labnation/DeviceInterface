@@ -143,7 +143,7 @@ namespace LabNation.DeviceInterface.Devices
             }
         }
 
-        internal SmartScope(ISmartScopeInterface hwInterface) : base()
+        public SmartScope(ISmartScopeInterface hwInterface) : base()
         {
             this.hardwareInterface = hwInterface;
             this.SuspendViewportUpdates = false;
