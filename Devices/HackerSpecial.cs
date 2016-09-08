@@ -66,6 +66,11 @@ namespace LabNation.DeviceInterface.Devices
             return memories;
         }
 
+        public byte[] GetFpgaData()
+        {
+            return this.iface.GetData(64);
+        }
+
         public IHardwareInterface HardwareInterface { get { return this.iface; } }
     }
 }
