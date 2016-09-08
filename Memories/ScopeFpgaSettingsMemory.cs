@@ -16,7 +16,7 @@ namespace LabNation.DeviceInterface.Memories
         public ScopeFpgaSettingsMemory(ISmartScopeInterface hwInterface, byte I2cAddress) : base(hwInterface, I2cAddress)
         {
             foreach(REG reg in Enum.GetValues(typeof(REG)))
-                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
+                registers[(uint)reg] = new ByteRegister(this, (uint)reg, reg.ToString());
         }
 
         public ByteRegister this[REG r]
