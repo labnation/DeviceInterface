@@ -46,6 +46,24 @@ namespace LabNation.DeviceInterface.Memories
             return this;
         }
 
+        public ByteRegister ClearBit(int offset) { return this.SetBit(offset, false); }
+        public ByteRegister SetBit(int offset, bool set = true)
+        {
+            byte value = this.Read().GetByte();
+            if (set)
+            {
+                value |= (byte)(1 << offset);
+            } else {
+                value &= (byte)~(1 << offset);
+            }
+            this.Set(value);
+            return this;
+        }
+        public bool GetBit(int offset)
+        {
+            return (this.GetByte() & (byte)(1 << offset)) != 0;
+        }
+
         public override object Get() { return this.internalValue; }
 
         public byte GetByte() { return this.internalValue; }
