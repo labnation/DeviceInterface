@@ -74,28 +74,35 @@ namespace LabNation.DeviceInterface.Devices
         public void ConfigureAdc()
         {
             WriteAdcReg(0x0A, 0x5A); //SW reset
-            WriteAdcReg(0x00, 0x04);
-            WriteAdcReg(0x02, 0x00);
-            WriteAdcReg(0x06, 16);
-            WriteAdcReg(0x03, 56);
-            WriteAdcReg(0x04, 0x02);
-            WriteAdcReg(0x00, 0x03);
-            WriteAdcReg(0x01, 0x02);
+            WriteAdcReg(0x00, 0x04); //Complete power down
+            WriteAdcReg(0x02, 0x00); //Activeate DOR & DCLK
+            WriteAdcReg(0x06, 0x10); //Offset binary encoding
+            WriteAdcReg(0x03, 0x38); //Configure timing
+            WriteAdcReg(0x04, 0x02); //DATA 100 ohm termination
+            WriteAdcReg(0x00, 0x03); //Power on
+            WriteAdcReg(0x01, 0x02); //DDR data on bus
         }
 
-        const uint REG_SPI_ADDR = 1;
-        const uint REG_SPI_VAL = 2;
-        const uint REG_FLAGS = 5;
-        const byte REG_FLAGS_SPI_MASK = 0x01;
-        const uint ROM_SPI_VAL = 4;
+        public const uint REG_SPI_ADDR          = 1;
+        public const uint REG_SPI_VAL           = 2;
+        public const uint REG_CHA_GAIN          = 3;
+        public const uint REG_CHB_GAIN          = 4;
+        public const uint REG_CHA_YPOS          = 5;
+        public const uint REG_CHB_YPOS          = 6;
+
+        public const uint REG_FLAGS             = 7;
+        public const byte B_FLAGS_SPI_CMD       = 0;
+        public const byte B_FLAGS_CHA_AC_DC     = 1;
+        public const byte B_FLAGS_CHB_AC_DC     = 2;
+        public const uint ROM_SPI_VAL           = 4;
 
         public byte ReadAdcReg(uint address)
         {
             FpgaSettingsMemory[REG_SPI_ADDR].WriteImmediate((byte)(address + 128)); //for a read, MSB must be 1
 
             //next, trigger rising edge to initiate SPI comm
-            FpgaSettingsMemory[REG_FLAGS].WriteImmediate(0);
-            FpgaSettingsMemory[REG_FLAGS].WriteImmediate(REG_FLAGS_SPI_MASK);
+            FpgaSettingsMemory[REG_FLAGS].ClearBit(B_FLAGS_SPI_CMD).WriteImmediate();
+            FpgaSettingsMemory[REG_FLAGS].SetBit(B_FLAGS_SPI_CMD).WriteImmediate();
 
             //finally read acquired value
             return FpgaRom[ROM_SPI_VAL].Read().GetByte();
@@ -107,8 +114,8 @@ namespace LabNation.DeviceInterface.Devices
 
             FpgaSettingsMemory[REG_SPI_VAL].WriteImmediate(value);
             //next, trigger rising edge to initiate SPI comm
-            FpgaSettingsMemory[REG_FLAGS].WriteImmediate(0);
-            FpgaSettingsMemory[REG_FLAGS].WriteImmediate(REG_FLAGS_SPI_MASK);
+            FpgaSettingsMemory[REG_FLAGS].ClearBit(B_FLAGS_SPI_CMD).WriteImmediate();
+            FpgaSettingsMemory[REG_FLAGS].SetBit(B_FLAGS_SPI_CMD).WriteImmediate();
         }
 
         public IHardwareInterface HardwareInterface { get { return this.iface; } }
