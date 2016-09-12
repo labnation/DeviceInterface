@@ -77,7 +77,7 @@ namespace LabNation.DeviceInterface.Devices
                 throw new ScopeIOException("Failed to read FW");
 
             Logger.Info("Got firmware of length " + firmware.Length);
-            if (!SmartScopeFlashHelpers.FlashFpga(this.iface, firmware))
+            if (!FlashFPGA(firmware))
                 throw new ScopeIOException("failed to flash FPGA");
             
             Logger.Info("FPGA flashed...");
@@ -89,6 +89,11 @@ namespace LabNation.DeviceInterface.Devices
         public List<DeviceMemory> GetMemories()
         {
             return memories;
+        }
+
+        public bool FlashFPGA(byte[] firmware)
+        {
+            return SmartScopeFlashHelpers.FlashFpga(this.iface, firmware);
         }
 
         public byte[] GetFpgaData()
@@ -133,5 +138,4 @@ namespace LabNation.DeviceInterface.Devices
 
         public IHardwareInterface HardwareInterface { get { return this.iface; } }
     }
-
 }
