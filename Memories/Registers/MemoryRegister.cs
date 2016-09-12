@@ -20,7 +20,7 @@ namespace LabNation.DeviceInterface.Memories
     abstract class MemoryRegister
     {
         public DeviceMemory Memory { get; private set; }
-        public string Name { get; private set; }
+        public string Name { get; internal set; }
         public uint Address { get; private set; }
         
         private bool _dirty;

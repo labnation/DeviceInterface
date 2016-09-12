@@ -12,12 +12,16 @@ namespace LabNation.DeviceInterface.Memories
         private byte I2cAddress;
         private bool readOnly;
 
+        protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
+        public override Dictionary<uint, MemoryRegister> Registers { get { return this.registers; } }
+
         public ScopeFpgaI2cMemory(ISmartScopeInterface hwInterface, byte I2cAddress, int size = 0, bool readOnly = false)
         {
             if (I2cAddress != (I2cAddress & 0x7f))
                 throw new Exception(string.Format("I2c Address too large to be an I2C address: {0:X}", I2cAddress));
+            
             for(uint i =0; i < size; i++)
-                registers.Add(i, new ByteRegister(this, i, "Reg[" + i.ToString() + "]"));
+                Registers.Add(i, new ByteRegister(this, i, "Reg[" + i.ToString() + "]"));
             this.hwInterface = hwInterface;
             this.I2cAddress = I2cAddress;
             this.readOnly = readOnly;
@@ -27,8 +31,8 @@ namespace LabNation.DeviceInterface.Memories
         {
             byte[] data = null;
             hwInterface.GetControllerRegister(ScopeController.FPGA, ConvertAddress(address), 1, out data);
-            registers[address].Set(data[0]);
-            registers[address].Dirty = false;
+            Registers[address].Set(data[0]);
+            Registers[address].Dirty = false;
         }
 
         public override void Write(uint address)
@@ -37,7 +41,7 @@ namespace LabNation.DeviceInterface.Memories
 
             byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.FPGA, ConvertAddress(address), data);
-            registers[address].Dirty = false;
+            Registers[address].Dirty = false;
         }
 
         private uint ConvertAddress(uint addr)

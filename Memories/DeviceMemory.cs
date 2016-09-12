@@ -14,8 +14,7 @@ namespace LabNation.DeviceInterface.Memories
 #endif
     abstract class DeviceMemory
     {
-        protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
-        public Dictionary<uint, MemoryRegister> Registers { get { return registers; } }
+        abstract public Dictionary<uint, MemoryRegister> Registers { get; }
 
         abstract public void Write(uint address);
         abstract public void Read(uint address);
@@ -25,7 +24,7 @@ namespace LabNation.DeviceInterface.Memories
         /// </summary>
         public List<MemoryRegister> Commit()
         {
-            List<MemoryRegister> dirtyRegisters = registers.Values.Where(x => x.Dirty).ToList();
+            List<MemoryRegister> dirtyRegisters = Registers.Values.Where(x => x.Dirty).ToList();
             if (dirtyRegisters.Count == 0)
                 return dirtyRegisters;
 
@@ -40,7 +39,7 @@ namespace LabNation.DeviceInterface.Memories
         
         public MemoryRegister this[uint address]
         {
-            get { return registers[address]; }
+            get { return Registers[address]; }
         }
     }
 }

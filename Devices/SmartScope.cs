@@ -40,7 +40,7 @@ namespace LabNation.DeviceInterface.Devices
         private const byte FPGA_I2C_ADDRESS_ROM = 0x0D;
 
 #if DEBUG 
-        public Memories.ScopeFpgaSettingsMemory FpgaSettingsMemory { get; private set; }
+        public Memories.ByteMemoryEnum<REG> FpgaSettingsMemory { get; private set; }
         public Memories.ScopeFpgaRom FpgaRom { get; private set; }
         public Memories.ScopeStrobeMemory StrobeMemory { get; private set; }
         public Memories.MAX19506Memory AdcMemory { get; private set; }
@@ -291,7 +291,7 @@ namespace LabNation.DeviceInterface.Devices
             memories.Clear();
             //Create memories
             PicMemory = new Memories.ScopePicRegisterMemory(hardwareInterface);
-            FpgaSettingsMemory = new Memories.ScopeFpgaSettingsMemory(hardwareInterface, FPGA_I2C_ADDRESS_SETTINGS);
+            FpgaSettingsMemory = new Memories.ByteMemoryEnum<REG>(new ScopeFpgaI2cMemory(hardwareInterface, FPGA_I2C_ADDRESS_SETTINGS));
             FpgaRom = new Memories.ScopeFpgaRom(hardwareInterface, FPGA_I2C_ADDRESS_ROM);
             StrobeMemory = new Memories.ScopeStrobeMemory(FpgaSettingsMemory, FpgaRom);
             AdcMemory = new Memories.MAX19506Memory(FpgaSettingsMemory, StrobeMemory, FpgaRom);

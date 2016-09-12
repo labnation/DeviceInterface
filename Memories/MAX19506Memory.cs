@@ -29,18 +29,21 @@ namespace LabNation.DeviceInterface.Memories
 #endif
     class MAX19506Memory : ByteMemory
     {
-        private ScopeFpgaSettingsMemory fpgaSettings;
+        private ByteMemoryEnum<REG> fpgaSettings;
         private ScopeStrobeMemory strobeMemory;
         private ScopeFpgaRom fpgaRom;
 
-        internal MAX19506Memory(ScopeFpgaSettingsMemory fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
+        protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
+        public override Dictionary<uint, MemoryRegister> Registers { get { return this.registers; } }
+
+        internal MAX19506Memory(ByteMemoryEnum<REG> fpgaMemory, ScopeStrobeMemory strobeMemory, ScopeFpgaRom fpgaRom)
         {
             this.fpgaSettings = fpgaMemory;
             this.strobeMemory = strobeMemory;
             this.fpgaRom = fpgaRom;
 
             foreach (MAX19506 reg in Enum.GetValues(typeof(MAX19506)))
-                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
+                Registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
         public override void Read(uint address)
@@ -53,8 +56,8 @@ namespace LabNation.DeviceInterface.Memories
 
             //finally read acquired value
             int acquiredVal = fpgaRom[ROM.SPI_RECEIVED_VALUE].Read().GetByte();
-            registers[address].Set(acquiredVal);
-            registers[address].Dirty = false;
+            Registers[address].Set(acquiredVal);
+            Registers[address].Dirty = false;
         }
 
         public override void Write(uint address)
@@ -69,7 +72,7 @@ namespace LabNation.DeviceInterface.Memories
             //finally, trigger rising edge
             strobeMemory[STR.INIT_SPI_TRANSFER].WriteImmediate(false);
             strobeMemory[STR.INIT_SPI_TRANSFER].WriteImmediate(true);
-            registers[address].Dirty = false;
+            Registers[address].Dirty = false;
         }
 
         public ByteRegister this[MAX19506 r]

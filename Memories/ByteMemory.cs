@@ -15,8 +15,8 @@ namespace LabNation.DeviceInterface.Memories
     {
         public new ByteRegister this[uint address]
         {
-            get { return (ByteRegister)registers[address]; }
-            set { ((ByteRegister)registers[address]).Set(value); }
+            get { return (ByteRegister)Registers[address]; }
+            set { ((ByteRegister)Registers[address]).Set(value); }
         }
     }
 }

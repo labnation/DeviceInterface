@@ -25,12 +25,15 @@ namespace LabNation.DeviceInterface.Memories
     {
         private ISmartScopeInterface hwInterface;
 
+        protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
+        public override Dictionary<uint, MemoryRegister> Registers { get { return this.registers; } }
+
         public ScopePicRegisterMemory(ISmartScopeInterface hwInterface)
         {
             this.hwInterface = hwInterface;
-                        
+
             foreach (PIC reg in Enum.GetValues(typeof(PIC)))
-                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
+                Registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
         }
 
         public override void Read(uint address)
@@ -40,8 +43,8 @@ namespace LabNation.DeviceInterface.Memories
 
             for (uint i = 0; i < data.Length; i++)
             {
-                registers[address + i].Set(data[i]);
-                registers[address + i].Dirty = false;
+                Registers[address + i].Set(data[i]);
+                Registers[address + i].Dirty = false;
             }
         }
 
@@ -49,7 +52,7 @@ namespace LabNation.DeviceInterface.Memories
         {
             byte[] data = new byte[] { this[address].GetByte() };
             hwInterface.SetControllerRegister(ScopeController.PIC, address, data);
-            registers[address].Dirty = false;
+            Registers[address].Dirty = false;
         }
         public ByteRegister this[PIC r]
         {

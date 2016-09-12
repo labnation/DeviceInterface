@@ -17,11 +17,11 @@ namespace LabNation.DeviceInterface.Memories
         public ScopeFpgaRom(ISmartScopeInterface hwInterface, byte I2cAddress) : base(hwInterface, I2cAddress, 0, true)
         {
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
-                registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
+                Registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
 
             int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
             for(uint i = (uint)ROM.STROBES + 1; i < (uint)ROM.STROBES + lastStrobe / 8 + 1; i++)
-                registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
+                Registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
         }
 
         public ByteRegister this[ROM r]

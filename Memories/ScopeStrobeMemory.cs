@@ -12,16 +12,19 @@ namespace LabNation.DeviceInterface.Memories
 #endif
     class ScopeStrobeMemory : DeviceMemory
     {
-        private ScopeFpgaSettingsMemory writeMemory;
+        private ByteMemoryEnum<REG> writeMemory;
         private ScopeFpgaRom readMemory;
 
-        public ScopeStrobeMemory(ScopeFpgaSettingsMemory writeMemory, ScopeFpgaRom readMemory)
+        protected Dictionary<uint, MemoryRegister> registers = new Dictionary<uint, MemoryRegister>();
+        public override Dictionary<uint, MemoryRegister> Registers { get { return this.registers; } }
+
+        public ScopeStrobeMemory(ByteMemoryEnum<REG> writeMemory, ScopeFpgaRom readMemory)
         {
             this.writeMemory = writeMemory;
             this.readMemory = readMemory;
 
             foreach (STR str in Enum.GetValues(typeof(STR)))
-                registers.Add((uint)str, new BoolRegister(this, (uint)str, str.ToString()));
+                Registers.Add((uint)str, new BoolRegister(this, (uint)str, str.ToString()));
         }
 
         private uint StrobeToRomAddress(uint strobe)
@@ -37,8 +40,8 @@ namespace LabNation.DeviceInterface.Memories
 
             uint romAddress = StrobeToRomAddress(address);
             int offset = (int)(address % 8);
-            registers[address].Set( ((readMemory[romAddress].GetByte() >> offset) & 0x01) == 0x01);
-            registers[address].Dirty = false;
+            Registers[address].Set( ((readMemory[romAddress].GetByte() >> offset) & 0x01) == 0x01);
+            Registers[address].Dirty = false;
         }
 
         public override void Write(uint address)
@@ -52,13 +55,13 @@ namespace LabNation.DeviceInterface.Memories
 
             //now put this in the correct FPGA register
             writeMemory[REG.STROBE_UPDATE].WriteImmediate(valToSend);
-            registers[address].Dirty = false;
+            Registers[address].Dirty = false;
         }
 
         new public BoolRegister this[uint address]
         {
-            get { return (BoolRegister)registers[address]; }
-            set { ((BoolRegister)registers[address]).Set(value); }
+            get { return (BoolRegister)Registers[address]; }
+            set { ((BoolRegister)Registers[address]).Set(value); }
         }
 
         public BoolRegister this[STR r]
