@@ -320,8 +320,8 @@ namespace LabNation.DeviceInterface.Devices
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(4);
             AdcMemory[MAX19506.OUTPUT_PWR_MNGMNT].Set(0);
             AdcMemory[MAX19506.FORMAT_PATTERN].Set(16);
-            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(56);
-            AdcMemory[MAX19506.CHA_TERMINATION].Set(2);
+            AdcMemory[MAX19506.DATA_CLK_TIMING].Set(24);
+            AdcMemory[MAX19506.CHA_TERMINATION].Set(0);
             AdcMemory[MAX19506.POWER_MANAGEMENT].Set(3);
             AdcMemory[MAX19506.OUTPUT_FORMAT].Set(0x02); //DDR on chA
         }
