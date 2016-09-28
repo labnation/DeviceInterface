@@ -5,12 +5,7 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    class ScopeStrobeMemory : DeviceMemory
+	public class ScopeStrobeMemory : DeviceMemory
     {
         private ByteMemoryEnum<REG> writeMemory;
         private ScopeFpgaRom readMemory;

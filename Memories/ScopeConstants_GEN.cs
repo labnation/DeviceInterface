@@ -5,12 +5,7 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-	public
-#else
-	internal
-#endif
-	 enum REG
+	public enum REG
     {
 		STROBE_UPDATE = 0,
 		SPI_ADDRESS = 1,
@@ -53,12 +48,7 @@ namespace LabNation.DeviceInterface.Memories
 		GENERATOR_SAMPLES_B1 = 38,
     }
 
-#if DEBUG
-	public
-#else
-	internal
-#endif
-	 enum STR
+	public enum STR
     {
 		GLOBAL_RESET = 0,
 		INIT_SPI_TRANSFER = 1,
@@ -84,12 +74,7 @@ namespace LabNation.DeviceInterface.Memories
 		LA_CHANNEL = 21,
     }
 
-#if DEBUG
-	public
-#else
-	internal
-#endif
-	 enum ROM
+	public enum ROM
     {
 		FW_GIT0 = 0,
 		FW_GIT1 = 1,

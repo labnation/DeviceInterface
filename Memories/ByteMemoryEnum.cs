@@ -6,12 +6,7 @@ using LabNation.DeviceInterface.Hardware;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    class ByteMemoryEnum<T> : ByteMemory
+	public class ByteMemoryEnum<T> : ByteMemory
     {
         private ByteMemory memory = null;
         public override Dictionary<uint, MemoryRegister> Registers { get { return memory.Registers; } }

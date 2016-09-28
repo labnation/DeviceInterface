@@ -5,12 +5,7 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    enum MAX19506
+	public enum MAX19506
     {
         POWER_MANAGEMENT = 0,
         OUTPUT_FORMAT = 1,
@@ -22,12 +17,7 @@ namespace LabNation.DeviceInterface.Memories
         COMMON_MODE = 8,
         SOFT_RESET = 10,
     }
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    class MAX19506Memory : ByteMemory
+	public class MAX19506Memory : ByteMemory
     {
         private ByteMemoryEnum<REG> fpgaSettings;
         private ScopeStrobeMemory strobeMemory;

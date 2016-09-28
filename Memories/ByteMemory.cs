@@ -6,12 +6,7 @@ using LabNation.DeviceInterface.Hardware;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-        public
-#else
-    internal
-#endif
-    abstract class ByteMemory : DeviceMemory
+    public abstract class  ByteMemory : DeviceMemory
     {
         public new ByteRegister this[uint address]
         {

@@ -39,19 +39,11 @@ namespace LabNation.DeviceInterface.Devices
         private const byte FPGA_I2C_ADDRESS_SETTINGS = 0x0C;
         private const byte FPGA_I2C_ADDRESS_ROM = 0x0D;
 
-#if DEBUG 
         public Memories.ByteMemoryEnum<REG> FpgaSettingsMemory { get; private set; }
         public Memories.ScopeFpgaRom FpgaRom { get; private set; }
         public Memories.ScopeStrobeMemory StrobeMemory { get; private set; }
         public Memories.MAX19506Memory AdcMemory { get; private set; }
         public Memories.ScopePicRegisterMemory PicMemory { get; private set; }
-#else
-        private Memories.ScopeFpgaSettingsMemory FpgaSettingsMemory;
-        private Memories.ScopeFpgaRom FpgaRom;
-        private Memories.ScopeStrobeMemory StrobeMemory;
-        private Memories.MAX19506Memory AdcMemory;
-        private Memories.ScopePicRegisterMemory PicMemory;
-#endif
 
         #if ANDROID
         Context context;

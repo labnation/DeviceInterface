@@ -6,22 +6,12 @@ using LabNation.DeviceInterface.Hardware;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    enum PIC
+	public enum PIC
     {
         FORCE_STREAMING = 0,
     }
 
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    class ScopePicRegisterMemory : ByteMemory
+	public class ScopePicRegisterMemory : ByteMemory
     {
         private ISmartScopeInterface hwInterface;
 

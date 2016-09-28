@@ -7,12 +7,7 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    class ScopeFpgaRom : ScopeFpgaI2cMemory
+	public class ScopeFpgaRom : ScopeFpgaI2cMemory
     {
         public ScopeFpgaRom(ISmartScopeInterface hwInterface, byte I2cAddress) : base(hwInterface, I2cAddress, 0, true)
         {

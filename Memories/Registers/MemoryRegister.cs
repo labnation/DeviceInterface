@@ -5,19 +5,9 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    delegate void RegisterValueChangedHandler(object o, EventArgs e);
+	public delegate void RegisterValueChangedHandler(object o, EventArgs e);
 
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    abstract class MemoryRegister
+	public abstract class MemoryRegister
     {
         public DeviceMemory Memory { get; private set; }
         public string Name { get; internal set; }

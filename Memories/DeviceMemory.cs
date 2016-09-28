@@ -7,12 +7,7 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-        public
-#else
-        internal
-#endif
-    abstract class DeviceMemory
+	public abstract class DeviceMemory
     {
         abstract public Dictionary<uint, MemoryRegister> Registers { get; }
 

@@ -5,12 +5,7 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Memories
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif    
-    class ByteRegister : MemoryRegister
+	public class ByteRegister : MemoryRegister
     {
         private byte internalValue
         {
