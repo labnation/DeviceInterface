@@ -57,7 +57,7 @@ null, null) { }
 
         public DeviceManager(
 #if ANDROID
-            Context context
+            Context context,
 #endif
             DeviceConnectHandler deviceConnectHandler
 )
