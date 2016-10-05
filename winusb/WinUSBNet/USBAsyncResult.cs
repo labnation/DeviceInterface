@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading;
 namespace MadWizard.WinUSBNet
 {
-    internal class USBAsyncResult : IAsyncResult, IDisposable
+    public class USBAsyncResult : IAsyncResult, IDisposable
     {
         private object _stateObject;
         private AsyncCallback _userCallback;
