@@ -14,7 +14,11 @@ namespace LabNation.DeviceInterface.Memories
             foreach (ROM reg in Enum.GetValues(typeof(ROM)))
                 Registers.Add((uint)reg, new ByteRegister(this, (uint)reg, reg.ToString()));
 
-            int lastStrobe = (int)Enum.GetValues(typeof(STR)).Cast<STR>().Max();
+			int lastStrobe = 0;
+			foreach(STR s in Enum.GetValues(typeof(STR)))
+				if ((int)s > lastStrobe)
+					lastStrobe = (int)s;
+			
             for(uint i = (uint)ROM.STROBES + 1; i < (uint)ROM.STROBES + lastStrobe / 8 + 1; i++)
                 Registers.Add(i, new ByteRegister(this, i, "STROBES " + (i - (int)ROM.STROBES)));
         }
