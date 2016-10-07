@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
-using Zeroconf;
 //using System.Threading.Tasks;
 using LabNation.DeviceInterface.Net;
 
