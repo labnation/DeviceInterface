@@ -1,0 +1,8 @@
+/obj/
+/bin/
+/*.suo
+/.DS_Store
+*.speccache
+*.sln
+*.csproj
+/packages/
