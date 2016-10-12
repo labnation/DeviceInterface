@@ -44,8 +44,6 @@ namespace LabNation.DeviceInterface.Devices
             const int gainCalibrationCoefficients = 3;
             const int frequencyResponseMagnitudes = 16;
             const int frequencyResponsePhases = 10;
-            //Number of possible multiplier/divider combinations
-            int modes = validMultipliers.Length * validDividers.Length;
             public UInt32 plugCount { get; private set; }
             public byte AdcTimingValue { get; internal set; }
             public List<GainCalibration> gainCalibration { get; private set; }

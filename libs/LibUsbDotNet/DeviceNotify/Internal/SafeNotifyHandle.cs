@@ -36,7 +36,6 @@ namespace LibUsbDotNet.DeviceNotify.Internal
         {
             if (handle != IntPtr.Zero)
             {
-                bool bSuccess = WindowsDeviceNotifier.UnregisterDeviceNotification(handle);
                 handle = IntPtr.Zero;
             }
             return true;

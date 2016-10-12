@@ -56,10 +56,6 @@ namespace LabNation.DeviceInterface
             //stop scope streaming
             scope.DataSourceScope.Stop();
 
-            //Prepare scope for test
-            if (scope is SmartScope)
-                (scope as SmartScope).SetDisableVoltageConversion(false);
-
             //set to timerange wide enough to capture 50Hz, but slightly off so smallest chance of aliasing
             const float initialTimeRange = 0.0277f;
             scope.AcquisitionMode = AcquisitionMode.AUTO;

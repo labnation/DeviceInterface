@@ -40,7 +40,6 @@ namespace LabNation.DeviceInterface.Hardware
                     this.port == sl.port &&
                     this.name == sl.name;
             }
-
         }
 
         Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> createdInterfaces = new Dictionary<ServiceLocation, SmartScopeInterfaceEthernet>();

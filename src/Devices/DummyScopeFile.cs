@@ -13,7 +13,6 @@ namespace LabNation.DeviceInterface.Devices
         private static Dictionary<AnalogChannel, float[]> readChannel = null;
         private static double[] readTime = null;
         private static double samplePeriodOriginal = 0;
-        private static int sequenceLength = 0;
 
         public static float[] GetWaveFromFile(AnalogChannel channel, uint waveLength, double samplePeriod, double timeOffset)
         {
@@ -32,7 +31,6 @@ namespace LabNation.DeviceInterface.Devices
                 };
                 readTime = matfileReader.Variables["time"].data as double[];
                 samplePeriodOriginal = readTime[1] - readTime[0];
-                sequenceLength = readChannel[AnalogChannel.ChA].Length;
                 matfileReader.Close();
             }
 
@@ -42,8 +40,6 @@ namespace LabNation.DeviceInterface.Devices
             uint decimation = (uint)Math.Ceiling(samplePeriod / samplePeriodOriginal);
             float[] wave = Utils.DecimateArray(readChannel[channel], decimation);
             
-            int sampleOffset = (int)Math.Ceiling(timeOffset / samplePeriodOriginal % sequenceLength);
-
             int requiredRepetitions = (int)Math.Ceiling(waveLength / (double)wave.Length);
             if (requiredRepetitions > 1)
             { 

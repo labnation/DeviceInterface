@@ -76,7 +76,6 @@ namespace LabNation.DeviceInterface.Hardware
         private UsbEndpointReader commandReadEndpoint;
         private UsbEndpointReader dataEndpoint;
 
-        private object registerLock = new object();
         private string serial;
         public string Serial { get { return serial; } } 
 

@@ -565,6 +565,7 @@ namespace LabNation.Common
         /// <param name="number">The number to scale</param>
         /// <param name="precision">The precision to which to round the number</param>
         /// <param name="significance">The number of significant figure in the result</param>
+		/// <param name="thousand">Decimal value of a kilo (e.g. 1000 or 1024)</param>
         /// <returns></returns>
         static public string siScale(double number, double precision, int significance, int thousand = 1000)
         {

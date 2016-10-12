@@ -100,7 +100,6 @@ namespace LabNation.DeviceInterface.Devices
 
         public static float[] WaveMultiCosine(uint awgPoints, double awgSamplePeriod, double timeOffset, double[] frequencies, double amplitude, double phase)
         {
-            List<float[]> components = new List<float[]>();
             float scaler = frequencies.Length;
             float[] result = new float[awgPoints];
             Func<float, float, float> Sum = (x, y) => x + y;

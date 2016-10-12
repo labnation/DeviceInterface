@@ -191,7 +191,7 @@ namespace LabNation.DeviceInterface.Net
                 }
                 catch (Exception e)
                 {
-                    Logger.Error("Socket aborted");
+					Logger.Error("Socket aborted {0:s}", e.Message);
                     return;
                 }
 
@@ -212,8 +212,7 @@ namespace LabNation.DeviceInterface.Net
                                 DateTime now = DateTime.Now;
                                 StringBuilder sb = new StringBuilder();
                                 sb.Append(now.Second + "-" + now.Millisecond + " Command: ");
-                                if (m.command != null)
-                                    sb.Append(m.command.ToString());
+                                sb.Append(m.command.ToString());
                                 if (m.data != null)
                                 {
                                     sb.Append("  Data: ");

@@ -48,7 +48,6 @@ namespace LabNation.DeviceInterface.Devices
 #endif
         static byte yOffsetMin = 10;
 
-        float triggerThreshold = 0f;
         int viewPortSamples = 2048;
 
         public bool ChunkyAcquisitions { get; private set; }
@@ -144,7 +143,6 @@ namespace LabNation.DeviceInterface.Devices
             
             //Let ADC output of 127 be the zero point of the Yoffset
             double[] c = channelSettings[channel].coefficients;
-            int offsetInt = (int)(-(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1]);
 
             FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(ProbeScaleHostToScope(channel, offset) + c[2] + c[0] * 127) / c[1])));
             yOffset[channel] = GetYOffset(channel);
@@ -274,16 +272,6 @@ namespace LabNation.DeviceInterface.Devices
             FpgaSettingsMemory[r].Set(offset);
         }
 #endif
-
-        private bool disableVoltageConversion = false;
-        /// <summary>
-        /// Disable the voltage conversion to have GetVoltages return the raw bytes as sample values (cast to float though)
-        /// </summary>
-        /// <param name="disable"></param>
-        public void SetDisableVoltageConversion(bool disable)
-        {
-            this.disableVoltageConversion = disable;
-        }
 
         public void SetCoupling(AnalogChannel channel, Coupling coupling)
         {

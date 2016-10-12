@@ -14,9 +14,6 @@ namespace LabNation.DeviceInterface.DataSources
     public class DataSource
     {
         private IScope scope;
-#if DEBUG
-        public event NewDataAvailableHandler BeforeNewDataAvailable;
-#endif
         public event NewDataAvailableHandler OnNewDataAvailable;
         public DataPackageScope LatestDataPackage { get; protected set; }
 

@@ -639,7 +639,6 @@ namespace LabNation.DeviceInterface.Devices {
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
 						triggerTimeout = SamplePeriodCurrent * acquisitionDepthCurrent * 1.0; //Give up after twice the acqbuffer timespan
 
-                    ///detect whether this section contains a trigger
                     //detect digital trigger
                     if (logicAnalyserEnabledCurrent && this.triggerValue.mode == TriggerMode.Digital)
                     {
@@ -703,7 +702,7 @@ namespace LabNation.DeviceInterface.Devices {
                 viewportUpdate = false;
             }
 
-            if (acquisitionBufferAnalog.Count == null)
+            if (acquisitionBufferAnalog.Count == 0)
                 return null;
 
             //Decrease the number of samples till viewport sample period is larger than 

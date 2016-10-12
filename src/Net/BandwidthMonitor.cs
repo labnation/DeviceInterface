@@ -15,17 +15,10 @@ namespace LabNation.DeviceInterface.Net
         LinkedList<KeyValuePair<DateTime, int>> linkedList = new LinkedList<KeyValuePair<DateTime, int>>();
         TimeSpan oneSecond = new TimeSpan(0, 0, 0, 1, 0);
         string lastCalc = "0";
-        NumberFormatInfo numberFormat;
 
         internal BandwidthMonitor(TimeSpan updateInterval)
         {
             this.updateInterval = updateInterval;
-
-            numberFormat = new NumberFormatInfo
-            {
-                NumberDecimalSeparator = ",",
-                NumberGroupSeparator = "."
-            };
         }
 
         internal bool Update(int bytes, out string value)
