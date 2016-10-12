@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Module>
+  <Name>DeviceInterface</Name>
+  <DefaultAction>Generate</DefaultAction>
+  <DefaultLinuxPlatforms>Linux</DefaultLinuxPlatforms>
+  <DefaultMacOSPlatforms>MacOS,iOS,Android</DefaultMacOSPlatforms>
+  <DefaultWindowsPlatforms>Windows</DefaultWindowsPlatforms>
+  <DefaultStartupProject>console-demo</DefaultStartupProject>
+  <SupportedPlatforms>Android,Linux,Windows,WindowsGL,iOS,MacOS</SupportedPlatforms>
+  <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
+</Module>

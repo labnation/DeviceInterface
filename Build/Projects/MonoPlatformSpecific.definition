@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ExternalProject Name="CommonMonoPlatformSpecific">
+<ExternalProject Name="MonoPlatformSpecific">
   <Platform Type="Android">
     <Reference Include="Mono.Android"/>
   </Platform>

@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Name="LabNation.SmartScopeServer" Path="./SmartScopeServer" Type="Console" Platforms="Linux,MacOS,Windows,WindowsGL">
+  <Properties>
+    <FrameworkVersions>
+      <Platform Name="Windows">
+        <Version>v4.5</Version>
+      </Platform>
+      <Platform Name="WindowsGL">
+        <Version>v4.5</Version>
+      </Platform>
+      <Platform Name="MacOS">
+        <Version>v4.5</Version>
+      </Platform>
+      <Platform Name="Linux">
+        <Version>v4.5</Version>
+      </Platform>
+      </FrameworkVersions>
+    <RootNamespace>LabNation.SmartScopeServer</RootNamespace>
+    <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
+    <CustomDefinitions>
+      <Platform Name="Linux">TRACE;LINUX</Platform>
+      <Platform Name="MacOS">MONOMAC</Platform>
+      <Platform Name="Windows">TRACE;WINDOWS;WINUSB</Platform>
+	  <Platform Name="WindowsGL">TRACE;WINDOWS;WINUSB</Platform>
+    </CustomDefinitions>
+	<NoWarn>1591</NoWarn>
+  </Properties>
+  <References>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="LabNation.Common" />
+    <Reference Include="LabNation.DeviceInterface" />
+    <Reference Include="WinFormReferences" />
+  </References>
+  <Files>
+    <Compile Include="Program.cs" />
+    <None Include="Mono.Zeroconf.Providers.Bonjour.dll.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>MacOS</Platforms>
+    </None>
+    <None Include="../Mono.Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/bin/Mono.Zeroconf.Providers.AvahiDBus.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>Linux,MacOS</Platforms>
+    </None>
+    <None Include="../Mono.Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/bin/Mono.Zeroconf.Providers.Bonjour.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>MacOS,Windows</Platforms>
+    </None>
+  </Files>
+</Project>

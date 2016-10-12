@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="LabNation.Common" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
+<Project Name="LabNation.Common" Path="./common/" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
@@ -27,7 +27,7 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="CommonMonoPlatformSpecific" />
+    <Reference Include="MonoPlatformSpecific" />
   </References>
   <Files>
     <Compile Include="FileLogger.cs" />

@@ -1,8 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Module>
-  <Name>LabNation.Common</Name>
-  <DefaultAction>Generate</DefaultAction>
-  <DefaultWindowsPlatforms>Android,Windows,iOS</DefaultWindowsPlatforms>
-  <SupportedPlatforms>Android,Linux,Windows,WindowsGL,iOS,MacOS</SupportedPlatforms>
-  <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
-</Module>
