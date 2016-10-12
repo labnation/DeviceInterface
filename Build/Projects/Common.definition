@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="LabNation.Common" Path="libs/common/" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
+<Project Name="Common" Path="libs/common/" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">

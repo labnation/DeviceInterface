@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="LabNation.DeviceInterface" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
+<Project Name="DeviceInterface" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
@@ -40,7 +40,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="MonoPlatformSpecific" />
-    <Reference Include="LabNation.Common" />
+    <Reference Include="Common" />
     <Reference Include="MatlabFileIO" />
     <Reference Include="WinFormReferences" />
     <Reference Include="LibUsbDotNet" />

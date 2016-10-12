@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="LabNation.SmartScopeServer" Path="src/SmartScopeServer" Type="Console" Platforms="Linux,MacOS,Windows,WindowsGL">
+<Project Name="SmartScopeServer" Path="examples/SmartScopeServer" Type="Console" Platforms="Linux,MacOS,Windows,WindowsGL">
   <Properties>
     <FrameworkVersions>
       <Platform Name="Windows">
@@ -33,8 +33,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="LabNation.Common" />
-    <Reference Include="LabNation.DeviceInterface" />
+    <Reference Include="Common" />
+    <Reference Include="DeviceInterface" />
     <Reference Include="WinFormReferences" />
   </References>
   <Files>
