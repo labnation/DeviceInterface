@@ -47,106 +47,108 @@
     <Reference Include="Mono.Zeroconf" />
   </References>
   <Files>
-    <Compile Include="DataSources\DataPackageScope.cs" />
-    <Compile Include="DataSources\DataSourceScope.cs" />
-    <Compile Include="Memories\ByteMemory.cs" />
-    <Compile Include="Memories\DeviceMemory.cs" />
-    <Compile Include="Memories\MAX19506Memory.cs" />
-    <Compile Include="Memories\Registers\BoolRegister.cs" />
-    <Compile Include="Memories\Registers\ByteRegister.cs" />
-    <Compile Include="Memories\Registers\MemoryRegister.cs" />
-    <Compile Include="Memories\ScopeConstants_GEN.cs">
+    <Compile Include="src\DataSources\DataPackageScope.cs" />
+    <Compile Include="src\DataSources\DataSourceScope.cs" />
+    <Compile Include="src\Memories\ByteMemory.cs" />
+    <Compile Include="src\Memories\DeviceMemory.cs" />
+    <Compile Include="src\Memories\MAX19506Memory.cs" />
+    <Compile Include="src\Memories\Registers\BoolRegister.cs" />
+    <Compile Include="src\Memories\Registers\ByteRegister.cs" />
+    <Compile Include="src\Memories\Registers\MemoryRegister.cs" />
+    <Compile Include="src\Memories\ScopeConstants_GEN.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ScopeConstants_GEN.tt</DependentUpon>
     </Compile>
-    <Compile Include="Memories\ScopeFpgaRom.cs" />
-    <Compile Include="Memories\ScopeFpgaI2cMemory.cs" />
-    <Compile Include="Memories\ByteMemoryEnum.cs" />
-    <Compile Include="Memories\ScopePicRegisterMemory.cs" />
-    <Compile Include="Memories\ScopeStrobeMemory.cs" />
-	<Compile Include="Tools.cs" />
-	<Compile Include="Devices\DeviceManager.cs" />
-    <Compile Include="Devices\IScope.cs" />
-	<Compile Include="Devices\IDevice.cs" />
-	<Compile Include="Devices\IWaveGenerator.cs" />
-    <Compile Include="Devices\ScopeChannel.cs" />
-    <Compile Include="Devices\DummyScope.cs" />
-    <Compile Include="Devices\DummyScopeFile.cs" />
-    <Compile Include="Devices\DummyScopeWaves.cs" />
-    <Compile Include="Devices\HackerSpecial.cs" />
-    <Compile Include="Devices\SmartScope.cs" />
-    <Compile Include="Devices\SmartScopeHeader.cs" />
-    <Compile Include="Devices\SmartScopeRom.cs" />
-    <Compile Include="Devices\SmartScopeSettings.cs" />
-	<Compile Include="Devices\SmartScopeRegisterGroups.cs" />
-	<Compile Include="Devices\SmartScopeAwg.cs" />
-    <Compile Include="Hardware\InterfaceManager.cs" />
-    <Compile Include="Hardware\InterfaceManagerZeroConf.cs"/>
-    <Compile Include="Hardware\InterfaceManagerLibUsb.cs">
+    <Compile Include="src\Memories\ScopeFpgaRom.cs" />
+    <Compile Include="src\Memories\ScopeFpgaI2cMemory.cs" />
+    <Compile Include="src\Memories\ByteMemoryEnum.cs" />
+    <Compile Include="src\Memories\ScopePicRegisterMemory.cs" />
+    <Compile Include="src\Memories\ScopeStrobeMemory.cs" />
+	<Compile Include="src\Tools.cs" />
+	<Compile Include="src\Devices\DeviceManager.cs" />
+    <Compile Include="src\Devices\IScope.cs" />
+	<Compile Include="src\Devices\IDevice.cs" />
+	<Compile Include="src\Devices\IWaveGenerator.cs" />
+    <Compile Include="src\Devices\ScopeChannel.cs" />
+    <Compile Include="src\Devices\DummyScope.cs" />
+    <Compile Include="src\Devices\DummyScopeFile.cs" />
+    <Compile Include="src\Devices\DummyScopeWaves.cs" />
+    <Compile Include="src\Devices\HackerSpecial.cs" />
+    <Compile Include="src\Devices\SmartScope.cs" />
+    <Compile Include="src\Devices\SmartScopeHeader.cs" />
+    <Compile Include="src\Devices\SmartScopeRom.cs" />
+    <Compile Include="src\Devices\SmartScopeSettings.cs" />
+	<Compile Include="src\Devices\SmartScopeRegisterGroups.cs" />
+	<Compile Include="src\Devices\SmartScopeAwg.cs" />
+    <Compile Include="src\Hardware\InterfaceManager.cs" />
+    <Compile Include="src\Hardware\InterfaceManagerZeroConf.cs"/>
+    <Compile Include="src\Hardware\InterfaceManagerLibUsb.cs">
       <Platforms>Linux,MacOS</Platforms>
     </Compile>
-    <Compile Include="Hardware\InterfaceManagerWinUsb.cs">
+    <Compile Include="src\Hardware\InterfaceManagerWinUsb.cs">
       <Platforms>Windows,WindowsGL</Platforms>
     </Compile>
-    <Compile Include="Hardware\InterfaceManagerXamarin.cs">
+    <Compile Include="src\Hardware\InterfaceManagerXamarin.cs">
       <Platforms>Android</Platforms>
     </Compile>
     
-    <Compile Include="Hardware\IHardwareInterface.cs" />
-    <Compile Include="Hardware\DummyInterface.cs" />
+    <Compile Include="src\Hardware\IHardwareInterface.cs" />
+    <Compile Include="src\Hardware\DummyInterface.cs" />
     
-    <Compile Include="Hardware\ISmartScopeInterface.cs" />
-    <Compile Include="Hardware\ISmartScopeInterfaceUsb.cs" />
+    <Compile Include="src\Hardware\ISmartScopeInterface.cs" />
+    <Compile Include="src\Hardware\ISmartScopeInterfaceUsb.cs" />
 
-    <Compile Include="Hardware\SmartScopeFlashHelpers.cs" />
-    <Compile Include="Hardware\SmartScopeInterfaceHelpers.cs" />
-    <Compile Include="Hardware\SmartScopeInterfaceEthernet.cs"/>
+    <Compile Include="src\Hardware\SmartScopeFlashHelpers.cs" />
+    <Compile Include="src\Hardware\SmartScopeInterfaceHelpers.cs" />
+    <Compile Include="src\Hardware\SmartScopeInterfaceEthernet.cs"/>
     
-    <Compile Include="Hardware\SmartScopeInterfaceLibUsb.cs">
+    <Compile Include="src\Hardware\SmartScopeInterfaceLibUsb.cs">
       <Platforms>Linux,MacOS</Platforms>
     </Compile>
-    <Compile Include="Hardware\SmartScopeInterfaceWinUsb.cs">
+    <Compile Include="src\Hardware\SmartScopeInterfaceWinUsb.cs">
       <Platforms>Windows,WindowsGL</Platforms>
     </Compile>
-    <Compile Include="Hardware\SmartScopeInterfaceXamarin.cs">
+    <Compile Include="src\Hardware\SmartScopeInterfaceXamarin.cs">
       <Platforms>Android</Platforms>
     </Compile>
     
-    <Compile Include="Net\BandwidthMonitor.cs">
+    <Compile Include="src\Net\BandwidthMonitor.cs">
       <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
     </Compile>
-    <Compile Include="Net\Constants.cs"/>
-    <Compile Include="Net\InterfaceServer.cs">
+    <Compile Include="src\Net\Constants.cs"/>
+    <Compile Include="src\Net\InterfaceServer.cs">
       <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
     </Compile>
-    <Compile Include="Net\Monitor.cs">
+    <Compile Include="src\Net\Monitor.cs">
       <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
     </Compile>
     
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Resources.cs" />
+    <Compile Include="src\Properties\AssemblyInfo.cs" />
+    <Compile Include="src\Resources.cs" />
     <None Include="Memories\ScopeConstants_GEN.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ScopeConstants_GEN.cs</LastGenOutput>
     </None>
-    <Content Include="libusb\libusb-1.0.0.dylib">
+    <None Include="libs\LibUsbDotNet\libusb-1.0.0.dylib">
+      <Link>libusb-1.0.0.dylib</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>
-    </Content>
-    <Content Include="LibUsbDotNet.dll.config">
+    </None>
+    <None Include="libs\LibUsbDotNet\LibUsbDotNet.dll.config">
+      <Link>LibUsbDotNet.dll.config</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS,Linux</Platforms>
-    </Content>
+    </None>
     <None Include="packages.config" />
-    <EmbeddedResource Include="i2c_sequence.mat" />
-    <EmbeddedResource Include="SmartScope_A10.bin" />
-    <EmbeddedResource Include="SmartScope_A12.bin" />
-	<EmbeddedResource Include="SmartScope_A14.bin" />
-	<EmbeddedResource Include="SmartScope_A15.bin" />
-	<EmbeddedResource Include="SmartScope_A16.bin" />
-    <EmbeddedResource Include="SmartScope_A17.bin" />
-    <EmbeddedResource Include="SmartScopeHackerSpecial.bin" />
+    <EmbeddedResource Include="blobs\i2c_sequence.mat" />
+    <EmbeddedResource Include="blobs\SmartScope_A10.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A12.bin" />
+	<EmbeddedResource Include="blobs\SmartScope_A14.bin" />
+	<EmbeddedResource Include="blobs\SmartScope_A15.bin" />
+	<EmbeddedResource Include="blobs\SmartScope_A16.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A17.bin" />
+    <EmbeddedResource Include="blobs\SmartScopeHackerSpecial.bin" />
 	
 	<Content Include="driver\wdi-simple.exe">
 		<CopyToOutputDirectory>Always</CopyToOutputDirectory>

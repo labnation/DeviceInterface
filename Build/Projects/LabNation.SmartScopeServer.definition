@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="LabNation.SmartScopeServer" Path="./SmartScopeServer" Type="Console" Platforms="Linux,MacOS,Windows,WindowsGL">
+<Project Name="LabNation.SmartScopeServer" Path="src/SmartScopeServer" Type="Console" Platforms="Linux,MacOS,Windows,WindowsGL">
   <Properties>
     <FrameworkVersions>
       <Platform Name="Windows">
@@ -43,11 +43,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>
     </None>
-    <None Include="../Mono.Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/bin/Mono.Zeroconf.Providers.AvahiDBus.dll">
+    <None Include="../../libs/Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/bin/Mono.Zeroconf.Providers.AvahiDBus.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>Linux,MacOS</Platforms>
     </None>
-    <None Include="../Mono.Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/bin/Mono.Zeroconf.Providers.Bonjour.dll">
+    <None Include="../../libs/Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/bin/Mono.Zeroconf.Providers.Bonjour.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS,Windows</Platforms>
     </None>

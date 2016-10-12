@@ -9,6 +9,6 @@ Resource.designer.cs
 /packages/
 /Resources.resources
 *.csproj
-packages.config
+/packages.config
 *.speccache
 *.sln

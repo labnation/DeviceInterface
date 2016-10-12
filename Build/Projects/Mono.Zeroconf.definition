@@ -4,53 +4,53 @@
     <Project 
       Name="Mono.Zeroconf.Providers.Bonjour"
       Guid="623325E2-5821-4701-A40C-3759097008DD"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/Mono.Zeroconf.Providers.Bonjour.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/Mono.Zeroconf.Providers.Bonjour.csproj">
     </Project>
     <Project 
       Name="Mono.Zeroconf.Providers.AvahiDBus.csproj"
       Guid="EF6ED6D1-D201-42ED-B680-5A77641BEB77"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/Mono.Zeroconf.Providers.AvahiDBus.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/Mono.Zeroconf.Providers.AvahiDBus.csproj">
     </Project>    
     <Project 
       Name="Mono.Zeroconf"
       Guid="5CF88E3A-13DD-4114-BAD9-DA826946516F"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
     </Project>
   </Platform>
   <Platform Type="Windows">
     <Project 
       Name="Mono.Zeroconf.Providers.Bonjour"
       Guid="623325E2-5821-4701-A40C-3759097008DD"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/Mono.Zeroconf.Providers.Bonjour.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/Mono.Zeroconf.Providers.Bonjour.csproj">
     </Project>
     <Project 
       Name="Mono.Zeroconf"
       Guid="5CF88E3A-13DD-4114-BAD9-DA826946516F"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
     </Project>
   </Platform>
   <Platform Type="WindowsGL">
     <Project 
       Name="Mono.Zeroconf.Providers.Bonjour"
       Guid="623325E2-5821-4701-A40C-3759097008DD"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/Mono.Zeroconf.Providers.Bonjour.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf.Providers.Bonjour/Mono.Zeroconf.Providers.Bonjour.csproj">
     </Project>
     <Project 
       Name="Mono.Zeroconf"
       Guid="5CF88E3A-13DD-4114-BAD9-DA826946516F"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
     </Project>
   </Platform>
   <Platform Type="Linux">
     <Project 
       Name="Mono.Zeroconf.Providers.AvahiDBus.csproj"
       Guid="EF6ED6D1-D201-42ED-B680-5A77641BEB77"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/Mono.Zeroconf.Providers.AvahiDBus.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/Mono.Zeroconf.Providers.AvahiDBus.csproj">
     </Project>
     <Project 
       Name="Mono.Zeroconf"
       Guid="5CF88E3A-13DD-4114-BAD9-DA826946516F"
-      Path="Mono.Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
+      Path="libs/Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
     </Project>
   </Platform>  
 </ExternalProject>

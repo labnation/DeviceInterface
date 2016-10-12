@@ -4,7 +4,7 @@
     <Project
 		Name="WinUSBNet"
 		Guid="CE06C329-287D-4F1E-B62D-B8353F2BAA4A"
-		Path="winusb/WinUSBNet/WinUSBNet.csproj">
+		Path="libs/winusb/WinUSBNet/WinUSBNet.csproj">
     </Project>
 	<Reference Include="System.Windows.Forms"/>
 	<Reference Include="System.Drawing"/>
@@ -13,7 +13,7 @@
     <Project
 		Name="WinUSBNet"
 		Guid="CE06C329-287D-4F1E-B62D-B8353F2BAA4A"
-		Path="winusb/WinUSBNet/WinUSBNet.csproj">
+		Path="libs/winusb/WinUSBNet/WinUSBNet.csproj">
     </Project>
 	<Reference Include="System.Windows.Forms"/>
 	<Reference Include="System.Drawing"/>
