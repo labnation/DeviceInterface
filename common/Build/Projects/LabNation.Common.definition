@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Name="LabNation.Common" Path="./" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
+  <Properties>
+    <FrameworkVersions>
+      <Platform Name="Android">
+        <Version>v4.0.3</Version>
+      </Platform>
+    </FrameworkVersions>
+    <LangVersion>5</LangVersion>
+    <RootNamespace>LabNation.Common</RootNamespace>
+    <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
+    <CustomDefinitions>
+      <Platform Name="Android">TRACE;ANDROID</Platform>
+      <Platform Name="iOS">IOS</Platform>
+      <Platform Name="Linux">TRACE;LINUX</Platform>
+      <Platform Name="MacOS">MONOMAC</Platform>
+      <Platform Name="Windows">TRACE;WINDOWS</Platform>
+	  <Platform Name="WindowsGL">TRACE;WINDOWS</Platform>	  
+    </CustomDefinitions>
+	<NoWarn>1591</NoWarn>
+  </Properties>
+  <References>
+    <Reference Include="System" />
+	<Reference Include="System.Management" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="CommonMonoPlatformSpecific" />
+  </References>
+  <Files>
+    <Compile Include="FileLogger.cs" />
+    <Compile Include="LinqExtensions.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SerialNumber.cs" />
+    <Compile Include="Trendline.cs" />
+    <Compile Include="Utils.cs" />
+  </Files>
+</Project>
