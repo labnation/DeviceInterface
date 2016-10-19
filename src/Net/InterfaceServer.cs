@@ -22,36 +22,44 @@ namespace LabNation.DeviceInterface.Net
         StreamWriter debugFile;
 #endif
         private bool running = true;
-        internal ISmartScopeInterfaceUsb hwInterface;
+        internal SmartScopeInterfaceUsb hwInterface;
         private const int RECEIVE_TIMEOUT = 10000; //10sec
 
-        BandwidthMonitor bwDown = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
-        BandwidthMonitor bwUp = new BandwidthMonitor(new TimeSpan(0, 0, 0, 0, 100));
-        string strBandwidthDown = "";
-        string strBandwidthUp = "";
-        Thread tcpListenerThread;
-        
-        public InterfaceServer(ISmartScopeInterfaceUsb hwInterface)
+        Thread controlSocketThread;
+        Thread dataSocketThread;
+        Thread bwPrintThread;
+
+        private object bwlock = new object();
+        private int bytesTx = 0;
+        private int bytesRx = 0;
+
+        public InterfaceServer(SmartScopeInterfaceUsb hwInterface)
         {
 #if DEBUGFILE
-            debugFile = new StreamWriter("debug.txt");
+            string logpath = Path.GetTempFileName();
+            Logger.Info("Writing server log to " + logpath);
+            debugFile = new StreamWriter(logpath);
 #endif
             this.hwInterface = hwInterface;
             //start TCP/IP thread
-            tcpListenerThread = new Thread(TcpIpController)
+            controlSocketThread = new Thread(ControlSocketServer)
             {
                 Name = "TCP listener",
             };
             
-            tcpListenerThread.Start();            
+            controlSocketThread.Start();
+
+            bwPrintThread = new Thread(PrintBandWidth) { Name = "Bandwidth printer" };
+            bwPrintThread.Start();
+               
         }
 
         public void Stop()
         {
             running = false;
-            tcpListener.Stop();
+            Disconnect();
             service.Dispose();
-            tcpListenerThread.Join(1000);
+            bwPrintThread.Join();
         }
 
         RegisterService service;
@@ -60,225 +68,249 @@ namespace LabNation.DeviceInterface.Net
             service = new RegisterService();
 
 			service.Name = Dns.GetHostName();
-            service.RegType = Constants.SERVICE_TYPE;
-            service.ReplyDomain = Constants.REPLY_DOMAIN;
-			service.Port = (short)(((IPEndPoint)tcpListener.LocalEndpoint).Port);
+            service.RegType = Net.SERVICE_TYPE;
+            service.ReplyDomain = Net.REPLY_DOMAIN;
+			service.Port = (ushort)(((IPEndPoint)ControlSocketListener.LocalEndpoint).Port);
+            service.TxtRecord = new TxtRecord();
+            service.TxtRecord.Add(Net.TXT_DATA_PORT, ((IPEndPoint)DataSocketListener.LocalEndpoint).Port.ToString());
             service.Register();
 
             LogMessage(LogTypes.ZEROCONF, "ZeroConf service posted");
         }
         private void UnregisterZeroConf()
         {
-            if (service != null)
-                service.Dispose();
-
+            if (service == null)
+                return;
+            service.Dispose();
             LogMessage(LogTypes.ZEROCONF, "ZeroConf service retracted");
         }
 
-        class Message
+        TcpListener DataSocketListener;
+        Socket DataSocket;
+        TcpListener ControlSocketListener;
+        Socket ControlSocket;
+        bool connected;
+
+        private byte[] smartScopeBuffer = new byte[Constants.SZ_HDR + Constants.FETCH_SIZE_MAX]; // Max received = header + full acq buf
+
+        private void DataSocketServer()
         {
-            public int length;
-            public Constants.Commands command;
-            public byte[] data;
-            
-            public static Message FromBuffer(byte[] buffer, int validLength)
-            {
-                if (validLength < 2)
-                    return null;
-                
-                int length = (buffer[0] << 8) + (buffer[1]);
-                if (validLength < length)
-                    return null;
-                if (length == 0)
-                    return null;
-
-                Message m = new Message();
-                m.length = length;
-
-                if (length > 2)
-                    m.command = (Constants.Commands)buffer[2];
-
-                if (length > 3)
-                {
-                    int dataLen = length - 3;
-                    m.data = new byte[dataLen];
-                    Buffer.BlockCopy(buffer, 3, m.data, 0, dataLen);
-                }
-                return m;
-            }
-        }
-
-        byte[] rxBuffer = new byte[Constants.BUF_SIZE];
-        byte[] msgBuffer = new byte[Constants.BUF_SIZE];
-        int msgBufferLength = 0;
-
-        //null returned means network error
-        List<Message> ReceiveMessage(Socket socket)
-        {
-            int bytesReceived = 0;
+            int length = 0;
             try
             {
-                bytesReceived = socket.Receive(rxBuffer);
-            }
-            catch
-            {
-                LogMessage(LogTypes.NETWORK, "Network connection closed unexpectedly => resetting");
-                return null; //in case of non-graceful disconnects (crash, network failure)
-            }
-            
-#if DEBUGFILE
-            DateTime now = DateTime.Now;
-            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Bytes received:" + bytesReceived.ToString());
-            debugFile.Flush();
-#endif
-            
-            if (bytesReceived >= rxBuffer.Length)
-                throw new Exception("TCP/IP socket buffer overflow!");
+                LogMessage(LogTypes.DATA, "Waiting for data connection to be opened");
+                try
+                {
+                    DataSocket = DataSocketListener.Server.Accept();
+                }
+                catch (SocketException e)
+                {
+                    LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
+                    return;
+                }
+                DataSocket.DontFragment = true;
+                DataSocket.NoDelay = true;
 
-            bwDown.Update(bytesReceived, out strBandwidthDown);
+                LogMessage(LogTypes.DATA, "Data socket connection accepted from " + DataSocket.RemoteEndPoint);
 
-            if (bytesReceived == 0) //this would indicate a network error
+                while (running && connected)
+                {
+                    while (processing) {
+                        // Don't fetch data when control socket is doing stuff
+                    }
+                    try
+                    {
+                        length = hwInterface.GetAcquisition(smartScopeBuffer);
+                    }
+                    catch(ScopeIOException e)
+                    {
+                        LogMessage(LogTypes.DATA, String.Format("usb error {0:s}", e.Message));
+                        continue;
+                    }
+                    try
+                    {
+                        DataSocket.Send(smartScopeBuffer, length, SocketFlags.None);
+                    }
+                    catch (SocketException e)
+                    {
+                        LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
+                        Disconnect();
+                    }
+                    lock (bwlock)
+                    {
+                        bytesTx += length;
+                    }
+                }
+            } catch(ThreadAbortException e)
             {
-                LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
-                return null;
+                LogMessage(LogTypes.DATA, String.Format("Data thread aborted {0:s}", e.Message));
+                hwInterface.Destroy();
             }
-
-            Buffer.BlockCopy(rxBuffer, 0, msgBuffer, msgBufferLength, bytesReceived);
-            msgBufferLength += bytesReceived;
-            
-            // Parsing message and build list
-            List<Message> msgList = new List<Message>();
-            while (true)
-            {
-                Message m = Message.FromBuffer(msgBuffer, msgBufferLength);
-                if (m == null)
-                    break;
-                
-                //Move remaining valid data to beginning
-                msgBufferLength -= m.length;
-                Buffer.BlockCopy(msgBuffer, m.length, msgBuffer, 0, msgBufferLength);                
-                msgList.Add(m);
-            }
-            return msgList;
         }
 
-        TcpListener tcpListener;
-        private void TcpIpController()
+        bool processing = false;
+
+        private void ControlSocketServer()
         {
-            bool disconnect;
-
-
-#if DEBUGFILE
-            tcpListener = new TcpListener(IPAddress.Any, 25482);
-#else
-        tcpListener = new TcpListener(IPAddress.Any, this.port);
-#endif
-
+            DateTime now;
+            int msgBufferLength = 0;
+            ScopeController ctrl;
+            int address;
+            int length;
+            byte[] data;
 
             while (running)
             {
-                tcpListener.Start();
+                ControlSocketListener = new TcpListener(IPAddress.Any, 0);
+                DataSocketListener = new TcpListener(IPAddress.Any, 0);
+
+                byte[] rxBuffer = new byte[Net.BUF_SIZE];
+                byte[] msgBuffer = new byte[1024*1024];
+
+                ControlSocketListener.Start();
                 LogMessage(LogTypes.DECORATION, "==================== New session started =======================");
-                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)tcpListener.LocalEndpoint).Port.ToString());                
+                LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port.ToString());
 
+                DataSocketListener.Start();
+                
                 RegisterZeroConf();
-
-                Socket socket;
+                
                 try
                 {
-                    socket = tcpListener.Server.Accept();
-                    socket.ReceiveTimeout = RECEIVE_TIMEOUT;
+                    ControlSocket = ControlSocketListener.Server.Accept();
                 }
-                catch (Exception e)
+                catch (SocketException e)
                 {
-					Logger.Error("Socket aborted {0:s}", e.Message);
+					Logger.Error("Control socket aborted {0:s}", e.Message);
                     return;
                 }
-
-                LogMessage(LogTypes.NETWORK, "Connection accepted from " + socket.RemoteEndPoint);
+                ControlSocket.DontFragment = true;
+                ControlSocket.NoDelay = true;
+                LogMessage(LogTypes.NETWORK, "Connection accepted from " + ControlSocket.RemoteEndPoint);
                 UnregisterZeroConf();
 
-                disconnect = false;
-                while (running && !disconnect)
-                {
-                    List<Message> msgList = ReceiveMessage(socket);
+                connected = true;
+                dataSocketThread = new Thread(DataSocketServer) { Name = "Data Socket" };
+                dataSocketThread.Start();
 
-                    if (msgList != null) //if no network error
+
+                while (connected)
+                {
+                    int bytesReceived;
+                    List<Net.Message> msgList = Net.ReceiveMessage(ControlSocket, ref rxBuffer, ref msgBuffer, ref msgBufferLength, out bytesReceived);
+                    if (msgList == null) //this would indicate a network error
                     {
-                        foreach (Message m in msgList)
+                        LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
+                        Disconnect();
+                    }
+                    lock (bwlock) {
+                        bytesRx += bytesReceived;
+                    }
+                    
+
+
+                    if (connected && msgList != null) //if no network error
+                    {
+                        processing = true;
+                        foreach (Net.Message m in msgList)
                         {
 #if DEBUGFILE
+                            now = DateTime.Now;
+                            StringBuilder sb = new StringBuilder();
+                            sb.Append(now.Second + "-" + now.Millisecond + " Command: ");
+                            sb.Append(m.command.ToString());
+                            if (m.data != null)
                             {
-                                DateTime now = DateTime.Now;
-                                StringBuilder sb = new StringBuilder();
-                                sb.Append(now.Second + "-" + now.Millisecond + " Command: ");
-                                sb.Append(m.command.ToString());
-                                if (m.data != null)
-                                {
-                                    sb.Append("  Data: ");
-                                    for (int i = 0; i < m.data.Length; i++)
-                                        sb.Append(i.ToString() + ":" + m.data[i].ToString("000") + " ");
-                                }
-                                debugFile.WriteLine(sb);
-                                debugFile.Flush();
+                                sb.Append("  Data: ");
+                                for (int i = 0; i < m.data.Length; i++)
+                                    sb.Append(i.ToString() + ":" + m.data[i].ToString("000") + " ");
                             }
+                            debugFile.WriteLine(sb);
+                            debugFile.Flush();
 #endif
-                            Constants.Commands command = m.command;
-
-                            if (command == Constants.Commands.SEND)
+                            Net.Command command = m.command;
+                            byte[] response = null;
+                            try
                             {
-                                SendControlMessage(m.data);
+                                switch (m.command)
+                                {
+                                    case Net.Command.SERIAL:
+                                        response = m.command.msg(System.Text.Encoding.UTF8.GetBytes(hwInterface.Serial));
+                                        break;
+                                    case Net.Command.PIC_FW_VERSION:
+                                        response = m.command.msg(hwInterface.PicFirmwareVersion);
+                                        break;
+                                    case Net.Command.FLUSH:
+                                        hwInterface.FlushDataPipe();
+                                        break;
+                                    case Net.Command.FLASH_FPGA:
+                                        bool result = hwInterface.FlashFpga(m.data);
+                                        response = m.command.msg(new byte[] { result ? (byte)0xff : (byte)0x00 });
+                                        break;
+                                    case Net.Command.DISCONNECT:
+                                        hwInterface.FlushDataPipe();
+                                        Disconnect();
+                                        break;
+                                    case Net.Command.DATA:
+                                        length = (m.data[0] << 8) + (m.data[1]);
+                                        response = m.command.msg(hwInterface.GetData(length));
+                                        break;
+									case Net.Command.DATA_PORT:
+										response = m.command.msg(BitConverter.GetBytes(((IPEndPoint)DataSocketListener.LocalEndpoint).Port));
+										break;
+									case Net.Command.ACQUISITION:
+                                        length = hwInterface.GetAcquisition(smartScopeBuffer);
+                                        response = m.command.msg(smartScopeBuffer, length);
+                                        break;
+                                    case Net.Command.SET:
+                                        Net.ParseControllerHeader(m.data, out ctrl, out address, out length, out data);
+                                        hwInterface.SetControllerRegister(ctrl, (uint)address, data);
+                                        break;
+                                    case Net.Command.GET:
+                                        Net.ParseControllerHeader(m.data, out ctrl, out address, out length, out data);
+                                        hwInterface.GetControllerRegister(ctrl, (uint)address, (uint)length, out data);
+                                        response = Net.ControllerHeader(m.command, ctrl, address, length, data);
+                                        break;
+                                    default:
+                                        Logger.Error("Unsupported command {0:G}", command);
+                                        Disconnect();
+                                        break;
+                                }
+                                processing = false;
+                            } catch(ScopeIOException e)
+                            {
+                                Logger.Error("Scope IO error : " + e.Message);
+                                Disconnect();
+                                break;
                             }
-                            else if (command == Constants.Commands.READ)
-                            {
-                                byte length = m.data[0];
-                                ReadControlBytes(socket, length);
-                            }
-                            else if (command == Constants.Commands.READ_HBW)
-                            {
-                                int length = (m.data[0] << 8) + (m.data[1]);
-                                ReadHispeedData(socket, length);
-                            }
-                            else if (command == Constants.Commands.SERIAL)
-                            {
-                                byte[] answer = System.Text.Encoding.UTF8.GetBytes(hwInterface.Serial);
-
 #if DEBUGFILE
-                                {
-                                    DateTime now = DateTime.Now;
-                                    debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before send");
-                                    debugFile.Flush();
-                                }
+                            now = DateTime.Now;
+                            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before send");
+                            debugFile.Flush();
 #endif
-
-                                socket.Send(answer);
+                            if (response != null)
+                            {
+                                try
+                                {
+                                    ControlSocket.Send(response);
+                                }
+                                catch (Exception e)
+                                {
+                                    Logger.Info("Failed to write to socket: " + e.Message);
+                                    Disconnect();
+                                }
+                            }
 #if DEBUGFILE
-                                {
-                                    DateTime now = DateTime.Now;
-                                    debugFile.WriteLine(now.Second + "-" + now.Millisecond + " After send");
-                                    debugFile.Flush();
-                                }
+                            now = DateTime.Now;
+                            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " After send");
+                            debugFile.Flush();
 #endif
-
-                                bwUp.Update(answer.Length, out strBandwidthUp);
-                            }
-                            else if (command == Constants.Commands.FLUSH)
+                            if (response != null)
                             {
-                                hwInterface.FlushDataPipe();
-                            }
-                            else if (command == Constants.Commands.DISCONNECT)
-                            {
-                                hwInterface.FlushDataPipe();
-                                disconnect = true;
-
-                                LogMessage(LogTypes.NETWORK, "Request to disconnect from " + socket.RemoteEndPoint);
-                            }
-                            else
-                            {
-                                throw new Exception(String.Format("Unsupported command {0:G}", command));
+                                lock (bwlock)
+                                    bytesTx += response.Length;
                             }
                         }
-
                         bandwidthPrintedLast = true;
                         DateTime time = DateTime.Now;
                         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -300,27 +332,52 @@ namespace LabNation.DeviceInterface.Net
                     }
                     else
                     {
-                        disconnect = true;
-                        LogMessage(LogTypes.NETWORK, "Connection closed");
-                        socket.Close();
-                        tcpListener.Stop();
-                        System.Threading.Thread.Sleep(500);
+                        Disconnect();
                     }
                 }
             }
         }
 
+        private object disconnectLock = new object();
+        private void Disconnect()
+        {
+            lock (disconnectLock)
+            {
+                if (!connected)//Means disconnect was called
+                    return;
+                connected = false;
+            }
+            
+            LogMessage(LogTypes.NETWORK, "Disconnecting...");
+
+            UnregisterZeroConf();
+            try
+            {
+                DataSocket.Shutdown(SocketShutdown.Both);
+            }
+            catch { }
+            DataSocketListener.Stop();
+            dataSocketThread.Join();
+
+            try
+            {
+                ControlSocket.Shutdown(SocketShutdown.Both);
+            }
+            catch { }
+            ControlSocketListener.Stop();
+            controlSocketThread.Join();
+        }
+
         enum LogTypes
         {
             NETWORK,
+            DATA,
             ZEROCONF,
             DECORATION,
         }
-        bool bandwidthPrintedLast = false;        
         private void LogMessage(LogTypes logType, string message)
         {
-            if (bandwidthPrintedLast)
-                Logger.LogC(LogLevel.INFO, "\n", ConsoleColor.Yellow);
+            Logger.LogC(LogLevel.INFO, "\n", ConsoleColor.Yellow);
 
             switch (logType)
             {
@@ -330,89 +387,39 @@ namespace LabNation.DeviceInterface.Net
                 case LogTypes.ZEROCONF:
                     Logger.LogC(LogLevel.INFO, "[ZeroConf] ", ConsoleColor.Cyan);
                     break;
+                case LogTypes.DATA:
+                    Logger.LogC(LogLevel.INFO, "[Data] ", ConsoleColor.Red);
+                    break;
                 default:
                     break;
             }
 
             Logger.LogC(LogLevel.INFO, message + "\n", ConsoleColor.Gray);
-
-            bandwidthPrintedLast = false;
         }
 
-        private void ReadHispeedData(Socket socket, int readLength)
+        private void PrintBandWidth()
         {
-#if DEBUGFILE
+            DateTime lastTime = DateTime.Now;
+            int bytesTxLocal;
+            int bytesRxLocal;
+            while (running)
             {
+                Thread.Sleep(100);
                 DateTime now = DateTime.Now;
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before GetHiSpeedData "+readLength.ToString());
-                debugFile.Flush();
+                double timepassed = (now - lastTime).TotalMilliseconds;
+                
+                lock(bwlock)
+                {
+                    bytesTxLocal = bytesTx;
+                    bytesTx = 0;
+                    bytesRxLocal = bytesRx;
+                    bytesRx = 0;
+                }
+                double bwTx = bytesTxLocal / timepassed * 1000 / 1024;
+                double bwRx = bytesRxLocal / timepassed * 1000 / 1024;
+                Logger.LogC(LogLevel.INFO, String.Format("[Bandwidth] \rTX {0:0.00}kB/s - RX {1:0.00}kB/s\r", bwTx, bwRx), ConsoleColor.Green);
+                lastTime = now;
             }
-#endif 
-
-            byte[] answer = hwInterface.GetData(readLength);
-			if (answer == null) {
-				Logger.Error ("Failed to read HSPEED data - null");
-			}
-#if DEBUGFILE
-            {
-                DateTime now = DateTime.Now;
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before netsend HiSpeedData");
-                debugFile.Flush();
-            }
-#endif 
-
-            socket.Send(answer);
-#if DEBUGFILE
-            {
-                DateTime now = DateTime.Now;
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " After netsend HiSpeedData");
-                debugFile.Flush();
-            }
-#endif 
-
-
-            bwUp.Update(answer.Length, out strBandwidthUp);
-        }
-
-        private void ReadControlBytes(Socket socket, byte readLength)
-        {
-#if DEBUGFILE
-            {
-                DateTime now = DateTime.Now;
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before GetControlBytes "+readLength.ToString());
-                debugFile.Flush();
-            }
-#endif 
-
-            byte[] answer = hwInterface.ReadControlBytes(readLength);
-			if (answer == null) {
-				Logger.Error ("Failed to read data - null");
-			}
-			Logger.Debug ("Read package sending {0:d}/{1:d} bytes", answer.Length, readLength);
-#if DEBUGFILE
-            {
-                DateTime now = DateTime.Now;
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before netsend ControlBytes");
-                debugFile.Flush();
-            }
-#endif 
-
-            socket.Send(answer);
-#if DEBUGFILE
-            {
-                DateTime now = DateTime.Now;
-                debugFile.WriteLine(now.Second + "-" + now.Millisecond + " After netsend ControlBytes");
-                debugFile.Flush();
-            }
-#endif 
-
-
-            bwUp.Update(answer.Length, out strBandwidthUp);
-        }
-
-        private void SendControlMessage(byte[] buffer)
-        {
-            hwInterface.WriteControlBytesBulk(buffer, false);
         }
     }
 }

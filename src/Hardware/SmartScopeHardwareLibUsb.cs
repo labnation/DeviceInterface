@@ -6,11 +6,10 @@ using System.Collections.Concurrent;
 using LibUsbDotNet.Main;
 using LibUsbDotNet;
 using System.Threading;
-using H=LabNation.DeviceInterface.Hardware.SmartScopeInterfaceHelpers;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    public class SmartScopeInterfaceLibUsb : ISmartScopeInterfaceUsb
+    public class SmartScopeHardwareLibUsb : ISmartScopeHardwareUsb
     {
     	public bool Destroyed { get; private set; }
         private object usbLock = new object();
@@ -20,15 +19,19 @@ namespace LabNation.DeviceInterface.Hardware
         {
             public UsbEndpointBase endPoint;
             public byte[] buffer;
+			private int offset;
+			private int length;
             public int timeout;
             public byte[] result;
             public ErrorCode resultCode;
             public bool executed;
             public int bytesReadOrWritten;
-            public UsbCommand(UsbEndpointBase ep, byte[] buffer, int timeout)
+            public UsbCommand(UsbEndpointBase ep, byte[] buffer, int offset, int length, int timeout)
             {
                 this.endPoint = ep;
                 this.buffer = buffer;
+				this.offset = offset;
+				this.length = length;
                 this.timeout = timeout;
                 this.bytesReadOrWritten = -1;
                 this.executed = false;
@@ -40,17 +43,15 @@ namespace LabNation.DeviceInterface.Hardware
             {
                 if (endPoint is UsbEndpointWriter)
                 {
-                    //lock (usbLock)
                     {
-                        resultCode = ((UsbEndpointWriter)endPoint).Write(buffer, timeout, out bytesReadOrWritten);
+                        resultCode = ((UsbEndpointWriter)endPoint).Write(buffer, offset, length, timeout, out bytesReadOrWritten);
                     }
                     executed = true;
                 }
                 else if (endPoint is UsbEndpointReader)
                 {
-                    //lock (usbLock)
                     {
-                        resultCode = ((UsbEndpointReader)endPoint).Read(buffer, timeout, out bytesReadOrWritten);
+                        resultCode = ((UsbEndpointReader)endPoint).Read(buffer, offset, length, timeout, out bytesReadOrWritten);
                     }
                     executed = true;
                 }
@@ -79,7 +80,7 @@ namespace LabNation.DeviceInterface.Hardware
         private string serial;
         public string Serial { get { return serial; } } 
 
-        public SmartScopeInterfaceLibUsb(UsbDevice usbDevice)
+        public SmartScopeHardwareLibUsb(UsbDevice usbDevice)
         {
             if (usbDevice is IUsbDevice)
             {
@@ -102,13 +103,10 @@ namespace LabNation.DeviceInterface.Hardware
 
         public void Destroy()
         {
-            //lock (usbLock)
-            {
-				Common.Logger.Debug("Closing device " + serial);
-            	device.Close();
-				Common.Logger.Debug("Destroying device " + serial);
-                Destroyed = true;
-            }
+			Common.Logger.Debug("Closing device " + serial);
+        	device.Close();
+			Common.Logger.Debug("Destroying device " + serial);
+            Destroyed = true;
         }
 
         public void WriteControlBytes(byte[] message, bool async)
@@ -130,16 +128,7 @@ namespace LabNation.DeviceInterface.Hardware
             if (commandWriteEndpoint == null)
                 throw new ScopeIOException("Command write endpoint is null");
 
-            byte[] buffer;
-            if (offset == 0 && length == message.Length)
-                buffer = message;
-            else
-            {
-                buffer = new byte[length];
-                Array.ConstrainedCopy(message, offset, buffer, 0, length);
-            }
-
-            UsbCommand cmd = new UsbCommand(commandWriteEndpoint, buffer, USB_TIMEOUT);
+			UsbCommand cmd = new UsbCommand(commandWriteEndpoint, message, offset, length, USB_TIMEOUT);
             cmd.Execute(usbLock);
             
             if (!async)
@@ -158,9 +147,9 @@ namespace LabNation.DeviceInterface.Hardware
             }
         }
 
-        public byte[] ReadControlBytes(int length)
+        public void ReadControlBytes(byte[] buffer, int offset, int length)
         {
-            UsbCommand cmd = new UsbCommand(commandReadEndpoint, new byte[COMMAND_READ_ENDPOINT_SIZE], USB_TIMEOUT);
+            UsbCommand cmd = new UsbCommand(commandReadEndpoint, buffer, offset, length, USB_TIMEOUT);
             cmd.Execute(usbLock);
 
             //FIXME: allow async completion
@@ -173,29 +162,22 @@ namespace LabNation.DeviceInterface.Hardware
                 default:
                     throw new ScopeIOException("Failed to read from device: " + cmd.resultCode.ToString("G"));
             }
-            byte[] returnBuffer = new byte[length];
-            Array.Copy(cmd.buffer, returnBuffer, length);
-
-            return returnBuffer;
         }
 
         public void FlushDataPipe()
         {
-            //lock (usbLock)
-            {
-                if (!Destroyed)
-                    dataEndpoint.Reset();
-            }
+            if (!Destroyed)
+                dataEndpoint.Reset();
         }
 
-        public byte[] GetData(int numberOfBytes)
+        public void GetData(byte[] buffer, int offset, int length)
         {
-            UsbCommand cmd = new UsbCommand(dataEndpoint, new byte[numberOfBytes], USB_TIMEOUT);
+            UsbCommand cmd = new UsbCommand(dataEndpoint, buffer, offset, length, USB_TIMEOUT);
             cmd.Execute(usbLock);
             cmd.WaitForCompletion();
 
-            if (cmd.bytesReadOrWritten != numberOfBytes)
-                return null;
+            if (cmd.bytesReadOrWritten != length)
+                throw new ScopeIOException("No data transferred");
             switch (cmd.resultCode)
             {
                 case ErrorCode.Success:
@@ -203,8 +185,6 @@ namespace LabNation.DeviceInterface.Hardware
                 default:
                     throw new ScopeIOException("An error occured while fetching scope data: " + cmd.resultCode.ToString("G"));
             }
-            //return read data
-            return cmd.buffer;
         }
     }
 }

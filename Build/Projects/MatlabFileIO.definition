@@ -7,7 +7,7 @@
     <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.0.3</Version>
+        <Version>v4.1</Version>
       </Platform>
       <Platform Name="Windows">
         <Version>v4.0</Version>

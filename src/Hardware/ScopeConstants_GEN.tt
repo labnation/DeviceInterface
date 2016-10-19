@@ -1,0 +1,147 @@
+﻿<#@ template language="C#" hostspecific="true" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace LabNation.DeviceInterface.Hardware
+{
+<#
+	/*
+	 * Resolving the filename needs to happen here (in this context), since 
+	 * once we're in the class below we're in a TextProcessor sandbox where
+	 * "this" won't mean "here"
+	 */
+	String hdlFile = this.Host.ResolvePath("Z:\\SmartScopeFpga\\hdl\\TypesConstants.vhd");
+	Int32 hdr_fixed_length = getHdlConstantInt(hdlFile, "HEADER_FIXED_LENGTH");
+#>
+public static class Constants {
+	public const int HDR_OFFSET = <#=hdr_fixed_length.ToString() #>;
+	public const int SZ_HDR = <#=getHdlConstantInt(hdlFile, "BYTES_PER_PIC_BURST").ToString() #>;
+	public const int SZ_OVERVIEW = <#=getHdlConstantInt(hdlFile, "OVERVIEW_MEMORY_SIZE").ToString() #>;
+<#=parseHdlToCSharpDict(hdlFile, "HDR_REGS", new String[] {"SCOPE_ACQUISITION_REGISTERS", "SCOPE_VIEW_REGISTERS"}, "REG") #>
+<#=parseHdlToCSharpDict(hdlFile, "HDR_STROBES", new String[] {"SCOPE_ACQUISITION_STROBES"}, "STR") #>
+
+<#=parseHdlToCSharpList(hdlFile, "AcquisitionStrobes", "SCOPE_ACQUISITION_STROBES", "STR") #>
+<#=parseHdlToCSharpList(hdlFile, "AcquisitionRegisters", "SCOPE_ACQUISITION_REGISTERS", "REG") #>
+<#=parseHdlToCSharpList(hdlFile, "ViewRegisters", "SCOPE_VIEW_REGISTERS", "REG") #>
+}
+<#=parseHdlToCSharpEnum(hdlFile,"REG") #>
+<#=parseHdlToCSharpEnum(hdlFile,"STR") #>
+<#=parseHdlToCSharpEnum(hdlFile,"ROM") #>
+}
+<#+
+	public int getHdlConstantInt(String hdlFile, String constantName)
+	{
+		StreamReader file = new System.IO.StreamReader(hdlFile);
+		String pattern = "^\\s*constant\\s+" + constantName +
+							"\\s*:\\s*(INTEGER|NATURAL|POSITIVE)\\s:=\\s*(\\d+)\\s*;.*$";
+		Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+
+		//the name of the enum is simply the registerType
+		String line;
+		while((line = file.ReadLine()) != null)
+		{
+			Match m = regex.Match(line);
+			if(m.Success)
+			{
+				return Int32.Parse(m.Groups[2].Value);
+			}
+		}
+		throw new Exception("Constant " + constantName + " not found in HDL");
+	}
+	public String parseHdlToCSharpEnum(String hdlFile, String registerType)
+	{
+		StreamReader file = new System.IO.StreamReader(hdlFile);
+		String pattern = "^\\s*constant\\s+" + registerType +
+							"_([a-zA-Z0-9_]+)\\s*:\\s*INTEGER\\s:=\\s*(\\d+)\\s*;.*$";
+		Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+
+		//the name of the enum is simply the registerType
+		String cSharpCode = "\n\tpublic enum " + registerType + "\r\n" +
+							 "    {\r\n";
+
+		String line;
+		while((line = file.ReadLine()) != null)
+		{
+			Match m = regex.Match(line);
+			if(m.Groups.Count == 3) { //Group[0] contains the whole matched string
+				cSharpCode += "\t\t" + m.Groups[1] + " = " + m.Groups[2] + ",\r\n";
+			}
+		}
+		cSharpCode += "    }\r\n";
+
+		file.Close();
+	
+		return cSharpCode;
+	}
+
+	public String parseHdlToCSharpDict(String hdlFile, String dictName, String[] arrayNames, String itemEnumName, int index = 0)
+	{
+		StreamReader file = new System.IO.StreamReader(hdlFile);
+		string fileContents = file.ReadToEnd();
+		file.Close();
+
+		String id = itemEnumName + "_([a-zA-Z0-9_]+)";
+		String arrayElements = "(\\s*(" + id + ")+,?)+.*?";
+		
+		String cSharpCode = "\n\tpublic static Dictionary<" + itemEnumName +", int> " + dictName + " =\r\n";
+		cSharpCode += "\t\tnew Dictionary<" + itemEnumName +", int>()\r\n";
+		cSharpCode += "    {\r\n";
+
+		foreach(String arrayName in arrayNames) {
+			String pattern = "\\s*constant\\s+" + arrayName + "\\s*:\\s*TYPE_ARRAY_OF_INTEGERS\\s+:=\\s+\\(" + arrayElements + "\\);";
+			Regex regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+			Match m = regex.Match(fileContents);
+		
+			if (m.Success) {
+				foreach (Capture capture in m.Groups[3].Captures) {
+				   cSharpCode += String.Format("\t\t{{ {0:s}.{1:s}, {2:d} }},\r\n", 
+									 itemEnumName, capture.Value, index);
+				   index++; 
+				}
+			}
+		}
+		
+		cSharpCode += "    };\r\n";
+		cSharpCode += String.Format("\tpublic const int N_{0:s} = {1:d};\r\n", dictName, index);
+	
+		return cSharpCode;
+	}
+
+	public String parseHdlToCSharpList(String hdlFile, String listName, String arrayName, String itemEnumName)
+	{
+		StreamReader file = new System.IO.StreamReader(hdlFile);
+		string fileContents = file.ReadToEnd();
+		file.Close();
+
+		String id = itemEnumName + "_([a-zA-Z0-9_]+)";
+		String arrayElements = "(\\s*(" + id + ")+,?)+.*?";
+		
+		String cSharpCode = "\n\tpublic static List<" + itemEnumName +"> " + listName + " =\r\n";
+		cSharpCode += "\t\tnew List<" + itemEnumName +">()\r\n";
+		cSharpCode += "    {\r\n";
+
+		String pattern = "\\s*constant\\s+" + arrayName + "\\s*:\\s*TYPE_ARRAY_OF_INTEGERS\\s+:=\\s+\\(" + arrayElements + "\\);";
+		Regex regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+		Match m = regex.Match(fileContents);
+		
+		if (m.Success) {
+			foreach (Capture capture in m.Groups[3].Captures) {
+				cSharpCode += String.Format("\t\t{0:s}.{1:s},\r\n", 
+									itemEnumName, capture.Value); 
+			}
+		}
+		
+		cSharpCode += "    };\r\n";
+		return cSharpCode;
+	}
+
+#>

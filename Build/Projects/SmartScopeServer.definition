@@ -40,7 +40,7 @@
   </References>
   <Files>
     <Compile Include="Program.cs" />
-    <None Include="Mono.Zeroconf.Providers.Bonjour.dll.config">
+    <None Include="../../Mono.Zeroconf.Providers.Bonjour.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>
     </None>
@@ -52,5 +52,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS,Windows</Platforms>
     </None>
+    <BundleResource Include="..\..\libs\LibUsbDotNet\libusb-1.0.0.dylib">
+      <Link>libusb-1.0.0.dylib</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>MacOS</Platforms>
+    </BundleResource>
+    
   </Files>
 </Project>

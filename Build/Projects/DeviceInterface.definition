@@ -3,7 +3,7 @@
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.0.3</Version>
+        <Version>v4.1</Version>
       </Platform>
       <Platform Name="Windows">
         <Version>v4.0</Version>
@@ -55,7 +55,7 @@
     <Compile Include="src\Memories\Registers\BoolRegister.cs" />
     <Compile Include="src\Memories\Registers\ByteRegister.cs" />
     <Compile Include="src\Memories\Registers\MemoryRegister.cs" />
-    <Compile Include="src\Memories\ScopeConstants_GEN.cs">
+    <Compile Include="src\Hardware\ScopeConstants_GEN.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ScopeConstants_GEN.tt</DependentUpon>
@@ -76,13 +76,16 @@
     <Compile Include="src\Devices\DummyScopeWaves.cs" />
     <Compile Include="src\Devices\HackerSpecial.cs" />
     <Compile Include="src\Devices\SmartScope.cs" />
-    <Compile Include="src\Devices\SmartScopeHeader.cs" />
     <Compile Include="src\Devices\SmartScopeRom.cs" />
     <Compile Include="src\Devices\SmartScopeSettings.cs" />
-	<Compile Include="src\Devices\SmartScopeRegisterGroups.cs" />
 	<Compile Include="src\Devices\SmartScopeAwg.cs" />
     <Compile Include="src\Hardware\InterfaceManager.cs" />
-    <Compile Include="src\Hardware\InterfaceManagerZeroConf.cs"/>
+    <Compile Include="src\Hardware\InterfaceManagerZeroConf.cs" >
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="src\Hardware\InterfaceManagerServiceDiscovery.cs" >
+      <Platforms>Android</Platforms>
+    </Compile>
     <Compile Include="src\Hardware\InterfaceManagerLibUsb.cs">
       <Platforms>Linux,MacOS</Platforms>
     </Compile>
@@ -97,25 +100,20 @@
     <Compile Include="src\Hardware\DummyInterface.cs" />
     
     <Compile Include="src\Hardware\ISmartScopeInterface.cs" />
-    <Compile Include="src\Hardware\ISmartScopeInterfaceUsb.cs" />
-
-    <Compile Include="src\Hardware\SmartScopeFlashHelpers.cs" />
-    <Compile Include="src\Hardware\SmartScopeInterfaceHelpers.cs" />
+    <Compile Include="src\Hardware\SmartScopeInterfaceUsb.cs" />
     <Compile Include="src\Hardware\SmartScopeInterfaceEthernet.cs"/>
-    
-    <Compile Include="src\Hardware\SmartScopeInterfaceLibUsb.cs">
+
+    <Compile Include="src\Hardware\ISmartScopeHardwareUsb.cs" />    
+    <Compile Include="src\Hardware\SmartScopeHardwareLibUsb.cs">
       <Platforms>Linux,MacOS</Platforms>
     </Compile>
-    <Compile Include="src\Hardware\SmartScopeInterfaceWinUsb.cs">
+    <Compile Include="src\Hardware\SmartScopeHardwareWinUsb.cs">
       <Platforms>Windows,WindowsGL</Platforms>
     </Compile>
-    <Compile Include="src\Hardware\SmartScopeInterfaceXamarin.cs">
+    <Compile Include="src\Hardware\SmartScopeHardwareXamarin.cs">
       <Platforms>Android</Platforms>
     </Compile>
     
-    <Compile Include="src\Net\BandwidthMonitor.cs">
-      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
-    </Compile>
     <Compile Include="src\Net\Constants.cs"/>
     <Compile Include="src\Net\InterfaceServer.cs">
       <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
@@ -126,7 +124,7 @@
     
     <Compile Include="src\Properties\AssemblyInfo.cs" />
     <Compile Include="src\Resources.cs" />
-    <None Include="src\Memories\ScopeConstants_GEN.tt">
+    <None Include="src\Hardware\ScopeConstants_GEN.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ScopeConstants_GEN.cs</LastGenOutput>
     </None>
@@ -139,6 +137,11 @@
       <Link>LibUsbDotNet.dll.config</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS,Linux</Platforms>
+    </None>
+    <None Include="Mono.Zeroconf.Providers.Bonjour.dll.config">
+      <Link>Mono.Zeroconf.Providers.Bonjour.dll.config</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>MacOS</Platforms>
     </None>
     <None Include="packages.config" />
     <EmbeddedResource Include="blobs\i2c_sequence.mat" />

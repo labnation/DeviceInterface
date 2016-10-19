@@ -54,7 +54,7 @@ namespace LabNation.DeviceInterface.Net
 #endif
         }
 
-        private void OnInterfaceConnect(ISmartScopeInterfaceUsb hardwareInterface, bool connected)
+        private void OnInterfaceConnect(SmartScopeInterfaceUsb hardwareInterface, bool connected)
         {
             Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Green);
             if (connected)

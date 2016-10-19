@@ -23,7 +23,11 @@ namespace MakerKit
             statusLabel.Text = "Loaded registerbank information from file";
 
             //starts DeviceManaging, converting any incoming SmartScope interfacei into a HackerSpecial instance. See connectHandler on what's going on next.
-            hsManager = new DeviceManager(null, connectHandler, new Dictionary<Type, Type>() { { typeof(ISmartScopeInterface), typeof(HackerSpecial) } });
+            hsManager = new DeviceManager(null, connectHandler, new Dictionary<Type, Type>()
+            {
+                { typeof(ISmartScopeInterfaceUsb), typeof(HackerSpecial) },
+                { typeof(SmartScopeInterfaceEthernet), typeof(HackerSpecial) }
+            });
             hsManager.Start();
 
 		}

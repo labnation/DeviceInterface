@@ -5,16 +5,26 @@ using System.Text;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
-//using System.Threading.Tasks;
+using Mono.Zeroconf;
+using System.Threading.Tasks;
 using LabNation.DeviceInterface.Net;
+using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Hardware
 {
     //class that provides raw HW access to the device
     internal class InterfaceManagerZeroConf : InterfaceManager<InterfaceManagerZeroConf, SmartScopeInterfaceEthernet>
     {
+#if MONOMAC || WINDOWS
+		//Instance to ensure proper building
+		Mono.Zeroconf.Providers.Bonjour.ZeroconfProvider p;
+#elif LINUX
+		Mono.Zeroconf.Providers.AvahiDBus.ZeroconfProvider p;
+#endif
+
         object pollLock = new object();
         bool pollThreadRunning;
+        int polling = 0;
         Thread pollThread;
         const int POLL_INTERVAL = 5000;
         List<ServiceLocation> detectedServices = new List<ServiceLocation>();
@@ -36,7 +46,6 @@ namespace LabNation.DeviceInterface.Hardware
                     return false;
                 ServiceLocation sl = (ServiceLocation)s;
                 return
-                    this.ip.Equals(sl.ip) &&
                     this.port == sl.port &&
                     this.name == sl.name;
             }
@@ -59,80 +68,57 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void pollThreadStart()
         {
-            while (pollThreadRunning)
-            {
-                PollDevice(); //PollDevice contains the Thread.Sleep         
-            }
+            PollDevice();
         }
 
-        /*private async Task<IReadOnlyList<IZeroconfHost>> FindZeroConf()
-        {
-            IReadOnlyList<IZeroconfHost> results = await
-                ZeroconfResolver.ResolveAsync("_sss._tcp.local.");
-            return results;
-        }
+        List<String> serviceNames = new List<string>();
+        object resolveLock = new object();
 
-        async Task<List<ServiceLocation>> EnumerateAllServicesFromAllHosts()
-        {
-            ILookup<string, string> domains = await ZeroconfResolver.BrowseDomainsAsync();
-            var responses = await ZeroconfResolver.ResolveAsync(domains.Select(g => g.Key));
-            List<ServiceLocation> l = new List<ServiceLocation>();
-            foreach (var resp in responses)
-                foreach (IService s in resp.Services.Values)
-                    l.Add(new ServiceLocation(IPAddress.Parse(resp.IPAddress), s.Port, s.Name));
-            return l;
-        }*/
-
-        Func<ServiceLocation, bool> nameFilter = new Func<ServiceLocation, bool>(x => x.name == Constants.SERVICE_TYPE + "." + Constants.REPLY_DOMAIN);
         public override void PollDevice()
         {
+            //browser needs to be renewed each time, as it's being disposed after Browse
+            ServiceBrowser browser = new ServiceBrowser();
+            browser.ServiceAdded += delegate(object o, ServiceBrowseEventArgs args)
+            {
+                Console.WriteLine("Found Service: {0}", args.Service.Name);
+                args.Service.Resolved += delegate(object o2, ServiceResolvedEventArgs args2)
+                {
+                    lock (resolveLock)
+                    {
+                        polling++;
+                        IResolvableService s = (IResolvableService)args2.Service;
+
+                        ServiceLocation loc = new ServiceLocation(s.HostEntry.AddressList[0], s.Port, s.FullName);
+                        Logger.Info("A new ethernet interface was found");
+                        SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port, OnInterfaceDisconnect);
+                        if (ethif.Connected)
+                        {
+                            createdInterfaces.Add(loc, ethif);
+                            if (onConnect != null)
+                                onConnect(ethif, true);
+                        }
+                        else
+                        {
+                            Logger.Info("... but could not connect to ethernet interface");
+                        }
+                        polling--;
+                    }
+                };
+                args.Service.Resolve();
+            };
+
+            //go for it!
             Common.Logger.Info("Polling ZeroConf");
-
-            throw new Exception("Need to implement a Linux-buildable ZeroConf solution");
-            /*Task<List<ServiceLocation>> hostsTask = EnumerateAllServicesFromAllHosts();
-
-            hostsTask.Wait();
-            List<ServiceLocation> detectedServices = hostsTask.Result.Where(nameFilter).ToList();
-
-            foreach (var kvp in createdInterfaces)
-            {
-                if (!kvp.Value.Connected)
-                {
-                    LabNation.Common.Logger.Info("An ethernet interface was removed");
-                    onConnect(kvp.Value, false);
-                    createdInterfaces.Remove(kvp.Key);
-                }
-            }
-
-            //handle connects
-            List<ServiceLocation> newInterfaces = detectedServices.Where(x => !createdInterfaces.ContainsKey(x)).ToList();
-            foreach (ServiceLocation loc in detectedServices)
-            {
-                if (createdInterfaces.Where(x => x.Key.ip.Equals(loc.ip) && x.Key.port == loc.port).Count() == 0)
-                {
-                    // A new interface
-                    LabNation.Common.Logger.Info("A new SmartScopeServer was detected at "+loc.ip.ToString()+":"+loc.port.ToString());
-                    SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(loc.ip, loc.port, OnInterfaceDisconnect);
-                    if (ethif.Connected)
-                    {
-                        createdInterfaces.Add(loc, ethif);
-                        if (onConnect != null)
-                            onConnect(ethif, true);
-                    }
-                    else
-                    {
-                        LabNation.Common.Logger.Info("... failed connecting to SmartScopeServer at " + loc.ip.ToString() + ":" + loc.port.ToString());
-                    }
-                }
-            }*/
+            browser.Browse(Net.Net.SERVICE_TYPE, Net.Net.REPLY_DOMAIN);
         }
 
         public void Destroy()
         {
-            pollThreadRunning = false;
-            if(pollThread != null)
-                pollThread.Join(1000);
+            foreach (var hw in createdInterfaces)
+                hw.Value.Destroy();
 
+            pollThreadRunning = false;
+            pollThread.Join(POLL_INTERVAL);
         }
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)

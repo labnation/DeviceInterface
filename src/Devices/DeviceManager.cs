@@ -25,7 +25,8 @@ namespace LabNation.DeviceInterface.Devices
         public List<IHardwareInterface> ConnectedList { get { return this.connectedList; } }
         private Dictionary<Type, Type> InterfaceActivators = new Dictionary<Type, Type>() {
             { typeof(DummyInterface), typeof(DummyScope) },
-            { typeof(ISmartScopeInterface), typeof(SmartScope) }
+            { typeof(SmartScopeInterfaceUsb), typeof(SmartScope) },
+            { typeof(SmartScopeInterfaceEthernet), typeof(SmartScope) }
         };
 
 #if WINDOWS
@@ -84,10 +85,12 @@ null, deviceConnectHandler) { }
             {
                 foreach (var kvp in interfaceActivatorOverride)
                 {
-                    if (kvp.Key.GetInterfaces().Contains(typeof(IHardwareInterface)) 
-                        && kvp.Value.GetInterfaces().Contains(typeof(IDevice)))
+                    if (kvp.Key.GetInterfaces().Contains(typeof(IHardwareInterface))) 
                     {
-                        this.InterfaceActivators[kvp.Key] = kvp.Value;
+                        if (kvp.Value == null)
+                            this.InterfaceActivators[kvp.Key] = null;
+                        else if(kvp.Value == null || kvp.Value.GetInterfaces().Contains(typeof(IDevice)))
+                            this.InterfaceActivators[kvp.Key] = kvp.Value;
                     }
                 }
             }
@@ -98,8 +101,14 @@ null, deviceConnectHandler) { }
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
 
-            //disable because of the crash by Wait
-            //InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
+			//disable because of the crash by Wait
+#if ANDROID
+			InterfaceManagerServiceDiscovery.context = context;
+			InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
+#else
+            InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
+#endif
+
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnInterfaceChanged;
@@ -142,8 +151,12 @@ null, deviceConnectHandler) { }
             
             if(pollThread != null)
                 pollThread.Join(100);
+#if ANDROID
+			InterfaceManagerServiceDiscovery.Instance.Destroy();
+#else
+            InterfaceManagerZeroConf.Instance.Destroy();
+#endif
 
-            //InterfaceManagerZeroConf.Instance.Destroy();
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
@@ -238,6 +251,24 @@ null, deviceConnectHandler) { }
                 Logger.Error("Failed to create device: " + e.Message);
             }
         }
+		public void Pause()
+		{
+			if (activeDevice is IScope)
+				((IScope)activeDevice).Pause();
+#if ANDROID
+			InterfaceManagerServiceDiscovery.Instance.Pause();
+#endif
+		}
+
+		public void Resume()
+		{
+			if (activeDevice is IScope)
+				((IScope)activeDevice).Resume();
+#if ANDROID
+			InterfaceManagerServiceDiscovery.Instance.Resume();
+#endif
+
+		}
 
 #if WINDOWS
         public void WinUsbPoll()

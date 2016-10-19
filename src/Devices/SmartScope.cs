@@ -10,6 +10,7 @@ using LabNation.Common;
 using AForge.Math;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Runtime.InteropServices;
 #if ANDROID
 using Android.Content;
 #endif
@@ -69,8 +70,6 @@ namespace LabNation.DeviceInterface.Devices
         
         internal static double BASE_SAMPLE_PERIOD = 10e-9; //10MHz sample rate
         private const int OVERVIEW_BUFFER_SIZE = 2048;
-        private const int ACQUISITION_DEPTH_MIN = 128; //Size of RAM
-        private const int ACQUISITION_DEPTH_MAX = 4 * 1024 * 1024; //Size of RAM
         private const int ACQUISITION_DEPTH_DEFAULT = 512 * 1024;
         private uint acquisitionDepthUserMaximum = ACQUISITION_DEPTH_DEFAULT;
         public uint AcquisitionDepthUserMaximum
@@ -81,10 +80,10 @@ namespace LabNation.DeviceInterface.Devices
             }
             set
             {
-                if (value > ACQUISITION_DEPTH_MAX)
-                    acquisitionDepthUserMaximum = ACQUISITION_DEPTH_MAX;
-                else if (value < ACQUISITION_DEPTH_MIN)
-                    acquisitionDepthUserMaximum = ACQUISITION_DEPTH_MIN;
+                if (value > Constants.ACQUISITION_DEPTH_MAX)
+                    acquisitionDepthUserMaximum = Constants.ACQUISITION_DEPTH_MAX;
+                else if (value < Constants.ACQUISITION_DEPTH_MIN)
+                    acquisitionDepthUserMaximum = Constants.ACQUISITION_DEPTH_MIN;
                 else
                     acquisitionDepthUserMaximum = value;
 
@@ -202,6 +201,7 @@ namespace LabNation.DeviceInterface.Devices
 
         #region initializers
 
+        private static uint FPGA_VERSION_UNFLASHED = 0xffffffff;
         private void InitializeHardware()
         {
             InitializeMemories();
@@ -240,9 +240,9 @@ namespace LabNation.DeviceInterface.Devices
                     throw new ScopeIOException("Failed to read FW");
 
                 Logger.Info("Got firmware of length " + firmware.Length);
-                if (!SmartScopeFlashHelpers.FlashFpga(this.hardwareInterface, firmware))
+                if (!this.hardwareInterface.FlashFpga(firmware))
                     throw new ScopeIOException("failed to flash FPGA");
-                if (GetFpgaFirmwareVersion() == SmartScopeFlashHelpers.FPGA_VERSION_UNFLASHED)
+                if (GetFpgaFirmwareVersion() == FPGA_VERSION_UNFLASHED)
                     throw new ScopeIOException("Got firmware version of unflashed FPGA");
                 LogWait("FPGA flashed...");
                 this.flashed = true;
@@ -439,8 +439,10 @@ namespace LabNation.DeviceInterface.Devices
 #if DEBUG
         public void LoadBootLoader()
         {
-            this.DataSourceScope.Stop();
-            this.hardwareInterface.LoadBootLoader();
+            if (!(this.hardwareInterface is SmartScopeInterfaceUsb))
+                throw new ScopeIOException("Can only load bootloader through USB interface");
+            DataSourceScope.Stop();
+            ((SmartScopeInterfaceUsb)hardwareInterface).LoadBootLoader();
         }
 #endif
 
@@ -457,9 +459,7 @@ namespace LabNation.DeviceInterface.Devices
             }
             catch (Exception)
             {
-            	Logger.Warn("Reset incomplete - destroying hardware interface");
-            	if(HardwareInterface != null)
-                    hardwareInterface.Destroy();
+                throw new ScopeIOException("Reset incomplete - destroying hardware interface");
             }
         }
 
@@ -474,29 +474,6 @@ namespace LabNation.DeviceInterface.Devices
 
         #region data_handlers
 
-#if WINDOWS
-        SmartScopeHeader ResyncHeader()
-        {
-            int tries = 64;
-            Logger.Warn("Trying to resync header by fetching up to " + tries + " packages");
-         
-            List<byte[]> crashBuffers = new List<byte[]>();
-            byte[] buf;
-            while ((buf = hardwareInterface.GetData(BYTES_PER_BURST)) != null && tries > 0)
-            {
-                if (buf[0] == 'L' && buf[1] == 'N')
-                {
-                    Logger.Warn("Got " + crashBuffers.Count + " packages before another header came");
-                    SmartScopeHeader h = new SmartScopeHeader(buf);
-                    return h;
-                }
-                crashBuffers.Add(buf);
-                tries--;
-            }
-            return null;
-        }
-#endif
-
         public bool SendOverviewBuffer
         {
             get { return StrobeMemory[STR.VIEW_SEND_OVERVIEW].GetBool(); }
@@ -507,105 +484,108 @@ namespace LabNation.DeviceInterface.Devices
         /// Get a package of scope data
         /// </summary>
         /// <returns>Null in case communication failed, a data package otherwise. Might result in disconnecting the device if a sync error occurs</returns>
+        private byte[] rxBuffer = new byte[Constants.SZ_HDR + Constants.FETCH_SIZE_MAX]; // Max received = header + full acq buf
+        private Hardware.SmartScopeHeader hdr;
+        List<AnalogChannel> analogChannels = new List<AnalogChannel>() { AnalogChannel.ChA, AnalogChannel.ChB };
         public DataPackageScope GetScopeData()
 		{
 			if (HardwareInterface == null)
 				return null;
-
-			byte[] buffer;
-			SmartScopeHeader header;
-            
-			try {
-                buffer = hardwareInterface.GetData(BYTES_PER_BURST);
-			} catch (ScopeIOException) {
-				return null;
-			} catch (Exception e) {
-				Logger.Error ("Error while trying to get scope data: " + e.Message);
-				return null;
-			}
-			if (buffer == null)
-				return null;
-
-			try {
-				header = new SmartScopeHeader (buffer);
-			} catch (Exception e) {
-#if WINDOWS
-                Logger.Warn("Error parsing header - attempting to fix that");
-                header = ResyncHeader();
-                if (header == null)
-                {
-                    Logger.Error("Resync header failed - resetting");
-                    Reset();
-                    return null;
-                }
-#else
-				Logger.Error ("Failed to parse header - resetting scope: " + e.Message);
-				Reset ();
-				return null;
-#endif
-			}
-
-            bool newAcquisition = currentDataPackage == null || currentDataPackage.Identifier != header.AcquisitionId;
-            AcquisitionDepthLastPackage = header.AcquisitionDepth;
-            SamplePeriodLastPackage = header.SamplePeriod;
-			acquiring = header.Acquiring;
-			stopPending = header.LastAcquisition;
-            awaitingTrigger = header.AwaitingTrigger;
-            armed = header.Armed;
-            List<AnalogChannel> analogChannels = new List<AnalogChannel>() { AnalogChannel.ChA, AnalogChannel.ChB };
-            Dictionary<AnalogChannel, GainCalibration> channelConfig = header.ChannelSettings(this.rom);
-            Dictionary<Channel, Array> receivedData;
-
-            //find min and max voltages for each channel, to allow saturation detection
-            byte[] minMaxBytes = new byte[] { 0, 255 };
-            Dictionary<Channel, float[]> minMaxVoltages = new Dictionary<Channel, float[]>();
-            foreach (AnalogChannel ch in analogChannels)
-                minMaxVoltages.Add(ch, minMaxBytes.ConvertByteToVoltage(header.ChannelSettings(this.rom)[ch], header.GetRegister(ch.YOffsetRegister()), probeSettings[ch]));
-
-            if (header.OverviewBuffer)
+            int received = 0;
+            try
             {
-                buffer = hardwareInterface.GetData(OVERVIEW_BUFFER_SIZE * BYTES_PER_SAMPLE);
+                received = hardwareInterface.GetAcquisition(rxBuffer);
+            } catch (ScopeIOException e)
+            {
+                Logger.Error("Failed to get acquisition: " + e.Message);
+                return null;
+            }
+            
+            if (received < Constants.SZ_HDR)
+                return null;
 
-                if (newAcquisition)
-                {
-                    //This should not be possible since the overview is always sent *AFTER* the viewport data,
-                    //so the last received package's identifier should match with this one
-                    Logger.Warn("Got an overview buffer but no data came in for it before. This is wrong");
+            GCHandle handle = GCHandle.Alloc(rxBuffer, GCHandleType.Pinned);
+            hdr = (SmartScopeHeader)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(SmartScopeHeader));
+            handle.Free();
+
+            acquiring       = hdr.flags.HasFlag(HeaderFlags.Acquiring);
+            stopPending     = hdr.flags.HasFlag(HeaderFlags.IsLastAcquisition);
+            awaitingTrigger = hdr.flags.HasFlag(HeaderFlags.AwaitingTrigger);
+            armed           = hdr.flags.HasFlag(HeaderFlags.Armded);
+
+            if (hdr.flags.HasFlag(HeaderFlags.TimedOut))
+                return null;
+
+            Dictionary<AnalogChannel, GainCalibration> channelConfig = hdr.ChannelSettings(this.rom);
+            Dictionary<Channel, Array> receivedData = SplitAndConvert(rxBuffer, analogChannels, hdr, Constants.SZ_HDR, received - Constants.SZ_HDR);
+
+            ChannelDataSourceScope source = hdr.flags.HasFlag(HeaderFlags.IsOverview) ? ChannelDataSourceScope.Overview :
+                                            hdr.flags.HasFlag(HeaderFlags.IsFullAcqusition) ? ChannelDataSourceScope.Acquisition :
+                                            ChannelDataSourceScope.Viewport;
+
+            bool newAcquisition = currentDataPackage == null || currentDataPackage.Identifier != hdr.acquisition_id;
+
+            if (newAcquisition && source == ChannelDataSourceScope.Overview)
+                Logger.Error(String.Format("Acquisition source for new acqusition is Overview, but {0:s}", source));
+
+            Int64 ViewportOffsetSamples = hdr.GetRegister(REG.VIEW_OFFSET_B0) +
+                                    (hdr.GetRegister(REG.VIEW_OFFSET_B1) << 8) +
+                                    (hdr.GetRegister(REG.VIEW_OFFSET_B2) << 16);
+
+            int n_samples = hdr.n_bursts * hdr.bytes_per_burst / 2;
+            if (newAcquisition)
+            {
+                if (hdr.offset != 0) {
+                    Logger.Error("Got an off-set package but didn't get any date before");
                     return null;
                 }
-                if (buffer == null)
+                    
+
+                /* FIXME: integrate into header*/
+                double SamplePeriod = BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION));
+                uint AcquisitionDepth = (uint)(2048 << hdr.GetRegister(REG.ACQUISITION_DEPTH));
+                int viewportExcessiveSamples = hdr.GetRegister(REG.VIEW_EXCESS_B0) + (hdr.GetRegister(REG.VIEW_EXCESS_B1) << 8);
+                double ViewportExcess = viewportExcessiveSamples * SamplePeriod;
+                Int64 holdoffSamples = hdr.GetRegister(REG.TRIGGERHOLDOFF_B0) +
+                                    (hdr.GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
+                                    (hdr.GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
+                                    (hdr.GetRegister(REG.TRIGGERHOLDOFF_B3) << 24) - TriggerDelay(TriggerValue.mode, hdr.GetRegister(REG.INPUT_DECIMATION));
+                double TriggerHoldoff = holdoffSamples * (SmartScope.BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION)));
+                int ViewportLength = (hdr.bytes_per_burst / 2) << hdr.GetRegister(REG.VIEW_BURSTS);
+
+                currentDataPackage = new DataPackageScope(this.GetType(),
+                    AcquisitionDepth, SamplePeriod,
+                    ViewportLength, ViewportOffsetSamples,
+                    TriggerHoldoff, holdoffSamples, 
+                    hdr.flags.HasFlag(HeaderFlags.Rolling), hdr.acquisition_id, 
+                    hdr.TriggerValue(channelConfig, probeSettings), 
+                    ViewportExcess);
+
+                currentDataPackage.Settings["InputDecimation"] = hdr.GetRegister(REG.INPUT_DECIMATION);
+                foreach (AnalogChannel ch in analogChannels)
                 {
-                    //This is also pretty bad
-                    Logger.Warn("Failed to get overview buffer payload. This is bad");
-                    return null;
+                    currentDataPackage.SaturationLowValue[ch] = ((byte)0).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), probeSettings[ch]);
+                    currentDataPackage.SaturationHighValue[ch] = ((byte)255).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), probeSettings[ch]);
+                    currentDataPackage.Resolution[ch] = ProbeScaleScopeToHost(ch, (float)channelConfig[ch].coefficients[0]);
+                    currentDataPackage.Settings["Multiplier" + ch.Name] = channelConfig[ch].multiplier;
+#if DEBUG
+                    currentDataPackage.Settings["Divider" + ch.Name] = channelConfig[ch].divider;
+                    currentDataPackage.Settings["Offset" + ch.Name] = ConvertYOffsetByteToVoltage(ch, hdr.GetRegister(ch.YOffsetRegister()));
+#endif
                 }
-
-                receivedData = SplitAndConvert(buffer, analogChannels, header);
-                foreach (Channel ch in receivedData.Keys)
-                {
-                    currentDataPackage.SetData(ChannelDataSourceScope.Overview, ch, receivedData[ch]);
-                    if (ch is AnalogChannel)
-                    {
-                        currentDataPackage.SaturationLowValue[ch] = minMaxVoltages[ch][0];
-                        currentDataPackage.SaturationHighValue[ch] = minMaxVoltages[ch][1];
-                    }
-                }               
-
-                return currentDataPackage;
             }
 
-            if (header.FullAcquisitionDump)
+            if(source == ChannelDataSourceScope.Viewport)
             {
-                buffer = hardwareInterface.GetData(header.Samples * BYTES_PER_SAMPLE);
-                if (newAcquisition || buffer == null)
-                {
-                    Logger.Warn("Got an acquisition buffer but no data came in for it before. This is wrong");
-                    return null;
-                }
+                double ViewportOffset = SamplePeriod * ViewportOffsetSamples;
+                currentDataPackage.offset[ChannelDataSourceScope.Viewport] = ViewportOffset;
+                double ViewportSamplePeriod = BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION) + hdr.GetRegister(REG.VIEW_DECIMATION));
+                currentDataPackage.samplePeriod[ChannelDataSourceScope.Viewport] = ViewportSamplePeriod;
+            }
 
-                receivedData = SplitAndConvert(buffer, analogChannels, header);
-
-                foreach (Channel ch in receivedData.Keys)
+            foreach (Channel ch in receivedData.Keys)
+            {
+                if(source == ChannelDataSourceScope.Acquisition)
                 {
                     //Here we don't use AddData since we want to assign the whole acqbuf in memory
                     // at once instead of growing it as it comes in.
@@ -614,22 +594,22 @@ namespace LabNation.DeviceInterface.Devices
                     Array targetArray;
                     if (target == null)
                     {
-                        targetArray = Array.CreateInstance(receivedData[ch].GetType().GetElementType(), header.AcquisitionDepth);
+                        targetArray = Array.CreateInstance(receivedData[ch].GetType().GetElementType(), AcquisitionDepth);
                         currentDataPackage.SetData(ChannelDataSourceScope.Acquisition, ch, targetArray);
-                        if (ch is AnalogChannel)
-                        {
-                            currentDataPackage.SaturationLowValue[ch] = minMaxVoltages[ch][0];
-                            currentDataPackage.SaturationHighValue[ch] = minMaxVoltages[ch][1];
-                        }
                     }
                     else
                     {
                         targetArray = target.array;
                     }
-                    Array.ConstrainedCopy(receivedData[ch], 0, targetArray, header.PackageOffset * header.Samples, receivedData[ch].Length);                    
+                    Array.ConstrainedCopy(receivedData[ch], 0, targetArray, hdr.offset * n_samples, receivedData[ch].Length);
                 }
+                else
+                    currentDataPackage.SetData(source, ch, receivedData[ch]);
+            }
 
-                float fullAcquisitionDumpProgress = (header.PackageOffset + 1) * (float)header.Samples / header.AcquisitionDepth;
+            if(source == ChannelDataSourceScope.Acquisition)
+            {
+                float fullAcquisitionDumpProgress = (hdr.offset + 1) * (float)n_samples / currentDataPackage.AcquisitionSamples;
 
                 //update FullAcquisitionFetchProgress and fire event when finished
                 float previousAcqTransferProgress = currentDataPackage.FullAcquisitionFetchProgress;
@@ -637,88 +617,18 @@ namespace LabNation.DeviceInterface.Devices
                 if (currentDataPackage.FullAcquisitionFetchProgress == 1 && previousAcqTransferProgress < 1)
                 {
                     currentDataPackage.UpdateTimestamp();
-                    if (OnAcquisitionTransferFinished != null)
+                    if(OnAcquisitionTransferFinished != null)
                         OnAcquisitionTransferFinished(this, new EventArgs());
                 }
-
-                return currentDataPackage;
             }
 
-            if (header.ImpossibleDump)
-                return null;
-
-			if (header.NumberOfPayloadBursts == 0 || header.TimedOut)
-				return null;
-
-			try {
-                buffer = hardwareInterface.GetData(BYTES_PER_BURST * header.NumberOfPayloadBursts);
-			} catch (Exception e) {
-				Logger.Error ("Failed to fetch payload - resetting scope: " + e.Message);
-				Reset ();
-				return null;
-			}
-                
-			if (buffer == null) {
-				Logger.Error ("Failed to get payload - resetting");
-				Reset ();
-				return null;
-			}
-
-            receivedData = SplitAndConvert(buffer, analogChannels, header);
-
-            if (newAcquisition)
-            {
-                if (header.PackageOffset != 0)
-                {
-                    Logger.Warn("Got an off-set package but didn't get any date before");
-                    return null;
-                }
-                /* FIXME: integrate into header*/
-                AnalogChannel triggerChannel = header.TriggerValue.channel;
-                byte[] triggerLevel = new byte[] { header.GetRegister(REG.TRIGGER_LEVEL) };
-                float[] triggerLevelFloat = triggerLevel.ConvertByteToVoltage(header.ChannelSettings(this.rom)[triggerChannel], header.GetRegister(triggerChannel.YOffsetRegister()), probeSettings[triggerChannel]);
-                header.TriggerValue.level = triggerLevelFloat[0];
-                currentDataPackage = new DataPackageScope(this.GetType(),
-                    header.AcquisitionDepth, header.SamplePeriod,
-                    header.ViewportLength, header.ViewportOffsetSamples,
-                    header.TriggerHoldoff, header.TriggerHoldoffSamples, header.Rolling,
-                    header.AcquisitionId, header.TriggerValue, header.ViewportExcess);
-            }
-
-#if DEBUG
-            currentDataPackage.header = header;
-            currentDataPackage.Settings["AcquisitionId"] = header.AcquisitionId;
-#endif
-            currentDataPackage.Settings["InputDecimation"] = header.GetRegister(REG.INPUT_DECIMATION);
-
-            currentDataPackage.offset[ChannelDataSourceScope.Viewport] = header.ViewportOffset;
-            currentDataPackage.samplePeriod[ChannelDataSourceScope.Viewport] = header.ViewportSamplePeriod;
-            foreach (Channel ch in receivedData.Keys)
-            {
-                currentDataPackage.AddData(ChannelDataSourceScope.Viewport, ch, receivedData[ch]);
-                if (ch is AnalogChannel)
-                {
-                    currentDataPackage.SaturationLowValue[ch] = minMaxVoltages[ch][0];
-                    currentDataPackage.SaturationHighValue[ch] = minMaxVoltages[ch][1];
-                }
-            }
-
-            foreach (AnalogChannel ch in AnalogChannel.List)
-            {
-                currentDataPackage.Resolution[ch] = ProbeScaleScopeToHost(ch, (float)channelConfig[ch].coefficients[0]);
-                currentDataPackage.Settings["Multiplier" + ch.Name]= channelConfig[ch].multiplier;
-#if DEBUG
-                currentDataPackage.Settings["Divider" + ch.Name] = channelConfig[ch].divider;
-                currentDataPackage.Settings["Offset" + ch.Name] = ConvertYOffsetByteToVoltage(ch, header.GetRegister(ch.YOffsetRegister()));
-#endif
-            }
             return currentDataPackage;
         }
 
-        private Dictionary<Channel, Array> SplitAndConvert(byte[] buffer, List<AnalogChannel> channels, SmartScopeHeader header)
+        private Dictionary<Channel, Array> SplitAndConvert(byte[] buffer, List<AnalogChannel> channels, SmartScopeHeader header, int offset, int length)
         {
             int n_channels = channels.Count;
-            int n_samples = buffer.Length / n_channels;
+            int n_samples = length / n_channels;
             byte[][] splitRaw = new byte[n_channels][];
 
             for (int j = 0; j < n_channels; j++)
@@ -728,7 +638,7 @@ namespace LabNation.DeviceInterface.Devices
             for (int i = 0; i < n_samples; i++)
             {
                 for (int j = 0; j < n_channels; j++)
-                    splitRaw[j][i] = buffer[i * n_channels + j];
+                    splitRaw[j][i] = buffer[offset + i * n_channels + j];
             }
 
             for (int j = 0; j < n_channels; j++)
@@ -751,14 +661,58 @@ namespace LabNation.DeviceInterface.Devices
         }
 
         //FIXME: this needs proper handling
-        private bool Connected { get { return this.HardwareInterface != null && !this.hardwareInterface.Destroyed && this.flashed; } }
-        public bool Ready { get { return this.Connected && this.deviceReady && !(this.HardwareInterface == null || this.hardwareInterface.Destroyed); } }
+        private bool Connected { get { return this.HardwareInterface != null && this.flashed; } }
+        public bool Ready { get { return this.Connected && this.deviceReady && !(this.HardwareInterface == null); } }
 
         #endregion
     }
 
     internal static class Helpers
     {
+        public static TriggerValue TriggerValue(this SmartScopeHeader hdr, Dictionary<AnalogChannel, SmartScope.GainCalibration> channelConfig, Dictionary<AnalogChannel, ProbeDivision> probeSettings)
+        {
+            byte modeByte = hdr.GetRegister(REG.TRIGGER_MODE);
+            TriggerValue tv = new TriggerValue()
+            {
+                mode = (TriggerMode)(modeByte & 0x03),
+                channel = AnalogChannel.List.Single(x => x.Value == ((modeByte >> 2) & 0x01)),
+                source = (TriggerSource)((modeByte >> 3) & 0x01),
+                edge = (TriggerEdge)((modeByte >> 4) & 0x03),
+            };
+            tv.pulseWidthMin = (
+                    (hdr.GetRegister(REG.TRIGGER_PW_MIN_B0) << 0) &
+                    (hdr.GetRegister(REG.TRIGGER_PW_MIN_B1) << 8) &
+                    (hdr.GetRegister(REG.TRIGGER_PW_MIN_B2) << 16)
+                    ) * SmartScope.BASE_SAMPLE_PERIOD;
+            tv.pulseWidthMax = (
+                    (hdr.GetRegister(REG.TRIGGER_PW_MAX_B0) << 0) &
+                    (hdr.GetRegister(REG.TRIGGER_PW_MAX_B1) << 8) &
+                    (hdr.GetRegister(REG.TRIGGER_PW_MAX_B2) << 16)
+                    ) * SmartScope.BASE_SAMPLE_PERIOD;
+            tv.level = hdr.GetRegister(REG.TRIGGER_LEVEL).ConvertByteToVoltage(channelConfig[tv.channel], hdr.GetRegister(tv.channel.YOffsetRegister()), probeSettings[tv.channel]);
+            return tv;
+        }
+        public static Dictionary<AnalogChannel, SmartScope.GainCalibration> ChannelSettings(this SmartScopeHeader h, SmartScope.Rom r)
+        {
+            Dictionary<AnalogChannel, SmartScope.GainCalibration> settings = new Dictionary<AnalogChannel, SmartScope.GainCalibration>();
+
+            foreach (AnalogChannel ch in AnalogChannel.List)
+            {
+                //Parse div_mul
+                byte divMul = h.GetRegister(REG.DIVIDER_MULTIPLIER);
+                int chOffset = ch.Value * 4;
+                double div = SmartScope.validDividers[(divMul >> (0 + chOffset)) & 0x3];
+                double mul = SmartScope.validMultipliers[(divMul >> (2 + chOffset)) & 0x3];
+
+                settings.Add(ch, r.getCalibration(ch, div, mul));
+            }
+            return settings;
+        }
+
+        public static float ConvertByteToVoltage(this byte b, SmartScope.GainCalibration calibration, byte yOffset, ProbeDivision division)
+        {
+            return (new byte[] { b }).ConvertByteToVoltage(calibration, yOffset, division)[0];
+        }
         public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, ProbeDivision division)
         {
             double[] coefficients = calibration.coefficients;

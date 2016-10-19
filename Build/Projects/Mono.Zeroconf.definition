@@ -52,5 +52,5 @@
       Guid="5CF88E3A-13DD-4114-BAD9-DA826946516F"
       Path="libs/Zeroconf/src/Mono.Zeroconf/Mono.Zeroconf.csproj">
     </Project>
-  </Platform>  
+  </Platform> 
 </ExternalProject>

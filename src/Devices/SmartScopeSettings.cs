@@ -104,11 +104,11 @@ namespace LabNation.DeviceInterface.Devices
                 List<MemoryRegister> FpgaStrobes = StrobeMemory.Commit();
                 
                 var FpgaRegistersAddresses = FpgaRegisters.Select(x => (REG)x.Address);
-                if (FpgaRegistersAddresses.Where(x => AcquisitionRegisters.Contains(x)).Count() > 0)
+                if (FpgaRegistersAddresses.Where(x => Constants.AcquisitionRegisters.Contains(x)).Count() > 0)
                     acquisitionUpdateRequired = true;
-                if (FpgaRegistersAddresses.Where(x => DumpRegisters.Contains(x)).Count() > 0)
+                if (FpgaRegistersAddresses.Where(x => Constants.ViewRegisters.Contains(x)).Count() > 0)
                     viewUpdateRequired = true;
-                if (!acquisitionUpdateRequired && FpgaStrobes.Select(x => (STR)x.Address).Where(x => AcquisitionStrobes.Contains(x)).Count() > 0)
+                if (!acquisitionUpdateRequired && FpgaStrobes.Select(x => (STR)x.Address).Where(x => Constants.AcquisitionStrobes.Contains(x)).Count() > 0)
                     acquisitionUpdateRequired = true;
 
                 if (acquisitionUpdateRequired)
@@ -534,7 +534,7 @@ namespace LabNation.DeviceInterface.Devices
 
         public double AcquisitionLengthMin
         {
-            get { return ACQUISITION_DEPTH_MIN * BASE_SAMPLE_PERIOD; }
+            get { return Constants.ACQUISITION_DEPTH_MIN * BASE_SAMPLE_PERIOD; }
         }
         public double AcquisitionLengthMax
         {
@@ -542,7 +542,7 @@ namespace LabNation.DeviceInterface.Devices
         }
         public uint AcquisitionDepthMax
         {
-            get { return (uint)ACQUISITION_DEPTH_MAX; }
+            get { return (uint)Constants.ACQUISITION_DEPTH_MAX; }
         }
         public uint InputDecimationMax
         {
@@ -812,9 +812,7 @@ namespace LabNation.DeviceInterface.Devices
         }
 
         public byte[] GetPicFirmwareVersion() {
-            hardwareInterface.SendCommand(SmartScopeInterfaceHelpers.PIC_COMMANDS.PIC_VERSION);
-            byte[] response = hardwareInterface.ReadControlBytes(16);
-            return response.Skip(4).Take(3).Reverse().ToArray();
+            return hardwareInterface.PicFirmwareVersion;
         }
 
         public byte DigitalOutput

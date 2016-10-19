@@ -9,7 +9,7 @@ using Android.App;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-    class InterfaceManagerXamarin: InterfaceManager<InterfaceManagerXamarin, SmartScopeInterfaceXamarin>
+    class InterfaceManagerXamarin: InterfaceManager<InterfaceManagerXamarin, SmartScopeInterfaceUsb>
     {
 
         UsbManager usbManager;
@@ -71,9 +71,10 @@ namespace LabNation.DeviceInterface.Hardware
         {
             if(!usbManager.HasPermission(d))
                 return;
-            SmartScopeInterfaceXamarin i = new SmartScopeInterfaceXamarin(context, usbManager, d);
-            interfaces.Add(d.DeviceName, i);
-            onConnect(i, true);
+            SmartScopeHardwareXamarin i = new SmartScopeHardwareXamarin(context, usbManager, d);
+            SmartScopeInterfaceUsb usb = new SmartScopeInterfaceUsb(i);
+            interfaces.Add(d.DeviceName, usb);
+            onConnect(usb, true);
         }
 
         private void FilterDevice(UsbDevice usbDevice)

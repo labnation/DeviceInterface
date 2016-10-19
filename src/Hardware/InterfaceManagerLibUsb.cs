@@ -11,7 +11,7 @@ using C=LabNation.Common;
 namespace LabNation.DeviceInterface.Hardware
 {
     //class that provides raw HW access to the device
-    internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb, SmartScopeInterfaceLibUsb>
+    internal class InterfaceManagerLibUsb: InterfaceManager<InterfaceManagerLibUsb, SmartScopeInterfaceUsb>
     {   
         #if IOS
         object pollLock = new object();
@@ -124,7 +124,7 @@ namespace LabNation.DeviceInterface.Hardware
             string serial = null;
             try
             {
-                SmartScopeInterfaceLibUsb f = new SmartScopeInterfaceLibUsb(scopeUsbDevice);
+                SmartScopeHardwareLibUsb f = new SmartScopeHardwareLibUsb(scopeUsbDevice);
                 //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
                 serial = scopeUsbDevice.Info.SerialString;
                 if (serial == "" || serial == null)
@@ -134,10 +134,11 @@ namespace LabNation.DeviceInterface.Hardware
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 }
                 C.Logger.Info("Device found with serial [" + serial + "]");
-                interfaces.Add(serial, f);
+                SmartScopeInterfaceUsb usb = new SmartScopeInterfaceUsb(f);
+                interfaces.Add(serial, usb);
 
                 if (onConnect != null)
-                    onConnect(f, true);
+                    onConnect(usb, true);
             }
             catch (ScopeIOException e)
             {

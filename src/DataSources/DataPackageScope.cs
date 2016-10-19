@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using LabNation.DeviceInterface.Devices;
 using LabNation.Common;
+using LabNation.DeviceInterface.Hardware;
 
 namespace LabNation.DeviceInterface.DataSources
 {
@@ -89,7 +90,7 @@ namespace LabNation.DeviceInterface.DataSources
         public TriggerValue TriggerValue { get; private set; }
         
 #if DEBUG
-        internal SmartScopeHeader header = null;
+        internal SmartScopeHeader header;
 #endif
 
         public Dictionary<string, double> Settings { get; private set; }

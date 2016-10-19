@@ -11,7 +11,7 @@ using LabNation.Common;
 namespace LabNation.DeviceInterface.Hardware
 {
     //class that provides raw HW access to the device
-    internal class InterfaceManagerWinUsb : InterfaceManager<InterfaceManagerWinUsb, SmartScopeInterfaceWinUsb>
+    internal class InterfaceManagerWinUsb : InterfaceManager<InterfaceManagerWinUsb, SmartScopeInterfaceUsb>
     {
         Form winUsbForm;
         USBNotifier notifier;
@@ -111,7 +111,7 @@ namespace LabNation.DeviceInterface.Hardware
             string serial = null;
             try
             {
-                SmartScopeInterfaceWinUsb f = new SmartScopeInterfaceWinUsb(dev);
+                SmartScopeHardwareWinUsb f = new SmartScopeHardwareWinUsb(dev);
                 //FIXME: should use ScopeUsbDevice.serial but not set with smartscope
                 serial = dev.Descriptor.SerialNumber;
                 if (serial == "" || serial == null)
@@ -119,10 +119,12 @@ namespace LabNation.DeviceInterface.Hardware
                 if (interfaces.ContainsKey(dev.Descriptor.PathName.ToLower()))
                     throw new ScopeIOException("This device was already registered. This is a bug");
                 C.Logger.Debug("Device found with serial [" + serial + "]");
-                interfaces.Add(dev.Descriptor.PathName.ToLower(), f);
+                SmartScopeInterfaceUsb usb = new SmartScopeInterfaceUsb(f);
+
+                interfaces.Add(dev.Descriptor.PathName.ToLower(), usb);
 
                 if (onConnect != null)
-                    onConnect(f, true);
+                    onConnect(usb, true);
                 return true;
             }
             catch (ScopeIOException e)

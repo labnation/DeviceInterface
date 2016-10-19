@@ -7,26 +7,31 @@ using System.Net.Sockets;
 using System.IO;
 using LabNation.DeviceInterface.Net;
 using LabNation.DeviceInterface.Hardware;
+using LabNation.Common;
+using System.Runtime.InteropServices;
 
 namespace LabNation.DeviceInterface.Hardware
 {
     public delegate void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface);
 
-    public class SmartScopeInterfaceEthernet:ISmartScopeInterface
+    public class SmartScopeInterfaceEthernet: ISmartScopeInterface
     {
         
-		public bool Connected { get { return this.tcpclnt.Connected; } }
+		public bool Connected { get { return this.controlClient.Connected; } }
+        private bool disconnectCalled = false;
         private IPAddress serverIp;
         private int serverPort;
+        private int dataPort;
         private OnInterfaceDisconnect onDisconnect;
-        BufferedStream stream;
-		TcpClient tcpclnt = new TcpClient();
+		TcpClient controlClient = new TcpClient();
+        TcpClient dataClient = new TcpClient();
+        Socket controlSocket;
+        Socket dataSocket;
         public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort, OnInterfaceDisconnect onDisconnect)
         {
             this.serverIp = serverIp;
             this.serverPort = serverPort;
             this.onDisconnect = onDisconnect;
-
             this.Connect();
         }
 			
@@ -34,146 +39,214 @@ namespace LabNation.DeviceInterface.Hardware
         {
             try
             {
-                tcpclnt.Connect(this.serverIp, this.serverPort);
-                NetworkStream unbufferedStream = tcpclnt.GetStream();
-                this.stream = new BufferedStream(unbufferedStream, Constants.BUF_SIZE);
+                controlClient.Connect(this.serverIp, this.serverPort);
+                controlClient.ReceiveTimeout = 10000;
+                
+                controlSocket = controlClient.Client;
+                controlSocket.DontFragment = true;
+                controlSocket.NoDelay = true;
+
+                byte[] serialBytes = Request(Net.Net.Command.SERIAL);
+                serial = System.Text.Encoding.UTF8.GetString(serialBytes, 0, serialBytes.Length);
             }
-            catch
+			catch(Exception e)
             {
+				Logger.Error("Failed to connect: " + e.Message);
                 //do nothing; up to calling code to check Connected property of this instance
             }
         }
 
-        //method encapsulating stream.Read, as this will throw an error upon ungraceful disconnect
-        private int ProtectedRead(byte[] array, int offset, int count)
-        {
-            try
-            {
-                return stream.Read(array, offset, count);
-            }
-            catch
-            {
-                if (onDisconnect != null)
-                    onDisconnect(this);
-
-                LabNation.Common.Logger.Warn("EthernetInterface Read error -- probably disconnection");
-                return 0;
-            }
-        }
-
+        private string serial;
         public string Serial { 
             get 
             {
-                if (!BitConverter.IsLittleEndian)
-                    throw new Exception("This system is bigEndian -- not supported!");
-
-                byte[] message = Constants.Commands.SERIAL.msg();
-                byte[] answer;
-                lock (this)
-                {
-                    stream.Write(message, 0, message.Length);
-					answer = new byte[11];
-                    ProtectedRead(answer, 0, answer.Length);
-                }
-
-                return System.Text.Encoding.UTF8.GetString(answer, 0, answer.Length);
+                return serial;
             } 
         }
 
-        public void WriteControlBytes(byte[] message, bool async)
+        public void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
-            byte[] wrapper = Constants.Commands.SEND.msg(message);
+            data = Request(Net.Net.ControllerHeader(Net.Net.Command.GET, ctrl, (int)address, (int)length, null));
+        }
+        public void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
+        {
+            Request(Net.Net.ControllerHeader(Net.Net.Command.SET, ctrl, (int)address, data.Length, data));
+        }
+        public byte[] GetData(int length)
+        {
+            return Request(Net.Net.Command.DATA, new byte[] { (byte)(length >> 8), (byte)(length) });
+        }
 
-            lock (this)
-            {
-                stream.Write(wrapper, 0, wrapper.Length);
+        private void SocketReceive(Socket s, int offset, int length, byte[] buffer)
+        {
+            int recvd = 0;
+            while(length > 0) {
+                if (!s.Connected)
+                    Destroy();
+                recvd = s.Receive(buffer, offset + recvd, length, SocketFlags.None);
+                length -= recvd;
             }
+                
         }
 
-        public void WriteControlBytesBulk(byte[] message, bool async)
+        public int GetAcquisition(byte[] buffer)
         {
-            WriteControlBytes(message, async);
-        }
-
-        public void WriteControlBytesBulk(byte[] message, int offset, int length, bool async)
-        {
-            byte[] buffer;
-            if (offset == 0 && length == message.Length)
-                buffer = message;
-            else
+            try
             {
-                buffer = new byte[length];
-                Array.ConstrainedCopy(message, offset, buffer, 0, length);
-            }
-
-            WriteControlBytes(buffer, async);
-        }
-
-        public byte[] ReadControlBytes(int length)
-        {
-            byte[] message = Constants.Commands.READ.msg( new byte[] {(byte)length });
-            byte[] answer;
-            lock (this)
-            {
-                stream.Write(message, 0, message.Length);
-                stream.Flush();
-
-                answer = new byte[length];
-
-                int offset = 0;
-				while(offset < length)
-                    offset += ProtectedRead(answer, offset, length - offset);
-            }
-
-            return answer;
-        }
-
-        public byte[] GetData(int numberOfBytes)
-        {
-            byte[] message = Constants.Commands.READ_HBW.msg( new byte[] { (byte)(numberOfBytes >> 8), (byte)numberOfBytes });
-
-            byte[] answer;
-            lock (this)
-            {
-                stream.Write(message, 0, message.Length);
-                stream.Flush();
-
-                answer = new byte[numberOfBytes];
-
-				int offset = 0;
-                while (offset < numberOfBytes)
+                if (dataSocket == null)
                 {
-                    int bytesReceived = ProtectedRead(answer, offset, numberOfBytes - offset);
-                    offset += bytesReceived;
+					byte[] portBytes = Request(Net.Net.Command.DATA_PORT);
+					this.dataPort = BitConverter.ToUInt16(portBytes, 0);
+                    dataClient.Connect(this.serverIp, this.dataPort);
+                    dataSocket = dataClient.Client;
+                    dataSocket.DontFragment = true;
+                    dataSocket.NoDelay = true;
 
-                    if (bytesReceived == 0)
+                }
+                SocketReceive(dataSocket, 0, Constants.SZ_HDR, buffer);
+                GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+                SmartScopeHeader hdr = (SmartScopeHeader)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(SmartScopeHeader));
+                handle.Free();
+                if (!hdr.IsValid())
+                {
+                    Logger.Error("Invalid header magic");
+                    Destroy();
+                    return 0;
+                }
+
+
+                if (hdr.flags.HasFlag(HeaderFlags.TimedOut))
+                    return Constants.SZ_HDR;
+
+                if (hdr.flags.HasFlag(HeaderFlags.IsOverview))
+                {
+                    SocketReceive(dataSocket, Constants.SZ_HDR, Constants.SZ_OVERVIEW, buffer);
+                    return Constants.SZ_HDR + Constants.SZ_OVERVIEW;
+                }
+
+                if (hdr.n_bursts == 0)
+                    throw new ScopeIOException("number of bursts in this USB pacakge is 0, cannot fetch");
+
+                int len = hdr.n_bursts * hdr.bytes_per_burst;
+                SocketReceive(dataSocket, Constants.SZ_HDR, len, buffer);
+                return Constants.SZ_HDR + len;
+            } catch (SocketException se)
+            {
+                throw new ScopeIOException("Socket exception: " + se.Message);
+            }
+        }
+
+        public byte[] PicFirmwareVersion { get { return Request(Net.Net.Command.PIC_FW_VERSION); } }
+        public void Reset()
+        {
+            Disconnect();
+        }
+        public bool FlashFpga(byte[] firmware)
+        {
+            byte[] ret = Request(Net.Net.Command.FLASH_FPGA, firmware);
+            return ret[0] > 0;
+        }
+        public void FlushDataPipe()
+        {
+            Request(Net.Net.Command.FLUSH);
+        }
+        public bool Destroyed { get { return false; } }
+
+        public void Destroy()
+        {
+            try
+            {
+                Request(Net.Net.Command.DISCONNECT);
+            }
+            catch (ScopeIOException) { }
+
+            try
+            {
+                controlSocket.Shutdown(SocketShutdown.Both);
+            }
+            catch { }
+            controlClient.Close();
+
+            try
+            {
+                dataSocket.Shutdown(SocketShutdown.Both);
+            }
+            catch { }
+            dataClient.Close();
+        }
+
+
+        
+        byte[] rxBuffer = new byte[Net.Net.BUF_SIZE];
+        byte[] msgBuffer = new byte[Net.Net.BUF_SIZE];
+        int msgBufferLength = 0;
+
+        private byte[] Request(Net.Net.Command command, byte[] cmdData = null)
+        {
+            return Request(command.msg(cmdData));
+        }
+        private byte[] Request(byte[] data)
+        {
+            Net.Net.Command command = (Net.Net.Command)data[Net.Net.HDR_SZ - 1];
+            lock (this)
+            {
+                try
+                {
+                    controlSocket.Send(data);
+                } catch(Exception se)
+                {
+                    Logger.Error("Failure while sending to socket: " + se.Message);
+                    Disconnect();
+                    throw new ScopeIOException("Failure while sending to socket: " + se.Message);
+                }
+                
+                int bytesReceived;
+                switch (command)
+                {
+                    case Net.Net.Command.DATA:
+                    case Net.Net.Command.GET:
+                    case Net.Net.Command.PIC_FW_VERSION:
+                    case Net.Net.Command.SERIAL:
+                    case Net.Net.Command.FLASH_FPGA:
+					case Net.Net.Command.ACQUISITION:
+                        List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, ref rxBuffer, ref msgBuffer, ref msgBufferLength, out bytesReceived);
+                        if (l == null)
+                        {
+                            Disconnect();
+                            throw new ScopeIOException("More than 1 message received");
+                        }
+                            
+                        if (l.Count > 1)
+                            throw new ScopeIOException("More than 1 message received");
+                        if (l.Count == 0)
+                            throw new ScopeIOException("No reply message received");
+                        Net.Net.Message reply = l[0];
+                        if (reply.command != command)
+                            throw new ScopeIOException(string.Format("Reply {0:G} doesn't match request command {1:G}", reply.command, command));
+                        if (command == Net.Net.Command.GET)
+                        {
+                            ScopeController c; int a; int b; byte[] response;
+                            Net.Net.ParseControllerHeader(reply.data, out c, out a, out b, out response);
+                            return response;
+                        }
+                        else
+                            return reply.data;
+                    default:
                         return null;
                 }
             }
-
-            return answer;
         }
 
-        public bool Destroyed { get { return false; } }
-        
-        public void Destroy() 
+        private void Disconnect()
         {
-            byte[] message = Constants.Commands.DISCONNECT.msg();
-            lock (this)
-            {
-                stream.Write(message, 0, message.Length);
-                stream.Flush();
-            }
+            if (disconnectCalled)
+                return;
+            disconnectCalled = true;
+
+            if (this.onDisconnect != null)
+                onDisconnect(this);
         }
 
-        public void FlushDataPipe()
-        {
-            byte[] message = Constants.Commands.FLUSH.msg();
-            lock (this)
-            {
-                stream.Write(message, 0, message.Length);
-                stream.Flush();
-            }
-        }
+
     }
 }

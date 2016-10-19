@@ -1,16 +1,13 @@
-﻿using System;
+﻿using LabNation.Common;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
 namespace LabNation.DeviceInterface.Hardware
 {
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    static class SmartScopeInterfaceHelpers
+    public class SmartScopeInterfaceUsb : ISmartScopeInterface
     {
         public enum PIC_COMMANDS
         {
@@ -32,21 +29,30 @@ namespace LabNation.DeviceInterface.Hardware
             I2C_WRITE_STOP = 16,
         }
 
-        public const byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
-        public const byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
-        public const int FLASH_USER_ADDRESS_MASK = 0x0FFF;
-        public const byte FPGA_I2C_ADDRESS_AWG = 0x0E;
-        public const int I2C_MAX_WRITE_LENGTH = 27;
-        public const int I2C_MAX_WRITE_LENGTH_BULK = 29;
+        public static byte HEADER_CMD_BYTE = 0xC0; //C0 as in Command
+        public static byte HEADER_RESPONSE_BYTE = 0xAD; //AD as in Answer Dude
+        public static int FLASH_USER_ADDRESS_MASK = 0x0FFF;
+        public static byte FPGA_I2C_ADDRESS_AWG = 0x0E;
+        public static int I2C_MAX_WRITE_LENGTH = 27;
+        public static int I2C_MAX_WRITE_LENGTH_BULK = 29;
 
         public enum Operation { READ, WRITE, WRITE_BEGIN, WRITE_BODY, WRITE_END };
 
-        public static void GetControllerRegister(this ISmartScopeInterface i, ScopeController ctrl, uint address, uint length, out byte[] data)
+        internal ISmartScopeHardwareUsb usb;
+        public SmartScopeInterfaceUsb(ISmartScopeHardwareUsb hwInterface)
+        {
+            this.usb = hwInterface;
+        }
+
+        public string Serial { get { return usb.Serial; } }
+        public void Destroy() { usb.Destroy(); }
+        public bool Destroyed { get { return usb.Destroyed;  } }
+        public void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
         {
             //In case of FPGA (I2C), first write address we're gonna read from to FPGA
             //FIXME: this should be handled by the PIC firmware
             if (ctrl == ScopeController.FPGA)
-                i.SetControllerRegister(ctrl, address, null);
+                SetControllerRegister(ctrl, address, null);
 
             if (ctrl == ScopeController.FLASH && (address + length) > (FLASH_USER_ADDRESS_MASK + 1))
             {
@@ -54,11 +60,11 @@ namespace LabNation.DeviceInterface.Hardware
             }
 
             byte[] header = UsbCommandHeader(ctrl, Operation.READ, address, length);
-            i.WriteControlBytes(header, false);
+            usb.WriteControlBytes(header, false);
 
             //EP3 always contains 16 bytes xxx should be linked to constant
             //FIXME: use endpoint length or so, or don't pass the argument to the function
-            byte[] readback = i.ReadControlBytes(16);
+            byte[] readback = ReadControlBytes(16);
             if(readback == null)
             {
                 data = null;
@@ -77,8 +83,7 @@ namespace LabNation.DeviceInterface.Hardware
             data = new byte[length];
             Array.Copy(readback, readHeaderLength, data, 0, length);
         }
-
-        public static void SetControllerRegister(this ISmartScopeInterface i, ScopeController ctrl, uint address, byte[] data)
+        public void SetControllerRegister(ScopeController ctrl, uint address, byte[] data)
         {
             if (data != null && data.Length > I2C_MAX_WRITE_LENGTH)
             {
@@ -104,7 +109,7 @@ namespace LabNation.DeviceInterface.Hardware
                 byte[] toSend = new byte[32];
 
                 //Begin I2C - send start condition
-                i.WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0), false);
+                usb.WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_BEGIN, address, 0), false);
 
                 while (offset < data.Length)
                 {
@@ -112,10 +117,10 @@ namespace LabNation.DeviceInterface.Hardware
                     byte[] header = UsbCommandHeader(ctrl, Operation.WRITE_BODY, address, (uint)length);
                     Array.Copy(header, toSend, header.Length);
                     Array.Copy(data, offset, toSend, header.Length, length);
-                    i.WriteControlBytes(toSend, false);
+                    usb.WriteControlBytes(toSend, false);
                     offset += length;
                 }
-                i.WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_END, address, 0), false);
+                usb.WriteControlBytes(UsbCommandHeader(ctrl, Operation.WRITE_END, address, 0), false);
             }
             else
             {
@@ -127,31 +132,130 @@ namespace LabNation.DeviceInterface.Hardware
                 Array.Copy(header, toSend, header.Length);
                 if (length > 0)
                     Array.Copy(data, 0, toSend, header.Length, data.Length);
-                i.WriteControlBytes(toSend, false);
+                usb.WriteControlBytes(toSend, false);
+            }
+        }
+        public void FlushDataPipe()
+        {
+            usb.FlushDataPipe();
+        }
+        public void SendCommand(PIC_COMMANDS cmd, bool async = false)
+        {
+            byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
+            usb.WriteControlBytes(toSend, async);
+        }
+        public void Reset()
+        {
+            SendCommand(PIC_COMMANDS.PIC_RESET, true);
+#if IOS
+			Common.Logger.Debug("Destroying interface after reset for ios");
+            Destroy();
+#endif
+        }
+        public byte[] PicFirmwareVersion
+        {
+            get
+            {
+                SendCommand(PIC_COMMANDS.PIC_VERSION);
+                byte[] response = ReadControlBytes(16);
+                return response.Skip(4).Take(3).Reverse().ToArray();
             }
         }
 
-        public static void SendCommand(this ISmartScopeInterface i, PIC_COMMANDS cmd, bool async = false)
+        public byte[] GetData(int length)
         {
-            byte[] toSend = new byte[2] { HEADER_CMD_BYTE, (byte)cmd };
-            i.WriteControlBytes(toSend, async);
+            byte[] buffer = new byte[length];
+            usb.GetData(buffer, 0, length);
+            return buffer;
         }
 
-        public static void LoadBootLoader(this ISmartScopeInterface i)
+        public int GetAcquisition(byte[] buffer)
         {
-            SendCommand(i, PIC_COMMANDS.PIC_BOOTLOADER, true);
+            return usb.GetAcquisition(buffer);
         }
 
-        public static void Reset(this ISmartScopeInterface i)
+        public bool FlashFpga(byte[] firmware)
         {
-            SendCommand(i, PIC_COMMANDS.PIC_RESET, true);
-			#if IOS
-			Common.Logger.Debug("Destroying interface after reset for ios");
-            i.Destroy();
-            #endif
+            int packetSize = 32;
+            int packetsPerCommand = 64;
+            int padding = 2048 / 8;
+
+            //Data to send to keep clock running after all data was sent
+            byte[] dummyData = new byte[packetSize];
+            for (int i = 0; i < dummyData.Length; i++)
+                dummyData[i] = 255;
+
+            //Send FW to FPGA
+            try
+            {
+                Stopwatch flashStopwatch = new Stopwatch();
+                flashStopwatch.Start();
+                UInt16 commands = (UInt16)(firmware.Length / packetSize + padding);
+                //PIC: enter FPGA flashing mode
+                byte[] msg = new byte[] {
+                    SmartScopeInterfaceUsb.HEADER_CMD_BYTE,
+                    (byte)SmartScopeInterfaceUsb.PIC_COMMANDS.PROGRAM_FPGA_START,
+                    (byte) (commands >> 8),
+                    (byte) (commands),
+                };
+                usb.WriteControlBytes(msg, false);
+
+                //FIXME: this sleep is found necessary on android tablets.
+                /* The problem occurs when a scope is initialised the *2nd*
+                 * time after the app starts, i.e. after replugging it.
+                 * A possible explanation is that in the second run, caches
+                 * are hit and the time between the PROGRAM_FPGA_START command
+                 * and the first bitstream bytes is smaller than on the first run.
+                 * 
+                 * Indeed, if this time is smaller than the time for the INIT bit
+                 * (see spartan 6 ug380 fig 2.4) to rise, the first bitstream data
+                 * is missed and the configuration fails.
+                 */
+                System.Threading.Thread.Sleep(10);
+                usb.FlushDataPipe();
+
+                int bytesSent = 0;
+                int commandSize = packetsPerCommand * packetSize;
+                while (bytesSent < firmware.Length)
+                {
+                    if (bytesSent + commandSize > firmware.Length)
+                        commandSize = firmware.Length - bytesSent;
+                    usb.WriteControlBytesBulk(firmware, bytesSent, commandSize, false);
+                    bytesSent += commandSize;
+                }
+                flashStopwatch.Stop();
+                for (int j = 0; j < padding; j++)
+                {
+                    usb.WriteControlBytesBulk(dummyData, false);
+                }
+
+                //Send finish flashing command
+                SendCommand(SmartScopeInterfaceUsb.PIC_COMMANDS.PROGRAM_FPGA_END);
+                Logger.Debug(String.Format("Flashed FPGA in {0:0.00}s", (double)flashStopwatch.ElapsedMilliseconds / 1000.0));
+                Logger.Debug("Flushing data pipe");
+                //Flush whatever might be left in the datapipe
+                usb.FlushDataPipe();
+            }
+            catch (ScopeIOException e)
+            {
+                Logger.Error("Flashing FPGA failed failed");
+                Logger.Error(e.Message);
+                return false;
+            }
+            return true;
         }
 
-        public static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)
+        public void LoadBootLoader()
+        {
+            SendCommand(PIC_COMMANDS.PIC_BOOTLOADER, true);
+        }
+        private byte[] ReadControlBytes(int length)
+        {
+            byte[] buffer = new byte[length];
+            usb.ReadControlBytes(buffer, 0, length);
+            return buffer;
+        }
+        private static byte[] UsbCommandHeader(ScopeController ctrl, Operation op, uint address, uint length)
         {
             byte[] header = null;
 
@@ -266,7 +370,6 @@ namespace LabNation.DeviceInterface.Hardware
             }
             return header;
         }
-
         private static byte[] UsbCommandHeaderI2c(byte I2cAddress, Operation op, uint address, uint length)
         {
             byte[] header;
@@ -295,5 +398,6 @@ namespace LabNation.DeviceInterface.Hardware
             }
             return header;
         }
+
     }
 }

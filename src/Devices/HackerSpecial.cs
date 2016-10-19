@@ -82,7 +82,7 @@ namespace LabNation.DeviceInterface.Devices
             
             Logger.Info("FPGA flashed...");
 
-            SmartScopeFlashHelpers.FlashFpga(iface, firmware);
+            iface.FlashFpga(firmware);
         }
 
         private List<DeviceMemory> memories = new List<DeviceMemory>();
@@ -93,7 +93,7 @@ namespace LabNation.DeviceInterface.Devices
 
         public bool FlashFPGA(byte[] firmware)
         {
-            return SmartScopeFlashHelpers.FlashFpga(this.iface, firmware);
+            return iface.FlashFpga(firmware);
         }
 
         public byte[] GetFpgaData()

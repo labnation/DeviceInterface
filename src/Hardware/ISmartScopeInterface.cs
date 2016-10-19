@@ -10,31 +10,26 @@ namespace LabNation.DeviceInterface.Hardware
         internal ScopeIOException(string msg) : base(msg) { }
     }
 
-#if DEBUG
-    public
-#else
-    internal
-#endif
-    enum ScopeController
+    public enum ScopeController
     {
-        PIC,
-        ROM,
-        FLASH,
-        FPGA,
-        AWG
+        PIC = 0,
+        ROM = 1,
+        FLASH = 2,
+        FPGA = 3,
+        AWG = 4
     }
 		
     public interface ISmartScopeInterface : IHardwareInterface
     {
-        void WriteControlBytes(byte[] message, bool async);
-        void WriteControlBytesBulk(byte[] message, bool async);
-        void WriteControlBytesBulk(byte[] message, int offset, int length, bool async);
-        byte[] ReadControlBytes(int length);
-        
-        byte[] GetData(int numberOfBytes);
-
-		bool Destroyed { get; }
+        void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data);
+        void SetControllerRegister(ScopeController ctrl, uint address, byte[] data);
+        int GetAcquisition(byte[] buffer);
+        byte[] GetData(int length);
+        void FlushDataPipe();
+        void Reset();
+        bool FlashFpga(byte[] firmware);
+        byte[] PicFirmwareVersion { get; }
+        bool Destroyed { get; }
         void Destroy();
-        void FlushDataPipe(); 
     }
 }
