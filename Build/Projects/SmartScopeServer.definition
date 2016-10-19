@@ -36,6 +36,7 @@
     <Reference Include="Common" />
     <Reference Include="DeviceInterface" />
     <Reference Include="WinFormReferences" />
+    <Reference Include="Mono.Zeroconf" />
   </References>
   <Files>
     <Compile Include="Program.cs" />
