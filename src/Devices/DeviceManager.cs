@@ -99,7 +99,7 @@ null, deviceConnectHandler) { }
             pollThread.Name = "Devicemanager Startup poll";
 
             //disable because of the crash by Wait
-            //InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
+            InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
 #if ANDROID
             InterfaceManagerXamarin.context = this.context;
             InterfaceManagerXamarin.Instance.onConnect += OnInterfaceChanged;
@@ -143,7 +143,7 @@ null, deviceConnectHandler) { }
             if(pollThread != null)
                 pollThread.Join(100);
 
-            //InterfaceManagerZeroConf.Instance.Destroy();
+            InterfaceManagerZeroConf.Instance.Destroy();
 #if ANDROID
             //Nothing to do here, just keeping same ifdef structure as above
 #elif WINDOWS
