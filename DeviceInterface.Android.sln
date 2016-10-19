@@ -1,0 +1,34 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakerKit.Android", "examples\MakerKit\MakerKit.Android.csproj", "{656B614D-4B72-7469-2E41-6E64726F6964}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Android", "libs\common\Common.Android.csproj", "{6D6D6F43-6E6F-412E-6E64-726F6964436F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeviceInterface.Android", ".\DeviceInterface.Android.csproj", "{DBDAD385-CED2-6EAD-7465-72666163652E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatlabFileIO.Android", "libs\matlab\MatlabFileIO.Android.csproj", "{D0DDD0BF-6261-6946-6C65-494F2E416E64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{656B614D-4B72-7469-2E41-6E64726F6964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{656B614D-4B72-7469-2E41-6E64726F6964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{656B614D-4B72-7469-2E41-6E64726F6964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{656B614D-4B72-7469-2E41-6E64726F6964}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D6D6F43-6E6F-412E-6E64-726F6964436F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D6D6F43-6E6F-412E-6E64-726F6964436F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D6D6F43-6E6F-412E-6E64-726F6964436F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D6D6F43-6E6F-412E-6E64-726F6964436F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBDAD385-CED2-6EAD-7465-72666163652E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBDAD385-CED2-6EAD-7465-72666163652E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBDAD385-CED2-6EAD-7465-72666163652E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBDAD385-CED2-6EAD-7465-72666163652E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0DDD0BF-6261-6946-6C65-494F2E416E64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0DDD0BF-6261-6946-6C65-494F2E416E64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0DDD0BF-6261-6946-6C65-494F2E416E64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0DDD0BF-6261-6946-6C65-494F2E416E64}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

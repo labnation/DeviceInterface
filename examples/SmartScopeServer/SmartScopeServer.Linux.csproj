@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{E0CAB981-CBE9-6F63-7065-536572766572}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>LabNation.SmartScopeServer</RootNamespace>
+    <AssemblyName>SmartScopeServer</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>1591</NoWarn>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+    <OutputPath>bin\Linux\AnyCPU\Debug</OutputPath>
+    <IntermediateOutputPath>obj\Linux\AnyCPU\Debug</IntermediateOutputPath>
+    <DocumentationFile>bin\Linux\AnyCPU\Debug\SmartScopeServer.xml</DocumentationFile>
+    <DefineConstants>DEBUG;TRACE;LINUX</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    <OutputPath>bin\Linux\AnyCPU\Release</OutputPath>
+    <IntermediateOutputPath>obj\Linux\AnyCPU\Release</IntermediateOutputPath>
+    <DocumentationFile>bin\Linux\AnyCPU\Release\SmartScopeServer.xml</DocumentationFile>
+    <DefineConstants>TRACE;LINUX</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <None Include="../../libs/Zeroconf/src/Mono.Zeroconf.Providers.AvahiDBus/bin/Mono.Zeroconf.Providers.AvahiDBus.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>Linux,MacOS</Platforms>
+    </None>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <_PostBuildHookTimestamp>@(IntermediateAssembly-&gt;'%(FullPath).timestamp')</_PostBuildHookTimestamp>
+  </PropertyGroup>
+  <Target Name="PostBuildHooks" Inputs="@(IntermediateAssembly);@(ReferencePath)" Outputs="@(IntermediateAssembly);$(_PostBuildHookTimestamp)" AfterTargets="CoreCompile" BeforeTargets="AfterCompile">
+    <Touch Files="$(_PostBuildHookTimestamp)" AlwaysCreate="True" />
+  </Target>
+  <ItemGroup>
+    <ProjectReference Include="..\..\libs\common\Common.Linux.csproj">
+      <Project>{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}</Project>
+      <Name>Common.Linux</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DeviceInterface.Linux.csproj">
+      <Project>{DEE4CE90-65DB-6E49-7465-72666163652E}</Project>
+      <Name>DeviceInterface.Linux</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

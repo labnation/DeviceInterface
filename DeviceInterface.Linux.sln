@@ -1,0 +1,52 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakerKit.Linux", "examples\MakerKit\MakerKit.Linux.csproj", "{656B614D-4B72-7469-2E4C-696E75784D61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Linux", "libs\common\Common.Linux.csproj", "{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeviceInterface.Linux", ".\DeviceInterface.Linux.csproj", "{DEE4CE90-65DB-6E49-7465-72666163652E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatlabFileIO.Linux", "libs\matlab\MatlabFileIO.Linux.csproj", "{6C74D9C2-6261-6946-6C65-494F2E4C696E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartScopeServer.Linux", "examples\SmartScopeServer\SmartScopeServer.Linux.csproj", "{E0CAB981-CBE9-6F63-7065-536572766572}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Zeroconf.Providers.AvahiDBus.csproj", "libs\Zeroconf\src\Mono.Zeroconf.Providers.AvahiDBus\Mono.Zeroconf.Providers.AvahiDBus.csproj", "{EF6ED6D1-D201-42ED-B680-5A77641BEB77}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Zeroconf", "libs\Zeroconf\src\Mono.Zeroconf\Mono.Zeroconf.csproj", "{5CF88E3A-13DD-4114-BAD9-DA826946516F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{656B614D-4B72-7469-2E4C-696E75784D61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{656B614D-4B72-7469-2E4C-696E75784D61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{656B614D-4B72-7469-2E4C-696E75784D61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{656B614D-4B72-7469-2E4C-696E75784D61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DEE4CE90-65DB-6E49-7465-72666163652E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEE4CE90-65DB-6E49-7465-72666163652E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEE4CE90-65DB-6E49-7465-72666163652E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEE4CE90-65DB-6E49-7465-72666163652E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C74D9C2-6261-6946-6C65-494F2E4C696E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C74D9C2-6261-6946-6C65-494F2E4C696E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C74D9C2-6261-6946-6C65-494F2E4C696E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C74D9C2-6261-6946-6C65-494F2E4C696E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0CAB981-CBE9-6F63-7065-536572766572}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0CAB981-CBE9-6F63-7065-536572766572}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0CAB981-CBE9-6F63-7065-536572766572}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0CAB981-CBE9-6F63-7065-536572766572}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF6ED6D1-D201-42ED-B680-5A77641BEB77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF6ED6D1-D201-42ED-B680-5A77641BEB77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF6ED6D1-D201-42ED-B680-5A77641BEB77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF6ED6D1-D201-42ED-B680-5A77641BEB77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CF88E3A-13DD-4114-BAD9-DA826946516F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CF88E3A-13DD-4114-BAD9-DA826946516F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CF88E3A-13DD-4114-BAD9-DA826946516F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CF88E3A-13DD-4114-BAD9-DA826946516F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{DEE4CE90-65DB-6E49-7465-72666163652E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>LabNation.DeviceInterface</RootNamespace>
+    <AssemblyName>DeviceInterface</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>1591</NoWarn>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <LangVersion>5</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+    <OutputPath>bin\Linux\AnyCPU\Debug</OutputPath>
+    <IntermediateOutputPath>obj\Linux\AnyCPU\Debug</IntermediateOutputPath>
+    <DocumentationFile>bin\Linux\AnyCPU\Debug\DeviceInterface.xml</DocumentationFile>
+    <DefineConstants>DEBUG;TRACE;LINUX</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    <OutputPath>bin\Linux\AnyCPU\Release</OutputPath>
+    <IntermediateOutputPath>obj\Linux\AnyCPU\Release</IntermediateOutputPath>
+    <DocumentationFile>bin\Linux\AnyCPU\Release\DeviceInterface.xml</DocumentationFile>
+    <DefineConstants>TRACE;LINUX</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="AForge">
+      <HintPath>packages\AForge.2.2.5\lib\AForge.dll</HintPath>
+    </Reference>
+    <Reference Include="AForge.Math">
+      <HintPath>packages\AForge.Math.2.2.5\lib\AForge.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="CsvHelper">
+      <HintPath>packages\CsvHelper.2.8.0\lib\net40-Client\CsvHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="LibUsbDotNet">
+      <HintPath>packages\LibUsbDotNet.2.2.8\lib\LibUsbDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.Core">
+      <HintPath>packages\Rx-Core.2.2.5\lib\net45\System.Reactive.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.Interfaces">
+      <HintPath>packages\Rx-Interfaces.2.2.5\lib\net45\System.Reactive.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.Linq">
+      <HintPath>packages\Rx-Linq.2.2.5\lib\net45\System.Reactive.Linq.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.PlatformServices">
+      <HintPath>packages\Rx-PlatformServices.2.2.5\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
+    </Reference>
+    <Reference Include="Zeroconf">
+      <HintPath>packages\Zeroconf.2.7.1\lib\net45\Zeroconf.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src\DataSources\DataPackageScope.cs" />
+    <Compile Include="src\DataSources\DataSourceScope.cs" />
+    <Compile Include="src\Memories\ByteMemory.cs" />
+    <Compile Include="src\Memories\DeviceMemory.cs" />
+    <Compile Include="src\Memories\MAX19506Memory.cs" />
+    <Compile Include="src\Memories\Registers\BoolRegister.cs" />
+    <Compile Include="src\Memories\Registers\ByteRegister.cs" />
+    <Compile Include="src\Memories\Registers\MemoryRegister.cs" />
+    <Compile Include="src\Memories\ScopeConstants_GEN.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ScopeConstants_GEN.tt</DependentUpon>
+    </Compile>
+    <Compile Include="src\Memories\ScopeFpgaRom.cs" />
+    <Compile Include="src\Memories\ScopeFpgaI2cMemory.cs" />
+    <Compile Include="src\Memories\ByteMemoryEnum.cs" />
+    <Compile Include="src\Memories\ScopePicRegisterMemory.cs" />
+    <Compile Include="src\Memories\ScopeStrobeMemory.cs" />
+    <Compile Include="src\Tools.cs" />
+    <Compile Include="src\Devices\DeviceManager.cs" />
+    <Compile Include="src\Devices\IScope.cs" />
+    <Compile Include="src\Devices\IDevice.cs" />
+    <Compile Include="src\Devices\IWaveGenerator.cs" />
+    <Compile Include="src\Devices\ScopeChannel.cs" />
+    <Compile Include="src\Devices\DummyScope.cs" />
+    <Compile Include="src\Devices\DummyScopeFile.cs" />
+    <Compile Include="src\Devices\DummyScopeWaves.cs" />
+    <Compile Include="src\Devices\HackerSpecial.cs" />
+    <Compile Include="src\Devices\SmartScope.cs" />
+    <Compile Include="src\Devices\SmartScopeHeader.cs" />
+    <Compile Include="src\Devices\SmartScopeRom.cs" />
+    <Compile Include="src\Devices\SmartScopeSettings.cs" />
+    <Compile Include="src\Devices\SmartScopeRegisterGroups.cs" />
+    <Compile Include="src\Devices\SmartScopeAwg.cs" />
+    <Compile Include="src\Hardware\InterfaceManager.cs" />
+    <Compile Include="src\Hardware\InterfaceManagerZeroConf.cs" />
+    <Compile Include="src\Hardware\InterfaceManagerLibUsb.cs">
+      <Platforms>Linux,MacOS</Platforms>
+    </Compile>
+    <Compile Include="src\Hardware\IHardwareInterface.cs" />
+    <Compile Include="src\Hardware\DummyInterface.cs" />
+    <Compile Include="src\Hardware\ISmartScopeInterface.cs" />
+    <Compile Include="src\Hardware\ISmartScopeInterfaceUsb.cs" />
+    <Compile Include="src\Hardware\SmartScopeFlashHelpers.cs" />
+    <Compile Include="src\Hardware\SmartScopeInterfaceHelpers.cs" />
+    <Compile Include="src\Hardware\SmartScopeInterfaceEthernet.cs" />
+    <Compile Include="src\Hardware\SmartScopeInterfaceLibUsb.cs">
+      <Platforms>Linux,MacOS</Platforms>
+    </Compile>
+    <Compile Include="src\Net\BandwidthMonitor.cs">
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="src\Net\Constants.cs" />
+    <Compile Include="src\Net\InterfaceServer.cs">
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="src\Net\Monitor.cs">
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="src\Properties\AssemblyInfo.cs" />
+    <Compile Include="src\Resources.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <None Include="Memories\ScopeConstants_GEN.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ScopeConstants_GEN.cs</LastGenOutput>
+    </None>
+    <None Include="libs\LibUsbDotNet\LibUsbDotNet.dll.config">
+      <Link>LibUsbDotNet.dll.config</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>MacOS,Linux</Platforms>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="blobs\i2c_sequence.mat" />
+    <EmbeddedResource Include="blobs\SmartScope_A10.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A12.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A14.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A15.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A16.bin" />
+    <EmbeddedResource Include="blobs\SmartScope_A17.bin" />
+    <EmbeddedResource Include="blobs\SmartScopeHackerSpecial.bin" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <_PostBuildHookTimestamp>@(IntermediateAssembly-&gt;'%(FullPath).timestamp')</_PostBuildHookTimestamp>
+  </PropertyGroup>
+  <Target Name="PostBuildHooks" Inputs="@(IntermediateAssembly);@(ReferencePath)" Outputs="@(IntermediateAssembly);$(_PostBuildHookTimestamp)" AfterTargets="CoreCompile" BeforeTargets="AfterCompile">
+    <Touch Files="$(_PostBuildHookTimestamp)" AlwaysCreate="True" />
+  </Target>
+  <ItemGroup>
+    <ProjectReference Include="libs\Zeroconf\src\Mono.Zeroconf.Providers.AvahiDBus\Mono.Zeroconf.Providers.AvahiDBus.csproj">
+      <Project>{EF6ED6D1-D201-42ED-B680-5A77641BEB77}</Project>
+      <Name>Mono.Zeroconf.Providers.AvahiDBus.csproj</Name>
+    </ProjectReference>
+    <ProjectReference Include="libs\Zeroconf\src\Mono.Zeroconf\Mono.Zeroconf.csproj">
+      <Project>{5CF88E3A-13DD-4114-BAD9-DA826946516F}</Project>
+      <Name>Mono.Zeroconf</Name>
+    </ProjectReference>
+    <ProjectReference Include="libs\common\Common.Linux.csproj">
+      <Project>{6D6D6F43-6E6F-4C2E-696E-7578436F6D6D}</Project>
+      <Name>Common.Linux</Name>
+    </ProjectReference>
+    <ProjectReference Include="libs\matlab\MatlabFileIO.Linux.csproj">
+      <Project>{6C74D9C2-6261-6946-6C65-494F2E4C696E}</Project>
+      <Name>MatlabFileIO.Linux</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
