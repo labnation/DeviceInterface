@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Name="MakerKit" Path="examples/MakerKit" Type="App" Platforms="Linux,MacOS,Windows,WindowsGL,Android">
+  <Properties>
+    <FrameworkVersions>
+      <Platform Name="Android">
+        <Version>v5.0</Version>
+      </Platform>
+      <Platform Name="Windows">
+        <Version>v4.5</Version>
+      </Platform>
+      <Platform Name="WindowsGL">
+        <Version>v4.5</Version>
+      </Platform>
+      <Platform Name="MacOS">
+        <Version>v4.5</Version>
+      </Platform>
+      <Platform Name="Linux">
+        <Version>v4.5</Version>
+      </Platform>
+      </FrameworkVersions>
+    <RootNamespace>MakerKit</RootNamespace>
+    <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
+    <CustomDefinitions>
+      <Platform Name="Linux">TRACE;LINUX</Platform>
+      <Platform Name="MacOS">MONOMAC</Platform>
+      <Platform Name="Windows">TRACE;WINDOWS;WINUSB</Platform>
+	  <Platform Name="WindowsGL">TRACE;WINDOWS;WINUSB</Platform>
+    </CustomDefinitions>
+	<NoWarn>1591</NoWarn>
+  </Properties>
+  <References>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Xml" />
+    <Reference Include="DeviceInterface" />
+    <Reference Include="MonoPlatformSpecific"/>
+    <Reference Include="FormApp"/>
+  </References>
+  <Files>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Program.cs">
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="Resources.cs" >
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="YamlHelper.cs" />
+    
+    <Compile Include="MakerKitForm.cs">
+      <SubType>Form</SubType>
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <Compile Include="MakerKitForm.Designer.cs">
+      <DependentUpon>MakerKitForm.cs</DependentUpon>
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </Compile>
+    <None Include="Info.plist">
+      <Platforms>MacOS</Platforms>
+    </None>
+    <None Include="Properties\AndroidManifest.xml">
+      <Platforms>Android</Platforms>
+    </None>
+    <None Include="packages.Android.config" >
+      <Link>packages.config</Link>
+      <Platforms>Android</Platforms>
+    </None>
+    <None Include="packages.config" >
+      <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
+    </None>
+    
+    <EmbeddedResource Include="Resources\labnation-logo.png" />
+    <Compile Include="Resources\Resource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <Platforms>Android</Platforms>
+    </Compile>
+    <AndroidResource Include="Resources\drawable\icon.png">
+      <Platforms>Android</Platforms>
+    </AndroidResource>
+    <AndroidResource Include="Resources\drawable-hdpi\icon.png" >
+      <Platforms>Android</Platforms>
+    </AndroidResource>
+    <AndroidResource Include="Resources\drawable-xhdpi\icon.png" >
+      <Platforms>Android</Platforms>
+    </AndroidResource>
+    <AndroidResource Include="Resources\drawable-xxhdpi\icon.png" >
+      <Platforms>Android</Platforms>
+    </AndroidResource>
+    <Compile Include="MainActivity.cs" >
+      <Platforms>Android</Platforms>
+    </Compile>
+    <Compile Include="MakerKitApp.cs" >
+      <Platforms>Android</Platforms>
+    </Compile>
+    <BundleResource Include="..\..\libs\LibUsbDotNet\libusb-1.0.0.dylib">
+      <Link>libusb-1.0.0.dylib</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Platforms>MacOS</Platforms>
+    </BundleResource>
+    
+    
+  </Files>
+</Project>

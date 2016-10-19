@@ -3,9 +3,9 @@
   <Name>DeviceInterface</Name>
   <DefaultAction>Generate</DefaultAction>
   <DefaultLinuxPlatforms>Linux</DefaultLinuxPlatforms>
-  <DefaultMacOSPlatforms>MacOS,iOS,Android</DefaultMacOSPlatforms>
+  <DefaultMacOSPlatforms>MacOS</DefaultMacOSPlatforms>
   <DefaultWindowsPlatforms>Windows</DefaultWindowsPlatforms>
-  <DefaultStartupProject>console-demo</DefaultStartupProject>
-  <SupportedPlatforms>Android,Linux,Windows,WindowsGL,iOS,MacOS</SupportedPlatforms>
+  <DefaultStartupProject>MakerKit</DefaultStartupProject>
+  <SupportedPlatforms>Android,Linux,Windows,MacOS</SupportedPlatforms>
   <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
 </Module>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ExternalProject Name="FormApp">
+  <Platform Type="MacOS">
+    <Reference Include="System.Windows.Forms"/>
+    <Reference Include="System.Drawing"/>
+  </Platform>
+  <Platform Type="Windows">
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </Platform>
+  <Platform Type="Linux">
+    <Reference Include="System.Windows.Forms"/>
+    <Reference Include="System.Drawing"/>
+  </Platform>
+  <Platform Type="Android">
+    <Reference Include="Xamarin.Forms.Platform.Android" />
+  </Platform>
+  
+</ExternalProject>
