@@ -229,7 +229,7 @@ namespace LabNation.DeviceInterface.Devices
                 try
                 {
                     LabNation.Common.SerialNumber s = new SerialNumber(this.Serial);
-	    			fwName = String.Format("SmartScope_{0}.bin", Base36.Encode((long)s.model, 3).ToUpper());
+	    			fwName = String.Format("blobs.SmartScope_{0}.bin", Base36.Encode((long)s.model, 3).ToUpper());
                     firmware = Resources.Load(fwName);
                 }
                 catch (Exception e)

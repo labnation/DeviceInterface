@@ -70,7 +70,7 @@ namespace LabNation.DeviceInterface.Devices
             memories.Add(FpgaUserMemory);
 
             //Get FW contents
-            string fwName = "SmartScopeHackerSpecial.bin";
+            string fwName = "blobs.SmartScopeHackerSpecial.bin";
             byte[] firmware = Resources.Load(fwName);
             
             if (firmware == null)

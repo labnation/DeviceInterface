@@ -10,7 +10,7 @@ namespace LabNation.DeviceInterface
 		{
 			Assembly ass = Assembly.GetExecutingAssembly();
 
-			using(Stream s = ass.GetManifestResourceStream(String.Format("{0}.{1}", ass.GetName().Name, name)))
+			using(Stream s = ass.GetManifestResourceStream(String.Format("LabNation.DeviceInterface.{0}", name)))
 			using(BinaryReader r = new BinaryReader(s))
 				return r.ReadBytes((int)s.Length);
 

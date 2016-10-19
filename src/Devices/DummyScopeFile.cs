@@ -20,7 +20,7 @@ namespace LabNation.DeviceInterface.Devices
             {
                 String filename = Path.GetTempFileName();
                 FileStream f = new FileStream(filename, FileMode.Create, FileAccess.Write);
-				byte[] i2cSequence = Resources.Load ("i2c_sequence.mat");
+				byte[] i2cSequence = Resources.Load ("blobs.i2c_sequence.mat");
 				f.Write(i2cSequence, 0, i2cSequence.Length);
                 f.Close();
 
