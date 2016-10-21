@@ -134,7 +134,7 @@
     <Compile Include="LibUsb\Internal\LibUsbRequest.cs" />
     <Compile Include="Main\UsbKernelVersion.cs" />
     <Compile Include="Internal\SafeOverlapped.cs" />
-    <Compile Include="Main\spdrp.cs" />
+    <Compile Include="Main\SPDRP.cs" />
     <Compile Include="Internal\UsbApiBase.cs" />
     <Compile Include="LibUsb\LibUsbDevice.cs" />
     <Compile Include="Main\EndpointDataEventArgs.cs" />
