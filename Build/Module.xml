@@ -5,7 +5,7 @@
   <DefaultLinuxPlatforms>Linux</DefaultLinuxPlatforms>
   <DefaultMacOSPlatforms>MacOS</DefaultMacOSPlatforms>
   <DefaultWindowsPlatforms>Windows</DefaultWindowsPlatforms>
-  <DefaultStartupProject>MakerKit</DefaultStartupProject>
+  <DefaultStartupProject>SmartScopeConsole</DefaultStartupProject>
   <SupportedPlatforms>Android,Linux,Windows,MacOS</SupportedPlatforms>
   <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
 </Module>
