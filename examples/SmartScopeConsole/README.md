@@ -1,3 +1,5 @@
+Documentation needs to get updated since major refactoring of low-level device interfacing
+
 # console-demo
 To get started, check out the repository. From a command line, run ```./bootstrap.h <platform>```, i.e.
 
