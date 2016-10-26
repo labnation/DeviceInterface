@@ -1,6 +1,8 @@
+*Documentation needs to get updated since major refactoring of low-level device interfacing*
+
 #DeviceInterface
 
-For a very simple usage example, see our [console-demo](https://github.com/labnation/console-demo/blob/master/SmartScopeConsole/Main.cs)
+For a very simple usage example, see our [console-demo](https://github.com/labnation/DeviceInterface/tree/master/examples/SmartScopeConsole)
 
 ##Overview
 DeviceInterface translates the SmartScope API to hardware I/O. It consists of several layers:
