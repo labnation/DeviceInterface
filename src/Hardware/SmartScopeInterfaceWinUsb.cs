@@ -76,7 +76,7 @@ namespace LabNation.DeviceInterface.Hardware
                         throw new ScopeIOException("Unknown endpoint type");
                     }
                 }
-                catch (USBException e)
+                catch (Exception e)
                 {
                     Error = e;
                     bytesTransferred = 0;
