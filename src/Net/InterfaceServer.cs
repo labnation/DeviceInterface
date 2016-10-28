@@ -1,6 +1,4 @@
-﻿#define DEBUGFILE
-
-using LabNation.DeviceInterface.Devices;
+﻿using LabNation.DeviceInterface.Devices;
 using LabNation.DeviceInterface.Hardware;
 using System;
 using System.Collections.Generic;
@@ -18,9 +16,6 @@ namespace LabNation.DeviceInterface.Net
 {
     public class InterfaceServer
     {
-#if DEBUGFILE
-        StreamWriter debugFile;
-#endif
         private bool running = true;
         internal SmartScopeInterfaceUsb hwInterface;
         private const int RECEIVE_TIMEOUT = 10000; //10sec
@@ -35,11 +30,6 @@ namespace LabNation.DeviceInterface.Net
 
         public InterfaceServer(SmartScopeInterfaceUsb hwInterface)
         {
-#if DEBUGFILE
-            string logpath = Path.GetTempFileName();
-            Logger.Info("Writing server log to " + logpath);
-            debugFile = new StreamWriter(logpath);
-#endif
             this.hwInterface = hwInterface;
             //start TCP/IP thread
             controlSocketThread = new Thread(ControlSocketServer)
@@ -214,20 +204,6 @@ namespace LabNation.DeviceInterface.Net
                         processing = true;
                         foreach (Net.Message m in msgList)
                         {
-#if DEBUGFILE
-                            now = DateTime.Now;
-                            StringBuilder sb = new StringBuilder();
-                            sb.Append(now.Second + "-" + now.Millisecond + " Command: ");
-                            sb.Append(m.command.ToString());
-                            if (m.data != null)
-                            {
-                                sb.Append("  Data: ");
-                                for (int i = 0; i < m.data.Length; i++)
-                                    sb.Append(i.ToString() + ":" + m.data[i].ToString("000") + " ");
-                            }
-                            debugFile.WriteLine(sb);
-                            debugFile.Flush();
-#endif
                             Net.Command command = m.command;
                             byte[] response = null;
                             try
@@ -283,11 +259,6 @@ namespace LabNation.DeviceInterface.Net
                                 Disconnect();
                                 break;
                             }
-#if DEBUGFILE
-                            now = DateTime.Now;
-                            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " Before send");
-                            debugFile.Flush();
-#endif
                             if (response != null)
                             {
                                 try
@@ -300,35 +271,12 @@ namespace LabNation.DeviceInterface.Net
                                     Disconnect();
                                 }
                             }
-#if DEBUGFILE
-                            now = DateTime.Now;
-                            debugFile.WriteLine(now.Second + "-" + now.Millisecond + " After send");
-                            debugFile.Flush();
-#endif
                             if (response != null)
                             {
                                 lock (bwlock)
                                     bytesTx += response.Length;
                             }
                         }
-                        bandwidthPrintedLast = true;
-                        DateTime time = DateTime.Now;
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.Write("\r" + time.Hour.ToString("00") + ":" + time.Minute.ToString("00") + ":" + time.Second.ToString("00") + ":" + time.Millisecond.ToString("000"));
-
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.Write("   Incoming: ");
-
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.Write(strBandwidthDown + " KB/s");
-
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.Write("    Outgoing: ");
-
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write(strBandwidthUp + " KB/s              ");
-
-                        Console.ForegroundColor = ConsoleColor.Gray;
                     }
                     else
                     {
