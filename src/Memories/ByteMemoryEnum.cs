@@ -35,6 +35,10 @@ namespace LabNation.DeviceInterface.Memories
 
         public override void Read(uint a) { this.memory.Read(a); }
         public override void Write(uint a) { this.memory.Write(a); }
+        public override void WriteRange(uint from, uint until)
+        {
+            this.memory.WriteRange(from, until);
+        }
 
         private static uint EnumToVal(T e)
         {

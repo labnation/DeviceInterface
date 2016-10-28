@@ -82,10 +82,25 @@ namespace LabNation.DeviceInterface.Hardware
         {
             if (data != null && data.Length > I2C_MAX_WRITE_LENGTH)
             {
-                if (ctrl != ScopeController.AWG)
-                    throw new Exception(String.Format("Can't do writes of this length ({0}) to controller {1:G}", data.Length, ctrl));
-
                 int offset = 0;
+
+                if (ctrl != ScopeController.AWG)
+                {
+                    //Chop up in smaller chunks
+                    int bytesLeft = data.Length;
+                    
+                    while(bytesLeft > 0)
+                    {
+                        int length = bytesLeft > I2C_MAX_WRITE_LENGTH ? I2C_MAX_WRITE_LENGTH : bytesLeft;
+                        byte[] newData = new byte[length];
+                        Array.Copy(data, offset, newData, 0, length);
+                        SetControllerRegister(ctrl, (uint)(address + offset), newData);
+                        offset += length;
+                        bytesLeft -= length;
+                    }
+                    return;
+                }
+
                 byte[] toSend = new byte[32];
 
                 //Begin I2C - send start condition

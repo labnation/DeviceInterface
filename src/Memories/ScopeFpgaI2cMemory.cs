@@ -44,6 +44,16 @@ namespace LabNation.DeviceInterface.Memories
             Registers[address].Dirty = false;
         }
 
+        public override void WriteRange(uint from, uint until)
+        {
+            if (readOnly) return;
+
+            var regs = Registers.Where(x => x.Key >= from && x.Key <= until).OrderBy(x => x.Key).Select(x => x.Value);
+            byte[] data = regs.Select(x => (byte)x.Get()).ToArray();
+            hwInterface.SetControllerRegister(ScopeController.FPGA, ConvertAddress(from), data);
+            regs.ToList().ForEach(x => x.Dirty = false);
+        }
+
         private uint ConvertAddress(uint addr)
         {
             return (uint)((addr & 0xff) + (I2cAddress << 8));

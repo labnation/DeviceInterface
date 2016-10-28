@@ -53,6 +53,11 @@ namespace LabNation.DeviceInterface.Memories
             Registers[address].Dirty = false;
         }
 
+        public override void WriteRange(uint from, uint until)
+        {
+            WriteRangeSimple(from, until);
+        }
+
         new public BoolRegister this[uint address]
         {
             get { return (BoolRegister)Registers[address]; }

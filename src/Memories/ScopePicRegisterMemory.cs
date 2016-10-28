@@ -44,6 +44,10 @@ namespace LabNation.DeviceInterface.Memories
             hwInterface.SetControllerRegister(ScopeController.PIC, address, data);
             Registers[address].Dirty = false;
         }
+        public override void WriteRange(uint from, uint until)
+        {
+            WriteRangeSimple(from, until);
+        }
         public ByteRegister this[PIC r]
         {
             get { return this[(uint)r]; }

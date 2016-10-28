@@ -50,6 +50,11 @@ namespace LabNation.DeviceInterface.Memories
             Registers[address].Dirty = false;
         }
 
+        public override void WriteRange(uint from, uint until)
+        {
+            WriteRangeSimple(from, until);
+        }
+
         public override void Write(uint address)
         {
             //first send correct address to FPGA

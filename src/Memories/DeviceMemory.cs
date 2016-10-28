@@ -13,7 +13,13 @@ namespace LabNation.DeviceInterface.Memories
 
         abstract public void Write(uint address);
         abstract public void Read(uint address);
+        abstract public void WriteRange(uint from, uint until);
 
+        internal void WriteRangeSimple(uint from, uint until)
+        {
+            for (uint i = from; i <= until; i++)
+                Write(i);
+        }
         /// <summary>
         /// Writes away all registers with the Dirty flag set
         /// </summary>
@@ -23,12 +29,21 @@ namespace LabNation.DeviceInterface.Memories
             if (dirtyRegisters.Count == 0)
                 return dirtyRegisters;
 
-            //Logger.Debug(String.Format("About to flush {0} / {1} registers in {2}", flushCount, registers.Count, this.GetType()));
+            uint[] regs = dirtyRegisters.Select(x => x.Address).ToArray();
+                
+            Array.Sort(regs);
 
-            foreach (MemoryRegister m in dirtyRegisters)
+            uint from = regs[0];
+            uint until = regs[0];
+            for(int i = 1; i < regs.Length; i++)
             {
-                m.WriteImmediate();
+                if (regs[i] != until + 1) {
+                    this.WriteRange(from, until);
+                    from = regs[i];
+                }
+                until = regs[i];
             }
+            this.WriteRange(from, until);
             return dirtyRegisters;
         }
         
