@@ -11,3 +11,4 @@ Resource.designer.cs
 *.csproj
 *.speccache
 *.sln
+*~
