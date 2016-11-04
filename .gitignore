@@ -1,4 +1,5 @@
 bin/
+*bak
 obj/
 Release/
 *.suo
