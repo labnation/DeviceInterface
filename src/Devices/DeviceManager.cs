@@ -105,6 +105,7 @@ null, deviceConnectHandler) { }
 #if ANDROID
 			InterfaceManagerServiceDiscovery.context = context;
 			InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
+#elif IOS
 #else
             InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
 #endif
@@ -153,6 +154,7 @@ null, deviceConnectHandler) { }
                 pollThread.Join(100);
 #if ANDROID
 			InterfaceManagerServiceDiscovery.Instance.Destroy();
+#elif IOS
 #else
             InterfaceManagerZeroConf.Instance.Destroy();
 #endif

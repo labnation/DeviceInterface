@@ -6,6 +6,6 @@
   <DefaultMacOSPlatforms>MacOS</DefaultMacOSPlatforms>
   <DefaultWindowsPlatforms>Windows</DefaultWindowsPlatforms>
   <DefaultStartupProject>SmartScopeConsole</DefaultStartupProject>
-  <SupportedPlatforms>Android,Linux,Windows,MacOS</SupportedPlatforms>
+  <SupportedPlatforms>Android,Linux,Windows,MacOS,iOS</SupportedPlatforms>
   <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
 </Module>
