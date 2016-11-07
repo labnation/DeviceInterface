@@ -106,6 +106,7 @@ null, deviceConnectHandler) { }
 			InterfaceManagerServiceDiscovery.context = context;
 			InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
 #elif IOS
+			InterfaceManagerIOS.Instance.onConnect += OnInterfaceChanged;
 #else
             InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
 #endif
@@ -155,6 +156,7 @@ null, deviceConnectHandler) { }
 #if ANDROID
 			InterfaceManagerServiceDiscovery.Instance.Destroy();
 #elif IOS
+			InterfaceManagerIOS.Instance.Destroy();
 #else
             InterfaceManagerZeroConf.Instance.Destroy();
 #endif
