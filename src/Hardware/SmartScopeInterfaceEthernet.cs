@@ -208,6 +208,7 @@ namespace LabNation.DeviceInterface.Hardware
                     case Net.Net.Command.PIC_FW_VERSION:
                     case Net.Net.Command.SERIAL:
                     case Net.Net.Command.FLASH_FPGA:
+					case Net.Net.Command.DATA_PORT:
 					case Net.Net.Command.ACQUISITION:
                         List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, ref rxBuffer, ref msgBuffer, ref msgBufferLength, out bytesReceived);
                         if (l == null)
