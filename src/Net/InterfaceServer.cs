@@ -287,13 +287,14 @@ namespace LabNation.DeviceInterface.Net
         }
 
         private object disconnectLock = new object();
+        private bool disconnectCalled = false;
         private void Disconnect()
         {
             lock (disconnectLock)
             {
-                if (!connected)//Means disconnect was called
+                if (disconnectCalled)//Means disconnect was called
                     return;
-                connected = false;
+                disconnectCalled = true;
             }
             
             LogMessage(LogTypes.NETWORK, "Disconnecting...");
@@ -302,18 +303,30 @@ namespace LabNation.DeviceInterface.Net
             try
             {
                 DataSocket.Shutdown(SocketShutdown.Both);
+                DataSocket.Send(Net.Command.DISCONNECT.msg());
+                DataSocket.Disconnect(false);
+                DataSocket.Close(1000);
             }
             catch { }
             DataSocketListener.Stop();
-            dataSocketThread.Join();
+            if(dataSocketThread != null) {
+                dataSocketThread.Join(1000);
+                if (dataSocketThread.IsAlive)
+                    dataSocketThread.Abort();
+            }
 
             try
             {
+                ControlSocket.Send(Net.Command.DISCONNECT.msg());
+                ControlSocket.Disconnect(false);
                 ControlSocket.Shutdown(SocketShutdown.Both);
+                ControlSocket.Close(1000);
             }
             catch { }
             ControlSocketListener.Stop();
-            controlSocketThread.Join();
+            controlSocketThread.Join(1000);
+            if (controlSocketThread.IsAlive)
+                controlSocketThread.Abort();
         }
 
         enum LogTypes
