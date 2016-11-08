@@ -261,6 +261,8 @@ null, deviceConnectHandler) { }
 				((IScope)activeDevice).Pause();
 #if ANDROID
 			InterfaceManagerServiceDiscovery.Instance.Pause();
+#elif IOS
+			InterfaceManagerApple.Instance.Pause();
 #endif
 		}
 
@@ -270,6 +272,8 @@ null, deviceConnectHandler) { }
 				((IScope)activeDevice).Resume();
 #if ANDROID
 			InterfaceManagerServiceDiscovery.Instance.Resume();
+#elif IOS
+			InterfaceManagerApple.Instance.Resume();
 #endif
 
 		}

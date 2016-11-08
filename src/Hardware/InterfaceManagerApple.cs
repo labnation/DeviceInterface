@@ -66,7 +66,6 @@ namespace LabNation.DeviceInterface.Hardware
         protected override void Initialize()
         {
 			browser = new NSNetServiceBrowser();
-			Resume();
         }
 
 		public override void PollDevice()
@@ -84,9 +83,13 @@ namespace LabNation.DeviceInterface.Hardware
 		{
 			browser.FoundService -= ServiceResolved;
 			browser.Stop();
+			while(createdInterfaces.Values.Count > 0)
+				OnInterfaceDisconnect(createdInterfaces.Values.First());
+			Logger.Debug("Service discovery stopped");
 		}
 		public void Resume()
 		{
+			Logger.Debug("Resuming Service discovery");
 			browser.FoundService += ServiceResolved;
 			browser.SearchForServices(Net.Net.SERVICE_TYPE, Net.Net.REPLY_DOMAIN);
 		}
@@ -122,6 +125,7 @@ namespace LabNation.DeviceInterface.Hardware
 				sockaddr_in IP4 = (sockaddr_in)Marshal.PtrToStructure(addr.Bytes, typeof(sockaddr_in));
 
 				IPAddress address = new IPAddress(IP4.sin_addr);
+				Logger.Info("Checking out service at {0}:{1}", address, ns.Port);
 				sl = new ServiceLocation(address, (int)ns.Port, ns.Name);
 				Logger.Debug("Got IP " + address.ToString());
 				if (createdInterfaces.Keys.Contains(sl))
@@ -148,9 +152,10 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
         {
-            //remove from list
-            if (createdInterfaces.ContainsValue(hardwareInterface))
-                createdInterfaces.Remove(createdInterfaces.Single(x => x.Value == hardwareInterface).Key);
+			//remove from list
+			if (!createdInterfaces.ContainsValue(hardwareInterface))
+				return;
+            createdInterfaces.Remove(createdInterfaces.Single(x => x.Value == hardwareInterface).Key);
 
             //propage upwards (to DeviceManager)
             onConnect(hardwareInterface, false);
