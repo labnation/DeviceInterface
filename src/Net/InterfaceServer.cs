@@ -93,7 +93,7 @@ namespace LabNation.DeviceInterface.Net
                 {
                     DataSocket = DataSocketListener.Server.Accept();
                 }
-                catch (SocketException e)
+                catch (Exception e)
                 {
                     LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
                     return;
@@ -183,8 +183,7 @@ namespace LabNation.DeviceInterface.Net
                 connected = true;
                 dataSocketThread = new Thread(DataSocketServer) { Name = "Data Socket" };
                 dataSocketThread.Start();
-
-
+                
                 while (connected)
                 {
                     int bytesReceived;
@@ -310,7 +309,10 @@ namespace LabNation.DeviceInterface.Net
                 DataSocket.Disconnect(false);
                 DataSocket.Close(1000);
             }
-            catch { }
+            catch (Exception e)
+            {
+                Logger.Error("Failed to close data socket: " + e.Message);
+            }
             DataSocketListener.Stop();
             if(dataSocketThread != null) {
                 dataSocketThread.Join(1000);
@@ -325,11 +327,15 @@ namespace LabNation.DeviceInterface.Net
                 ControlSocket.Shutdown(SocketShutdown.Both);
                 ControlSocket.Close(1000);
             }
-            catch { }
+            catch (Exception e) {
+                Logger.Error("Failed to close control socket: " + e.Message);
+            }
             ControlSocketListener.Stop();
             controlSocketThread.Join(1000);
             if (controlSocketThread.IsAlive)
                 controlSocketThread.Abort();
+
+            connected = false;
         }
 
         enum LogTypes
