@@ -43,8 +43,6 @@ namespace LabNation.DeviceInterface.Hardware
                 controlClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
                 
                 controlSocket = controlClient.Client;
-                controlSocket.DontFragment = true;
-                controlSocket.NoDelay = true;
 
                 byte[] serialBytes = Request(Net.Net.Command.SERIAL);
                 serial = System.Text.Encoding.UTF8.GetString(serialBytes, 0, serialBytes.Length);
