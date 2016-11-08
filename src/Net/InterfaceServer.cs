@@ -115,7 +115,8 @@ namespace LabNation.DeviceInterface.Net
                     catch(ScopeIOException e)
                     {
                         LogMessage(LogTypes.DATA, String.Format("usb error {0:s}", e.Message));
-                        continue;
+                        Disconnect();
+                        break;
                     }
                     try
                     {
@@ -192,6 +193,7 @@ namespace LabNation.DeviceInterface.Net
                     {
                         LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
                         Disconnect();
+                        break;
                     }
                     lock (bwlock) {
                         bytesRx += bytesReceived;
@@ -296,6 +298,7 @@ namespace LabNation.DeviceInterface.Net
                     return;
                 disconnectCalled = true;
             }
+            connected = false;
             
             LogMessage(LogTypes.NETWORK, "Disconnecting...");
 
