@@ -40,7 +40,7 @@ namespace LabNation.DeviceInterface.Hardware
             try
             {
                 controlClient.Connect(this.serverIp, this.serverPort);
-                controlClient.ReceiveTimeout = 10000;
+                controlClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
                 
                 controlSocket = controlClient.Client;
                 controlSocket.DontFragment = true;
@@ -108,11 +108,9 @@ namespace LabNation.DeviceInterface.Hardware
                 {
 					byte[] portBytes = Request(Net.Net.Command.DATA_PORT);
 					this.dataPort = BitConverter.ToUInt16(portBytes, 0);
+                    dataClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
                     dataClient.Connect(this.serverIp, this.dataPort);
                     dataSocket = dataClient.Client;
-                    dataSocket.DontFragment = true;
-                    dataSocket.NoDelay = true;
-
                 }
                 SocketReceive(dataSocket, 0, Constants.SZ_HDR, buffer);
                 GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
