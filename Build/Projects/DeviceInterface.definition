@@ -86,7 +86,7 @@
     <Compile Include="src\Hardware\InterfaceManagerServiceDiscovery.cs" >
       <Platforms>Android</Platforms>
     </Compile>
-    <Compile Include="src\Hardware\InterfaceManagerIOs.cs" >
+    <Compile Include="src\Hardware\InterfaceManagerApple.cs" >
       <Platforms>iOS</Platforms>
     </Compile>
     <Compile Include="src\Hardware\InterfaceManagerLibUsb.cs">

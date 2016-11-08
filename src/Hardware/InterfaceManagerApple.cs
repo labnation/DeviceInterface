@@ -13,7 +13,7 @@ namespace LabNation.DeviceInterface.Hardware
 {
 
     //class that provides raw HW access to the device
-    internal class InterfaceManagerIOS : InterfaceManager<InterfaceManagerIOS, SmartScopeInterfaceEthernet>
+    internal class InterfaceManagerApple : InterfaceManager<InterfaceManagerApple, SmartScopeInterfaceEthernet>
     {
 		const int AF_INET = 2;
 		const int AF_INET6 = 30;
