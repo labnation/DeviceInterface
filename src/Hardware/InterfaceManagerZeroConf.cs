@@ -124,8 +124,9 @@ namespace LabNation.DeviceInterface.Hardware
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
         {
             //remove from list
-            if (createdInterfaces.ContainsValue(hardwareInterface))
-                createdInterfaces.Remove(createdInterfaces.Single(x => x.Value == hardwareInterface).Key);
+            if (!createdInterfaces.ContainsValue(hardwareInterface))
+                return;
+            createdInterfaces.Remove(createdInterfaces.Single(x => x.Value == hardwareInterface).Key);
 
             //propage upwards (to DeviceManager)
             onConnect(hardwareInterface, false);

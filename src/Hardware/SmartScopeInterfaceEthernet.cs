@@ -79,14 +79,25 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void SocketReceive(Socket s, int offset, int length, byte[] buffer)
         {
+            if (disconnectCalled)
+                return;
             int recvd = 0;
-            while(length > 0) {
+            while (length > 0)
+            {
                 if (!s.Connected)
                     Destroy();
-                recvd = s.Receive(buffer, offset + recvd, length, SocketFlags.None);
+                try {
+                    recvd = s.Receive(buffer, offset + recvd, length, SocketFlags.None);
+                } catch(Exception e)
+                {
+                    Logger.Error("Failed to receive bytes: " + e.Message);
+                    throw new ScopeIOException(e.Message);
+                }
+                
+                if (recvd == 0)
+                    Disconnect();
                 length -= recvd;
             }
-                
         }
 
         public int GetAcquisition(byte[] buffer)
@@ -188,7 +199,7 @@ namespace LabNation.DeviceInterface.Hardware
         private byte[] Request(byte[] data)
         {
             Net.Net.Command command = (Net.Net.Command)data[Net.Net.HDR_SZ - 1];
-            lock (this)
+            lock (controlSocket)
             {
                 try
                 {
