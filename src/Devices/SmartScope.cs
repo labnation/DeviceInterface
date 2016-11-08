@@ -604,7 +604,7 @@ namespace LabNation.DeviceInterface.Devices
                     Array.ConstrainedCopy(receivedData[ch], 0, targetArray, hdr.offset * n_samples, receivedData[ch].Length);
                 }
                 else
-                    currentDataPackage.SetData(source, ch, receivedData[ch]);
+                    currentDataPackage.AddData(source, ch, receivedData[ch]);
             }
 
             if(source == ChannelDataSourceScope.Acquisition)
