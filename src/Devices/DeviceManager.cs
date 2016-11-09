@@ -28,6 +28,7 @@ namespace LabNation.DeviceInterface.Devices
             { typeof(SmartScopeInterfaceUsb), typeof(SmartScope) },
             { typeof(SmartScopeInterfaceEthernet), typeof(SmartScope) }
         };
+        public Exception ZeroconfFailure = null;
 
 #if WINDOWS
         Thread badDriverDetectionThread;
@@ -101,14 +102,20 @@ null, deviceConnectHandler) { }
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
 
-			//disable because of the crash by Wait
+            //disable because of the crash by Wait
 #if ANDROID
 			InterfaceManagerServiceDiscovery.context = context;
 			InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
 #elif IOS
 			InterfaceManagerApple.Instance.onConnect += OnInterfaceChanged;
 #else
-            InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
+            try
+            {
+                InterfaceManagerZeroConf.Instance.onConnect += OnInterfaceChanged;
+            }
+            catch (Exception e) {
+                ZeroconfFailure = e;
+            }
 #endif
 
 #if ANDROID
@@ -158,7 +165,11 @@ null, deviceConnectHandler) { }
 #elif IOS
 			InterfaceManagerApple.Instance.Destroy();
 #else
-            InterfaceManagerZeroConf.Instance.Destroy();
+            try
+            {
+                InterfaceManagerZeroConf.Instance.Destroy();
+            } catch { }
+            
 #endif
 
 #if ANDROID

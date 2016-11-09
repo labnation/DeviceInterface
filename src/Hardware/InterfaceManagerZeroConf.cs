@@ -22,11 +22,6 @@ namespace LabNation.DeviceInterface.Hardware
 		Mono.Zeroconf.Providers.AvahiDBus.ZeroconfProvider p;
 #endif
 
-        object pollLock = new object();
-        bool pollThreadRunning;
-        int polling = 0;
-        Thread pollThread;
-        const int POLL_INTERVAL = 5000;
         List<ServiceLocation> detectedServices = new List<ServiceLocation>();
 
         class ServiceLocation
@@ -55,37 +50,14 @@ namespace LabNation.DeviceInterface.Hardware
 
         protected override void Initialize()
         {
-            startPollThread();
-        }
-
-        private void startPollThread()
-        {
-            pollThread = new Thread(new ThreadStart(pollThreadStart));
-            pollThread.Name = "ZeroConf poll thread";
-            pollThreadRunning = true;
-            pollThread.Start();
-        }
-
-        private void pollThreadStart()
-        {
-            PollDevice();
-        }
-
-        List<String> serviceNames = new List<string>();
-        object resolveLock = new object();
-
-        public override void PollDevice()
-        {
-            //browser needs to be renewed each time, as it's being disposed after Browse
             ServiceBrowser browser = new ServiceBrowser();
-            browser.ServiceAdded += delegate(object o, ServiceBrowseEventArgs args)
+            browser.ServiceAdded += delegate (object o, ServiceBrowseEventArgs args)
             {
                 Console.WriteLine("Found Service: {0}", args.Service.Name);
-                args.Service.Resolved += delegate(object o2, ServiceResolvedEventArgs args2)
+                args.Service.Resolved += delegate (object o2, ServiceResolvedEventArgs args2)
                 {
                     lock (resolveLock)
                     {
-                        polling++;
                         IResolvableService s = (IResolvableService)args2.Service;
 
                         ServiceLocation loc = new ServiceLocation(s.HostEntry.AddressList[0], s.Port, s.FullName);
@@ -101,24 +73,26 @@ namespace LabNation.DeviceInterface.Hardware
                         {
                             Logger.Info("... but could not connect to ethernet interface");
                         }
-                        polling--;
                     }
                 };
                 args.Service.Resolve();
             };
 
-            //go for it!
-            Common.Logger.Info("Polling ZeroConf");
             browser.Browse(Net.Net.SERVICE_TYPE, Net.Net.REPLY_DOMAIN);
+        }
+
+        List<String> serviceNames = new List<string>();
+        object resolveLock = new object();
+
+        public override void PollDevice()
+        {
+            Logger.Error("Polling not supported on Zeroconf service discovery");
         }
 
         public void Destroy()
         {
             foreach (var hw in createdInterfaces)
                 hw.Value.Destroy();
-
-            pollThreadRunning = false;
-            pollThread.Join(POLL_INTERVAL);
         }
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)

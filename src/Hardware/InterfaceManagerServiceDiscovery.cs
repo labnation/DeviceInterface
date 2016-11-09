@@ -89,7 +89,7 @@ namespace LabNation.DeviceInterface.Hardware
 
 		public override void PollDevice()
 		{
-			Logger.Debug("Polling not supported on Android service discovery");
+			Logger.Error("Polling not supported on Android service discovery");
 		}
 
         public void Destroy()
