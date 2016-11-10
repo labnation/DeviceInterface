@@ -52,6 +52,8 @@ namespace LabNation.DeviceInterface.Devices
 
         public bool ChunkyAcquisitions { get; private set; }
 
+        public bool HighBandwidthMode = false;
+
         #region helpers
 
         private void validateDivider(double div)
@@ -184,6 +186,9 @@ namespace LabNation.DeviceInterface.Devices
             float baseMin = -0.6345f; //V
             float baseMax = 0.6769f; //V
 
+            float baseRange = baseMax - baseMin;
+            float reqRange = ProbeScaleHostToScope(channel, maximum - minimum);
+
             //Walk through dividers/multipliers till requested range fits
             //this walk assumes it starts with the smallest range, and that range is only increasing
             int dividerIndex = 0;
@@ -191,15 +196,14 @@ namespace LabNation.DeviceInterface.Devices
 
             verticalRanges[channel] = new Range(minimum, maximum);
 
-            for (int i = 0; i < rom.computedDividers.Length * rom.computedMultipliers.Length; i++)
+            int mults = rom.computedMultipliers.Length-1;
+            
+            for (int i = 0; i < rom.computedDividers.Length * mults; i++)
             {
-                dividerIndex= i / rom.computedMultipliers.Length;
-                multIndex = rom.computedMultipliers.Length - (i % rom.computedMultipliers.Length) - 1;
-                if (
-                    (ProbeScaleHostToScope(channel, maximum) < baseMax * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
-                    &&
-                    (ProbeScaleHostToScope(channel, minimum) > baseMin * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex])
-                    )
+                dividerIndex= i / mults;
+                multIndex = mults - (i % mults) - (HighBandwidthMode ? 1 : 0);
+                double curRange = baseRange * rom.computedDividers[dividerIndex] / rom.computedMultipliers[multIndex];
+                if (reqRange < curRange)
                     break;
             }
             SetDivider(channel, validDividers[dividerIndex]);
