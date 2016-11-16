@@ -17,13 +17,13 @@ namespace LabNation.DeviceInterface.Hardware
     public class SmartScopeInterfaceEthernet: ISmartScopeInterface
     {
         
-		public bool Connected { get { return this.controlClient.Connected; } }
+        public bool Connected { get { return this.controlClient.Connected; } }
         private bool disconnectCalled = false;
         private IPAddress serverIp;
         private int serverPort;
         private int dataPort;
         private OnInterfaceDisconnect onDisconnect;
-		TcpClient controlClient = new TcpClient();
+        TcpClient controlClient = new TcpClient();
         TcpClient dataClient = new TcpClient();
         Socket controlSocket;
         Socket dataSocket;
@@ -80,12 +80,13 @@ namespace LabNation.DeviceInterface.Hardware
             if (disconnectCalled)
                 return;
             int recvd = 0;
+			int recvdTotal = 0;
             while (length > 0)
             {
                 if (!s.Connected)
                     Destroy();
                 try {
-                    recvd = s.Receive(buffer, offset + recvd, length, SocketFlags.None);
+                    recvd = s.Receive(buffer, offset + recvdTotal, length, SocketFlags.None);
                 } catch(Exception e)
                 {
                     Logger.Error("Failed to receive bytes: " + e.Message);
