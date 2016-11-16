@@ -374,6 +374,11 @@ namespace LabNation.DeviceInterface.Devices
                         bool verified = LabNation.Common.Utils.VerifyRamp((byte[])d.array);
                         allGood &= verified;
                     }
+                    if (!allGood)
+                    {
+                        triesLeft--;
+                        continue;
+                    }
                     return allGood;
                 }
             }
