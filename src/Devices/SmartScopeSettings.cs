@@ -196,7 +196,7 @@ namespace LabNation.DeviceInterface.Devices
 
             verticalRanges[channel] = new Range(minimum, maximum);
 
-            int mults = rom.computedMultipliers.Length - (HighBandwidthMode ? 1 : 0);
+            int mults = rom.computedMultipliers.Length - (HighBandwidthMode ? 2 : 0);
             
             for (int i = 0; i < rom.computedDividers.Length * mults; i++)
             {
