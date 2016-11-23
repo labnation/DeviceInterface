@@ -192,8 +192,8 @@ namespace LabNation.DeviceInterface.Net
                 
             while (connected)
             {
-                int bytesReceived;
-                List<Net.Message> msgList = Net.ReceiveMessage(ControlSocket, ref rxBuffer, ref msgBuffer, ref msgBufferLength, out bytesReceived);
+                int bufLengtBefore = msgBufferLength;
+                List<Net.Message> msgList = Net.ReceiveMessage(ControlSocket, msgBuffer, ref msgBufferLength);
                 if (msgList == null) //this would indicate a network error
                 {
                     LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
@@ -201,7 +201,7 @@ namespace LabNation.DeviceInterface.Net
                     break;
                 }
                 lock (bwlock) {
-                    bytesRx += bytesReceived;
+                    bytesRx += (msgBufferLength - bufLengtBefore);
                 }
                     
 

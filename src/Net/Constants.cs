@@ -87,16 +87,17 @@ namespace LabNation.DeviceInterface.Net
             }
         }
 
-        internal static List<Message> ReceiveMessage(Socket socket, ref byte[] rxBuffer, ref byte[] msgBuffer, ref int msgBufferLength, out int bytesReceived)
+        internal static List<Message> ReceiveMessage(Socket socket, byte[] msgBuffer, ref int msgBufferLength)
         {
-            bytesReceived = 0;
+            int bytesReceived = 0;
 			int bytesConsumed = 0;
+
 			List<Message> msgList = new List<Message>();
 			while (msgList.Count == 0)
 			{
 				try
 				{
-					bytesReceived = socket.Receive(rxBuffer);
+                    bytesReceived = socket.Receive(msgBuffer, msgBufferLength, msgBuffer.Length - msgBufferLength, SocketFlags.None);
 				}
 				catch
 				{
@@ -110,13 +111,12 @@ namespace LabNation.DeviceInterface.Net
             debugFile.Flush();
 #endif
 
-				if (bytesReceived > rxBuffer.Length)
+                if (bytesReceived > msgBuffer.Length)
 					throw new Exception("TCP/IP socket buffer overflow!");
 
 				if (bytesReceived == 0) //this would indicate a network error
 					return null;
 
-				Buffer.BlockCopy(rxBuffer, 0, msgBuffer, msgBufferLength, bytesReceived);
 				msgBufferLength += bytesReceived;
 
 				// Parsing message and build list

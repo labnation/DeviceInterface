@@ -207,8 +207,7 @@ namespace LabNation.DeviceInterface.Hardware
                     Disconnect();
                     throw new ScopeIOException("Failure while sending to socket: " + se.Message);
                 }
-                
-                int bytesReceived;
+
                 switch (command)
                 {
                     case Net.Net.Command.DATA:
@@ -218,7 +217,7 @@ namespace LabNation.DeviceInterface.Hardware
                     case Net.Net.Command.FLASH_FPGA:
 					case Net.Net.Command.DATA_PORT:
 					case Net.Net.Command.ACQUISITION:
-                        List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, ref rxBuffer, ref msgBuffer, ref msgBufferLength, out bytesReceived);
+                        List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, msgBuffer, ref msgBufferLength);
                         if (l == null)
                         {
                             Disconnect();
