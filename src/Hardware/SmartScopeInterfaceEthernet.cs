@@ -183,9 +183,6 @@ namespace LabNation.DeviceInterface.Hardware
             dataClient.Close();
         }
 
-
-        
-        byte[] rxBuffer = new byte[Net.Net.BUF_SIZE];
         byte[] msgBuffer = new byte[Net.Net.BUF_SIZE];
         int msgBufferLength = 0;
 
@@ -200,7 +197,11 @@ namespace LabNation.DeviceInterface.Hardware
             {
                 try
                 {
-                    controlSocket.Send(data);
+                    int toSend = data.Length;
+                    while (toSend > 0)
+                    {
+                        toSend -= controlSocket.Send(data, data.Length - toSend, toSend, SocketFlags.None);
+                    }
                 } catch(Exception se)
                 {
                     Logger.Error("Failure while sending to socket: " + se.Message);
