@@ -785,7 +785,7 @@ namespace LabNation.Common
                 if ((byte)(p[i - 1] + 1) != p[i])
                     failingIndices.Add(i);
 
-            Logger.Debug(failingIndices.Count + " failing indices");
+            Logger.Error(failingIndices.Count + " failing indices out of " + p.Length);
 
             return failingIndices.Count == 0;
         }
