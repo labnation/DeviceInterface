@@ -16,13 +16,21 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Net
 {
+    public delegate void ServerChangedHandler(InterfaceServer s, bool connected);
+
     public class Monitor
     {
         Thread pollThread;
-        List<InterfaceServer> servers = new List<InterfaceServer>();
+        public List<InterfaceServer> servers = new List<InterfaceServer>();
+        private List<IHardwareInterface> hwInterfaces = new List<IHardwareInterface>();
 
-        public Monitor()
+        bool autostart;
+        ServerChangedHandler OnServerChanged;
+        public Monitor(bool autostart = true, ServerChangedHandler s = null)
         {
+            if (s != null)
+                OnServerChanged += s;
+            this.autostart = autostart;
             //start USB polling thread
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
@@ -38,8 +46,9 @@ namespace LabNation.DeviceInterface.Net
 
         public void Stop()
         {
-            foreach(InterfaceServer s in servers)
+            while(servers.Count > 0)
             {
+                InterfaceServer s = servers.First();
                 Logger.Info("Stopping server for interface with serial " + s.hwInterface.Serial);
                 s.Stop();
             }
@@ -54,29 +63,49 @@ namespace LabNation.DeviceInterface.Net
 #endif
         }
 
+        private void OnServerDisconnect(InterfaceServer s)
+        {
+            if(servers.Contains(s))
+            {
+                servers.Remove(s);
+                s.Stop();
+                Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Gray);
+                if (OnServerChanged != null)
+                    OnServerChanged(s, false);
+            }
+
+            //If hwInterface remains connected, start new server
+            if(hwInterfaces.Contains(s.hwInterface))
+                OnInterfaceConnect(s.hwInterface, true);
+        }
+        private void OnServerStart(InterfaceServer s)
+        {
+            if (OnServerChanged != null)
+                OnServerChanged(s, true);
+        }
+
         private void OnInterfaceConnect(SmartScopeInterfaceUsb hardwareInterface, bool connected)
         {
-            Logger.LogC(LogLevel.INFO, "[Hardware] ", ConsoleColor.Green);
             if (connected)
             {
+                if(!hwInterfaces.Contains(hardwareInterface))
+                    hwInterfaces.Add(hardwareInterface);
                 Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Gray);
-                servers.Add(new InterfaceServer(hardwareInterface));
+                InterfaceServer s = new InterfaceServer(hardwareInterface);
+                servers.Add(s);
+                s.OnDisconnect += OnServerDisconnect;
+                s.OnStart += OnServerStart;
+                if (autostart)
+                    s.Start();
+                if (OnServerChanged != null)
+                    OnServerChanged(s, true);
             }
             else //disconnect
             {
-                //Find server with disappeared hw interface
-                if (servers.Where(x => x.hwInterface == hardwareInterface).Count() != 0)
-                {
-                    InterfaceServer s = servers.First(x => x.hwInterface == hardwareInterface);
-                    servers.Remove(s);
-                    s.Stop();
-                    Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Gray);
-
-                }
-                else
-                {
-                    Logger.LogC(LogLevel.INFO, "ignored\n", ConsoleColor.Gray);
-                }
+                hwInterfaces.Remove(hardwareInterface);
+                InterfaceServer s = servers.Find(x => x.hwInterface == hardwareInterface);
+                if (s != null)
+                    OnServerDisconnect(s);
             }
         }
     }
