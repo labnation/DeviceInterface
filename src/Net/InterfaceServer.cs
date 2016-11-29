@@ -173,6 +173,7 @@ namespace LabNation.DeviceInterface.Net
             {
                 LogMessage(LogTypes.DATA, String.Format("Data thread aborted {0:s}", e.Message));
                 hwInterface.Destroy();
+                Stop();
             }
         }
 
@@ -354,7 +355,7 @@ namespace LabNation.DeviceInterface.Net
             if (DataSocketListener != null)
             {
                 DataSocketListener.Stop();
-                if (dataSocketThread != null)
+                if (dataSocketThread != null && Thread.CurrentThread != dataSocketThread)
                 {
                     dataSocketThread.Join(1000);
                     if (dataSocketThread.IsAlive)
@@ -386,7 +387,7 @@ namespace LabNation.DeviceInterface.Net
                 }
                 ControlSocketListener.Stop();
             }
-            if(controlSocketThread != null)
+            if(controlSocketThread != null && Thread.CurrentThread != controlSocketThread)
             {
                 if (controlSocketThread.IsAlive)
                     controlSocketThread.Join(1000);

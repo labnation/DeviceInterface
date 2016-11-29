@@ -10,7 +10,6 @@ using System.Windows.Forms;
 using LabNation.Common;
 using LabNation.DeviceInterface.Net;
 using System.Collections.Concurrent;
-using System.Threading;
 using LabNation.DeviceInterface.Hardware;
 using LabNation.DeviceInterface.Devices;
 
@@ -23,18 +22,21 @@ namespace LabNation.SmartScopeServerUI
             InitializeComponent();
         }
 
-        Dictionary<InterfaceServer, int> tableRows = new Dictionary<InterfaceServer, int>();
+        class ServerInfo
+        {
+            public int row;
+            public int bytesTx;
+            public int bytesRx;
+        }
+
+        Dictionary<InterfaceServer, ServerInfo> tableRows = new Dictionary<InterfaceServer, ServerInfo>();
         ConcurrentQueue<LogMessage> logqueue = new ConcurrentQueue<LogMessage>();
-        Thread logThread;
-        LabNation.DeviceInterface.Net.Monitor interfaceMonitor;
-        bool running = true;
+        Monitor interfaceMonitor;
+        Timer logTimer;
+        Timer bwTimer;
         
         private void Form_Load(object sender, EventArgs e)
         {
-            Logger.AddQueue(logqueue);
-            logThread = new Thread(DequeueLog);
-            logThread.Name = "Logbox";
-            logThread.Start();
             this.FormClosing += Cleanup;
             Logger.Debug("App started");
             interfaceMonitor = new LabNation.DeviceInterface.Net.Monitor(false, OnServerChanged);
@@ -50,14 +52,30 @@ namespace LabNation.SmartScopeServerUI
             };
             clearLog.Click += delegate { BeginInvoke((MethodInvoker)delegate { logbox.Clear(); }); };
             menu.Items.Add(clearLog);
+
+            bwTimer = new Timer()
+            {
+                Enabled = true,
+                Interval = 500,
+            };
+            bwTimer.Tick += BwTimer_Tick;
+
+            Logger.AddQueue(logqueue);
+            logTimer = new Timer()
+            {
+                Enabled = true,
+                Interval = 100,
+            };
+
+            logTimer.Tick += LogTimer_Tick;
+
         }
 
         private void Cleanup(object sender, FormClosingEventArgs e)
         {
-            running = false;
-            logThread.Join(1000);
-            if (logThread.IsAlive)
-                logThread.Abort();
+
+            bwTimer.Enabled = false;
+            logTimer.Enabled = false;
             Logger.Info("Stopping interface monitor");
             interfaceMonitor.Stop();
 
@@ -97,7 +115,7 @@ namespace LabNation.SmartScopeServerUI
                     if (tableRows.ContainsKey(s))
                     {
                         //Update
-                        int row = tableRows[s];
+                        int row = tableRows[s].row;
                         Label labelPort = (Label)tableLayoutPanel1.GetControlFromPosition(COL_PORT, row);
                         Button startButton = (Button)tableLayoutPanel1.GetControlFromPosition(COL_BUTT, row);
                         startButton.Text = s.State == ServerState.Started ? STR_STOP : STR_START;
@@ -126,14 +144,14 @@ namespace LabNation.SmartScopeServerUI
                         tableLayoutPanel1.Controls.Add(new Label() { Text = "up" }, COL_BW_UP, row);
                         tableLayoutPanel1.Controls.Add(new Label() { Text = "dn" }, COL_BW_DN, row);
                         tableLayoutPanel1.Controls.Add(startButton, COL_BUTT, row);
-                        tableRows[s] = row;
+                        tableRows.Add(s, new ServerInfo() { row = row });
                     }
                 }
                 else
                 {
                     Logger.Debug("Removing Server for " + s.hwInterface.Serial);
                     //Find row where this server lives
-                    int row = tableRows[s];
+                    int row = tableRows[s].row;
                     tableRows.Remove(s);
 
                     // delete all controls of row that we want to delete
@@ -162,13 +180,46 @@ namespace LabNation.SmartScopeServerUI
                         }
                     }
 
-                    tableRows.Where(x => x.Value > row).ToList().ForEach(x => tableRows[x.Key] = x.Value - 1);
+                    tableRows.Where(x => x.Value.row > row).ToList().ForEach(x => tableRows[x.Key].row = x.Value.row - 1);
                     tableLayoutPanel1.RowStyles.RemoveAt(row);
                     tableLayoutPanel1.RowCount--;
                 }
             }
             tableLayoutPanel1.ResumeLayout();
             tableLayoutPanel1.PerformLayout();
+        }
+
+
+        DateTime lastBwUpdate = DateTime.Now;
+        private void BwTimer_Tick(object sender, EventArgs e)
+        {
+            double timePassed = (DateTime.Now - lastBwUpdate).TotalMilliseconds / 1000;
+            string format = "{0:0.00} kBps";
+            lock (serverTableLock)
+            {
+                foreach(var kvp in tableRows)
+                {
+                    InterfaceServer s = kvp.Key;
+                    int row = kvp.Value.row;
+                    Label lup = (Label)tableLayoutPanel1.GetControlFromPosition(COL_BW_UP, row);
+                    Label ldown = (Label)tableLayoutPanel1.GetControlFromPosition(COL_BW_DN, row);
+                    if (lup == null || ldown == null)
+                        continue;
+                    double bwup = 0;
+                    double bwdn = 0;
+                    if (s.State == ServerState.Started)
+                    {
+                        bwdn = (s.BytesRx - tableRows[s].bytesRx) / timePassed / 1024;
+                        bwup = (s.BytesTx - tableRows[s].bytesTx) / timePassed / 1024;
+                    }
+                    ldown.Text = String.Format(format, bwdn );
+                    lup.Text = String.Format(format, bwup);
+
+                    tableRows[s].bytesRx = s.BytesRx;
+                    tableRows[s].bytesTx = s.BytesTx;
+                }
+            }
+            lastBwUpdate = DateTime.Now;
         }
 
         private void StartStopServer(object s, EventArgs e) {
@@ -208,15 +259,12 @@ namespace LabNation.SmartScopeServerUI
             box.ScrollToCaret();
         }
 
-        private void DequeueLog()
+        DateTime bwLastCheck = DateTime.MaxValue;
+        private void LogTimer_Tick(object sender, EventArgs e)
         {
-            while(running)
-            {
-                Thread.Sleep(50);
-                LogMessage m;
-                while (logqueue.TryDequeue(out m))
-                    AddLogMessage(m);
-            }
+            LogMessage m;
+            while (logqueue.TryDequeue(out m))
+                AddLogMessage(m);
         }
     }
 }
