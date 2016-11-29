@@ -157,7 +157,15 @@ namespace LabNation.DeviceInterface.Devices
             }
 
             dataSourceScope = new DataSources.DataSource(this);
-            InitializeHardware();
+            try {
+                InitializeHardware();
+            } catch(Exception e)
+            {
+                Logger.Error("Failed to initialize hardware, resetting scope: " + e.Message);
+                hardwareInterface.Reset();
+                throw e;
+            }
+            
         }
 
         public void Pause() 
