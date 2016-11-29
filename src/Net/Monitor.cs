@@ -50,7 +50,7 @@ namespace LabNation.DeviceInterface.Net
             {
                 InterfaceServer s = servers.First();
                 Logger.Info("Stopping server for interface with serial " + s.hwInterface.Serial);
-                s.Stop();
+                s.Destroy();
             }
         }
 
@@ -63,22 +63,18 @@ namespace LabNation.DeviceInterface.Net
 #endif
         }
 
-        private void OnServerDisconnect(InterfaceServer s)
+        private void OnServerDestroy(InterfaceServer s)
         {
             if(servers.Contains(s))
             {
                 servers.Remove(s);
-                s.Stop();
                 Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Gray);
+
                 if (OnServerChanged != null)
                     OnServerChanged(s, false);
             }
-
-            //If hwInterface remains connected, start new server
-            if(hwInterfaces.Contains(s.hwInterface))
-                OnInterfaceConnect(s.hwInterface, true);
         }
-        private void OnServerStart(InterfaceServer s)
+        private void OnServerStartStop(InterfaceServer s)
         {
             if (OnServerChanged != null)
                 OnServerChanged(s, true);
@@ -93,8 +89,9 @@ namespace LabNation.DeviceInterface.Net
                 Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Gray);
                 InterfaceServer s = new InterfaceServer(hardwareInterface);
                 servers.Add(s);
-                s.OnDisconnect += OnServerDisconnect;
-                s.OnStart += OnServerStart;
+                s.OnDestroy += OnServerDestroy;
+                s.OnStop += OnServerStartStop;
+                s.OnStart += OnServerStartStop;
                 if (autostart)
                     s.Start();
                 if (OnServerChanged != null)
@@ -104,8 +101,8 @@ namespace LabNation.DeviceInterface.Net
             {
                 hwInterfaces.Remove(hardwareInterface);
                 InterfaceServer s = servers.Find(x => x.hwInterface == hardwareInterface);
-                if (s != null)
-                    OnServerDisconnect(s);
+                if(s != null)
+                    s.Destroy();
             }
         }
     }

@@ -38,10 +38,11 @@ namespace LabNation.SmartScopeServerUI
             this.FormClosing += Cleanup;
             Logger.Debug("App started");
             interfaceMonitor = new LabNation.DeviceInterface.Net.Monitor(false, OnServerChanged);
-            tableLayoutPanel1.Controls.Add(new Label() { Text = "Serial" }, 0, 0);
-            tableLayoutPanel1.Controls.Add(new Label() { Text = "Port" }, 1, 0);
-            tableLayoutPanel1.Controls.Add(new Label() { Text = "Connected" }, 2, 0);
-            tableLayoutPanel1.Controls.Add(new Label() { Text = "Btns" }, 3, 0);
+            tableLayoutPanel1.Controls.Add(new Label() { Text = "Serial" }, COL_SERIAL, 0);
+            tableLayoutPanel1.Controls.Add(new Label() { Text = "Port" }, COL_PORT, 0);
+            tableLayoutPanel1.Controls.Add(new Label() { Text = "Up" }, COL_BW_UP, 0);
+            tableLayoutPanel1.Controls.Add(new Label() { Text = "Down" }, COL_BW_DN, 0);
+            tableLayoutPanel1.Controls.Add(new Label() { Text = "Btns" }, COL_BUTT, 0);
 
             ToolStripMenuItem clearLog = new ToolStripMenuItem()
             {
@@ -68,88 +69,124 @@ namespace LabNation.SmartScopeServerUI
         {
             if(connected)
             {
-                BeginInvoke((MethodInvoker)delegate { AddServerToTable(s); });
+                BeginInvoke((MethodInvoker)delegate { UpdateServerTable(s, true); });
             } else
             {
-                BeginInvoke((MethodInvoker)delegate { RemoveServerFromTable(s); });
+                BeginInvoke((MethodInvoker)delegate { UpdateServerTable(s, false); });
             }
 
         }
 
-        private void AddServerToTable(InterfaceServer s)
+        private object serverTableLock = new object();
+        private const int COL_SERIAL = 0;
+        private const int COL_PORT = 1;
+        private const int COL_BW_UP = 2;
+        private const int COL_BW_DN = 3;
+        private const int COL_BUTT = 4;
+        private const string STR_START = "start";
+        private const string STR_STOP = "stop";
+
+        private void UpdateServerTable(InterfaceServer s, bool present)
         {
-            if(tableRows.ContainsKey(s))
+            tableLayoutPanel1.SuspendLayout();
+
+            lock (serverTableLock)
             {
-                //Update
-                int row = tableRows[s];
-                Label labelPort = (Label)tableLayoutPanel1.GetControlFromPosition(1, row);
-                Button startButton = (Button)tableLayoutPanel1.GetControlFromPosition(3, row);
-                startButton.Text = "Stop";
-                startButton.Click += StopServer;
-                startButton.Enabled = true;
-                labelPort.Text = s.Port.ToString();
-            }
-            else
-            {
-                Label labelSerial = new Label() { Text = s.hwInterface.Serial, Tag = s };
-                Label labelPort = new Label() { Text = s.Port.ToString(), Tag = s };
-                Button startButton = new Button()
+                if (present)
                 {
-                    Text = "start",
-                    Tag = s,
-                    Dock = DockStyle.Fill,
-
-                };
-                startButton.Click += StartServer;
-
-                tableLayoutPanel1.RowCount += 1;
-                tableLayoutPanel1.RowStyles.Add(new RowStyle());
-                int row = tableLayoutPanel1.RowCount - 2;
-                tableLayoutPanel1.Controls.Add(labelSerial, 0, row);
-                tableLayoutPanel1.Controls.Add(labelPort, 1, row);
-                tableLayoutPanel1.Controls.Add(startButton, 3, row);
-                tableRows[s] = row;
-            }
-
-        }
-
-        private void StartServer(object s, EventArgs e) {
-            Button b = (Button)s;
-            b.Click -= StartServer;
-            b.Enabled = false;
-            ((InterfaceServer)b.Tag).Start();
-        }
-        private void StopServer(object s, EventArgs e) { ((InterfaceServer)((Control)s).Tag).Stop(); }
-        private void RemoveServerFromTable(InterfaceServer s)
-        {
-            //Find row where this server lives
-            int row = tableRows[s];
-            tableRows.Remove(s);
-
-            // delete all controls of row that we want to delete
-            for (int i = 0; i < tableLayoutPanel1.ColumnCount; i++)
-            {
-                var control = tableLayoutPanel1.GetControlFromPosition(i, row);
-                tableLayoutPanel1.Controls.Remove(control);
-            }
-
-            // move up row controls that comes after row we want to remove
-            for (int i = row + 1; i < tableLayoutPanel1.RowCount; i++)
-            {
-                for (int j = 0; j < tableLayoutPanel1.ColumnCount; j++)
-                {
-                    var control = tableLayoutPanel1.GetControlFromPosition(j, i);
-                    if (control != null)
+                    if (tableRows.ContainsKey(s))
                     {
-                        tableLayoutPanel1.SetRow(control, i - 1);
+                        //Update
+                        int row = tableRows[s];
+                        Label labelPort = (Label)tableLayoutPanel1.GetControlFromPosition(COL_PORT, row);
+                        Button startButton = (Button)tableLayoutPanel1.GetControlFromPosition(COL_BUTT, row);
+                        startButton.Text = s.State == ServerState.Started ? STR_STOP : STR_START;
+                        startButton.Enabled = true;
+                        labelPort.Text = s.Port.ToString();
+                    }
+                    else
+                    {
+                        Label labelSerial = new Label() { Text = s.hwInterface.Serial, Tag = s };
+                        Label labelPort = new Label() { Text = s.Port.ToString(), Tag = s };
+                        Button startButton = new Button()
+                        {
+                            Text = s.State == ServerState.Started ? STR_STOP : STR_START,
+                            Tag = s,
+                            Dock = DockStyle.Fill,
+
+                        };
+                        startButton.Click += StartStopServer;
+
+                        tableLayoutPanel1.RowCount += 1;
+                        tableLayoutPanel1.RowStyles.Add(new RowStyle());
+                        //Use one but last row, last row is used for emptyness
+                        int row = tableLayoutPanel1.RowCount - 2;
+                        tableLayoutPanel1.Controls.Add(labelSerial, COL_SERIAL, row);
+                        tableLayoutPanel1.Controls.Add(labelPort, COL_PORT, row);
+                        tableLayoutPanel1.Controls.Add(new Label() { Text = "up" }, COL_BW_UP, row);
+                        tableLayoutPanel1.Controls.Add(new Label() { Text = "dn" }, COL_BW_DN, row);
+                        tableLayoutPanel1.Controls.Add(startButton, COL_BUTT, row);
+                        tableRows[s] = row;
                     }
                 }
+                else
+                {
+                    Logger.Debug("Removing Server for " + s.hwInterface.Serial);
+                    //Find row where this server lives
+                    int row = tableRows[s];
+                    tableRows.Remove(s);
+
+                    // delete all controls of row that we want to delete
+                    for (int i = 0; i < tableLayoutPanel1.ColumnCount; i++)
+                    {
+                        var control = tableLayoutPanel1.GetControlFromPosition(i, row);
+                        if(control != null)
+                        {
+                            tableLayoutPanel1.Controls.Remove(control);
+                            Logger.Debug("Removing control @ col " + i + " " + control.GetType().ToString());
+                            control.Dispose();
+                        }
+                            
+                    }
+
+                    // move up row controls that comes after row we want to remove
+                    for (int i = row + 1; i < tableLayoutPanel1.RowCount; i++)
+                    {
+                        for (int j = 0; j < tableLayoutPanel1.ColumnCount; j++)
+                        {
+                            var control = tableLayoutPanel1.GetControlFromPosition(j, i);
+                            if (control != null)
+                            {
+                                tableLayoutPanel1.SetRow(control, i - 1);
+                            }
+                        }
+                    }
+
+                    tableRows.Where(x => x.Value > row).ToList().ForEach(x => tableRows[x.Key] = x.Value - 1);
+                    tableLayoutPanel1.RowStyles.RemoveAt(row);
+                    tableLayoutPanel1.RowCount--;
+                }
             }
+            tableLayoutPanel1.ResumeLayout();
+            tableLayoutPanel1.PerformLayout();
+        }
 
-            // remove last row
-            tableLayoutPanel1.RowStyles.RemoveAt(tableLayoutPanel1.RowCount - 1);
-            tableLayoutPanel1.RowCount--;
-
+        private void StartStopServer(object s, EventArgs e) {
+            Button b = (Button)s;
+            b.Enabled = false;
+            InterfaceServer server = (InterfaceServer)b.Tag;
+            switch(server.State)
+            {
+                case ServerState.Started:
+                    server.Stop();
+                    break;
+                case ServerState.Stopped:
+                    server.Start();
+                    break;
+                case ServerState.Destroyed:
+                    Logger.Warn("Received start/stop request on destroyed server - expect badness");
+                    break;
+            }
         }
 
         private void AddLogMessage(LogMessage m)

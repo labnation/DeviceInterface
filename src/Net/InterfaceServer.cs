@@ -14,16 +14,24 @@ using LabNation.Common;
 
 namespace LabNation.DeviceInterface.Net
 {
-    public delegate void ServerDisconnectHandler(InterfaceServer s);
-    public delegate void ServerStartHandler(InterfaceServer s);
+    public delegate void ServerChangeHandler(InterfaceServer s);
+    public enum ServerState { Stopped, Started, Destroyed };
 
     public class InterfaceServer
     {
-        public ServerDisconnectHandler OnDisconnect;
-        public ServerDisconnectHandler OnStart;
+        public ServerChangeHandler OnDestroy;
+        public ServerChangeHandler OnStart;
+        public ServerChangeHandler OnStop;
+
+        
+        private object stateLock = new object();
+        private ServerState state;
+        public ServerState State { get { return state; } }
 
         public SmartScopeInterfaceUsb hwInterface;
-        public int Port { get { return ControlSocketListener == null ? -1 : ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port; } }
+        public int Port { get {
+                return state == ServerState.Started? ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port : -1;
+            } }
         private const int RECEIVE_TIMEOUT = 10000; //10sec
 
         Thread controlSocketThread;
@@ -32,27 +40,52 @@ namespace LabNation.DeviceInterface.Net
         private object bwlock = new object();
         private int bytesTx = 0;
         private int bytesRx = 0;
+        public int BytesRx { get { return bytesRx; } }
+        public int BytesTx { get { return bytesTx; } }
 
         public InterfaceServer(SmartScopeInterfaceUsb hwInterface)
         {
             this.hwInterface = hwInterface;
-            //start TCP/IP thread
-            controlSocketThread = new Thread(ControlSocketServer)
-            {
-                Name = "TCP listener",
-            };
+            state = ServerState.Stopped;
         }
 
         public void Start()
         {
-            if (controlSocketThread.IsAlive)
-                throw new Exception("Can't start a server twice");
-            controlSocketThread.Start();
+            lock(stateLock)
+            {
+                if(state != ServerState.Stopped)
+                    throw new Exception(String.Format("Can't start server, it is {0:G}", state));
+                state = ServerState.Started;
+                controlSocketThread = new Thread(ControlSocketServer)
+                {
+                    Name = "TCP listener",
+                };
+                controlSocketThread.Start();
+            }
         }
-
         public void Stop()
         {
-            Disconnect();
+            lock (stateLock)
+            {
+                if (state == ServerState.Stopped)
+                    return;
+                state = ServerState.Stopped;
+                Disconnect();
+                if (OnStop != null)
+                    OnStop(this);
+            }
+        }
+        public void Destroy()
+        {
+            lock (stateLock)
+            {
+                if (state == ServerState.Destroyed)
+                    return;
+                state = ServerState.Destroyed;
+                Disconnect();
+                if (OnDestroy != null)
+                    OnDestroy(this);
+            }
         }
 
         RegisterService service;
@@ -100,6 +133,7 @@ namespace LabNation.DeviceInterface.Net
                 catch (Exception e)
                 {
                     LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
+                    Stop();
                     return;
                 }
 
@@ -117,7 +151,7 @@ namespace LabNation.DeviceInterface.Net
                     catch(ScopeIOException e)
                     {
                         LogMessage(LogTypes.DATA, String.Format("usb error {0:s}", e.Message));
-                        Disconnect();
+                        Stop();
                         break;
                     }
                     try
@@ -131,12 +165,9 @@ namespace LabNation.DeviceInterface.Net
                     catch (SocketException e)
                     {
                         LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
-                        Disconnect();
+                        Stop();
                     }
-                    lock (bwlock)
-                    {
-                        bytesTx += length;
-                    }
+                    bytesTx += length;
                 }
             } catch(ThreadAbortException e)
             {
@@ -145,10 +176,12 @@ namespace LabNation.DeviceInterface.Net
             }
         }
 
-        bool processing = false;
+        bool processing;
 
         private void ControlSocketServer()
         {
+            disconnectCalled = false;
+            processing = false;
             int msgBufferLength = 0;
             ScopeController ctrl;
             int address;
@@ -197,12 +230,10 @@ namespace LabNation.DeviceInterface.Net
                 if (msgList == null) //this would indicate a network error
                 {
                     LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
-                    Disconnect();
+                    Stop();
                     break;
                 }
-                lock (bwlock) {
-                    bytesRx += (msgBufferLength - bufLengtBefore);
-                }
+                bytesRx += (msgBufferLength - bufLengtBefore);
                     
 
 
@@ -232,7 +263,7 @@ namespace LabNation.DeviceInterface.Net
                                     break;
                                 case Net.Command.DISCONNECT:
                                     hwInterface.FlushDataPipe();
-                                    Disconnect();
+                                    Stop();
                                     break;
                                 case Net.Command.DATA:
                                     length = (m.data[0] << 8) + (m.data[1]);
@@ -256,14 +287,14 @@ namespace LabNation.DeviceInterface.Net
                                     break;
                                 default:
                                     Logger.Error("Unsupported command {0:G}", command);
-                                    Disconnect();
+                                    Stop();
                                     break;
                             }
                             processing = false;
                         } catch(ScopeIOException e)
                         {
                             Logger.Error("Scope IO error : " + e.Message);
-                            Disconnect();
+                            Stop();
                             break;
                         }
                         if (response != null)
@@ -275,25 +306,24 @@ namespace LabNation.DeviceInterface.Net
                             catch (Exception e)
                             {
                                 Logger.Info("Failed to write to socket: " + e.Message);
-                                Disconnect();
+                                Stop();
                             }
                         }
                         if (response != null)
                         {
-                            lock (bwlock)
-                                bytesTx += response.Length;
+                            bytesTx += response.Length;
                         }
                     }
                 }
                 else
                 {
-                    Disconnect();
+                    Stop();
                 }
             }
         }
 
         private object disconnectLock = new object();
-        private bool disconnectCalled = false;
+        private bool disconnectCalled;
         private void Disconnect()
         {
             lock (disconnectLock)
@@ -308,9 +338,6 @@ namespace LabNation.DeviceInterface.Net
                 connected = false;
             }  
             LogMessage(LogTypes.NETWORK, "Disconnecting...");
-
-            if (OnDisconnect != null)
-                OnDisconnect(this);
 
             UnregisterZeroConf();
             try
@@ -331,7 +358,16 @@ namespace LabNation.DeviceInterface.Net
                 {
                     dataSocketThread.Join(1000);
                     if (dataSocketThread.IsAlive)
-                        dataSocketThread.Abort();
+                    {
+                        try
+                        {
+                            dataSocketThread.Abort();
+                        }
+                        catch(Exception e)
+                        {
+                            Logger.Error("While aborting data socket thread: " + e.Message);
+                        }
+                    }
                 }
             }
 
@@ -350,13 +386,14 @@ namespace LabNation.DeviceInterface.Net
                 }
                 ControlSocketListener.Stop();
             }
-            if (controlSocketThread.IsAlive)
-                controlSocketThread.Join(1000);
-            if (controlSocketThread.IsAlive)
-                controlSocketThread.Abort();
-            if (controlSocketThread.IsAlive)
+            if(controlSocketThread != null)
             {
-                Logger.Error("Control socket should be dead");
+                if (controlSocketThread.IsAlive)
+                    controlSocketThread.Join(1000);
+                if (controlSocketThread.IsAlive)
+                    controlSocketThread.Abort();
+                if (controlSocketThread.IsAlive)
+                    Logger.Error("Control socket should be dead");
             }
         }
 
