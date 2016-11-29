@@ -49,7 +49,9 @@ namespace LabNation.DeviceInterface.Hardware
             {
                 if (interfaces.Count > 0 && onConnect != null)
                 {
-                    onConnect(interfaces.First().Value, true);
+                    foreach(var iface in interfaces) {
+                        onConnect(iface.Value, true);
+                    }
                     return;
                 }
 
@@ -64,8 +66,7 @@ namespace LabNation.DeviceInterface.Hardware
                             try
                             {
                                 USBDevice d = new USBDevice(dev);
-                                if (DeviceFound(d))
-                                    return;
+                                DeviceFound(d);
                             }
                             catch (USBException e)
                             {
