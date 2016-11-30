@@ -255,7 +255,6 @@ namespace LabNation.DeviceInterface.Net
             byte[] msgBuffer = new byte[1024*1024];
 
             ControlSocketListener.Start();
-            Logger.Info("==================== New session started =======================");
             Logger.Info("SmartScope Server listening for incoming connections on port " + ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port.ToString());
 
             DataSocketListener.Start();
