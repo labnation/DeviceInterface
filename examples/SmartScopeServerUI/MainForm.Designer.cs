@@ -30,6 +30,7 @@ namespace LabNation.SmartScopeServerUI
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitter = new System.Windows.Forms.SplitContainer();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.logbox = new System.Windows.Forms.RichTextBox();
@@ -144,13 +145,13 @@ namespace LabNation.SmartScopeServerUI
             // clearToolStripMenuItem
             // 
             this.clearToolStripMenuItem.Name = "clearToolStripMenuItem";
-            this.clearToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.clearToolStripMenuItem.Size = new System.Drawing.Size(101, 22);
             this.clearToolStripMenuItem.Text = "Clear";
             // 
             // hideToolStripMenuItem
             // 
             this.hideToolStripMenuItem.Name = "hideToolStripMenuItem";
-            this.hideToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.hideToolStripMenuItem.Size = new System.Drawing.Size(101, 22);
             this.hideToolStripMenuItem.Text = "Hide";
             // 
             // MainForm
@@ -161,6 +162,7 @@ namespace LabNation.SmartScopeServerUI
             this.Controls.Add(this.status);
             this.Controls.Add(this.menu);
             this.Controls.Add(this.splitter);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menu;
             this.Name = "MainForm";
             this.Text = "SmartScope Network Server";

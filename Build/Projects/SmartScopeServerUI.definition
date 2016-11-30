@@ -17,6 +17,7 @@
       </FrameworkVersions>
     <RootNamespace>LabNation.SmartScopeServerUI</RootNamespace>
     <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
+    <WindowsApplicationIcon>smartscopeserver.ico</WindowsApplicationIcon>
     <CustomDefinitions>
       <Platform Name="Linux">TRACE;LINUX</Platform>
       <Platform Name="MacOS">MONOMAC</Platform>
@@ -50,6 +51,7 @@
       <ExcludePlatforms>iOS</ExcludePlatforms>
     </Compile>
 
+    <Content Include="smartscopeserver.ico"/>
     <None Include="../../Mono.Zeroconf.Providers.Bonjour.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>
