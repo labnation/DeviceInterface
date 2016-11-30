@@ -44,7 +44,7 @@ namespace LabNation.DeviceInterface.Hardware
                 throw new ScopeIOException("Failed to connect.");
             }
 
-            controlClient.Connect(this.serverIp, this.serverPort);
+            controlClient.EndConnect(result);
             controlSocket = controlClient.Client;
 
             byte[] serialBytes = Request(Net.Net.Command.SERIAL);
