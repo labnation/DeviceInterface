@@ -36,7 +36,8 @@
     <Reference Include="System.Xml" />
     <Reference Include="Common" />
     <Reference Include="DeviceInterface" />
-    <Reference Include="WinFormReferences" />
+  	<Reference Include="System.Windows.Forms"/>
+  	<Reference Include="System.Drawing"/>
     <Reference Include="Mono.Zeroconf" />
   </References>
   <Files>
