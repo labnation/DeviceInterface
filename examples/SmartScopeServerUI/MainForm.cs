@@ -46,12 +46,17 @@ namespace LabNation.SmartScopeServerUI
             tableLayoutPanel1.Controls.Add(new Label() { Text = "Down" }, COL_BW_DN, 0);
             tableLayoutPanel1.Controls.Add(new Label() { Text = "Btns" }, COL_BUTT, 0);
 
-            ToolStripMenuItem clearLog = new ToolStripMenuItem()
-            {
-                Text = "Clear log",
+            clearToolStripMenuItem.Click += delegate { BeginInvoke((MethodInvoker)delegate { logbox.Clear(); }); };
+            hideToolStripMenuItem.Click += delegate { BeginInvoke((MethodInvoker)delegate { HideShowLogBox(!hideToolStripMenuItem.Checked); }); };
+            
+            autoStartServerToolStripMenuItem.Click += delegate {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    autoStartServerToolStripMenuItem.Checked = !autoStartServerToolStripMenuItem.Checked;
+                });
             };
-            clearLog.Click += delegate { BeginInvoke((MethodInvoker)delegate { logbox.Clear(); }); };
-            menu.Items.Add(clearLog);
+
+            HideShowLogBox(hideToolStripMenuItem.Checked);
 
             bwTimer = new Timer()
             {
@@ -71,6 +76,33 @@ namespace LabNation.SmartScopeServerUI
 
         }
 
+        int logboxwidth;
+        private void HideShowLogBox(bool hide)
+        {
+            hideToolStripMenuItem.Checked = hide;
+            //Store logbox width
+            if(logbox.Visible)
+            {
+                logboxwidth = logbox.Width;
+            }
+            if (hide && logbox.Visible)
+            {
+                this.splitter.Panel2MinSize = 0;
+                this.Width -= logboxwidth;
+                this.logbox.Visible = false;
+                this.splitter.IsSplitterFixed = true;
+                this.splitter.SplitterDistance = this.splitter.Width;
+            }
+            else if(!hide && !logbox.Visible)
+            {
+                int spdis = this.splitter.SplitterDistance;
+                this.splitter.IsSplitterFixed = false;
+                this.logbox.Visible = true;
+                this.Width += logboxwidth;
+                this.splitter.SplitterDistance = spdis;
+            }
+        }
+
         private void Cleanup(object sender, FormClosingEventArgs e)
         {
 
@@ -88,6 +120,8 @@ namespace LabNation.SmartScopeServerUI
             if(connected)
             {
                 BeginInvoke((MethodInvoker)delegate { UpdateServerTable(s, true); });
+                if (autoStartServerToolStripMenuItem.Checked && s.State == ServerState.Stopped)
+                    s.Start();
             } else
             {
                 BeginInvoke((MethodInvoker)delegate { UpdateServerTable(s, false); });
@@ -161,7 +195,6 @@ namespace LabNation.SmartScopeServerUI
                         if(control != null)
                         {
                             tableLayoutPanel1.Controls.Remove(control);
-                            Logger.Debug("Removing control @ col " + i + " " + control.GetType().ToString());
                             control.Dispose();
                         }
                             
