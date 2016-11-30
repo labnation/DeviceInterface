@@ -68,7 +68,6 @@ namespace LabNation.DeviceInterface.Net
             if(s.State == ServerState.Destroyed)
             {
                 servers.Remove(s);
-                Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Gray);
             }
             if (OnServerChanged != null)
                 OnServerChanged(s, s.State != ServerState.Destroyed);
@@ -80,7 +79,6 @@ namespace LabNation.DeviceInterface.Net
             {
                 if(!hwInterfaces.Contains(hardwareInterface))
                     hwInterfaces.Add(hardwareInterface);
-                Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Gray);
                 InterfaceServer s = new InterfaceServer(hardwareInterface);
                 servers.Add(s);
                 s.OnStateChanged += ServerChangeHandler;
