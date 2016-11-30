@@ -15,27 +15,35 @@ using LabNation.Common;
 namespace LabNation.DeviceInterface.Net
 {
     public delegate void ServerChangeHandler(InterfaceServer s);
-    public enum ServerState { Stopped, Started, Destroyed };
+    public enum ServerState { Uninitialized, Stopped, Stopping, Started, Starting, Destroying, Destroyed };
 
     public class InterfaceServer
     {
-        public ServerChangeHandler OnDestroy;
-        public ServerChangeHandler OnStart;
-        public ServerChangeHandler OnStop;
+        public ServerChangeHandler OnStateChanged;
+        private ServerState stateRequested;
+        private ServerState _state;
+        public ServerState State {
+            get { return _state; }
+            private set
+            {
+                if (Thread.CurrentThread != stateThread)
+                    throw new Exception(String.Format("State changing from wrong thread {0}", Thread.CurrentThread.Name));
+                _state = value;
+                if (OnStateChanged != null)
+                    OnStateChanged(this);
+            }
+        }
 
-        
-        private object stateLock = new object();
-        private ServerState state;
-        public ServerState State { get { return state; } }
 
         public SmartScopeInterfaceUsb hwInterface;
         public int Port { get {
-                return state == ServerState.Started? ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port : -1;
+                return State == ServerState.Started? ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port : -1;
             } }
         private const int RECEIVE_TIMEOUT = 10000; //10sec
 
         Thread controlSocketThread;
         Thread dataSocketThread;
+        Thread stateThread;
 
         private object bwlock = new object();
         private int bytesTx = 0;
@@ -46,46 +54,99 @@ namespace LabNation.DeviceInterface.Net
         public InterfaceServer(SmartScopeInterfaceUsb hwInterface)
         {
             this.hwInterface = hwInterface;
-            state = ServerState.Stopped;
+            
+            stateThread = new Thread(ManageState)
+            {
+                Name = "State Manager"
+            };
+            stateThread.Start();
+            _state = ServerState.Uninitialized;
+            stateRequested = ServerState.Stopped;
+        }
+
+        private object disconnectLock = new object();
+        private bool disconnectCalled;
+        private void ManageState()
+        {
+            //Only this thread can change State
+            while (State != ServerState.Destroyed)
+            {
+                Thread.Sleep(100);
+                if (State == ServerState.Destroying || State == ServerState.Starting || State == ServerState.Stopping)
+                    throw new Exception("Server state transitioning outside of state manager thread");
+
+
+                //Local copy of stateRequested so code below is thread safe
+                ServerState nextState = stateRequested;
+
+                if (nextState == State)
+                    continue;
+
+                Logger.Info("Moving from state {0:G} -> {1:G}", State, nextState);
+
+                switch (nextState)
+                {
+                    //From here, stateRequested can only be Started, Stopped or Destroyed
+                    case ServerState.Started:
+                        State = ServerState.Starting;
+                        controlSocketThread = new Thread(ControlSocketServer)
+                        {
+                            Name = "TCP listener",
+                        };
+                        controlSocketThread.Start();
+                        while (dataSocketThread == null || !dataSocketThread.IsAlive)
+                            Thread.Sleep(10);
+                        State = ServerState.Started;
+                        break;
+                    case ServerState.Stopped:
+                        State = ServerState.Stopping;
+                        Disconnect();
+                        State = ServerState.Stopped;
+                        break;
+                    case ServerState.Destroyed:
+                        State = ServerState.Destroying;
+                        Disconnect();
+                        State = ServerState.Destroyed;
+                        break;
+                    default:
+                        throw new Exception(String.Format("Illegal target state requested {0:G}", nextState));
+
+                }
+            }
+        }
+        private void Disconnect()
+        {
+            if (Thread.CurrentThread != stateThread)
+                throw new Exception("Disconnect called from wrong thread");
+            lock (disconnectLock)
+            {
+                if (disconnectCalled)//Means disconnect was called
+                {
+                    if (connected)
+                        Logger.Error("Wow this is bad!");
+                    return;
+                }
+                disconnectCalled = true;
+                connected = false;
+            }
+            LogMessage(LogTypes.NETWORK, "Disconnecting...");
+
+            UnregisterZeroConf();
+            CloseSocket(dataSocketThread, DataSocketListener, DataSocket);
+            CloseSocket(controlSocketThread, ControlSocketListener, ControlSocket);
         }
 
         public void Start()
         {
-            lock(stateLock)
-            {
-                if(state != ServerState.Stopped)
-                    throw new Exception(String.Format("Can't start server, it is {0:G}", state));
-                state = ServerState.Started;
-                controlSocketThread = new Thread(ControlSocketServer)
-                {
-                    Name = "TCP listener",
-                };
-                controlSocketThread.Start();
-            }
+            stateRequested = ServerState.Started;
         }
         public void Stop()
         {
-            lock (stateLock)
-            {
-                if (state == ServerState.Stopped)
-                    return;
-                state = ServerState.Stopped;
-                Disconnect();
-                if (OnStop != null)
-                    OnStop(this);
-            }
+            stateRequested = ServerState.Stopped;
         }
         public void Destroy()
         {
-            lock (stateLock)
-            {
-                if (state == ServerState.Destroyed)
-                    return;
-                state = ServerState.Destroyed;
-                Disconnect();
-                if (OnDestroy != null)
-                    OnDestroy(this);
-            }
+            stateRequested = ServerState.Destroyed;
         }
 
         RegisterService service;
@@ -128,7 +189,7 @@ namespace LabNation.DeviceInterface.Net
                 try
                 {
                     DataSocket = DataSocketListener.Server.Accept();
-                    DataSocket.SendBufferSize = smartScopeBuffer.Length * 4;
+                    //DataSocket.SendBufferSize = smartScopeBuffer.Length * 4;
                 }
                 catch (Exception e)
                 {
@@ -200,11 +261,8 @@ namespace LabNation.DeviceInterface.Net
             LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port.ToString());
 
             DataSocketListener.Start();
-                
-            RegisterZeroConf();
 
-            if (OnStart != null)
-                OnStart(this);
+            RegisterZeroConf();
 
             try
             {
@@ -235,8 +293,6 @@ namespace LabNation.DeviceInterface.Net
                     break;
                 }
                 bytesRx += (msgBufferLength - bufLengtBefore);
-                    
-
 
                 if (connected && msgList != null) //if no network error
                 {
@@ -302,6 +358,7 @@ namespace LabNation.DeviceInterface.Net
                         {
                             try
                             {
+                                Logger.Debug("Command {0:G}", (Net.Command)response[3]);
                                 ControlSocket.Send(response);
                             }
                             catch (Exception e)
@@ -323,78 +380,29 @@ namespace LabNation.DeviceInterface.Net
             }
         }
 
-        private object disconnectLock = new object();
-        private bool disconnectCalled;
-        private void Disconnect()
+        private void CloseSocket(Thread thread, TcpListener l, Socket socket)
         {
-            lock (disconnectLock)
-            {
-                if (disconnectCalled)//Means disconnect was called
-                {
-                    if (connected)
-                        Logger.Error("Wow this is bad!");
-                    return;
-                }
-                disconnectCalled = true;
-                connected = false;
-            }  
-            LogMessage(LogTypes.NETWORK, "Disconnecting...");
-
-            UnregisterZeroConf();
-            try
-            {
-                DataSocket.Shutdown(SocketShutdown.Both);
-                DataSocket.Send(Net.Command.DISCONNECT.msg());
-                DataSocket.Disconnect(false);
-                DataSocket.Close(1000);
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Failed to close data socket: " + e.Message);
-            }
-            if (DataSocketListener != null)
-            {
-                DataSocketListener.Stop();
-                if (dataSocketThread != null && Thread.CurrentThread != dataSocketThread)
-                {
-                    dataSocketThread.Join(1000);
-                    if (dataSocketThread.IsAlive)
-                    {
-                        try
-                        {
-                            dataSocketThread.Abort();
-                        }
-                        catch(Exception e)
-                        {
-                            Logger.Error("While aborting data socket thread: " + e.Message);
-                        }
-                    }
-                }
-            }
-
-            if (ControlSocketListener != null)
+            if (thread == null)
+                return;
+            while (thread.IsAlive)
             {
                 try
                 {
-                    ControlSocket.Send(Net.Command.DISCONNECT.msg());
-                    ControlSocket.Disconnect(false);
-                    ControlSocket.Shutdown(SocketShutdown.Both);
-                    ControlSocket.Close(1000);
+                    if (socket != null)
+                    {
+                        socket.Close();
+                        socket.Dispose();
+                    }
+                    if(l != null)
+                        l.Stop();
+
+                    thread.Abort();
+                    thread.Interrupt();
                 }
-                catch (Exception e)
+                catch(Exception e)
                 {
-                    Logger.Error("Failed to close control socket: " + e.Message);
+                    Logger.Info("while aborting thread {0} : {1}", thread.Name, e.Message);
                 }
-                ControlSocketListener.Stop();
-            }
-            if(controlSocketThread != null && Thread.CurrentThread != controlSocketThread)
-            {
-                if (controlSocketThread.IsAlive)
-                    controlSocketThread.Join(1000);
-                if (controlSocketThread.IsAlive)
-                    controlSocketThread.Abort();
-                if (controlSocketThread.IsAlive)
-                    Logger.Error("Control socket should be dead");
             }
         }
 

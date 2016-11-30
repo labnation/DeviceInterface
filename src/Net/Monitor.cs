@@ -63,21 +63,15 @@ namespace LabNation.DeviceInterface.Net
 #endif
         }
 
-        private void OnServerDestroy(InterfaceServer s)
+        private void ServerChangeHandler(InterfaceServer s)
         {
-            if(servers.Contains(s))
+            if(s.State == ServerState.Destroyed)
             {
                 servers.Remove(s);
                 Logger.LogC(LogLevel.INFO, "removed\n", ConsoleColor.Gray);
-
-                if (OnServerChanged != null)
-                    OnServerChanged(s, false);
             }
-        }
-        private void OnServerStartStop(InterfaceServer s)
-        {
             if (OnServerChanged != null)
-                OnServerChanged(s, true);
+                OnServerChanged(s, s.State != ServerState.Destroyed);
         }
 
         private void OnInterfaceConnect(SmartScopeInterfaceUsb hardwareInterface, bool connected)
@@ -89,13 +83,9 @@ namespace LabNation.DeviceInterface.Net
                 Logger.LogC(LogLevel.INFO, "connected\n", ConsoleColor.Gray);
                 InterfaceServer s = new InterfaceServer(hardwareInterface);
                 servers.Add(s);
-                s.OnDestroy += OnServerDestroy;
-                s.OnStop += OnServerStartStop;
-                s.OnStart += OnServerStartStop;
+                s.OnStateChanged += ServerChangeHandler;
                 if (autostart)
                     s.Start();
-                if (OnServerChanged != null)
-                    OnServerChanged(s, true);
             }
             else //disconnect
             {
