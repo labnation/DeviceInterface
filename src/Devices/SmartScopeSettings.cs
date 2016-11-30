@@ -93,6 +93,8 @@ namespace LabNation.DeviceInterface.Devices
         }
         public void CommitSettings()
         {
+            if (hardwareInterface.Destroyed)
+                throw new ScopeIOException("Cannot commit settings, hardware interface gone");
             try
             {
                 bool acquisitionUpdateRequired = false;
