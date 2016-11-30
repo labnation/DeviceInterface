@@ -24,13 +24,13 @@ namespace LabNation.DeviceInterface.Net
         public List<InterfaceServer> servers = new List<InterfaceServer>();
         private List<IHardwareInterface> hwInterfaces = new List<IHardwareInterface>();
 
-        bool autostart;
+        public bool Autostart;
         ServerChangedHandler OnServerChanged;
         public Monitor(bool autostart = true, ServerChangedHandler s = null)
         {
             if (s != null)
                 OnServerChanged += s;
-            this.autostart = autostart;
+            this.Autostart = autostart;
             //start USB polling thread
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
@@ -84,7 +84,7 @@ namespace LabNation.DeviceInterface.Net
                 InterfaceServer s = new InterfaceServer(hardwareInterface);
                 servers.Add(s);
                 s.OnStateChanged += ServerChangeHandler;
-                if (autostart)
+                if (Autostart)
                     s.Start();
             }
             else //disconnect
