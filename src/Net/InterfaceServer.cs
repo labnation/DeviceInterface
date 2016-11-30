@@ -129,8 +129,6 @@ namespace LabNation.DeviceInterface.Net
                 disconnectCalled = true;
                 connected = false;
             }
-            LogMessage(LogTypes.NETWORK, "Disconnecting...");
-
             UnregisterZeroConf();
             CloseSocket(dataSocketThread, DataSocketListener, DataSocket);
             CloseSocket(controlSocketThread, ControlSocketListener, ControlSocket);
@@ -162,14 +160,14 @@ namespace LabNation.DeviceInterface.Net
             service.TxtRecord.Add(Net.TXT_DATA_PORT, ((IPEndPoint)DataSocketListener.LocalEndpoint).Port.ToString());
             service.Register();
 
-            LogMessage(LogTypes.ZEROCONF, "ZeroConf service posted");
+            Logger.Info("ZeroConf service posted");
         }
         private void UnregisterZeroConf()
         {
             if (service == null)
                 return;
             service.Dispose();
-            LogMessage(LogTypes.ZEROCONF, "ZeroConf service retracted");
+            Logger.Info("ZeroConf service retracted");
         }
 
         TcpListener DataSocketListener;
@@ -185,7 +183,7 @@ namespace LabNation.DeviceInterface.Net
             int length = 0;
             try
             {
-                LogMessage(LogTypes.DATA, "Waiting for data connection to be opened");
+                Logger.Info("Waiting for data connection to be opened");
                 try
                 {
                     DataSocket = DataSocketListener.Server.Accept();
@@ -193,12 +191,12 @@ namespace LabNation.DeviceInterface.Net
                 }
                 catch (Exception e)
                 {
-                    LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
+                    Logger.Info("Data socket aborted {0:s}", e.Message);
                     Stop();
                     return;
                 }
 
-                LogMessage(LogTypes.DATA, "Data socket connection accepted from " + DataSocket.RemoteEndPoint);
+                Logger.Info("Data socket connection accepted from " + DataSocket.RemoteEndPoint);
 
                 while (connected)
                 {
@@ -211,7 +209,7 @@ namespace LabNation.DeviceInterface.Net
                     }
                     catch(ScopeIOException e)
                     {
-                        LogMessage(LogTypes.DATA, String.Format("usb error {0:s}", e.Message));
+                        Logger.Info("usb error {0:s}", e.Message);
                         Stop();
                         break;
                     }
@@ -225,14 +223,14 @@ namespace LabNation.DeviceInterface.Net
                     }
                     catch (SocketException e)
                     {
-                        LogMessage(LogTypes.DATA, String.Format("Data socket aborted {0:s}", e.Message));
+                        Logger.Info("Data socket aborted {0:s}", e.Message);
                         Stop();
                     }
                     bytesTx += length;
                 }
             } catch(ThreadAbortException e)
             {
-                LogMessage(LogTypes.DATA, String.Format("Data thread aborted {0:s}", e.Message));
+                Logger.Info("Data thread aborted {0:s}", e.Message);
                 hwInterface.Destroy();
                 Stop();
             }
@@ -257,8 +255,8 @@ namespace LabNation.DeviceInterface.Net
             byte[] msgBuffer = new byte[1024*1024];
 
             ControlSocketListener.Start();
-            LogMessage(LogTypes.DECORATION, "==================== New session started =======================");
-            LogMessage(LogTypes.NETWORK, "SmartScope Server listening for incoming connections on port " + ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port.ToString());
+            Logger.Info("==================== New session started =======================");
+            Logger.Info("SmartScope Server listening for incoming connections on port " + ((IPEndPoint)ControlSocketListener.LocalEndpoint).Port.ToString());
 
             DataSocketListener.Start();
 
@@ -270,12 +268,12 @@ namespace LabNation.DeviceInterface.Net
             }
             catch (SocketException e)
             {
-				Logger.Error("Control socket aborted {0:s}", e.Message);
+                Logger.Info("Control socket aborted {0:s}", e.Message);
                 return;
             }
             ControlSocket.DontFragment = true;
             ControlSocket.NoDelay = true;
-            LogMessage(LogTypes.NETWORK, "Connection accepted from " + ControlSocket.RemoteEndPoint);
+            Logger.Info("Connection accepted from {0}", ControlSocket.RemoteEndPoint);
             UnregisterZeroConf();
 
             connected = true;
@@ -288,7 +286,7 @@ namespace LabNation.DeviceInterface.Net
                 List<Net.Message> msgList = Net.ReceiveMessage(ControlSocket, msgBuffer, ref msgBufferLength);
                 if (msgList == null) //this would indicate a network error
                 {
-                    LogMessage(LogTypes.NETWORK, "Nothing received from network socket => resetting");
+                    Logger.Info("Nothing received from network socket => resetting");
                     Stop();
                     break;
                 }
@@ -343,7 +341,7 @@ namespace LabNation.DeviceInterface.Net
                                     response = Net.ControllerHeader(m.command, ctrl, address, length, data);
                                     break;
                                 default:
-                                    Logger.Error("Unsupported command {0:G}", command);
+                                    Logger.Info("Unsupported command {0:G}", command);
                                     Stop();
                                     break;
                             }
@@ -358,7 +356,7 @@ namespace LabNation.DeviceInterface.Net
                         {
                             try
                             {
-                                Logger.Debug("Command {0:G}", (Net.Command)response[3]);
+                                //Logger.Debug("Command {0:G}", (Net.Command)response[3]);
                                 ControlSocket.Send(response);
                             }
                             catch (Exception e)
@@ -390,6 +388,8 @@ namespace LabNation.DeviceInterface.Net
                 {
                     if (socket != null)
                     {
+                        if(socket.Connected)
+                            socket.Send(Net.Command.DISCONNECT.msg());
                         socket.Close();
                         socket.Dispose();
                     }
@@ -411,24 +411,7 @@ namespace LabNation.DeviceInterface.Net
             NETWORK,
             DATA,
             ZEROCONF,
-            DECORATION,
-        }
-        private void LogMessage(LogTypes logType, string message)
-        {
-            switch (logType)
-            {
-                case LogTypes.NETWORK:
-                    Logger.LogC(LogLevel.INFO, "[Network ] " + message, ConsoleColor.Yellow);
-                    break;
-                case LogTypes.ZEROCONF:
-                    Logger.LogC(LogLevel.INFO, "[ZeroConf] " + message, ConsoleColor.Cyan);
-                    break;
-                case LogTypes.DATA:
-                    Logger.LogC(LogLevel.INFO, "[Data] " + message, ConsoleColor.Red);
-                    break;
-                default:
-                    break;
-            }
+            SERVER,
         }
     }
 }

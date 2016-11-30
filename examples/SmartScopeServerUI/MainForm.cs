@@ -246,14 +246,34 @@ namespace LabNation.SmartScopeServerUI
                 this.Invoke((MethodInvoker)delegate { AddLogMessage(m); });
                 return;
             }
-            ConsoleColor c = m.color.HasValue ? m.color.Value : ConsoleColor.Green;
+
+            Color logColor;
+            switch(m.level)
+            {
+                case LogLevel.WARN:
+                    logColor = Color.Yellow;
+                    break;
+                case LogLevel.INFO:
+                    logColor = Color.LightGreen;
+                    break;
+                case LogLevel.ERROR:
+                    logColor = Color.Red;
+                    break;
+                case LogLevel.DEBUG:
+                    logColor = Color.Cyan;
+                    break;
+                default:
+                    logColor = Color.White;
+                    break;
+            }
+            Color c = m.color.HasValue ? Color.FromName(m.color.Value.ToString()) : logColor;
             string msg = String.Format("[{0}] {1} {2}", m.level.ToString().ToUpper(), m.message, Environment.NewLine);
 
             var box = logbox;
             box.SelectionStart = box.TextLength;
             box.SelectionLength = 0;
 
-            box.SelectionColor = Color.FromName(c.ToString());
+            box.SelectionColor = c;
             box.AppendText(msg);
             box.SelectionColor = box.ForeColor;
             box.ScrollToCaret();
