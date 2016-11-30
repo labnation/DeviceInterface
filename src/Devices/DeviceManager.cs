@@ -277,10 +277,19 @@ null, deviceConnectHandler) { }
 #endif
 		}
 
-		public void Resume()
-		{
-			if (activeDevice is IScope)
-				((IScope)activeDevice).Resume();
+        public void Resume()
+        {
+            if (activeDevice is IScope)
+            {
+                try
+                {
+                    ((IScope)activeDevice).Resume();
+                }
+                catch (ScopeIOException e)
+                {
+                    Logger.Info("While resuming scope: {0}", e);
+                }
+            }
 #if ANDROID
 			InterfaceManagerServiceDiscovery.Instance.Resume();
 #elif IOS
