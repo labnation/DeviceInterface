@@ -51,7 +51,8 @@
       <ExcludePlatforms>iOS</ExcludePlatforms>
     </Compile>
 
-    <Content Include="smartscopeserver.ico"/>
+    <EmbeddedResource Include="smartscopeserver.ico"/>
+
     <None Include="../../Mono.Zeroconf.Providers.Bonjour.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>

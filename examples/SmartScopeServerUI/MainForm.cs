@@ -20,6 +20,17 @@ namespace LabNation.SmartScopeServerUI
         public MainForm()
         {
             InitializeComponent();
+            this.Icon = new Icon(new System.IO.MemoryStream(LoadResource("smartscopeserver.ico")));
+        }
+
+        internal static byte[] LoadResource(string name)
+        {
+            System.Reflection.Assembly ass = System.Reflection.Assembly.GetExecutingAssembly();
+
+            using (System.IO.Stream s = ass.GetManifestResourceStream(String.Format("LabNation.SmartScopeServerUI.{0}", name)))
+            using (System.IO.BinaryReader r = new System.IO.BinaryReader(s))
+                return r.ReadBytes((int)s.Length);
+
         }
 
         class ServerInfo

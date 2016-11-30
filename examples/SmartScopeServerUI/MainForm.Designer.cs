@@ -162,7 +162,6 @@ namespace LabNation.SmartScopeServerUI
             this.Controls.Add(this.status);
             this.Controls.Add(this.menu);
             this.Controls.Add(this.splitter);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menu;
             this.Name = "MainForm";
             this.Text = "SmartScope Network Server";
