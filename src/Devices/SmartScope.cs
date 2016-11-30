@@ -544,6 +544,7 @@ namespace LabNation.DeviceInterface.Devices
             Int64 ViewportOffsetSamples = hdr.GetRegister(REG.VIEW_OFFSET_B0) +
                                     (hdr.GetRegister(REG.VIEW_OFFSET_B1) << 8) +
                                     (hdr.GetRegister(REG.VIEW_OFFSET_B2) << 16);
+            double samplePeriod = BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION));
 
             int n_samples = hdr.n_bursts * hdr.bytes_per_burst / 2;
             if (newAcquisition)
@@ -555,10 +556,9 @@ namespace LabNation.DeviceInterface.Devices
                     
 
                 /* FIXME: integrate into header*/
-                double SamplePeriod = BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION));
-                uint AcquisitionDepth = (uint)(2048 << hdr.GetRegister(REG.ACQUISITION_DEPTH));
+                uint acquisitionDepth = (uint)(2048 << hdr.GetRegister(REG.ACQUISITION_DEPTH));
                 int viewportExcessiveSamples = hdr.GetRegister(REG.VIEW_EXCESS_B0) + (hdr.GetRegister(REG.VIEW_EXCESS_B1) << 8);
-                double ViewportExcess = viewportExcessiveSamples * SamplePeriod;
+                double ViewportExcess = viewportExcessiveSamples * samplePeriod;
                 Int64 holdoffSamples = hdr.GetRegister(REG.TRIGGERHOLDOFF_B0) +
                                     (hdr.GetRegister(REG.TRIGGERHOLDOFF_B1) << 8) +
                                     (hdr.GetRegister(REG.TRIGGERHOLDOFF_B2) << 16) +
@@ -567,7 +567,7 @@ namespace LabNation.DeviceInterface.Devices
                 int ViewportLength = (hdr.bytes_per_burst / 2) << hdr.GetRegister(REG.VIEW_BURSTS);
 
                 currentDataPackage = new DataPackageScope(this.GetType(),
-                    AcquisitionDepth, SamplePeriod,
+                    acquisitionDepth, samplePeriod,
                     ViewportLength, ViewportOffsetSamples,
                     TriggerHoldoff, holdoffSamples, 
                     hdr.flags.HasFlag(HeaderFlags.Rolling), hdr.acquisition_id, 
@@ -588,13 +588,8 @@ namespace LabNation.DeviceInterface.Devices
                 }
             }
 
-            if(source == ChannelDataSourceScope.Viewport)
-            {
-                double ViewportOffset = SamplePeriod * ViewportOffsetSamples;
-                currentDataPackage.offset[ChannelDataSourceScope.Viewport] = ViewportOffset;
-                double ViewportSamplePeriod = BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION) + hdr.GetRegister(REG.VIEW_DECIMATION));
-                currentDataPackage.samplePeriod[ChannelDataSourceScope.Viewport] = ViewportSamplePeriod;
-            }
+            currentDataPackage.offset[ChannelDataSourceScope.Viewport] = samplePeriod * ViewportOffsetSamples;
+            currentDataPackage.samplePeriod[ChannelDataSourceScope.Viewport] = BASE_SAMPLE_PERIOD * Math.Pow(2, hdr.GetRegister(REG.INPUT_DECIMATION) + hdr.GetRegister(REG.VIEW_DECIMATION));
 
             foreach (Channel ch in receivedData.Keys)
             {
