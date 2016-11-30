@@ -187,7 +187,7 @@ namespace LabNation.DeviceInterface.Net
                 try
                 {
                     DataSocket = DataSocketListener.Server.Accept();
-                    //DataSocket.SendBufferSize = smartScopeBuffer.Length * 4;
+                    DataSocket.SendBufferSize = smartScopeBuffer.Length * 4;
                 }
                 catch (Exception e)
                 {
@@ -217,7 +217,7 @@ namespace LabNation.DeviceInterface.Net
                     {
                         int sent = 0;
                         while(sent < length) {
-                            sent += DataSocket.Send(smartScopeBuffer, sent, length - sent, SocketFlags.Partial);
+                            sent += DataSocket.Send(smartScopeBuffer, sent, length - sent, SocketFlags.None);
                         }
 
                     }

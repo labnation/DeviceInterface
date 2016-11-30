@@ -237,6 +237,9 @@ namespace LabNation.SmartScopeServerUI
                 case ServerState.Destroyed:
                     Logger.Warn("Received start/stop request on destroyed server - expect badness");
                     break;
+                default:
+                    Logger.Debug("Not doing anything to server, it is busy {0:G}", server.State);
+                    break;
             }
         }
 
