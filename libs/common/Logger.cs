@@ -55,8 +55,9 @@ namespace LabNation.Common
         }
         public static void Log(LogLevel l, string msg, string end = "\n", ConsoleColor? color = null )
         {
-            foreach(var q in logQueues)
-				q.Enqueue(new LogMessage(l, msg, end, color));
+            foreach(string msg_part in msg.Split('\n'))
+                foreach(var q in logQueues)
+				    q.Enqueue(new LogMessage(l, msg_part, end, color));
             foreach (var cb in logUpdateCallbacks)
                 cb();
         }
