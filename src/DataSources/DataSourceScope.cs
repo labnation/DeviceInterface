@@ -79,14 +79,13 @@ namespace LabNation.DeviceInterface.DataSources
 
         public void Stop()
         {
-            if (!IsRunning)
+            if (!running)
             {
-                Logger.Info("Datasource stop requested, but not stopping device since it's not running");
+                Logger.Info("Datasource stop requested, but not stopping device since a stop request is pending");
                 return;
             }            
             //stop thread
             running = false;
-            dataFetchThread.Join(1000);
             Logger.Debug("Requested DataFetchThread to stop");
         }
 
