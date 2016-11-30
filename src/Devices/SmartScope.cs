@@ -674,8 +674,8 @@ namespace LabNation.DeviceInterface.Devices
         }
 
         //FIXME: this needs proper handling
-        private bool Connected { get { return this.HardwareInterface != null && this.flashed; } }
-        public bool Ready { get { return this.Connected && this.deviceReady && !(this.HardwareInterface == null); } }
+        private bool Connected { get { return this.HardwareInterface != null && !this.hardwareInterface.Destroyed && this.flashed; } }
+        public bool Ready { get { return this.Connected && this.deviceReady; } }
 
         #endregion
     }
