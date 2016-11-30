@@ -94,7 +94,7 @@ namespace LabNation.DeviceInterface.Net
                             Name = "TCP listener",
                         };
                         controlSocketThread.Start();
-                        while (dataSocketThread == null || !dataSocketThread.IsAlive)
+                        while (DataSocketListener == null || DataSocketListener.Server == null)
                             Thread.Sleep(10);
                         State = ServerState.Started;
                         break;
