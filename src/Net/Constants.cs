@@ -17,7 +17,8 @@ namespace LabNation.DeviceInterface.Net
         public const string VERSION = "0.0.0.1";
         public const int BUF_SIZE = 8 * 1024;
         public const int HDR_SZ = 4;
-        public const int TIMEOUT_RX = 10000;
+        public const int TIMEOUT_RX = 3000;
+        public const int TIMEOUT_CONNECT = 2000;
 
         //COMMANDS
         public enum Command

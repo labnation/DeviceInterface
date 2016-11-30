@@ -18,7 +18,6 @@ namespace LabNation.DeviceInterface.Hardware
     {
         
         public bool Connected { get { return this.controlClient.Connected; } }
-        private bool disconnectCalled = false;
         private IPAddress serverIp;
         private int serverPort;
         private int dataPort;
@@ -37,21 +36,19 @@ namespace LabNation.DeviceInterface.Hardware
 			
         private void Connect()
         {
-            try
+            controlClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
+            var result = controlClient.BeginConnect(this.serverIp, this.serverPort, null, null);
+            var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(Net.Net.TIMEOUT_CONNECT));
+            if (!success)
             {
-                controlClient.Connect(this.serverIp, this.serverPort);
-                controlClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
-                
-                controlSocket = controlClient.Client;
+                throw new ScopeIOException("Failed to connect.");
+            }
 
-                byte[] serialBytes = Request(Net.Net.Command.SERIAL);
-                serial = System.Text.Encoding.UTF8.GetString(serialBytes, 0, serialBytes.Length);
-            }
-			catch(Exception e)
-            {
-				Logger.Error("Failed to connect: " + e.Message);
-                //do nothing; up to calling code to check Connected property of this instance
-            }
+            controlClient.Connect(this.serverIp, this.serverPort);
+            controlSocket = controlClient.Client;
+
+            byte[] serialBytes = Request(Net.Net.Command.SERIAL);
+            serial = System.Text.Encoding.UTF8.GetString(serialBytes, 0, serialBytes.Length);
         }
 
         private string serial;
@@ -77,7 +74,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void SocketReceive(Socket s, int offset, int length, byte[] buffer)
         {
-            if (disconnectCalled)
+            if (destroyed)
                 return;
             int recvd = 0;
 			int recvdTotal = 0;
@@ -85,17 +82,25 @@ namespace LabNation.DeviceInterface.Hardware
             {
                 if (!s.Connected)
                     Destroy();
-                try {
-                    recvd = s.Receive(buffer, offset + recvdTotal, length, SocketFlags.None);
-                } catch(Exception e)
+                try
                 {
-                    Logger.Error("Failed to receive bytes: " + e.Message);
+                    var result = s.BeginReceive(buffer, offset + recvdTotal, length, SocketFlags.None, null, null);
+                    var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(Net.Net.TIMEOUT_RX));
+
+                    if (!success)
+                        Destroy();
+
+                    recvd = s.EndReceive(result);
+                }
+                catch (Exception e)
+                {
                     throw new ScopeIOException(e.Message);
                 }
-                
+
                 if (recvd == 0)
-                    Disconnect();
+                    Destroy();
                 length -= recvd;
+                recvdTotal += recvd;
             }
         }
 
@@ -107,9 +112,9 @@ namespace LabNation.DeviceInterface.Hardware
                 {
 					byte[] portBytes = Request(Net.Net.Command.DATA_PORT);
 					this.dataPort = BitConverter.ToUInt16(portBytes, 0);
-                    dataClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
                     dataClient.Connect(this.serverIp, this.dataPort);
                     dataSocket = dataClient.Client;
+                    dataSocket.ReceiveTimeout = Net.Net.TIMEOUT_RX;
                 }
                 SocketReceive(dataSocket, 0, Constants.SZ_HDR, buffer);
                 GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
@@ -147,7 +152,7 @@ namespace LabNation.DeviceInterface.Hardware
         public byte[] PicFirmwareVersion { get { return Request(Net.Net.Command.PIC_FW_VERSION); } }
         public void Reset()
         {
-            Disconnect();
+            Destroy();
         }
         public bool FlashFpga(byte[] firmware)
         {
@@ -158,10 +163,18 @@ namespace LabNation.DeviceInterface.Hardware
         {
             Request(Net.Net.Command.FLUSH);
         }
-        public bool Destroyed { get { return false; } }
+        private bool destroyed = false;
+        public bool Destroyed { get { return destroyed; } }
 
         public void Destroy()
         {
+            if (destroyed)
+                return;
+            destroyed = true;
+
+            if (this.onDisconnect != null)
+                onDisconnect(this);
+
             try
             {
                 Request(Net.Net.Command.DISCONNECT);
@@ -205,7 +218,7 @@ namespace LabNation.DeviceInterface.Hardware
                 } catch(Exception se)
                 {
                     Logger.Error("Failure while sending to socket: " + se.Message);
-                    Disconnect();
+                    Destroy();
                     throw new ScopeIOException("Failure while sending to socket: " + se.Message);
                 }
 
@@ -221,7 +234,7 @@ namespace LabNation.DeviceInterface.Hardware
                         List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, msgBuffer, ref msgBufferLength);
                         if (l == null)
                         {
-                            Disconnect();
+                            Destroy();
                             throw new ScopeIOException("More than 1 message received");
                         }
                             
@@ -242,20 +255,8 @@ namespace LabNation.DeviceInterface.Hardware
                             return reply.data;
                     default:
                         return null;
-                }
+                } 
             }
         }
-
-        private void Disconnect()
-        {
-            if (disconnectCalled)
-                return;
-            disconnectCalled = true;
-
-            if (this.onDisconnect != null)
-                onDisconnect(this);
-        }
-
-
     }
 }
