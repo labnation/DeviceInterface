@@ -17,8 +17,8 @@ namespace LabNation.DeviceInterface.Devices
     {
         public event InterfaceChangeHandler InterfaceChanged;
         public event DeviceConnectHandler DeviceConnected;
-        private IDevice activeDevice = null;
-        public IDevice ActiveDevice { get { return activeDevice; } }
+        private IDevice activeDevice = null; //warning: this is the object which is passed to external code (matlab,labview)
+        
         Thread pollThread;
         private List<IHardwareInterface> connectedList = new List<IHardwareInterface>(); //list of all connected devices, serial and type provided
 
@@ -27,6 +27,13 @@ namespace LabNation.DeviceInterface.Devices
             { typeof(DummyInterface), typeof(DummyScope) },
             { typeof(ISmartScopeInterface), typeof(SmartScope) }
         };
+        public Exception ZeroconfFailure = null;        
+        
+        ///////////////////////////////////////////////////////////////////////////
+        // this section contains the properties called by external synchronous code
+        public IDevice MainDevice { get { return activeDevice; } }
+        public bool SmartScopeConnected { get { return activeDevice is SmartScope; } }
+        ///////////////////////////////////////////////////////////////////////////        
 
 #if WINDOWS
         Thread badDriverDetectionThread;
