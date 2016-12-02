@@ -30,6 +30,12 @@ namespace LabNation.DeviceInterface.Devices
         };
         public Exception ZeroconfFailure = null;
 
+        ///////////////////////////////////////////////////////////////////////////
+        // this section contains the properties called by external synchronous code
+        public IScope MainDevice { get { return activeDevice as IScope; } } 
+        public bool SmartScopeConnected { get { return activeDevice is SmartScope; } }
+        ///////////////////////////////////////////////////////////////////////////
+
 #if WINDOWS
         Thread badDriverDetectionThread;
         bool running = true;
