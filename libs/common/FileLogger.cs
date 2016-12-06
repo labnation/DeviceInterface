@@ -89,7 +89,7 @@ namespace LabNation.Common
 						#if !IOS && !ANDROID
                         if (useConsoleColor && entry.color.HasValue)
                         {
-                            oldColor = Console.ForegroundColor;
+                            var oldColor = Console.ForegroundColor;
                             Console.ForegroundColor = entry.color.Value;
                             Console.Write(message);
                             Console.ForegroundColor = oldColor;
