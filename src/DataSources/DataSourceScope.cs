@@ -86,7 +86,12 @@ namespace LabNation.DeviceInterface.DataSources
             }            
             //stop thread
             running = false;
-            Logger.Debug("Requested DataFetchThread to stop");
+            while (dataFetchThread.IsAlive && Thread.CurrentThread != dataFetchThread)
+            {
+                Logger.Warn("Data fetch thread for scope {0} not stopping easily, aborting", scope.GetType());
+                dataFetchThread.Interrupt();
+                dataFetchThread.Join(200);
+            }
         }
 
         internal void Reset()
