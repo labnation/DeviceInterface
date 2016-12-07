@@ -115,18 +115,34 @@ namespace LabNation.DeviceInterface.Hardware
 				return;
 			}
 			Logger.Info("A new ethernet interface was found at {0}:{1}", info.Host, info.Port);
-			SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(
-				new System.Net.IPAddress(info.Host.GetAddress()), info.Port, OnInterfaceDisconnect);
-			if (ethif.Connected)
-			{
-				createdInterfaces.Add(info, ethif);
-				if (onConnect != null)
-					onConnect(ethif, true);
-			}
-			else
-			{
-				LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
-			}
+            SmartScopeInterfaceEthernet ethif = null;
+            try
+            {
+                ethif = new SmartScopeInterfaceEthernet(
+                    new System.Net.IPAddress(info.Host.GetAddress()), info.Port, OnInterfaceDisconnect);
+                if (ethif.Connected)
+                {
+                    createdInterfaces.Add(info, ethif);
+                    if (onConnect != null)
+                        onConnect(ethif, true);
+                }
+                else
+                {
+                    LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
+                }
+            }
+            catch (Exception e) {
+                Logger.Error("Failed to handle new ethernet scope {0}:{1}", e.GetType(), e.Message);
+                if (ethif != null)
+                {
+                    if (createdInterfaces.ContainsKey(info))
+                    {
+                        createdInterfaces.Remove(info);
+                        if (onConnect != null)
+                            onConnect(ethif, false);
+                    }
+                }
+            }
 		}
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
