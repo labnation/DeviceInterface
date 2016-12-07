@@ -31,7 +31,7 @@ namespace LabNation.DeviceInterface.Devices
         
         ///////////////////////////////////////////////////////////////////////////
         // this section contains the properties called by external synchronous code
-        public IDevice MainDevice { get { return activeDevice; } }
+        public IScope MainDevice { get { return (activeDevice is IScope) ? (activeDevice as IScope) : null; } } 
         public bool SmartScopeConnected { get { return activeDevice is SmartScope; } }
         ///////////////////////////////////////////////////////////////////////////        
 
