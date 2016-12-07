@@ -349,7 +349,11 @@ namespace LabNation.DeviceInterface.Net
                         {
                             Logger.Error("Scope IO error : " + e.Message);
                             Stop();
-                            hwInterface.Reset();
+                            try
+                            {
+                                hwInterface.Reset();
+                            }
+                            catch { }
                             break;
                         }
                         if (response != null)
