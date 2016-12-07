@@ -19,7 +19,6 @@ namespace LabNation.DeviceInterface.Devices
         /// <summary>
         /// Set the data with which the AWG runs
         /// </summary>
-        /// <param name="data">AWG data</param>
         public double[] GeneratorDataDouble
         {
             set
