@@ -108,11 +108,18 @@ namespace LabNation.DeviceInterface.DataSources
                 Logger.Error("Device not started as device.Start() didn't return true");
 
             //looping until device is stopped
-            while (running && scope.Ready)
+            try
             {
-                LatestDataPackage = scope.GetScopeData();
-                if (LatestDataPackage != null)
-                    this.fireDataAvailableEvents();
+                while (running && scope.Ready)
+                {
+                    LatestDataPackage = scope.GetScopeData();
+                    if (LatestDataPackage != null)
+                        this.fireDataAvailableEvents();
+                }
+            }
+            catch (ThreadInterruptedException tie)
+            {
+                Logger.Info("Data fetch thread interrupted");
             }
             Logger.Debug("Data fetch thread stopped");
         }
