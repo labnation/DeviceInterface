@@ -36,18 +36,15 @@ namespace LabNation.Common
     {
         public delegate void logUpdateCallback();
         static List<ConcurrentQueue<LogMessage>> logQueues = new List<ConcurrentQueue<LogMessage>>();
-        static List<logUpdateCallback> logUpdateCallbacks = new List<logUpdateCallback>();
 
 		/// <summary>
 		/// Log the origin of the messages using reflection
 		/// </summary>
 		public static bool LogOrigin = false;
 
-        public static void AddQueue(ConcurrentQueue<LogMessage> q, logUpdateCallback cb = null)
+        public static void AddQueue(ConcurrentQueue<LogMessage> q)
         {
             logQueues.Add(q);
-            if(cb != null)
-                logUpdateCallbacks.Add(cb);
         }
         public static void LogC(LogLevel l, string msg, ConsoleColor? color = null)
         {
@@ -58,8 +55,6 @@ namespace LabNation.Common
             foreach(string msg_part in msg.Split('\n'))
                 foreach(var q in logQueues)
 				    q.Enqueue(new LogMessage(l, msg_part, end, color));
-            foreach (var cb in logUpdateCallbacks)
-                cb();
         }
         public static void Info(string text) {  Log(LogLevel.INFO, text); }
 		public static void Info(string format, params object[] args) { Info (String.Format (format, args)); }
