@@ -108,46 +108,69 @@ namespace LabNation.DeviceInterface.Hardware
 			Logger.Error("Failed to resolve : {0} - {1}", sender, e);
 		}
 
-		public void AdressResolved(object sender, EventArgs info)
-		{
-			NSNetService ns = (NSNetService)sender;
-			servicesFound.Remove(ns);
+        public void AdressResolved(object sender, EventArgs info)
+        {
+            NSNetService ns = (NSNetService)sender;
+            servicesFound.Remove(ns);
 
-			ServiceLocation sl = new ServiceLocation(IPAddress.None, 0, "");
-			foreach (var addr in ns.Addresses)
-			{
-				sockaddr socket_address = (sockaddr)Marshal.PtrToStructure(addr.Bytes, typeof(sockaddr));
-				if (socket_address.sa_family != AF_INET)
-				{
-					Logger.Info("Ignoring service since it's socket type is not AF_INET but {0:d}", socket_address.sa_family);
-					continue;
-				}
-				sockaddr_in IP4 = (sockaddr_in)Marshal.PtrToStructure(addr.Bytes, typeof(sockaddr_in));
+            ServiceLocation sl = new ServiceLocation(IPAddress.None, 0, "");
+            foreach (var addr in ns.Addresses)
+            {
+                sockaddr socket_address = (sockaddr)Marshal.PtrToStructure(addr.Bytes, typeof(sockaddr));
+                if (socket_address.sa_family != AF_INET)
+                {
+                    Logger.Info("Ignoring service since it's socket type is not AF_INET but {0:d}", socket_address.sa_family);
+                    continue;
+                }
+                sockaddr_in IP4 = (sockaddr_in)Marshal.PtrToStructure(addr.Bytes, typeof(sockaddr_in));
 
-				IPAddress address = new IPAddress(IP4.sin_addr);
-				Logger.Info("Checking out service at {0}:{1}", address, ns.Port);
-				sl = new ServiceLocation(address, (int)ns.Port, ns.Name);
-				Logger.Debug("Got IP " + address.ToString());
-				if (createdInterfaces.Keys.Contains(sl))
-				{
-					Logger.Info("Skipping registration of service at {0}:{1} since already registerd", address, ns.Port);
-					return;
-				}
-			}
+                IPAddress address = new IPAddress(IP4.sin_addr);
+                Logger.Info("Checking out service at {0}:{1}", address, ns.Port);
+                sl = new ServiceLocation(address, (int)ns.Port, ns.Name);
+                Logger.Debug("Got IP " + address.ToString());
+                if (createdInterfaces.Keys.Contains(sl))
+                {
+                    Logger.Info("Skipping registration of service at {0}:{1} since already registerd", address, ns.Port);
+                    return;
+                }
+            }
 
-			Logger.Info("A new ethernet interface was found at {0}:{1}", sl.ip, sl.port);
-			SmartScopeInterfaceEthernet ethif = new SmartScopeInterfaceEthernet(
-				sl.ip, sl.port, OnInterfaceDisconnect);
-			if (ethif.Connected)
-			{
-				createdInterfaces.Add(sl, ethif);
-				if (onConnect != null)
-					onConnect(ethif, true);
-			}
-			else
-			{
-				LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
-			}
+            Logger.Info("A new ethernet interface was found at {0}:{1}", sl.ip, sl.port);
+            Logger.Info("Starting new thread to instantiate Ethernet scope");
+            Thread EtherScopeInstantiationThread = new Thread(delegate ()
+            {
+                SmartScopeInterfaceEthernet ethif = null;
+                try
+                {
+                    ethif = new SmartScopeInterfaceEthernet(
+                        sl.ip, sl.port, OnInterfaceDisconnect);
+                    if (ethif.Connected)
+                    {
+                        createdInterfaces.Add(sl, ethif);
+                        if (onConnect != null)
+                            onConnect(ethif, true);
+                    }
+                    else
+                    {
+                        LabNation.Common.Logger.Info("... but could not connect to ethernet interface");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Failed to connect to ethernet scope {0}:{1}", e.GetType(), e.Message);
+                    if (ethif != null)
+                    {
+                        if (createdInterfaces.ContainsKey(sl))
+                        {
+                            createdInterfaces.Remove(sl);
+                            if (onConnect != null)
+                                onConnect(ethif, false);
+                        }
+                    }
+                }
+            });
+            EtherScopeInstantiationThread.Name = "Ethernet Scope instantiation";
+            EtherScopeInstantiationThread.Start();
 		}
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
