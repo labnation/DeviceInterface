@@ -31,7 +31,8 @@ namespace LabNation.Common
         LogLevel logLevel;
 		#if !ANDROID
         protected bool useConsoleColor = false;
-		#endif
+        ConsoleColor oldColor = Console.ForegroundColor;
+        #endif
         public FileLogger(StreamWriter writer, LogLevel level)
         {
             this.logLevel = level;
