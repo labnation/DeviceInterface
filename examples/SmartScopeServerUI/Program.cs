@@ -1,16 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+#if MONOMAC
+using CoreGraphics;
+using Foundation;
+using AppKit;
+using ObjCRuntime;
+#else
 using System.Windows.Forms;
+#endif
 
 namespace LabNation.SmartScopeServerUI
 {
     static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
+        #if MONOMAC
+        static void Main (string[] args)
+        {
+          NSApplication.Init ();
+          NSApplication.Main (args);
+        }
+        #else
         [STAThread]
         static void Main()
         {
@@ -18,5 +26,6 @@ namespace LabNation.SmartScopeServerUI
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
         }
+        #endif
     }
 }

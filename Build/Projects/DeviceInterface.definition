@@ -42,7 +42,7 @@
     <Reference Include="MonoPlatformSpecific" />
     <Reference Include="Common" />
     <Reference Include="MatlabFileIO" />
-    <Reference Include="WinFormReferences" />
+    <Reference Include="WinUSB" />
     <Reference Include="LibUsbDotNet" />
     <Reference Include="Mono.Zeroconf" />
   </References>
