@@ -176,7 +176,7 @@ namespace LabNation.DeviceInterface.Net
         Socket ControlSocket;
         bool connected;
 
-        private byte[] smartScopeBuffer = new byte[Constants.SZ_HDR + Constants.FETCH_SIZE_MAX]; // Max received = header + full acq buf
+        private byte[] smartScopeBuffer = new byte[Net.ACQUISITION_PACKET_SIZE]; // Max received = header + full acq buf
 
         private void DataSocketServer()
         {
@@ -187,7 +187,7 @@ namespace LabNation.DeviceInterface.Net
                 try
                 {
                     DataSocket = DataSocketListener.Server.Accept();
-                    DataSocket.SendBufferSize = smartScopeBuffer.Length * 4;
+                    DataSocket.SendBufferSize = Net.DATA_SOCKET_BUFFER_SIZE;
                 }
                 catch (Exception e)
                 {

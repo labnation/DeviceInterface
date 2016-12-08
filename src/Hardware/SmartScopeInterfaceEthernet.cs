@@ -113,6 +113,7 @@ namespace LabNation.DeviceInterface.Hardware
 					byte[] portBytes = Request(Net.Net.Command.DATA_PORT);
 					this.dataPort = BitConverter.ToUInt16(portBytes, 0);
                     dataClient.Connect(this.serverIp, this.dataPort);
+                    dataClient.ReceiveBufferSize = Net.Net.DATA_SOCKET_BUFFER_SIZE;
                     dataSocket = dataClient.Client;
                     dataSocket.ReceiveTimeout = Net.Net.TIMEOUT_RX;
                 }
