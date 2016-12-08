@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ExternalProject Name="WinUSB">
+  <Platform Type="Windows">
+    <Project
+		Name="WinUSBNet"
+		Guid="CE06C329-287D-4F1E-B62D-B8353F2BAA4A"
+		Path="libs/winusb/WinUSBNet/WinUSBNet.csproj">
+    </Project>
+    <Reference Include="WinFormReferences"/>
+  </Platform>
+  <Platform Type="WindowsGL">
+    <Project
+		Name="WinUSBNet"
+		Guid="CE06C329-287D-4F1E-B62D-B8353F2BAA4A"
+		Path="libs/winusb/WinUSBNet/WinUSBNet.csproj">
+    </Project>
+  	<Reference Include="WinFormReferences"/>
+  </Platform>
+</ExternalProject>

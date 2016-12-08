@@ -29,28 +29,60 @@
   <References>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
     <Reference Include="Common" />
     <Reference Include="DeviceInterface" />
-  	<Reference Include="System.Windows.Forms"/>
-  	<Reference Include="System.Drawing"/>
+  	<Reference Include="WinFormReferences"/>
     <Reference Include="Mono.Zeroconf" />
   </References>
   <Files>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
+      <ExcludePlatforms>MacOS</ExcludePlatforms>
     </Compile>
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
+      <ExcludePlatforms>MacOS</ExcludePlatforms>
     </Compile>
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
-      <ExcludePlatforms>iOS</ExcludePlatforms>
+      <ExcludePlatforms>MacOS</ExcludePlatforms>
     </Compile>
+    <Compile Include="Program.cs"/>
+    
+    <Compile Include="AppDelegate.cs">
+      <Platforms>MacOS</Platforms>
+    </Compile>
+    <Compile Include="AppDelegate.designer.cs">
+      <DependentUpon>AppDelegate.cs</DependentUpon>
+      <Platforms>MacOS</Platforms>
+    </Compile>
+    <InterfaceDefinition Include="MacMenu.xib">
+      <Platforms>MacOS</Platforms>
+    </InterfaceDefinition>
+    <Compile Include="MacWindow.cs">
+      <Platforms>MacOS</Platforms>
+    </Compile>
+    <Compile Include="MacWindow.designer.cs">
+      <DependentUpon>MacWindow.cs</DependentUpon>
+      <Platforms>MacOS</Platforms>
+    </Compile>
+    <InterfaceDefinition Include="MacWindow.xib">
+      <Platforms>MacOS</Platforms>
+    </InterfaceDefinition>
+    <Compile Include="MacWindowController.cs">
+      <Platforms>MacOS</Platforms>
+    </Compile>
+    <Compile Include="ServerTable.cs">
+      <Platforms>MacOS</Platforms>
+    </Compile>
+
+    <None Include="Info.plist">
+      <Platforms>MacOS</Platforms>
+    </None>
 
     <EmbeddedResource Include="smartscopeserver.ico"/>
     <Content Include="smartscopeserver.icns">
