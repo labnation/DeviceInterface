@@ -111,7 +111,11 @@ null, deviceConnectHandler) { }
             InterfaceManagerLibUsb.Instance.onConnect += OnInterfaceChanged;
 #endif
 
+#if ANDROID
+            OnInterfaceChanged(DummyInterface.Audio, true);
+#else
             OnInterfaceChanged(DummyInterface.Generator, true);
+#endif
             //FIXME: android should add audio-scope here!!!
 
             pollThread.Start();
@@ -164,18 +168,18 @@ null, deviceConnectHandler) { }
             if(connected) {
                 connectedList.Add(hardwareInterface);
 
-                #if WINDOWS
+#if WINDOWS
                 lastSmartScopeDetectedThroughWinUsb = DateTime.Now;
-				#endif
+#endif
             }
             else
             {
                 if (connectedList.Contains(hardwareInterface))
                     connectedList.Remove(hardwareInterface);
                 
-                #if WINDOWS
+#if WINDOWS
                 lastSmartScopeDetectedThroughWinUsb = null;
-				#endif
+#endif
             }
 
             /* If application handles interface preferences, pass it the updated
