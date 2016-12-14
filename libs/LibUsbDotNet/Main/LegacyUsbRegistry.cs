@@ -233,7 +233,7 @@ namespace LibUsbDotNet.Main
 
             deviceProperties.Add(DevicePropertyType.HardwareId.ToString(), new string[] { fakeHardwareIds });
 
-            string fakeSymbolicName = fakeHardwareIds + "{" + Guid.Empty + " }";
+            string fakeSymbolicName = fakeHardwareIds + "{" + Guid.Empty + "}";
 
             if (usbDevice.Info.Descriptor.SerialStringIndex > 0)
             {
