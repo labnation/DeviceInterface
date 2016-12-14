@@ -85,7 +85,8 @@ namespace LibUsbDotNet.DeviceNotify.Linux
                 LinuxDevItem linuxDevItem = new LinuxDevItem(deviceFileName,
                                                              e.MonoUSBProfile.BusNumber,
                                                              e.MonoUSBProfile.DeviceAddress,
-                                                             e.MonoUSBProfile.DeviceDescriptor);
+                                                             e.MonoUSBProfile.DeviceDescriptor,
+                                                             e.MonoUSBProfile.Serial);
 
                 deviceNotify(this,
                              new LinuxDeviceNotifyEventArgs(linuxDevItem,

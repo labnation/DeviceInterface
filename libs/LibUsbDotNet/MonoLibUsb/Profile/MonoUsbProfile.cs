@@ -36,6 +36,7 @@ namespace MonoLibUsb.Profile
         private readonly MonoUsbDeviceDescriptor mMonoUsbDeviceDescriptor = new MonoUsbDeviceDescriptor();
         private readonly MonoUsbProfileHandle mMonoUSBProfileHandle;
         internal bool mDiscovered;
+        internal string mSerial;
 
         internal MonoUsbProfile(MonoUsbProfileHandle monoUSBProfileHandle)
         {
@@ -75,6 +76,15 @@ namespace MonoLibUsb.Profile
         public byte DeviceAddress
         {
             get { return mDeviceAddress; }
+        }
+
+        /// <summary>
+        /// Gets the serial.
+        /// </summary>
+        /// <value>The serial.</value>
+        public string Serial
+        {
+            get { return mSerial; }
         }
 
         /// <summary>
