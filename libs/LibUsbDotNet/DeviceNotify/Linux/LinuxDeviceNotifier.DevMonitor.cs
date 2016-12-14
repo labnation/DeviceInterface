@@ -116,7 +116,7 @@ namespace LibUsbDotNet.DeviceNotify.Linux
                     byte[] descriptorBytes;
                     if (ReadFileDescriptor(deviceInterfaceFile, out descriptorBytes))
                     {
-                        LinuxDevItem addedItem = new LinuxDevItem(deviceFileName, busNumber, deviceAddress, descriptorBytes);
+                        LinuxDevItem addedItem = new LinuxDevItem(deviceFileName, busNumber, deviceAddress, descriptorBytes, null);
                         mLinuxDevItemList.Add(addedItem);
                     }
                 }
@@ -156,7 +156,7 @@ namespace LibUsbDotNet.DeviceNotify.Linux
                 byte[] descriptorBytes;
                 if (ReadFileDescriptor(e.FullPath, out descriptorBytes))
                 {
-                    LinuxDevItem addedItem = new LinuxDevItem(e.Name, busNumber, deviceAddress, descriptorBytes);
+                    LinuxDevItem addedItem = new LinuxDevItem(e.Name, busNumber, deviceAddress, descriptorBytes, null);
                     if (mLinuxDevItemList.FindByName(e.Name) != null) throw new Exception("FileAdded:Invalid LinuxDevItem");
                     mLinuxDevItemList.Add(addedItem);
 

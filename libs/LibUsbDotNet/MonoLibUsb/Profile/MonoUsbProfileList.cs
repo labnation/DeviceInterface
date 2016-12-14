@@ -24,6 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using LibUsbDotNet;
+using LibUsbDotNet.LudnMonoLibUsb;
 using LibUsbDotNet.Main;
 
 namespace MonoLibUsb.Profile
@@ -70,6 +71,11 @@ namespace MonoLibUsb.Profile
                 {
                     //Console.WriteLine("DeviceDiscovery: Added: {0}", newProfile.ProfileHandle.DangerousGetHandle());
                     newProfile.mDiscovered = true;
+
+                    //Super hackish way to add serial 
+                    MonoUsbDevice dev = new MonoUsbDevice(ref newProfile);
+                    newProfile.mSerial = dev.Info.SerialString;
+
                     mList.Add(newProfile);
                     FireAddRemove(newProfile, AddRemoveType.Added);
                 }

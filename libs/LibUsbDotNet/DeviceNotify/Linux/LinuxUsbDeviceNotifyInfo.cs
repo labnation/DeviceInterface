@@ -1,4 +1,4 @@
-// Copyright © 2006-2010 Travis Robinson. All rights reserved.
+// Copyright ï¿½ 2006-2010 Travis Robinson. All rights reserved.
 // 
 // website: http://sourceforge.net/projects/libusbdotnet
 // e-mail:  libusbdotnet@gmail.com
@@ -106,7 +106,7 @@ namespace LibUsbDotNet.DeviceNotify.Linux
         /// </summary>
         public string SerialNumber
         {
-            get { return string.Empty; }
+            get { return mLinuxDevItem.Serial; }
         }
 
         ///<summary>
