@@ -22,7 +22,7 @@ namespace LabNation.SmartScopeServerUI
 
 		public override void DidFinishLaunching (NSNotification notification)
 		{
-            ConsoleLogger c = new ConsoleLogger(LogLevel.DEBUG);
+            new ConsoleLogger(LogLevel.DEBUG);
 
             mainWindowController = new MacWindowController ();
 
@@ -43,9 +43,22 @@ namespace LabNation.SmartScopeServerUI
             mainWindowController.Window.ContentView.AddSubview (scrollView);
 			mainWindowController.Window.MakeKeyAndOrderFront (this);
 
-            m = new Monitor(false, stv.ServerChanged);
+            autostartitem.State = NSCellStateValue.On;
+            m = new Monitor(autostartitem.State == NSCellStateValue.On, stv.ServerChanged);
 		}
 
+        partial void autostart(Foundation.NSObject sender)
+        {
+
+            NSMenuItem startitem = (NSMenuItem)sender;
+            startitem.State = startitem.State == NSCellStateValue.On ? NSCellStateValue.Off : NSCellStateValue.On;
+            m.Autostart = autostartitem.State == NSCellStateValue.On;
+        }
+
+        partial void quit(Foundation.NSObject sender)
+        {
+            mainWindowController.Close();
+        }
         public override void WillTerminate(Foundation.NSNotification notification)
         {
             FileLogger.StopAll();   
