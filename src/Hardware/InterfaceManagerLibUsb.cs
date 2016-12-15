@@ -161,7 +161,7 @@ namespace LabNation.DeviceInterface.Hardware
                         return;
                     }
 
-                    UsbDeviceFinder usbFinder = new UsbDeviceFinder(e.Device.IdVendor, e.Device.IdProduct);
+                    UsbDeviceFinder usbFinder = new UsbDeviceFinder(e.Device.IdVendor, e.Device.IdProduct, e.Device.SerialNumber);
                     UsbDevice usbDevice = UsbDevice.OpenUsbDevice(usbFinder);
                     if(usbDevice != null)
                         DeviceFound(usbDevice);
@@ -170,11 +170,7 @@ namespace LabNation.DeviceInterface.Hardware
                     C.Logger.Debug(String.Format("LibUSB device removal [VID:{0},PID:{1}]", e.Device.IdVendor, e.Device.IdProduct));
                     if (e.Device != null && e.Device.IdVendor == VID && PIDs.Contains(e.Device.IdProduct))
                     {
-                        //Cos sometimes we fail to get the serial
-                        if(e.Device.SerialNumber == "" || e.Device.SerialNumber == null)
-                            RemoveDevice(interfaces.First().Key);
-                        else
-                            RemoveDevice(e.Device.SerialNumber);
+                        RemoveDevice(e.Device.SerialNumber);
                     }
                     break;
                 default:
