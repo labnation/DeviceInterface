@@ -148,6 +148,7 @@ namespace LabNation.SmartScopeServerUI
                         button = new NSButton();
                         button.Identifier = identifier;
                         button.Activated += stv.StartStopServer;
+                        button.BezelStyle = NSBezelStyle.Inline;
                     }
                     button.Title = info.server.State == ServerState.Started ? STR_STOP : STR_START;
                     button.Enabled = true;

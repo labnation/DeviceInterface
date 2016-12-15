@@ -35,7 +35,9 @@ namespace LabNation.SmartScopeServerUI
             ServerTable stv = new ServerTable(frame);
             NSScrollView scrollView = new NSScrollView(frame)
             {
-                AutoresizingMask = NSViewResizingMask.HeightSizable | NSViewResizingMask.WidthSizable
+                AutoresizingMask = NSViewResizingMask.HeightSizable | NSViewResizingMask.WidthSizable,
+                HasHorizontalScroller = true,
+                HasVerticalScroller = true,
             };
             scrollView.DocumentView = stv.Table;
 
