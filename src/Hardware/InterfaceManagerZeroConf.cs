@@ -97,6 +97,7 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
         {
+            Logger.Debug("Interface disconneceted {0}:{1}", hardwareInterface.GetType(), hardwareInterface.Serial);
             //remove from list
             if (!createdInterfaces.ContainsValue(hardwareInterface))
                 return;

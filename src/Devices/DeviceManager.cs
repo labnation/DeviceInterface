@@ -173,6 +173,7 @@ null, deviceConnectHandler) { }
 #else
             try
             {
+                Logger.Debug("Destroying InterfaceManagerZeroconf");
                 InterfaceManagerZeroConf.Instance.Destroy();
             } catch { }
             

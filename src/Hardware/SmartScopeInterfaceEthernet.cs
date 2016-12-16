@@ -46,6 +46,7 @@ namespace LabNation.DeviceInterface.Hardware
 
             controlClient.EndConnect(result);
             controlSocket = controlClient.Client;
+            controlSocket.ReceiveTimeout = Net.Net.TIMEOUT_RX;
 
             byte[] serialBytes = Request(Net.Net.Command.SERIAL);
             serial = System.Text.Encoding.UTF8.GetString(serialBytes, 0, serialBytes.Length);
@@ -81,14 +82,21 @@ namespace LabNation.DeviceInterface.Hardware
             while (length > 0)
             {
                 if (!s.Connected)
+                {
+                    Logger.Debug("Socket not connected - Destroying");
                     Destroy();
+                }
                 try
                 {
-                    var result = s.BeginReceive(buffer, offset + recvdTotal, length, SocketFlags.None, null, null);
-                    var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(Net.Net.TIMEOUT_RX));
+                    SocketError error;
+                    var result = s.BeginReceive(buffer, offset + recvdTotal, length, SocketFlags.None, out error, null, null);
+                    var success = result.AsyncWaitHandle.WaitOne();
 
-                    if (!success)
+                    if (error != SocketError.Success)
+                    {
+                        Logger.Error("Failed to receive from socket: {0} - Destroying", error);
                         Destroy();
+                    }
 
                     recvd = s.EndReceive(result);
                 }
@@ -98,7 +106,10 @@ namespace LabNation.DeviceInterface.Hardware
                 }
 
                 if (recvd == 0)
+                {
+                    Logger.Debug("Nothing received from socket - Destroying");
                     Destroy();
+                }
                 length -= recvd;
                 recvdTotal += recvd;
             }
@@ -124,7 +135,6 @@ namespace LabNation.DeviceInterface.Hardware
                 if (!hdr.IsValid())
                 {
                     Logger.Error("Invalid header magic");
-                    Destroy();
                     return 0;
                 }
 
@@ -153,6 +163,7 @@ namespace LabNation.DeviceInterface.Hardware
         public byte[] PicFirmwareVersion { get { return Request(Net.Net.Command.PIC_FW_VERSION); } }
         public void Reset()
         {
+            Logger.Debug("Reset requested - Destroying");
             Destroy();
         }
         public bool FlashFpga(byte[] firmware)
@@ -171,6 +182,7 @@ namespace LabNation.DeviceInterface.Hardware
         {
             if (destroyed)
                 return;
+            Logger.Debug(" ----- DESTROYING ---- ");
             destroyed = true;
 
             if (this.onDisconnect != null)
@@ -218,7 +230,7 @@ namespace LabNation.DeviceInterface.Hardware
                     }
                 } catch(Exception se)
                 {
-                    Logger.Error("Failure while sending to socket: " + se.Message);
+                    Logger.Error("Failure while sending to socket, destroying: {0}" + se.Message);
                     Destroy();
                     throw new ScopeIOException("Failure while sending to socket: " + se.Message);
                 }
@@ -235,12 +247,21 @@ namespace LabNation.DeviceInterface.Hardware
                         List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, msgBuffer, ref msgBufferLength);
                         if (l == null)
                         {
+                            Logger.Debug("Message list is null - no message received?");
                             Destroy();
+                            throw new ScopeIOException("Message list is null - no message received?");
+                        }
+
+                        if (l.Count > 1)
+                        {
+                            int i = 0;
+                            foreach (Net.Net.Message m in l)
+                            {
+                                Logger.Error("Message {0} : {1:G} [{2} bytes]", i, m.command, m.length);
+                                i++;
+                            }
                             throw new ScopeIOException("More than 1 message received");
                         }
-                            
-                        if (l.Count > 1)
-                            throw new ScopeIOException("More than 1 message received");
                         if (l.Count == 0)
                             throw new ScopeIOException("No reply message received");
                         Net.Net.Message reply = l[0];

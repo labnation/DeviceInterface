@@ -316,6 +316,7 @@ namespace LabNation.DeviceInterface.Net
                                     response = m.command.msg(new byte[] { result ? (byte)0xff : (byte)0x00 });
                                     break;
                                 case Net.Command.DISCONNECT:
+                                    Logger.Info("Received Disconnect request from client");
                                     hwInterface.FlushDataPipe();
                                     Stop();
                                     break;
@@ -418,7 +419,7 @@ namespace LabNation.DeviceInterface.Net
                 }
                 catch(Exception e)
                 {
-                    Logger.Info("while aborting thread {0} : {1}", thread.Name, e.Message);
+                    Logger.Info("while aborting thread {0} : {1} (Alive = {2})", thread.Name, e.Message, thread.IsAlive);
                 }
             }
         }
