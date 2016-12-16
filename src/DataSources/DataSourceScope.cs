@@ -90,6 +90,7 @@ namespace LabNation.DeviceInterface.DataSources
             {
                 Logger.Warn("Data fetch thread for scope {0} not stopping easily, aborting", scope.GetType());
                 dataFetchThread.Interrupt();
+                dataFetchThread.Abort();
                 dataFetchThread.Join(200);
             }
         }
