@@ -88,17 +88,19 @@ namespace LabNation.DeviceInterface.Hardware
                 }
                 try
                 {
-                    SocketError error;
-                    var result = s.BeginReceive(buffer, offset + recvdTotal, length, SocketFlags.None, out error, null, null);
-                    var success = result.AsyncWaitHandle.WaitOne();
-
-                    if (error != SocketError.Success)
+                    int triesLeft = Net.Net.TIMEOUT_RX;
+                    while (!s.Poll(1000, SelectMode.SelectRead)) 
                     {
-                        Logger.Error("Failed to receive from socket: {0} - Destroying", error);
-                        Destroy();
+                        triesLeft--;
+                        if (triesLeft < 0)
+                        {
+                            Logger.Error("Tried enough - destroying");
+                            Destroy();
+                            return;
+                        }
+                        
                     }
-
-                    recvd = s.EndReceive(result);
+                    recvd = s.Receive(buffer, offset + recvdTotal, length, SocketFlags.None);
                 }
                 catch (Exception e)
                 {
