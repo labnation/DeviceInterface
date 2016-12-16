@@ -392,14 +392,27 @@ namespace LabNation.DeviceInterface.Net
                 {
                     if (socket != null)
                     {
-                        if(socket.Connected)
+                        if (socket.Connected)
                             socket.Send(Net.Command.DISCONNECT.msg());
                         socket.Close();
                         socket.Dispose();
                     }
-                    if(l != null)
+                }
+                catch (Exception e)
+                {
+                    Logger.Info("while closing socket on thread {0} : {1}", thread.Name, e.Message);
+                }
+                try
+                {
+                    if (l != null)
                         l.Stop();
-
+                }
+                catch (Exception e)
+                {
+                    Logger.Info("while stopping TcpListener on thread {0} : {1}", thread.Name, e.Message);
+                }
+                try
+                {
                     thread.Abort();
                     thread.Interrupt();
                 }
