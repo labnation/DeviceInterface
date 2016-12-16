@@ -530,7 +530,7 @@ namespace LabNation.DeviceInterface.Devices
                 return null;
 
             Dictionary<AnalogChannel, GainCalibration> channelConfig = hdr.ChannelSettings(this.rom);
-            Dictionary<Channel, Array> receivedData = SplitAndConvert(rxBuffer, analogChannels, hdr, Constants.SZ_HDR, received - Constants.SZ_HDR);
+            Dictionary<Channel, Array> receivedData = SplitAndConvert(rxBuffer, analogChannels, hdr, channelConfig, Constants.SZ_HDR, received - Constants.SZ_HDR);
 
             ChannelDataSourceScope source = hdr.flags.HasFlag(HeaderFlags.IsOverview) ? ChannelDataSourceScope.Overview :
                                             hdr.flags.HasFlag(HeaderFlags.IsFullAcqusition) ? ChannelDataSourceScope.Acquisition :
@@ -633,20 +633,38 @@ namespace LabNation.DeviceInterface.Devices
             return currentDataPackage;
         }
 
-        private Dictionary<Channel, Array> SplitAndConvert(byte[] buffer, List<AnalogChannel> channels, SmartScopeHeader header, int offset, int length)
+        private Dictionary<Channel, Array> SplitAndConvert(byte[] buffer, List<AnalogChannel> channels, SmartScopeHeader header, Dictionary<AnalogChannel, SmartScope.GainCalibration> channelSettings, int offset, int length)
         {
             int n_channels = channels.Count;
             int n_samples = length / n_channels;
             byte[][] splitRaw = new byte[n_channels][];
+            float[][] splitVolt = new float[n_channels][];
 
             for (int j = 0; j < n_channels; j++)
-                splitRaw[j] = new byte[n_samples];
-
-            Dictionary<Channel, Array> result = new Dictionary<Channel, Array>();
-            for (int i = 0; i < n_samples; i++)
             {
-                for (int j = 0; j < n_channels; j++)
-                    splitRaw[j][i] = buffer[offset + i * n_channels + j];
+                splitRaw[j] = new byte[n_samples];
+                splitVolt[j] = new float[n_samples];
+            }
+
+            //this section converts twos complement to a physical voltage value
+            Dictionary<Channel, Array> result = new Dictionary<Channel, Array>();
+
+            for (int j = 0; j < n_channels; j++)
+            {
+                AnalogChannel ch = channels[j];
+                double[] coeff = channelSettings[ch].coefficients;
+                byte yOffset = header.GetRegister(ch.YOffsetRegister());
+                float gain = probeSettings[ch];
+                float totalOffset = (float)(yOffset * coeff[1] + coeff[2]);
+
+                int k = j;
+                for (int i = 0; i < n_samples; i++)
+                {
+                    byte b = buffer[offset + k];
+                    splitRaw[j][i] = b;
+                    splitVolt[j][i] = (float)(b * coeff[0] + totalOffset) * gain;
+                    k += n_channels;
+                }
             }
 
             for (int j = 0; j < n_channels; j++)
@@ -658,10 +676,7 @@ namespace LabNation.DeviceInterface.Devices
                 }
                 else
                 {
-                    result[ch] = splitRaw[j].ConvertByteToVoltage(
-                        header.ChannelSettings(this.rom)[ch],
-                        header.GetRegister(ch.YOffsetRegister()),
-                        probeSettings[ch]);
+                    result[ch] = splitVolt[j];
                 }
                 result[ch.Raw()] = splitRaw[j];
             }
