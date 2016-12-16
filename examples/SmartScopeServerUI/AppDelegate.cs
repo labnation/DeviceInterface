@@ -19,6 +19,7 @@ namespace LabNation.SmartScopeServerUI
 		}
 
         Monitor m;
+        ServerTable stv;
 
 		public override void DidFinishLaunching (NSNotification notification)
 		{
@@ -32,7 +33,7 @@ namespace LabNation.SmartScopeServerUI
 			// We create a tab control to insert both examples into, and set it to take the entire window and resize
 			CGRect frame = mainWindowController.Window.ContentView.Frame;
 
-            ServerTable stv = new ServerTable(frame);
+            stv = new ServerTable(frame);
             NSScrollView scrollView = new NSScrollView(frame)
             {
                 AutoresizingMask = NSViewResizingMask.HeightSizable | NSViewResizingMask.WidthSizable,
@@ -46,7 +47,7 @@ namespace LabNation.SmartScopeServerUI
 			mainWindowController.Window.MakeKeyAndOrderFront (this);
 
             autostartitem.State = NSCellStateValue.On;
-            m = new Monitor(autostartitem.State == NSCellStateValue.On, stv.ServerChanged);
+            m = new Monitor(autostartitem.State == NSCellStateValue.On, ServerChanged);
 		}
 
         partial void autostart(Foundation.NSObject sender)
@@ -55,6 +56,13 @@ namespace LabNation.SmartScopeServerUI
             NSMenuItem startitem = (NSMenuItem)sender;
             startitem.State = startitem.State == NSCellStateValue.On ? NSCellStateValue.Off : NSCellStateValue.On;
             m.Autostart = autostartitem.State == NSCellStateValue.On;
+        }
+
+        void ServerChanged(InterfaceServer s, bool present)
+        {
+            stv.ServerChanged(s, present);
+            if (s.State == ServerState.Stopped && autostartitem.State == NSCellStateValue.On)
+                s.Start();
         }
 
         partial void quit(Foundation.NSObject sender)
