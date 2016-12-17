@@ -188,6 +188,7 @@ namespace LabNation.DeviceInterface.Net
                 {
                     DataSocket = DataSocketListener.Server.Accept();
                     DataSocket.SendBufferSize = Net.DATA_SOCKET_BUFFER_SIZE;
+                    DataSocket.SendTimeout = Net.TIMEOUT_TX;
                 }
                 catch (Exception e)
                 {
@@ -397,7 +398,7 @@ namespace LabNation.DeviceInterface.Net
                 {
                     if (socket != null)
                     {
-                        if (socket.Connected)
+                        if (socket.Connected && socket.Poll(1000, SelectMode.SelectWrite))
                             socket.Send(Net.Command.DISCONNECT.msg());
                         socket.Close();
                         socket.Dispose();

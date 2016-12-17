@@ -20,6 +20,7 @@ namespace LabNation.DeviceInterface.Net
         public const int DATA_SOCKET_BUFFER_SIZE = ACQUISITION_PACKET_SIZE * 2;
         public const int HDR_SZ = 4;
         public const int TIMEOUT_RX = 3000;
+        public const int TIMEOUT_TX = 5000;
         public const int TIMEOUT_CONNECT = 2000;
 
         //COMMANDS
@@ -100,6 +101,9 @@ namespace LabNation.DeviceInterface.Net
 			{
 				try
 				{
+
+                    int triesLeft = Net.TIMEOUT_RX;
+                    while (!socket.Poll(1000, SelectMode.SelectRead)) { }
                     bytesReceived = socket.Receive(msgBuffer, msgBufferLength, msgBuffer.Length - msgBufferLength, SocketFlags.None);
 				}
 				catch
