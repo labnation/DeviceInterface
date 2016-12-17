@@ -211,7 +211,7 @@ namespace LabNation.DeviceInterface.Net
                     {
                         Logger.Info("usb error {0:s}", e.Message);
                         Stop();
-                        break;
+                        return;
                     }
                     try
                     {
@@ -225,6 +225,7 @@ namespace LabNation.DeviceInterface.Net
                     {
                         Logger.Info("Data socket aborted {0:s}", e.Message);
                         Stop();
+                        return;
                     }
                     bytesTx += length;
                 }
@@ -233,6 +234,7 @@ namespace LabNation.DeviceInterface.Net
                 Logger.Info("Data thread aborted {0:s}", e.Message);
                 hwInterface.Destroy();
                 Stop();
+                return;
             }
         }
 
@@ -287,7 +289,7 @@ namespace LabNation.DeviceInterface.Net
                 {
                     Logger.Info("Nothing received from network socket => resetting");
                     Stop();
-                    break;
+                    return;
                 }
                 bytesRx += (msgBufferLength - bufLengtBefore);
 
@@ -319,7 +321,7 @@ namespace LabNation.DeviceInterface.Net
                                     Logger.Info("Received Disconnect request from client");
                                     hwInterface.FlushDataPipe();
                                     Stop();
-                                    break;
+                                    return;
                                 case Net.Command.DATA:
                                     length = (m.data[0] << 8) + (m.data[1]);
                                     response = m.command.msg(hwInterface.GetData(length));
@@ -343,7 +345,7 @@ namespace LabNation.DeviceInterface.Net
                                 default:
                                     Logger.Info("Unsupported command {0:G}", command);
                                     Stop();
-                                    break;
+                                    return;
                             }
                             processing = false;
                         } catch(ScopeIOException e)
@@ -355,7 +357,7 @@ namespace LabNation.DeviceInterface.Net
                                 hwInterface.Reset();
                             }
                             catch { }
-                            break;
+                            return;
                         }
                         if (response != null)
                         {
@@ -368,6 +370,7 @@ namespace LabNation.DeviceInterface.Net
                             {
                                 Logger.Info("Failed to write to socket: " + e.Message);
                                 Stop();
+                                return;
                             }
                         }
                         if (response != null)
@@ -379,6 +382,7 @@ namespace LabNation.DeviceInterface.Net
                 else
                 {
                     Stop();
+                    return;
                 }
             }
         }
@@ -387,7 +391,7 @@ namespace LabNation.DeviceInterface.Net
         {
             if (thread == null)
                 return;
-            while (thread.IsAlive)
+            while (thread.IsAlive || (socket != null && socket.Connected))
             {
                 try
                 {
