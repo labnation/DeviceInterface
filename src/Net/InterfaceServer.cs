@@ -403,6 +403,11 @@ namespace LabNation.DeviceInterface.Net
                         socket.Dispose();
                     }
                 }
+                catch (ObjectDisposedException ode)
+                {
+                    Logger.Info("socket disposed");
+                    socket = null;
+                }
                 catch (Exception e)
                 {
                     Logger.Info("while closing socket on thread {0} : {1}", thread.Name, e.Message);
@@ -411,6 +416,11 @@ namespace LabNation.DeviceInterface.Net
                 {
                     if (l != null)
                         l.Stop();
+                }
+                catch (ObjectDisposedException ode)
+                {
+                    Logger.Info("TcpListener disposed");
+                    l = null;
                 }
                 catch (Exception e)
                 {
