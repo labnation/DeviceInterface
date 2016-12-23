@@ -51,8 +51,18 @@ namespace LabNation.SmartScopeServerUI
             Table.DataSource = new TableDataSource(this);
             Table.Delegate = new TableDelegate(this);
 
+            item = NSStatusBar.SystemStatusBar.CreateStatusItem(NSStatusItemLength.Square);
+            item.Title = "S";
+            item.Menu = new NSMenu();
+            serverTitle = new NSMenuItem("Servers:");
+            serverTitle.Enabled = false;
+            item.Menu.AddItem(serverTitle);
+
             UpdateBandwidth(null);
         }
+
+        NSStatusItem item;
+        NSMenuItem serverTitle;
 
         DateTime lastBwUpdate = DateTime.Now;
         void UpdateBandwidth(NSTimer timer)
@@ -73,6 +83,8 @@ namespace LabNation.SmartScopeServerUI
 
                 info.bytesRx = s.BytesRx;
                 info.bytesTx = s.BytesTx;
+
+                UpdateMenuItem(info);
             }
             lastBwUpdate = DateTime.Now;
             NSTimer.CreateScheduledTimer(TimeSpan.FromMilliseconds(1000), UpdateBandwidth);
@@ -83,6 +95,7 @@ namespace LabNation.SmartScopeServerUI
         class ServerInfo
         {
             public InterfaceServer server;
+            public NSMenuItem menuItem;
             public int bytesTx;
             public int bytesRx;
             public double bwTx;
@@ -91,6 +104,14 @@ namespace LabNation.SmartScopeServerUI
 
         Dictionary<int, ServerInfo> tableRows = new Dictionary<int, ServerInfo>();
 
+        private void UpdateMenuItem(ServerInfo info)
+        {
+            info.menuItem.Title = String.Format("{0} : Up {1} kBps - Down {2} kBps",
+                                                info.server.hwInterface.Serial,
+                                                info.bwTx, info.bwRx);
+            info.menuItem.State = info.server.State == ServerState.Started ? NSCellStateValue.On : NSCellStateValue.Off;
+        }
+
         public void ServerChanged(InterfaceServer s, bool present)
         {
             InvokeOnMainThread(() =>
@@ -98,13 +119,20 @@ namespace LabNation.SmartScopeServerUI
                 if (present)
                 {
                     if (tableRows.Where(x => x.Value.server == s).Count() == 0)
-                        tableRows.Add(tableRows.Count, new ServerInfo() { server = s });
+                    {
+                        ServerInfo info = new ServerInfo() { server = s, menuItem = new NSMenuItem() };
+                        UpdateMenuItem(info);
+                        item.Menu.AddItem(info.menuItem);
+                        tableRows.Add(tableRows.Count, info);
+                    }
                 }
                 else 
                 {
                     if (tableRows.Where(x => x.Value.server == s).Count() != 0)
                     {
-                        tableRows.Remove(tableRows.Single(x => x.Value.server == s).Key);
+                        var info = tableRows.Single(x => x.Value.server == s);
+                        item.Menu.RemoveItem(info.Value.menuItem);
+                        tableRows.Remove(info.Key);
 
                         List<ServerInfo> ordered = tableRows.OrderBy(x => x.Key).Select(x => x.Value).ToList();
                         for (int i = 0; i < tableRows.Count; i++)
@@ -113,7 +141,7 @@ namespace LabNation.SmartScopeServerUI
                                 tableRows[i] = ordered[i];
                             else
                                 tableRows.Remove(i);
-                         }
+                        }
                     }
                 }
                 Table.ReloadData();
