@@ -19,7 +19,7 @@ namespace LabNation.DeviceInterface.Net
         public const int ACQUISITION_PACKET_SIZE = Constants.SZ_HDR + Constants.FETCH_SIZE_MAX;
         public const int DATA_SOCKET_BUFFER_SIZE = ACQUISITION_PACKET_SIZE * 2;
         public const int HDR_SZ = 4;
-        public const int TIMEOUT_RX = 3000;
+        public const int TIMEOUT_RX = 5000;
         public const int TIMEOUT_TX = 5000;
         public const int TIMEOUT_CONNECT = 2000;
 
