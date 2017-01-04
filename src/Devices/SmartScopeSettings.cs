@@ -704,11 +704,15 @@ namespace LabNation.DeviceInterface.Devices
             FpgaSettingsMemory[REG.VIEW_EXCESS_B1].Set((byte)(samplesExcess >> 8));
         }
 
+        public event Action OnSamplePeriodChanged;
         public int SubSampleRate { 
             get { return FpgaSettingsMemory[REG.INPUT_DECIMATION].GetByte(); }
             private set { 
                 FpgaSettingsMemory[REG.INPUT_DECIMATION].Set((byte)value);
                 TriggerHoldOff = this.holdoff;
+
+                if (OnSamplePeriodChanged != null)
+                    OnSamplePeriodChanged();
             } 
         }
 
