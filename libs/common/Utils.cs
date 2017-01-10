@@ -577,6 +577,18 @@ namespace LabNation.Common
             number = number / divider;
             return numberSignificanceFormat(number, significance);
         }
+        static public string siReferencedScale(double reference, double number, double precision, int significance, int thousand = 1000)
+        {
+            //Round to the specified precision
+            reference = precisionRound(reference, precision);
+            //Then scale it to si scale
+            double divider = reference == 0 ? 1 : Math.Floor((Math.Log(Math.Abs(reference), thousand)));
+            divider = Math.Pow(thousand, divider);
+
+            number = precisionRound(number, precision);
+            number = number / divider;
+            return number.ToString();
+        }
         static public string siPrefix(double number, double precision, string unit, int thousand = 1000)
         {
             number = precisionRound(number, precision);
