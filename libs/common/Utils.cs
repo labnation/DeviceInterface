@@ -539,7 +539,7 @@ namespace LabNation.Common
             int scale = (int)Math.Floor(Math.Log10(Math.Abs(number)));
             int maxScale = scale - significance + 1;
             double rounder = Math.Pow(10, maxScale);
-            return Math.Round(Math.Abs(number) / rounder) * rounder * Math.Sign(number);
+            return Math.Round(Math.Abs(number) / rounder) /(1/ rounder) * Math.Sign(number);
         }
 
         static public string precisionFormat(double number, double precision, int significance)
