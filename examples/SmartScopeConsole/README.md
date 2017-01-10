@@ -5,7 +5,7 @@ To get started, check out the repository. From a command line, run ```./bootstra
 
 ```./bootstrap.h MacOS```
 
-Then open the generated ```DeviceInterface.<Platform>.sln``` file with Xamarin/MonoDevelop/VisualStudio.
+Then open the generated ```DeviceInterface.<Platform>.sln``` file with Xamarin/MonoDevelop/VisualStudio. Finally, set the SmartScopeConsole project as start-up project.
 
 When running the app, the smartscope is configured to make 20us acquisitions in AUTO trigger mode (i.e. timeout when no trigger) with an input range of -3V to 3V on both channels. They are configured in DC coupling for a x10 probe and a 0V vertical offset.
 
