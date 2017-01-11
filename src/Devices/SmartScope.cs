@@ -653,11 +653,15 @@ namespace LabNation.DeviceInterface.Devices
             {
                 AnalogChannel ch = channels[j];
                 double[] coeff = channelSettings[ch].coefficients;
+				if(coeff.Length != 3)
+					throw new Exception(String.Format("Calibration coefficients are not of length 3, but {0} for ch {1} (n_ch:{2}", coeff.Length, ch.Name, n_channels));
                 byte yOffset = header.GetRegister(ch.YOffsetRegister());
                 float gain = probeSettings[ch];
                 float totalOffset = (float)(yOffset * coeff[1] + coeff[2]);
 
                 int k = j;
+				if(offset + n_channels * (n_samples - 1) + k >= buffer.Length)
+					throw new Exception(String.Format("Buffer will be addressed out of bounds. [offset:{0}][n_chan:{1}][length:{2}][n_samp:{3}][buf_len:{4}]", offset, n_channels, length, n_samples, buffer.Length));
                 for (int i = 0; i < n_samples; i++)
                 {
                     byte b = buffer[offset + k];
@@ -672,12 +676,18 @@ namespace LabNation.DeviceInterface.Devices
                 AnalogChannel ch = channels[j];
                 if (header.GetStrobe(STR.LA_ENABLE) && header.GetStrobe(STR.LA_CHANNEL) == ch.Value > 0)
                 {
+					if(j >= splitRaw.Length)
+						throw new Exception(String.Format("Assigning LA channel failing due to oob index {1} (len = {2})", j, splitRaw.Length));
                     result[LogicAnalyserChannel.LA] = splitRaw[j];
                 }
                 else
                 {
+					if(j >= splitVolt.Length)
+						throw new Exception(String.Format("Assigning Voltage channel failing due to oob index {1} (len = {2})", j, splitVolt.Length));
                     result[ch] = splitVolt[j];
                 }
+				if(j >= splitRaw.Length)
+					throw new Exception(String.Format("Assigning RAW failing due to oob index {1} (len = {2})", j, splitRaw.Length));
                 result[ch.Raw()] = splitRaw[j];
             }
             return result;
