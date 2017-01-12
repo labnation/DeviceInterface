@@ -102,9 +102,13 @@ namespace LabNation.DeviceInterface.Hardware
                 throw new ScopeIOException("number of bursts in this USB pacakge is 0, cannot fetch");
 
             int len = hdr.n_bursts * hdr.bytes_per_burst;
+            if (len + Constants.SZ_HDR > buffer.Length)
+            {
+                usb.GetData(new byte[len], 0, len);
+                Logger.Error("Length of packet too large (N_burst: {0}, bytes per burst: {1}) expect failure", hdr.n_bursts, hdr.bytes_per_burst);
+                return 0;
+            }
             usb.GetData(buffer, Constants.SZ_HDR, len);
-			if (len + Constants.SZ_HDR > buffer.Length)
-				Logger.Error ("Length of packet too large (N_burst: {0}, bytes per burst: {1}) expect failure", hdr.n_bursts, hdr.bytes_per_burst);
             return Constants.SZ_HDR + len;
         }
     }
