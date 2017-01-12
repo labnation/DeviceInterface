@@ -47,10 +47,11 @@ namespace LabNation.DeviceInterface.Hardware
         }
 
         Dictionary<ServiceLocation, SmartScopeInterfaceEthernet> createdInterfaces = new Dictionary<ServiceLocation, SmartScopeInterfaceEthernet>();
+        ServiceBrowser browser;
 
         protected override void Initialize()
         {
-            ServiceBrowser browser = new ServiceBrowser();
+            browser = new ServiceBrowser();
             browser.ServiceAdded += delegate (object o, ServiceBrowseEventArgs args)
             {
                 Console.WriteLine("Found Service: {0}", args.Service.Name);
@@ -93,6 +94,7 @@ namespace LabNation.DeviceInterface.Hardware
         {
             foreach (var hw in createdInterfaces)
                 hw.Value.Destroy();
+            browser.Dispose();
         }
 
         private void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface)
