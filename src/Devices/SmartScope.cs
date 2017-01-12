@@ -602,7 +602,7 @@ namespace LabNation.DeviceInterface.Devices
                     Array targetArray;
                     if (target == null)
                     {
-                        targetArray = Array.CreateInstance(receivedData[ch].GetType().GetElementType(), AcquisitionDepth);
+                        targetArray = Array.CreateInstance(receivedData[ch].GetType().GetElementType(), currentDataPackage.AcquisitionSamples);
                         currentDataPackage.SetData(ChannelDataSourceScope.Acquisition, ch, targetArray);
                     }
                     else
