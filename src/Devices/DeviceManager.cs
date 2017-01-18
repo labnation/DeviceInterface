@@ -108,7 +108,6 @@ null, deviceConnectHandler) { }
             pollThread = new Thread(PollUponStart);
             pollThread.Name = "Devicemanager Startup poll";
 
-            //disable because of the crash by Wait
 #if ANDROID
 			InterfaceManagerServiceDiscovery.context = context;
 			InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
