@@ -342,12 +342,23 @@ namespace LabNation.DeviceInterface.Devices
             SetTriggerByte(127);
             //Disable Logic Analyser
             ChannelSacrificedForLogicAnalyser = null;
+
+            bool runningBeforeTest = Running;
             Running = true;
             Logger.Info("Calibrating ADC timing");
             CommitSettings();
             if (TestAdcRamp())
             {
                 Logger.Info("ADC calibration OK with value from ROM = " + AdcTimingValue);
+
+                //Get the overview, so the scope doesn't want to send this afterwards
+                SendOverviewBuffer = true;
+
+                if (!runningBeforeTest)
+                    Running = false;
+                CommitSettings();
+                StrobeMemory[STR.FORCE_TRIGGER].WriteImmediate(true);
+                DataPackageScope p = GetScopeData();
                 return;
             }
 #if !DEBUG
