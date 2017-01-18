@@ -73,7 +73,7 @@ namespace LabNation.DeviceInterface.Devices {
         public bool SuspendViewportUpdates { get; set; }
         public event AcquisitionTransferFinishedHandler OnAcquisitionTransferFinished;
 
-        Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog;
+        Dictionary<AnalogChannel, float[]> acquisitionBufferAnalog = new Dictionary<AnalogChannel, float[]>();
         byte[] acquisitionBufferDigital = null;
 
 #if ANDROID
