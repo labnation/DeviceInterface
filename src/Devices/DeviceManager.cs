@@ -135,8 +135,11 @@ null, deviceConnectHandler) { }
             InterfaceManagerLibUsb.Instance.onConnect += OnInterfaceChanged;
 #endif
 
+#if ANDROID
+            OnInterfaceChanged(DummyInterface.Audio, true);
+#else
             OnInterfaceChanged(DummyInterface.Generator, true);
-            //FIXME: android should add audio-scope here!!!
+#endif
 
             pollThread.Start();
 
