@@ -70,7 +70,7 @@ namespace LabNation.DeviceInterface.Hardware
         }
         public byte[] GetData(int length)
         {
-            return Request(Net.Net.Command.DATA, new byte[] { (byte)(length >> 8), (byte)(length) });
+            return Request(Net.Net.Command.DATA, new byte[] { (byte)(length), (byte)(length >> 8) });
         }
 
         private void SocketReceive(Socket s, int offset, int length, byte[] buffer)

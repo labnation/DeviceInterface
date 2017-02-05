@@ -317,7 +317,7 @@ namespace LabNation.DeviceInterface.Net
                                     Stop();
                                     return;
                                 case Net.Command.DATA:
-                                    length = (m.data[0] << 8) + (m.data[1]);
+                                    length = (m.data[0]) + (m.data[1] << 8);
                                     response = m.command.msg(hwInterface.GetData(length));
                                     break;
 								case Net.Command.DATA_PORT:
