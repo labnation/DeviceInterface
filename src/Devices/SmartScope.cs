@@ -540,6 +540,8 @@ namespace LabNation.DeviceInterface.Devices
             if (hdr.flags.HasFlag(HeaderFlags.TimedOut))
                 return null;
 
+            if (received <= Constants.SZ_HDR)
+                throw new ScopeIOException("Too little data");
             Dictionary<AnalogChannel, GainCalibration> channelConfig = hdr.ChannelSettings(this.rom);
             Dictionary<Channel, Array> receivedData = SplitAndConvert(rxBuffer, analogChannels, hdr, channelConfig, Constants.SZ_HDR, received - Constants.SZ_HDR);
 
