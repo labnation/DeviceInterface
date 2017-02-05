@@ -18,11 +18,16 @@ namespace LabNation.DeviceInterface.Net
         public const int BUF_SIZE = 8 * 1024;
         public const int ACQUISITION_PACKET_SIZE = Constants.SZ_HDR + Constants.FETCH_SIZE_MAX;
         public const int DATA_SOCKET_BUFFER_SIZE = ACQUISITION_PACKET_SIZE * 2;
-        public const int HDR_SZ = 4;
+        public const int HDR_SZ = 5;
+#if DEBUG
+        public const int TIMEOUT_RX = 5000 * 1000;
+        public const int TIMEOUT_TX = 5000 * 1000;
+        public const int TIMEOUT_CONNECT = 2000 * 1000;
+#else
         public const int TIMEOUT_RX = 5000;
         public const int TIMEOUT_TX = 5000;
         public const int TIMEOUT_CONNECT = 2000;
-
+#endif
         //COMMANDS
         public enum Command
         {
@@ -42,10 +47,11 @@ namespace LabNation.DeviceInterface.Net
         {
             len += HDR_SZ;
             byte[] buf = new byte[len];
-            buf[0] = (byte)(len >> 16);
+            buf[0] = (byte)(len);
             buf[1] = (byte)(len >> 8);
-            buf[2] = (byte)(len);
-            buf[3] = (byte)command;
+            buf[2] = (byte)(len >> 16);
+            buf[3] = (byte)(len >> 24);
+            buf[4] = (byte)command;
 
             return buf;
         }
@@ -71,7 +77,7 @@ namespace LabNation.DeviceInterface.Net
                 if (validLength < HDR_SZ)
                     return null;
 
-                int length = (buffer[offset] << 16) + (buffer[offset + 1] << 8) + (buffer[offset+2]);
+                int length = (buffer[offset]) + (buffer[offset + 1] << 8) + (buffer[offset + 2] << 16) + (buffer[offset+3] << 24);
                 if (validLength < length)
                     return null;
                 if (length == 0)
@@ -79,13 +85,13 @@ namespace LabNation.DeviceInterface.Net
 
                 Message m = new Message();
                 m.length = length;
-                m.command = (Command)buffer[offset+3];
+                m.command = (Command)buffer[offset + HDR_SZ - 1];
 
                 if (length > HDR_SZ)
                 {
                     int dataLen = length - HDR_SZ;
                     m.data = new byte[dataLen];
-                    Buffer.BlockCopy(buffer, offset+HDR_SZ, m.data, 0, dataLen);
+                    Buffer.BlockCopy(buffer, offset + HDR_SZ, m.data, 0, dataLen);
                 }
                 return m;
             }
@@ -158,10 +164,10 @@ namespace LabNation.DeviceInterface.Net
 
             int offset = HDR_SZ;
             res[offset++] = (byte)ctrl;
-            res[offset++] = (byte)(address >> 8);
             res[offset++] = (byte)(address);
-            res[offset++] = (byte)(length >> 8);
+            res[offset++] = (byte)(address >> 8);
             res[offset++] = (byte)(length);
+            res[offset++] = (byte)(length >> 8);
 
             if(data != null)
                 Buffer.BlockCopy(data, 0, res, offset, length);
@@ -171,8 +177,8 @@ namespace LabNation.DeviceInterface.Net
         internal static void ParseControllerHeader(byte[] buffer, out ScopeController ctrl, out int address, out int length, out byte[] data)
         {
             ctrl = (ScopeController)buffer[0];
-            address = (buffer[1] << 8) + buffer[2];
-            length = (buffer[3] << 8) + buffer[4];
+            address = buffer[1] + (buffer[2] << 8);
+            length = buffer[3] + (buffer[4] << 8);
             int dataLength = buffer.Length - 5;
             if (dataLength > 0)
             {
