@@ -201,9 +201,6 @@ namespace LabNation.DeviceInterface.Net
 
                 while (connected)
                 {
-                    while (processing) {
-                        // Don't fetch data when control socket is doing stuff
-                    }
                     try
                     {
                         length = hwInterface.GetAcquisition(smartScopeBuffer);
@@ -239,12 +236,9 @@ namespace LabNation.DeviceInterface.Net
             }
         }
 
-        bool processing;
-
         private void ControlSocketServer()
         {
             disconnectCalled = false;
-            processing = false;
             int msgBufferLength = 0;
             ScopeController ctrl;
             int address;
@@ -296,7 +290,6 @@ namespace LabNation.DeviceInterface.Net
 
                 if (connected && msgList != null) //if no network error
                 {
-                    processing = true;
                     foreach (Net.Message m in msgList)
                     {
                         Net.Command command = m.command;
@@ -348,7 +341,6 @@ namespace LabNation.DeviceInterface.Net
                                     Stop();
                                     return;
                             }
-                            processing = false;
                         } catch(ScopeIOException e)
                         {
                             Logger.Error("Scope IO error : " + e.Message);
