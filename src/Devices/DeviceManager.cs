@@ -109,8 +109,11 @@ null, deviceConnectHandler) { }
             pollThread.Name = "Devicemanager Startup poll";
 
 #if ANDROID
-			InterfaceManagerServiceDiscovery.context = context;
-			InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.JellyBean)
+            {
+                InterfaceManagerServiceDiscovery.context = context;
+                InterfaceManagerServiceDiscovery.Instance.onConnect += OnInterfaceChanged;
+            }
 #elif IOS
 			InterfaceManagerApple.Instance.onConnect += OnInterfaceChanged;
 #else
@@ -169,7 +172,8 @@ null, deviceConnectHandler) { }
             if(pollThread != null)
                 pollThread.Join(100);
 #if ANDROID
-			InterfaceManagerServiceDiscovery.Instance.Destroy();
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.JellyBean)
+			    InterfaceManagerServiceDiscovery.Instance.Destroy();
 #elif IOS
 			InterfaceManagerApple.Instance.Destroy();
 #else
@@ -280,7 +284,8 @@ null, deviceConnectHandler) { }
 			if (activeDevice is IScope)
 				((IScope)activeDevice).Pause();
 #if ANDROID
-			InterfaceManagerServiceDiscovery.Instance.Pause();
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.JellyBean)
+                InterfaceManagerServiceDiscovery.Instance.Pause();
 #elif IOS
 			InterfaceManagerApple.Instance.Pause();
 #endif
@@ -300,7 +305,8 @@ null, deviceConnectHandler) { }
                 }
             }
 #if ANDROID
-			InterfaceManagerServiceDiscovery.Instance.Resume();
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.JellyBean)
+                InterfaceManagerServiceDiscovery.Instance.Resume();
 #elif IOS
 			InterfaceManagerApple.Instance.Resume();
 #endif
