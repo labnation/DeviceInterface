@@ -51,17 +51,9 @@ namespace LabNation.SmartScopeServerUI
             Table.DataSource = new TableDataSource(this);
             Table.Delegate = new TableDelegate(this);
 
-            item = NSStatusBar.SystemStatusBar.CreateStatusItem(NSStatusItemLength.Square);
-            item.Title = "S";
-            item.Menu = new NSMenu();
-            serverTitle = new NSMenuItem("Servers:");
-            serverTitle.Enabled = false;
-            item.Menu.AddItem(serverTitle);
-
             UpdateBandwidth(null);
         }
 
-        NSStatusItem item;
         NSMenuItem serverTitle;
 
         DateTime lastBwUpdate = DateTime.Now;
@@ -122,7 +114,6 @@ namespace LabNation.SmartScopeServerUI
                     {
                         ServerInfo info = new ServerInfo() { server = s, menuItem = new NSMenuItem() };
                         UpdateMenuItem(info);
-                        item.Menu.AddItem(info.menuItem);
                         tableRows.Add(tableRows.Count, info);
                     }
                 }
@@ -131,7 +122,6 @@ namespace LabNation.SmartScopeServerUI
                     if (tableRows.Where(x => x.Value.server == s).Count() != 0)
                     {
                         var info = tableRows.Single(x => x.Value.server == s);
-                        item.Menu.RemoveItem(info.Value.menuItem);
                         tableRows.Remove(info.Key);
 
                         List<ServerInfo> ordered = tableRows.OrderBy(x => x.Key).Select(x => x.Value).ToList();
