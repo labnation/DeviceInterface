@@ -8,7 +8,7 @@
 	<key>CFBundleName</key>
 	<string>SmartScope Server</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.6</string>
+	<string>10.10</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>CFBundleDisplayName</key>
@@ -21,5 +21,7 @@
 	<string>VersionPlaceHolder</string>
 	<key>CFBundleVersion</key>
 	<string>2</string>
+	<key>NSMainNibFile</key>
+	<string>MacMenu</string>
 </dict>
 </plist>
