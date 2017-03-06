@@ -16,7 +16,8 @@ namespace LabNation.SmartScopeServerUI
             Port, 
             BwUp, 
             BwDn, 
-            Buttons 
+            Buttons,
+            Connected
         };
         static Dictionary<COLS, string> coldefs = new Dictionary<COLS, string>
         {
@@ -25,6 +26,7 @@ namespace LabNation.SmartScopeServerUI
             { COLS.BwUp, "Up"},
             { COLS.BwDn, "Down"},
             { COLS.Buttons, ""},
+            { COLS.Connected, "Running"},
 
         };
 
@@ -194,6 +196,16 @@ namespace LabNation.SmartScopeServerUI
                             textfield.StringValue = String.Format(bwFormat, info.bwRx);
                         else if (tableColumn.Identifier == coldefs[COLS.Port])
                             textfield.StringValue = info.server.Port.ToString();
+                        else if (tableColumn.Identifier == coldefs[COLS.Connected])
+                        {
+                            if (info.server.RunningSince == DateTime.MinValue)
+                                textfield.StringValue = "";
+                            else
+                            {
+                                TimeSpan runningfor = (DateTime.Now - info.server.RunningSince);
+                                textfield.StringValue = runningfor.ToString(@"dd\.hh\:mm\:ss");
+                            }
+                        }
                     }
                     return textfield;
                 }

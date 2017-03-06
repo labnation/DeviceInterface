@@ -64,6 +64,8 @@ namespace LabNation.DeviceInterface.Net
             stateRequested = ServerState.Stopped;
         }
 
+        private DateTime runningSince;
+        public DateTime RunningSince { get { return runningSince; } }
         private object disconnectLock = new object();
         private bool disconnectCalled;
         private void ManageState()
@@ -97,11 +99,13 @@ namespace LabNation.DeviceInterface.Net
                         while (DataSocketListener == null || DataSocketListener.Server == null)
                             Thread.Sleep(10);
                         State = ServerState.Started;
+                        runningSince = DateTime.Now;
                         break;
                     case ServerState.Stopped:
                         State = ServerState.Stopping;
                         Disconnect();
                         State = ServerState.Stopped;
+                        runningSince = DateTime.MinValue;
                         break;
                     case ServerState.Destroyed:
                         State = ServerState.Destroying;
