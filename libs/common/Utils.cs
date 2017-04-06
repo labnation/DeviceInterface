@@ -537,9 +537,20 @@ namespace LabNation.Common
             if (number == 0 || double.IsNaN(number))
                 return number;
             int scale = (int)Math.Floor(Math.Log10(Math.Abs(number)));
-            int maxScale = scale - significance + 1;
+
+            //special provision in case abs(number)<1
+            if (scale + 1 < significance)
+                number *= Math.Pow(10, significance - scale - 1);
+            int newScale = (int)Math.Floor(Math.Log10(Math.Abs(number)));
+
+            int maxScale = newScale - significance + 1;
             double rounder = Math.Pow(10, maxScale);
-            return Math.Round(Math.Abs(number) / rounder) /(1/ rounder) * Math.Sign(number);
+            double result = Math.Round(Math.Abs(number) / rounder) /(1/ rounder) * Math.Sign(number);
+
+            if (scale < significance)
+                result /= Math.Pow(10, significance - scale - 1);
+
+            return result;
         }
 
         static public string precisionFormat(double number, double precision, int significance)
@@ -580,12 +591,13 @@ namespace LabNation.Common
         static public string siReferencedScale(double reference, double number, double precision, int significance, int thousand = 1000)
         {
             //Round to the specified precision
-            reference = precisionRound(reference, precision);
+            reference = significanceTruncate(reference, significance);
             //Then scale it to si scale
             double divider = reference == 0 ? 1 : Math.Floor((Math.Log(Math.Abs(reference), thousand)));
             divider = Math.Pow(thousand, divider);
 
-            number = precisionRound(number, precision);
+            number = significanceTruncate(number, significance);
+            number = precisionRound(number, reference/Math.Pow(10, significance));
             number = number / divider;
             return number.ToString();
         }
