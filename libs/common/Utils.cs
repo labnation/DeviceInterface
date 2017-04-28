@@ -620,6 +620,24 @@ namespace LabNation.Common
                 default: return unit;
             }
         }
+
+        static public string siTime(double inSeconds)
+        {
+            int seconds = (int)(inSeconds*1.000001); //dirty fix for double rounding issue. Otherwise 59.9999999 would not be displayed as 1:00.
+            int minutes = (int)((double)seconds / 60.0);
+            int hours = (int)((double)minutes / 60.0);
+            int days = (int)((double)hours/24.0);            
+
+            if (days > 0)
+                return days.ToString() + "d" + (hours%24).ToString();
+            else if (hours > 0)
+                return hours.ToString() + "h" + (minutes%60).ToString("00");
+            else if (minutes > 0)
+                return minutes.ToString() + "m" + (seconds%60).ToString("00");
+            else
+                return seconds.ToString() + "s";
+        }
+
 		static public string siRound(double number)
 		{
 			string prefix = "k";
