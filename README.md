@@ -114,10 +114,10 @@ To use DeviceInterface, you don't actually need to understand these internals, s
 
 All 'smart' chips (PIC, FPGA, ADC) inside the SmartScope have their registers, typically bytes. These are the 'parameters' of certain functionalities of these chips. Examples:
 
-* FGPA: the TRIGGER_LEVEL register defines the voltage of the analog trigger level (FPGA register 7, see [the FPGA register list](https://github.com/labnation/DeviceInterface/blob/master/Memories/ScopeConstants_GEN.cs))
+* FGPA: the TRIGGER_LEVEL register defines the voltage of the analog trigger level (FPGA register 7, see [the FPGA register list](https://github.com/labnation/DeviceInterface/blob/master/src/Hardware/ScopeConstants_GEN.cs))
 * ADC: bits 5 and 4 of register 6 in the ADC defines wheth er its data is in two's complement or simply offset  binary (see the MAX19506 datasheet p22)
 
-Therefore, some logic is required to convert from physical values to register values (eg GUI trigger slider to TRIGGER_LEVEL bytevalue). These conversions are implemented in DeviceInterface (see the [TriggerValue setter method in SmartScopeSettings.cs](https://github.com/labnation/DeviceInterface/blob/master/Devices/SmartScopeSettings.cs)).
+Therefore, some logic is required to convert from physical values to register values (eg GUI trigger slider to TRIGGER_LEVEL bytevalue). These conversions are implemented in DeviceInterface (see the [TriggerValue setter method in SmartScopeSettings.cs](https://github.com/labnation/DeviceInterface/blob/master/src/Devices/SmartScopeSettings.cs)).
 
 `MemoryRegister` represents a register inside of a device. For efficiency's sake, they are cached, meaning the change of a register is not immediately written through to the device. Instead, you can change a bunch of registers and finally call `Commit()` on the containing  `DeviceMemory` object to effectuate the register changes. To circumvent this chaching mechanism, use `MemoryRegister.WriteImmediate()`.
 
