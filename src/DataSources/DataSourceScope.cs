@@ -113,9 +113,12 @@ namespace LabNation.DeviceInterface.DataSources
             {
                 while (running && scope.Ready)
                 {
-                    LatestDataPackage = scope.GetScopeData();
-                    if (LatestDataPackage != null)
+                    DataPackageScope incomingDataPackage = scope.GetScopeData();
+                    if (incomingDataPackage != null)
+                    {
+                        LatestDataPackage = incomingDataPackage;
                         this.fireDataAvailableEvents();
+                    }
                 }
             }
             catch (ThreadInterruptedException tie)
