@@ -522,6 +522,11 @@ namespace LabNation.DeviceInterface.Devices {
 		}
         public DataPackageScope GetScopeData()
         {
+            if (timeOrigin          == null) return null;
+            if (viewportUpdateLock  == null) return null;
+            if (timeOrigin == null) return null;
+            if (acquisitionRunning == null) return null;
+
             //Sleep to simulate USB delay
             System.Threading.Thread.Sleep(usbLatency);
             TimeSpan timeOffset = DateTime.Now - timeOrigin;
@@ -579,6 +584,8 @@ namespace LabNation.DeviceInterface.Devices {
 
 					foreach (AnalogChannel channel in channelsToAcquireDataFor)
                     {
+                        if (!ChannelConfig.ContainsKey(channel)) return null;
+
                         if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                             continue;
                         float[] wave;
@@ -649,6 +656,9 @@ namespace LabNation.DeviceInterface.Devices {
                     else
                     //detect analog trigger
                     {
+                        if (triggerValue == null) return null;
+                        if (triggerValue.source == null) return null;
+
                         if (triggerValue.source == TriggerSource.External)
                             triggerDetected = false;
                         triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerValue.channel].ToArray(), triggerValue,
@@ -702,8 +712,8 @@ namespace LabNation.DeviceInterface.Devices {
                 viewportUpdate = false;
             }
 
-            if (acquisitionBufferAnalog.Count == 0)
-                return null;
+            if (acquisitionBufferAnalog == null) return null;
+            if (acquisitionBufferAnalog.Count == 0) return null;
 
             //Decrease the number of samples till viewport sample period is larger than 
             //or equal to the full sample rate
@@ -763,7 +773,6 @@ namespace LabNation.DeviceInterface.Devices {
                 //set 20mV as resolution, which is needed for some processors (like freqdetection). Don't go too low, as ETS uses this in its difference detector
                 p.Resolution[ch] = 0.020f;
             }
-
 
             if (logicAnalyserEnabledCurrent)
             {
