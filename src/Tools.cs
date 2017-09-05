@@ -354,6 +354,13 @@ namespace LabNation.DeviceInterface
             dutyCycleError = double.NaN;
             risingNFallingEdges = new Dictionary<int, bool>();
 
+            Type innerType = data.array.GetType().GetElementType();
+            if (innerType != typeof(bool) && innerType != typeof(float))
+            {
+                Logger.Error("Crash prevented: asked to find frequency of array of " + innerType.ToString());
+                return;
+            }
+
             bool[] digitized = data.array.GetType().GetElementType() == typeof(bool) ? (bool[])data.array : LabNation.Common.Utils.Schmitt((float[])data.array, minVoltage, maxVoltage);
 
             List<double> edgePeriod = new List<double>();
