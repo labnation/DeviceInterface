@@ -9,29 +9,33 @@ namespace LabNation.DeviceInterface.Devices
 {
     public delegate void AcquisitionTransferFinishedHandler(IScope scope, EventArgs e);
 
-    public sealed class ProbeDivision 
+    public class Probe 
     {
-        public static List<ProbeDivision> divs = new List<ProbeDivision>();
-        public float factor { get; private set; }
-        private string name;
+        public float Gain { get; private set; }
+        public float Offset { get; private set; }
+        public string Name { get; private set; }
+        public string Unit { get; private set; }
 
-        private ProbeDivision(string name, float factor)
+        public Probe(string name, string unit, float gain, float offset)
         {
-            this.factor = factor;
-            this.name = name;
-            divs.Add(this);
+            this.Name = name;
+            this.Unit = unit;
+            this.Gain = gain;
+            this.Offset = offset;
         }
-        public override string ToString() { return this.name; }
 
-        public static implicit operator float(ProbeDivision d) { return d.factor; }
-        public static ProbeDivision X1 = new ProbeDivision("X1", 1f);
-        public static ProbeDivision X10 = new ProbeDivision("X10", 10f);
-        public static ProbeDivision X100 = new ProbeDivision("X100", 100f);
-        public static ProbeDivision findByFactor(float factor)
+        public float RawToUser(float raw)
         {
-            ProbeDivision d = divs.SingleOrDefault(x => x.factor == factor);
-            return d == null ? X1 : d;
+            return Offset + Gain * raw;
         }
+
+        public float UserToRaw(float userValue)
+        {
+            return (userValue - Offset) / Gain;
+        }
+
+        public static Probe DefaultX1Probe { get { return new Probe("X1", "V", 1, 0); } }       //needed as dummy
+        public static Probe DefaultX10Probe { get { return new Probe("X10", "V", 10, 0); } }    //needed as by default we want to set a x10 probe
     }
 
     public enum TriggerSource { Channel = 0, External = 1 };
@@ -145,8 +149,8 @@ namespace LabNation.DeviceInterface.Devices
         float GetYOffset(AnalogChannel channel);
         float GetYOffsetMax(AnalogChannel ch);
         float GetYOffsetMin(AnalogChannel ch);
-        void SetProbeDivision(AnalogChannel ch, ProbeDivision division);
-        ProbeDivision GetProbeDivision(AnalogChannel ch);
+        void SetProbeDivision(AnalogChannel ch, Probe division);
+        Probe GetProbe(AnalogChannel ch);
 
         /* Logic Analyser */
         bool LogicAnalyserEnabled { get; }

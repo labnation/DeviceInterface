@@ -147,12 +147,12 @@ namespace LabNation.DeviceInterface.Devices
             foreach (DigitalChannel d in DigitalChannel.List)
                 this.triggerDigital[d] = DigitalTriggerValue.X;
 
-            probeSettings = new Dictionary<AnalogChannel, ProbeDivision>();
+            probeSettings = new Dictionary<AnalogChannel, Probe>();
             yOffset = new Dictionary<AnalogChannel, float>();
             verticalRanges = new Dictionary<AnalogChannel, Range>();
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                probeSettings[ch] = ProbeDivision.X1;
+                probeSettings[ch] = Probe.DefaultX1Probe;
                 yOffset[ch] = 0f;
             }
 
@@ -592,7 +592,7 @@ namespace LabNation.DeviceInterface.Devices
                 {
                     currentDataPackage.SaturationLowValue[ch] = ((byte)0).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), probeSettings[ch]);
                     currentDataPackage.SaturationHighValue[ch] = ((byte)255).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), probeSettings[ch]);
-                    currentDataPackage.Resolution[ch] = ProbeScaleScopeToHost(ch, (float)channelConfig[ch].coefficients[0]);
+                    currentDataPackage.Resolution[ch] = probeSettings[ch].RawToUser((float)channelConfig[ch].coefficients[0]);
                     currentDataPackage.Settings["Multiplier" + ch.Name] = channelConfig[ch].multiplier;
 #if DEBUG
                     currentDataPackage.Settings["Divider" + ch.Name] = channelConfig[ch].divider;
@@ -669,7 +669,8 @@ namespace LabNation.DeviceInterface.Devices
 				if(coeff.Length != 3)
 					throw new Exception(String.Format("Calibration coefficients are not of length 3, but {0} for ch {1} (n_ch:{2}", coeff.Length, ch.Name, n_channels));
                 byte yOffset = header.GetRegister(ch.YOffsetRegister());
-                float gain = probeSettings[ch];
+                float probeGain = probeSettings[ch].Gain;
+                float probeOffset = probeSettings[ch].Offset;
                 float totalOffset = (float)(yOffset * coeff[1] + coeff[2]);
 
                 int k = j;
@@ -679,7 +680,7 @@ namespace LabNation.DeviceInterface.Devices
                 {
                     byte b = buffer[offset + k];
                     splitRaw[j][i] = b;
-                    splitVolt[j][i] = (float)(b * coeff[0] + totalOffset) * gain;
+                    splitVolt[j][i] = (float)(b * coeff[0] + totalOffset) * probeGain + probeOffset;
                     k += n_channels;
                 }
             }
@@ -715,7 +716,7 @@ namespace LabNation.DeviceInterface.Devices
 
     internal static class Helpers
     {
-        public static TriggerValue TriggerValue(this SmartScopeHeader hdr, Dictionary<AnalogChannel, SmartScope.GainCalibration> channelConfig, Dictionary<AnalogChannel, ProbeDivision> probeSettings)
+        public static TriggerValue TriggerValue(this SmartScopeHeader hdr, Dictionary<AnalogChannel, SmartScope.GainCalibration> channelConfig, Dictionary<AnalogChannel, Probe> probeSettings)
         {
             byte modeByte = hdr.GetRegister(REG.TRIGGER_MODE);
             TriggerValue tv = new TriggerValue()
@@ -755,20 +756,21 @@ namespace LabNation.DeviceInterface.Devices
             return settings;
         }
 
-        public static float ConvertByteToVoltage(this byte b, SmartScope.GainCalibration calibration, byte yOffset, ProbeDivision division)
+        public static float ConvertByteToVoltage(this byte b, SmartScope.GainCalibration calibration, byte yOffset, Probe division)
         {
             return (new byte[] { b }).ConvertByteToVoltage(calibration, yOffset, division)[0];
         }
-        public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, ProbeDivision division)
+        public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, Probe probe)
         {
             double[] coefficients = calibration.coefficients;
             float[] voltage = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value
             float totalOffset = (float)(yOffset * coefficients[1] + coefficients[2]);
-            float gain = division;
+            float probeGain = probe.Gain;
+            float probeOffset = probe.Offset;
 
-            voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * gain).ToArray();
+            voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * probeGain + probeOffset).ToArray();
             return voltage;
         }
                 
