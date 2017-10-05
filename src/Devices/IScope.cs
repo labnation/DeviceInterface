@@ -34,8 +34,10 @@ namespace LabNation.DeviceInterface.Devices
             return (userValue - Offset) / Gain;
         }
 
-        public static Probe DefaultX1Probe { get { return new Probe("X1", "V", 1, 0); } }       //needed as dummy
-        public static Probe DefaultX10Probe { get { return new Probe("X10", "V", 10, 0); } }    //needed as by default we want to set a x10 probe
+        private static Probe defaultX1Probe = new Probe("X1", "V", 1, 0);
+        public static Probe DefaultX1Probe {get { return defaultX1Probe; } }
+        private static Probe defaultX10Probe = new Probe("X10", "V", 10, 0);
+        public static Probe DefaultX10Probe { get { return defaultX10Probe; } }
     }
 
     public enum TriggerSource { Channel = 0, External = 1 };
