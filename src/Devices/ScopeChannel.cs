@@ -45,8 +45,10 @@ namespace LabNation.DeviceInterface.Devices
     {
         private static HashSet<AnalogChannel> list = new HashSet<AnalogChannel>();
         new public static IList<AnalogChannel> List { get { return list.ToList().AsReadOnly(); } }
+        public Probe Probe { get; private set; }
         private AnalogChannel(string name, int value) : base(name, value, typeof(float)) { 
             list.Add(this);
+            this.Probe = Probe.DefaultX1Probe;
         }
         static public implicit operator AnalogChannel(string chName)
         {
@@ -56,6 +58,10 @@ namespace LabNation.DeviceInterface.Devices
         static public explicit operator AnalogChannelRaw(AnalogChannel ch)
         {
             return AnalogChannelRaw.List.Single(x => x.Value == ch.Value);
+        }
+        public void SetProbe(Probe newProbe)
+        {
+            this.Probe = newProbe;
         }
 
         public static readonly AnalogChannel ChA = new AnalogChannel("A", 0);
