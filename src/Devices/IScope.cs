@@ -3,18 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LabNation.DeviceInterface.DataSources;
-
+using System.IO;
+using System.Runtime.Serialization;
+using System.Xml;
 
 namespace LabNation.DeviceInterface.Devices
 {
     public delegate void AcquisitionTransferFinishedHandler(IScope scope, EventArgs e);
 
+    [Serializable()]
+    [DataContract]
     public class Probe 
     {
-        public float Gain { get; private set; }
-        public float Offset { get; private set; }
-        public string Name { get; private set; }
-        public string Unit { get; private set; }
+        [DataMember] public float Gain { get; private set; }
+        [DataMember] public float Offset { get; private set; }
+        [DataMember] public string Name { get; private set; }
+        [DataMember] public string Unit { get; private set; }
 
         public Probe(string name, string unit, float gain, float offset)
         {

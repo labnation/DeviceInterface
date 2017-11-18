@@ -45,6 +45,7 @@
     <Reference Include="WinUSB" />
     <Reference Include="LibUsbDotNet" />
     <Reference Include="Mono.Zeroconf" />
+	<Reference Include="System.Runtime.Serialization"/>
   </References>
   <Files>
     <Compile Include="src\DataSources\DataPackageScope.cs" />
