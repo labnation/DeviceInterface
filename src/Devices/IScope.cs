@@ -19,28 +19,36 @@ namespace LabNation.DeviceInterface.Devices
         [DataMember] public float Offset { get; private set; }
         [DataMember] public string Name { get; private set; }
         [DataMember] public string Unit { get; private set; }
+        [DataMember] public bool Inverted { get; set; }
 
-        public Probe(string name, string unit, float gain, float offset)
+        public Probe(string name, string unit, float gain, float offset, bool invert)
         {
             this.Name = name;
             this.Unit = unit;
             this.Gain = gain;
             this.Offset = offset;
+            this.Inverted = invert;
         }
 
         public float RawToUser(float raw)
         {
-            return Offset + Gain * raw;
+            if (Inverted)
+                return -(Offset + Gain * raw);
+            else
+                return Offset + Gain * raw;
         }
 
         public float UserToRaw(float userValue)
         {
-            return (userValue - Offset) / Gain;
+            if (Inverted)
+                return (- userValue - Offset) / Gain;
+            else
+                return (userValue - Offset) / Gain;
         }
 
-        private static Probe defaultX1Probe = new Probe("X1", "V", 1, 0);
+        private static Probe defaultX1Probe = new Probe("X1", "V", 1, 0, false);
         public static Probe DefaultX1Probe {get { return defaultX1Probe; } }
-        private static Probe defaultX10Probe = new Probe("X10", "V", 10, 0);
+        private static Probe defaultX10Probe = new Probe("X10", "V", 10, 0, false);
         public static Probe DefaultX10Probe { get { return defaultX10Probe; } }
     }
 
@@ -153,8 +161,8 @@ namespace LabNation.DeviceInterface.Devices
         void SetVerticalRange(AnalogChannel channel, float minimum, float maximum);
         void SetYOffset(AnalogChannel channel, float offset);
         float GetYOffset(AnalogChannel channel);
-        float GetYOffsetMax(AnalogChannel ch);
-        float GetYOffsetMin(AnalogChannel ch);
+        float GetYOffsetLimit1(AnalogChannel ch);
+        float GetYOffsetLimit2(AnalogChannel ch);
         void SetProbeDivision(AnalogChannel ch, Probe division);
         Probe GetProbe(AnalogChannel ch);
 

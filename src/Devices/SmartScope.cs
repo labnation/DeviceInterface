@@ -676,12 +676,27 @@ namespace LabNation.DeviceInterface.Devices
                 int k = j;
 				if(offset + n_channels * (n_samples - 1) + k >= buffer.Length)
 					throw new Exception(String.Format("Buffer will be addressed out of bounds. [offset:{0}][n_chan:{1}][length:{2}][n_samp:{3}][buf_len:{4}]", offset, n_channels, length, n_samples, buffer.Length));
-                for (int i = 0; i < n_samples; i++)
+
+                //in case probe is inverted: different loop for speedup
+                if (probeSettings[ch].Inverted)
                 {
-                    byte b = buffer[offset + k];
-                    splitRaw[j][i] = b;
-                    splitVolt[j][i] = (float)(b * coeff[0] + totalOffset) * probeGain + probeOffset;
-                    k += n_channels;
+                    for (int i = 0; i < n_samples; i++)
+                    {
+                        byte b = buffer[offset + k];
+                        splitRaw[j][i] = b;
+                        splitVolt[j][i] = -((float)(b * coeff[0] + totalOffset) * probeGain + probeOffset);
+                        k += n_channels;
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < n_samples; i++)
+                    {
+                        byte b = buffer[offset + k];
+                        splitRaw[j][i] = b;
+                        splitVolt[j][i] = (float)(b * coeff[0] + totalOffset) * probeGain + probeOffset;
+                        k += n_channels;
+                    }
                 }
             }
 
@@ -770,7 +785,11 @@ namespace LabNation.DeviceInterface.Devices
             float probeGain = probe.Gain;
             float probeOffset = probe.Offset;
 
-            voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * probeGain + probeOffset).ToArray();
+            if (probe.Inverted)
+                voltage = buffer.Select(x => -((float)(x * coefficients[0] + totalOffset) * probeGain + probeOffset)).ToArray();
+            else
+                voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * probeGain + probeOffset).ToArray();
+
             return voltage;
         }
                 

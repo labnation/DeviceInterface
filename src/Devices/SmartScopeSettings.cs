@@ -162,8 +162,8 @@ namespace LabNation.DeviceInterface.Devices
         }
 
         //FIXME: this might be need to be implemented as LUT
-        public float GetYOffsetMax(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMax); }
-        public float GetYOffsetMin(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMin); }
+        public float GetYOffsetLimit1(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMax); }
+        public float GetYOffsetLimit2(AnalogChannel channel) { return ConvertYOffsetByteToVoltage(channel, yOffsetMin); }
 
         /// <summary>
         /// Sets and uploads the divider and multiplier what are optimal for the requested range

@@ -350,8 +350,8 @@ namespace LabNation.DeviceInterface.Devices {
 		{
 		   return this.yOffset[ch];
 		}
-        public float GetYOffsetMax(AnalogChannel ch) { return float.MaxValue; }
-        public float GetYOffsetMin(AnalogChannel ch) { return float.MinValue; }
+        public float GetYOffsetLimit1(AnalogChannel ch) { return float.MaxValue; }
+        public float GetYOffsetLimit2(AnalogChannel ch) { return float.MinValue; }
 
         public void ForceTrigger()
         {
