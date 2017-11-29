@@ -341,6 +341,18 @@ namespace LabNation.DeviceInterface.Devices
                     FpgaSettingsMemory[REG.TRIGGER_LEVEL].Set((byte)level);   
                 }
 
+                /* Set external trigger level */
+                if (value.source == TriggerSource.External)
+                {
+                    float maxTriggerComparisonVoltage = 3;
+                    float requestedComparisonVoltage = (float)(Math.Max(0, Math.Min(maxTriggerComparisonVoltage, value.level)));
+                    FpgaSettingsMemory[REG.TRIGGER_PWM].Set((byte)(requestedComparisonVoltage / maxTriggerComparisonVoltage * 255.0f));
+
+                    //FIXME: we have to make a clean way to enable the 3V rail solely for the external trigger. 
+                    //Now this is only enabled by the LA_ENABLE and GENERATOR_TO_AWG strobes
+                    StrobeMemory[STR.GENERATOR_TO_AWG].Set(true);
+                }
+
                 TriggerDigital = triggerValue.Digital;
 
                 UpdateTriggerPulseWidth();
