@@ -46,6 +46,11 @@ namespace LabNation.DeviceInterface.Devices
                 return (userValue - Offset) / Gain;
         }
 
+        public void ChangeOffset(float offset)
+        {
+            this.Offset = offset;
+        }
+
         private static Probe defaultX1Probe = new Probe("X1", "V", 1, 0, false);
         public static Probe DefaultX1Probe {get { return defaultX1Probe; } }
         private static Probe defaultX10Probe = new Probe("X10", "V", 10, 0, false);
