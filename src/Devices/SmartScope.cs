@@ -162,7 +162,7 @@ namespace LabNation.DeviceInterface.Devices
             } catch(Exception e)
             {
                 Logger.Error("Failed to initialize hardware, resetting scope: " + e.Message);
-                hardwareInterface.Reset();
+                if (HardwareInterface != null) hardwareInterface.Reset();
                 throw e;
             }
             
