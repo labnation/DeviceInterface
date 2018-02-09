@@ -589,9 +589,9 @@ namespace LabNation.DeviceInterface.Devices
                 currentDataPackage.Settings["InputDecimation"] = hdr.GetRegister(REG.INPUT_DECIMATION);
                 foreach (AnalogChannel ch in analogChannels)
                 {
-                    currentDataPackage.SaturationLowValue[ch] = ((byte)0).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), ch.Probe);
-                    currentDataPackage.SaturationHighValue[ch] = ((byte)255).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), ch.Probe);
-                    currentDataPackage.Resolution[ch] = ch.Probe.RawToUser((float)channelConfig[ch].coefficients[0]);
+                    currentDataPackage.SaturationLowValue[ch] = ((byte)0).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), ch);
+                    currentDataPackage.SaturationHighValue[ch] = ((byte)255).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), ch);
+                    currentDataPackage.Resolution[ch] = ch.RawToUser((float)channelConfig[ch].coefficients[0]);
                     currentDataPackage.Settings["Multiplier" + ch.Name] = channelConfig[ch].multiplier;
 #if DEBUG
                     currentDataPackage.Settings["Divider" + ch.Name] = channelConfig[ch].divider;
@@ -677,7 +677,7 @@ namespace LabNation.DeviceInterface.Devices
 					throw new Exception(String.Format("Buffer will be addressed out of bounds. [offset:{0}][n_chan:{1}][length:{2}][n_samp:{3}][buf_len:{4}]", offset, n_channels, length, n_samples, buffer.Length));
 
                 //in case probe is inverted: different loop for speedup
-                if (ch.Probe.Inverted)
+                if (ch.Inverted)
                 {
                     for (int i = 0; i < n_samples; i++)
                     {
@@ -750,7 +750,7 @@ namespace LabNation.DeviceInterface.Devices
                     (hdr.GetRegister(REG.TRIGGER_PW_MAX_B1) << 8) &
                     (hdr.GetRegister(REG.TRIGGER_PW_MAX_B2) << 16)
                     ) * SmartScope.BASE_SAMPLE_PERIOD;
-            tv.level = hdr.GetRegister(REG.TRIGGER_LEVEL).ConvertByteToVoltage(channelConfig[tv.channel], hdr.GetRegister(tv.channel.YOffsetRegister()), tv.channel.Probe);
+            tv.level = hdr.GetRegister(REG.TRIGGER_LEVEL).ConvertByteToVoltage(channelConfig[tv.channel], hdr.GetRegister(tv.channel.YOffsetRegister()), tv.channel);
             return tv;
         }
         public static Dictionary<AnalogChannel, SmartScope.GainCalibration> ChannelSettings(this SmartScopeHeader h, SmartScope.Rom r)
@@ -770,21 +770,21 @@ namespace LabNation.DeviceInterface.Devices
             return settings;
         }
 
-        public static float ConvertByteToVoltage(this byte b, SmartScope.GainCalibration calibration, byte yOffset, Probe division)
+        public static float ConvertByteToVoltage(this byte b, SmartScope.GainCalibration calibration, byte yOffset, AnalogChannel ch)
         {
-            return (new byte[] { b }).ConvertByteToVoltage(calibration, yOffset, division)[0];
+            return (new byte[] { b }).ConvertByteToVoltage(calibration, yOffset, ch)[0];
         }
-        public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, Probe probe)
+        public static float[] ConvertByteToVoltage(this byte[] buffer, SmartScope.GainCalibration calibration, byte yOffset, AnalogChannel ch)
         {
             double[] coefficients = calibration.coefficients;
             float[] voltage = new float[buffer.Length];
 
             //this section converts twos complement to a physical voltage value
             float totalOffset = (float)(yOffset * coefficients[1] + coefficients[2]);
-            float probeGain = probe.Gain;
-            float probeOffset = probe.Offset;
+            float probeGain = ch.Probe.Gain;
+            float probeOffset = ch.Probe.Offset;
 
-            if (probe.Inverted)
+            if (ch.Inverted)
                 voltage = buffer.Select(x => -((float)(x * coefficients[0] + totalOffset) * probeGain + probeOffset)).ToArray();
             else
                 voltage = buffer.Select(x => (float)(x * coefficients[0] + totalOffset) * probeGain + probeOffset).ToArray();

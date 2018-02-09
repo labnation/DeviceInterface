@@ -19,7 +19,6 @@ namespace LabNation.DeviceInterface.Devices
         [DataMember] public float Offset { get; private set; }
         [DataMember] public string Name { get; private set; }
         [DataMember] public string Unit { get; private set; }
-        [DataMember] public bool Inverted { get; set; }
 
         public Probe(string name, string unit, float gain, float offset, bool invert)
         {
@@ -27,24 +26,7 @@ namespace LabNation.DeviceInterface.Devices
             this.Unit = unit;
             this.Gain = gain;
             this.Offset = offset;
-            this.Inverted = invert;
-        }
-
-        public float RawToUser(float raw)
-        {
-            if (Inverted)
-                return -(Offset + Gain * raw);
-            else
-                return Offset + Gain * raw;
-        }
-
-        public float UserToRaw(float userValue)
-        {
-            if (Inverted)
-                return (- userValue - Offset) / Gain;
-            else
-                return (userValue - Offset) / Gain;
-        }
+        }        
 
         public void ChangeOffset(float offset)
         {
