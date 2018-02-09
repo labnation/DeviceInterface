@@ -168,8 +168,6 @@ namespace LabNation.DeviceInterface.Devices
         float GetYOffset(AnalogChannel channel);
         float GetYOffsetLimit1(AnalogChannel ch);
         float GetYOffsetLimit2(AnalogChannel ch);
-        void SetProbeDivision(AnalogChannel ch, Probe division);
-        Probe GetProbe(AnalogChannel ch);
 
         /* Logic Analyser */
         bool LogicAnalyserEnabled { get; }

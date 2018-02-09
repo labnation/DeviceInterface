@@ -125,7 +125,7 @@ namespace SmartScopeConsole
 				//use DC coupling
 				scope.SetCoupling (ch, Coupling.DC);
 				//and x10 probes
-				scope.SetProbeDivision (ch, Probe.DefaultX10Probe);
+				ch.SetProbe(Probe.DefaultX10Probe);
 			}
 
 			// Set trigger to channel A
@@ -228,7 +228,7 @@ namespace SmartScopeConsole
 				c += String.Format ("======= Channel {0:s} =======\n", chName);
 				c += String.Format (fCh, chName, "Vertical offset", printVolt (scope.GetYOffset (ch)));
 				c += String.Format (fCh, chName, "Coupling", scope.GetCoupling (ch).ToString ("G"));
-				c += String.Format (fCh, chName, "Probe division", scope.GetProbe (ch).ToString ());
+				c += String.Format (fCh, chName, "Probe division", ch.Probe.ToString ());
 			}
 			c += "---------------------------------------------\n";
 			Console.Write (c);				

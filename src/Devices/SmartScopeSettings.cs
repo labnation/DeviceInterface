@@ -34,7 +34,6 @@ namespace LabNation.DeviceInterface.Devices
             public float maximum;
         }
 
-        private Dictionary<AnalogChannel, Probe> probeSettings;
         private Dictionary<AnalogChannel, Range> verticalRanges;
         private Dictionary<AnalogChannel, float> yOffset;
 
@@ -139,7 +138,7 @@ namespace LabNation.DeviceInterface.Devices
             //Let ADC output of 127 be the zero point of the Yoffset
             double[] c = channelSettings[channel].coefficients;
 
-            FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(probeSettings[channel].UserToRaw(offset) + c[2] + c[0] * 127) / c[1])));
+            FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(channel.Probe.UserToRaw(offset) + c[2] + c[0] * 127) / c[1])));
             yOffset[channel] = GetYOffset(channel);
             if (channel == triggerValue.channel && triggerValue.mode != TriggerMode.Digital)
             {
@@ -151,7 +150,7 @@ namespace LabNation.DeviceInterface.Devices
         {
             double[] c = channelSettings[channel].coefficients;
             float voltageSet = (float)(-value * c[1] - c[2] - c[0] * 127.0);
-            return probeSettings[channel].RawToUser(voltageSet);
+            return channel.Probe.RawToUser(voltageSet);
         }
 
 		public float GetYOffset(AnalogChannel channel)
@@ -180,7 +179,7 @@ namespace LabNation.DeviceInterface.Devices
             float baseMax = 0.6769f; //V
 
             float baseRange = baseMax - baseMin;
-            float reqRange = probeSettings[channel].UserToRaw(maximum - minimum);
+            float reqRange = channel.Probe.UserToRaw(maximum - minimum);
 
             //Walk through dividers/multipliers till requested range fits
             //this walk assumes it starts with the smallest range, and that range is only increasing
@@ -203,17 +202,6 @@ namespace LabNation.DeviceInterface.Devices
             SetMultiplier(channel, validMultipliers[multIndex]);
             channelSettings[channel] = rom.getCalibration(channel, validDividers[dividerIndex], validMultipliers[multIndex]);
             SetYOffset(channel, yOffset[channel]);
-        }
-
-        public void SetProbeDivision(AnalogChannel ch, Probe division)
-        {
-            probeSettings[ch] = division;
-            SetVerticalRange(ch, verticalRanges[ch].minimum, verticalRanges[ch].maximum);
-        }
-
-        public Probe GetProbe(AnalogChannel ch)
-        {
-            return probeSettings[ch];
         }
 
 		/// <summary>
@@ -333,7 +321,7 @@ namespace LabNation.DeviceInterface.Devices
                     REG offsetRegister = value.channel == AnalogChannel.ChB ? REG.CHB_YOFFSET_VOLTAGE : REG.CHA_YOFFSET_VOLTAGE;
                     double level = 0;
                     if (coefficients != null)
-                        level = (probeSettings[value.channel].UserToRaw(value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
+                        level = (value.channel.Probe.UserToRaw(value.level) - FpgaSettingsMemory[offsetRegister].GetByte() * coefficients[1] - coefficients[2]) / coefficients[0];
                     if (level < 0) level = 0;
                     if (level > 255) level = 255;
 
@@ -374,7 +362,7 @@ namespace LabNation.DeviceInterface.Devices
                 if (coefficients != null) {
                     level = FpgaSettingsMemory[REG.TRIGGER_LEVEL].GetByte();
                     level = level * coefficients[0] + coefficients[1] * FpgaSettingsMemory[offsetRegister].GetByte() + coefficients[2];
-                    level = probeSettings[v.channel].RawToUser((float)level);
+                    level = v.channel.Probe.RawToUser((float)level);
                 }
                 v.level = (float)level;
 

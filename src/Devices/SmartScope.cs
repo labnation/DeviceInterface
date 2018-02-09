@@ -147,12 +147,11 @@ namespace LabNation.DeviceInterface.Devices
             foreach (DigitalChannel d in DigitalChannel.List)
                 this.triggerDigital[d] = DigitalTriggerValue.X;
 
-            probeSettings = new Dictionary<AnalogChannel, Probe>();
             yOffset = new Dictionary<AnalogChannel, float>();
             verticalRanges = new Dictionary<AnalogChannel, Range>();
             foreach (AnalogChannel ch in AnalogChannel.List)
             {
-                probeSettings[ch] = Probe.DefaultX1Probe;
+                ch.SetProbe(Probe.DefaultX1Probe);
                 yOffset[ch] = 0f;
             }
 
@@ -584,15 +583,15 @@ namespace LabNation.DeviceInterface.Devices
                     ViewportLength, ViewportOffsetSamples,
                     TriggerHoldoff, holdoffSamples, 
                     hdr.flags.HasFlag(HeaderFlags.Rolling), hdr.acquisition_id, 
-                    hdr.TriggerValue(channelConfig, probeSettings), 
+                    hdr.TriggerValue(channelConfig), 
                     ViewportExcess);
 
                 currentDataPackage.Settings["InputDecimation"] = hdr.GetRegister(REG.INPUT_DECIMATION);
                 foreach (AnalogChannel ch in analogChannels)
                 {
-                    currentDataPackage.SaturationLowValue[ch] = ((byte)0).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), probeSettings[ch]);
-                    currentDataPackage.SaturationHighValue[ch] = ((byte)255).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), probeSettings[ch]);
-                    currentDataPackage.Resolution[ch] = probeSettings[ch].RawToUser((float)channelConfig[ch].coefficients[0]);
+                    currentDataPackage.SaturationLowValue[ch] = ((byte)0).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), ch.Probe);
+                    currentDataPackage.SaturationHighValue[ch] = ((byte)255).ConvertByteToVoltage(channelConfig[ch], hdr.GetRegister(ch.YOffsetRegister()), ch.Probe);
+                    currentDataPackage.Resolution[ch] = ch.Probe.RawToUser((float)channelConfig[ch].coefficients[0]);
                     currentDataPackage.Settings["Multiplier" + ch.Name] = channelConfig[ch].multiplier;
 #if DEBUG
                     currentDataPackage.Settings["Divider" + ch.Name] = channelConfig[ch].divider;
@@ -669,8 +668,8 @@ namespace LabNation.DeviceInterface.Devices
 				if(coeff.Length != 3)
 					throw new Exception(String.Format("Calibration coefficients are not of length 3, but {0} for ch {1} (n_ch:{2}", coeff.Length, ch.Name, n_channels));
                 byte yOffset = header.GetRegister(ch.YOffsetRegister());
-                float probeGain = probeSettings[ch].Gain;
-                float probeOffset = probeSettings[ch].Offset;
+                float probeGain = ch.Probe.Gain;
+                float probeOffset = ch.Probe.Offset;
                 float totalOffset = (float)(yOffset * coeff[1] + coeff[2]);
 
                 int k = j;
@@ -678,7 +677,7 @@ namespace LabNation.DeviceInterface.Devices
 					throw new Exception(String.Format("Buffer will be addressed out of bounds. [offset:{0}][n_chan:{1}][length:{2}][n_samp:{3}][buf_len:{4}]", offset, n_channels, length, n_samples, buffer.Length));
 
                 //in case probe is inverted: different loop for speedup
-                if (probeSettings[ch].Inverted)
+                if (ch.Probe.Inverted)
                 {
                     for (int i = 0; i < n_samples; i++)
                     {
@@ -731,7 +730,7 @@ namespace LabNation.DeviceInterface.Devices
 
     internal static class Helpers
     {
-        public static TriggerValue TriggerValue(this SmartScopeHeader hdr, Dictionary<AnalogChannel, SmartScope.GainCalibration> channelConfig, Dictionary<AnalogChannel, Probe> probeSettings)
+        public static TriggerValue TriggerValue(this SmartScopeHeader hdr, Dictionary<AnalogChannel, SmartScope.GainCalibration> channelConfig)
         {
             byte modeByte = hdr.GetRegister(REG.TRIGGER_MODE);
             TriggerValue tv = new TriggerValue()
@@ -751,7 +750,7 @@ namespace LabNation.DeviceInterface.Devices
                     (hdr.GetRegister(REG.TRIGGER_PW_MAX_B1) << 8) &
                     (hdr.GetRegister(REG.TRIGGER_PW_MAX_B2) << 16)
                     ) * SmartScope.BASE_SAMPLE_PERIOD;
-            tv.level = hdr.GetRegister(REG.TRIGGER_LEVEL).ConvertByteToVoltage(channelConfig[tv.channel], hdr.GetRegister(tv.channel.YOffsetRegister()), probeSettings[tv.channel]);
+            tv.level = hdr.GetRegister(REG.TRIGGER_LEVEL).ConvertByteToVoltage(channelConfig[tv.channel], hdr.GetRegister(tv.channel.YOffsetRegister()), tv.channel.Probe);
             return tv;
         }
         public static Dictionary<AnalogChannel, SmartScope.GainCalibration> ChannelSettings(this SmartScopeHeader h, SmartScope.Rom r)

@@ -23,7 +23,6 @@ namespace LabNation.DeviceInterface.Devices {
         public double dutyCycle;
         public double noise;
         public int bursts;
-        public Probe probeDivision;
     }
 
 	public partial class DummyScope : IDevice, IScope {
@@ -192,8 +191,7 @@ namespace LabNation.DeviceInterface.Devices {
                         frequency = 10e3,
                         phase = 0,
                         dutyCycle = 0.5f,
-                        waveform = AnalogWaveForm.TRIANGLE,
-                        probeDivision = Probe.DefaultX1Probe,
+                        waveform = AnalogWaveForm.TRIANGLE
                     }
                 },
                 { AnalogChannel.ChB, new DummyScopeChannelConfig() 
@@ -205,8 +203,7 @@ namespace LabNation.DeviceInterface.Devices {
                         frequency = 10e3,
                         phase = 0,
                         dutyCycle = 0.5f,
-                        waveform = AnalogWaveForm.SINE,
-                        probeDivision = Probe.DefaultX1Probe,
+                        waveform = AnalogWaveForm.SINE
                     }
                 }
             };
@@ -333,14 +330,6 @@ namespace LabNation.DeviceInterface.Devices {
         }
         public void SetVerticalRange(AnalogChannel ch, float minimum, float maximum)
         {
-        }
-        public void SetProbeDivision(AnalogChannel ch, Probe division)
-        {
-            ChannelConfig[ch].probeDivision = division;
-        }
-        public Probe GetProbe(AnalogChannel ch)
-        {
-            return ChannelConfig[ch].probeDivision;
         }
         public void SetYOffset(AnalogChannel ch, float yOffset)
 		{
