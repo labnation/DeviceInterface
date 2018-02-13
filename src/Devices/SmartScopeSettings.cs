@@ -179,7 +179,7 @@ namespace LabNation.DeviceInterface.Devices
             float baseMax = 0.6769f; //V
 
             float baseRange = baseMax - baseMin;
-            float reqRange = channel.UserToRaw(maximum - minimum);
+            float reqRange = Math.Abs(channel.UserToRaw(maximum - minimum)); //need to take Abs, because custom probes can make the UserToRaw outcome negative!
 
             //Walk through dividers/multipliers till requested range fits
             //this walk assumes it starts with the smallest range, and that range is only increasing
