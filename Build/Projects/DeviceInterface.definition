@@ -155,6 +155,7 @@
 	<EmbeddedResource Include="blobs\SmartScope_A15.bin" />
 	<EmbeddedResource Include="blobs\SmartScope_A16.bin" />
     <EmbeddedResource Include="blobs\SmartScope_A17.bin" />
+	<EmbeddedResource Include="blobs\SmartScope_A18.bin" />
     <EmbeddedResource Include="blobs\SmartScopeHackerSpecial.bin" />
 	
 	<Content Include="driver\wdi-simple.exe">
