@@ -4,9 +4,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>com.lab-nation.SmartScopeServerUI</string>
+	<string>com.lab-nation.SmartScopeConsole</string>
 	<key>CFBundleName</key>
-	<string>SmartScope Server</string>
+	<string>SmartScope Console</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.10</string>
 	<key>NSPrincipalClass</key>
