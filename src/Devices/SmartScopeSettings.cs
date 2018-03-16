@@ -138,7 +138,7 @@ namespace LabNation.DeviceInterface.Devices
             //Let ADC output of 127 be the zero point of the Yoffset
             double[] c = channelSettings[channel].coefficients;
 
-            FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(channel.UserToRaw(offset) + c[2] + c[0] * 127) / c[1])));
+            FpgaSettingsMemory[r].Set((byte)Math.Max(yOffsetMin, Math.Min(yOffsetMax, -(channel.UserToRaw(offset+channel.Probe.Offset) + c[2] + c[0] * 127) / c[1]))); //probe offset needs to be taken into account here, because entire class uses the 'GUI' values == the values measured in the probe's unit. Only when settings div/mult or offset, these are translated to the real voltage.
             yOffset[channel] = GetYOffset(channel);
             if (channel == triggerValue.channel && triggerValue.mode != TriggerMode.Digital)
             {
@@ -179,7 +179,7 @@ namespace LabNation.DeviceInterface.Devices
             float baseMax = 0.6769f; //V
 
             float baseRange = baseMax - baseMin;
-            float reqRange = Math.Abs(channel.UserToRaw(maximum - minimum)); //need to take Abs, because custom probes can make the UserToRaw outcome negative!
+            float reqRange = Math.Abs(channel.UserToRaw(maximum) - channel.UserToRaw(minimum)); //need to take Abs, because custom probes can make the UserToRaw outcome negative!
 
             //Walk through dividers/multipliers till requested range fits
             //this walk assumes it starts with the smallest range, and that range is only increasing
