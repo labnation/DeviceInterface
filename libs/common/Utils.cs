@@ -223,13 +223,22 @@ namespace LabNation.Common
             }
         }
 
+#if WINDOWS
+        private static string storagePath = "";
+#endif 
         public static string StoragePath
         {
             get
             {
-                string path = 
+#if WINDOWS
+                if (storagePath == "")
+                    storagePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
+#endif
+                string path =
 #if ANDROID
                 Android.OS.Environment.ExternalStorageDirectory.AbsolutePath;
+#elif WINDOWS
+                storagePath;
 #else
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
 #endif
