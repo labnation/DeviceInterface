@@ -239,6 +239,15 @@ namespace LabNation.Common
                 Android.OS.Environment.ExternalStorageDirectory.AbsolutePath;
 #elif WINDOWS
                 storagePath;
+
+                //as long as it is not possible to create a file in this directory: iterate to parent
+                while (!IsDirectoryWritable(path))
+                {
+                    DirectoryInfo parDirectory = Directory.GetParent(path);
+                    if (parDirectory == null) break;
+
+                    path = parDirectory.FullName;
+                }
 #else
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
 #endif
@@ -249,6 +258,29 @@ namespace LabNation.Common
                 return path;
             }
         }
+
+#if WINDOWS
+        public static bool IsDirectoryWritable(string dirPath)
+        {
+            try
+            {
+                using (FileStream fs = File.Create(
+                    Path.Combine(
+                        dirPath,
+                        Path.GetRandomFileName()
+                    ),
+                    1,
+                    FileOptions.DeleteOnClose)
+                )
+                { }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+#endif
 
         public static bool Schmitt(float value, bool previousValue, float thresholdHigh, float thresholdLow)
         {
