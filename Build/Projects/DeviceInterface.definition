@@ -69,6 +69,8 @@
 	<Compile Include="src\Tools.cs" />
 	<Compile Include="src\Devices\DeviceManager.cs" />
     <Compile Include="src\Devices\IScope.cs" />
+    <Compile Include="src\Devices\IWifiBridge.cs" />
+    <Compile Include="src\Devices\WifiBridge.cs" />
 	<Compile Include="src\Devices\IDevice.cs" />
 	<Compile Include="src\Devices\IWaveGenerator.cs" />
     <Compile Include="src\Devices\ScopeChannel.cs" />

@@ -20,6 +20,7 @@ namespace LabNation.DeviceInterface.Devices
     public partial class SmartScope : IScope, IWaveGenerator, IDisposable
     {
         public IHardwareInterface HardwareInterface { get { return hardwareInterface; } }
+        public IWifiBridge WifiBridge;
         private ISmartScopeInterface hardwareInterface;
 #if DEBUG
         public
@@ -140,6 +141,10 @@ namespace LabNation.DeviceInterface.Devices
         public SmartScope(ISmartScopeInterface hwInterface) : base()
         {
             this.hardwareInterface = hwInterface;
+
+            if (this.hardwareInterface is SmartScopeInterfaceEthernet)
+                this.WifiBridge = new WifiBridge(this.hardwareInterface as SmartScopeInterfaceEthernet);
+
             this.SuspendViewportUpdates = false;
             DataOutOfRange = false;
             deviceReady = false;

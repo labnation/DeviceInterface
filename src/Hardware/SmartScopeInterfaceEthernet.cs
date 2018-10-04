@@ -26,6 +26,11 @@ namespace LabNation.DeviceInterface.Hardware
         TcpClient dataClient = new TcpClient();
         Socket controlSocket;
         Socket dataSocket;
+
+        //TODO: Abstract into message layer + command layer on top, so we can have
+        //      2 separate command layers using same msg layer, 
+        //          1. For bridge
+        //          2. For smartscope
         public SmartScopeInterfaceEthernet(IPAddress serverIp, int serverPort, OnInterfaceDisconnect onDisconnect)
         {
             this.serverIp = serverIp;
@@ -163,6 +168,43 @@ namespace LabNation.DeviceInterface.Hardware
         }
 
         public byte[] PicFirmwareVersion { get { return Request(Net.Net.Command.PIC_FW_VERSION); } }
+
+        public string GetAccessPoints()
+        {
+            byte[] aps = Request(Net.Net.Command.LEDE_LIST_APS);
+            return System.Text.Encoding.UTF8.GetString(aps);
+        }
+        public string SetAccessPoint(string ssid, string bssid, string enc, string key)
+        {
+            int length = ssid.Length + bssid.Length + enc.Length + key.Length;
+            byte[] ap_param = new byte[length + 4];
+
+            int offset = 0;
+            Encoding.ASCII.GetBytes(ssid).CopyTo(ap_param, offset);
+            offset += ssid.Length + 1;
+
+            Encoding.ASCII.GetBytes(enc).CopyTo(ap_param, offset);
+            offset += enc.Length + 1;
+
+            Encoding.ASCII.GetBytes(bssid).CopyTo(ap_param, offset);
+            offset += bssid.Length + 1;
+
+            Encoding.ASCII.GetBytes(key).CopyTo(ap_param, offset);
+            offset += key.Length;
+
+            byte[] result = Request(Net.Net.Command.LEDE_CONNECT_AP, ap_param);
+            return System.Text.Encoding.UTF8.GetString(result);
+        }
+        public void BridgeReset()
+        {
+            Request(Net.Net.Command.LEDE_RESET);
+        }
+
+        public void BridgeReboot()
+        {
+            Request(Net.Net.Command.LEDE_REBOOT);
+        }
+
         public void Reset()
         {
             Logger.Debug("Reset requested - Destroying");
@@ -244,8 +286,11 @@ namespace LabNation.DeviceInterface.Hardware
                     case Net.Net.Command.PIC_FW_VERSION:
                     case Net.Net.Command.SERIAL:
                     case Net.Net.Command.FLASH_FPGA:
-					case Net.Net.Command.DATA_PORT:
-					case Net.Net.Command.ACQUISITION:
+                    case Net.Net.Command.DATA_PORT:
+                    case Net.Net.Command.ACQUISITION:
+                    case Net.Net.Command.LEDE_LIST_APS:
+                    case Net.Net.Command.LEDE_CONNECT_AP:
+                    case Net.Net.Command.LEDE_RESET:
                         List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, msgBuffer, ref msgBufferLength);
                         if (l == null)
                         {
