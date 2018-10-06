@@ -58,6 +58,8 @@ namespace LabNation.DeviceInterface.Devices
                         aps.Add(ap);
                     ap = new AccessPointInfo();
                     ap.BSSID = line.Split(new string[] { " ", "(" }, StringSplitOptions.RemoveEmptyEntries)[1];
+                    ap.TKIP = false; //to be sure
+                    ap.CCMP = false; //to be sure
                 }
                 else
                 {
@@ -76,6 +78,11 @@ namespace LabNation.DeviceInterface.Devices
                     else if (line.IndexOf("* Authentication suites: ") == 0)
                     {
                         ap.Authentication = line.Substring("* Authentication suites: ".Length);
+                    }
+                    else if (line.IndexOf("* Pairwise ciphers: ") == 0)
+                    {
+                        if (line.IndexOf("CCMP") > 0) ap.CCMP = true;
+                        if (line.IndexOf("TKIP") > 0) ap.TKIP = true;
                     }
                 }
             }

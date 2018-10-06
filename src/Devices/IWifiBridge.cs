@@ -10,6 +10,8 @@ namespace LabNation.DeviceInterface.Hardware
         public string SSID;
         public string BSSID;
         public int Strength;
+        public bool TKIP;
+        public bool CCMP;
         public string Authentication;
     }
 
