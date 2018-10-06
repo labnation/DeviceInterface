@@ -5,9 +5,17 @@ using System.Text;
 
 namespace LabNation.DeviceInterface.Hardware
 {
+    public struct AccessPointInfo
+    {
+        public string SSID;
+        public string BSSID;
+        public int Strength;
+        public string Authentication;
+    }
+
     public interface IWifiBridge : IHardwareInterface
     {
-        string GetAccessPoints();
+        List<AccessPointInfo> GetAccessPoints();
         string SetAccessPoint(string ssid, string bssid, string enc, string key);
         void Reset();
         void Reboot();
