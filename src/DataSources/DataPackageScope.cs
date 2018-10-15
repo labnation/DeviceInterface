@@ -158,6 +158,12 @@ namespace LabNation.DeviceInterface.DataSources
 
                 data[type][ch] = new ChannelData(type, ch, arr, partial, samplePeriod[type], offset[type]);
                 this.LastDataUpdate = DateTime.Now;
+
+                //if update for LA channel data is received: delete all Digital channel data, as they are now outdated and need to be recalculated
+                if (ch is LogicAnalyserChannel)
+                    for (int i = data[type].Count - 1; i >= 0; i--)
+                        if (data[type].ElementAt(i).Key is DigitalChannel)
+                            data[type].Remove(data[type].ElementAt(i).Key);
             }
         }
 
