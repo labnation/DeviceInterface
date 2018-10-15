@@ -168,6 +168,19 @@ namespace MatlabFileIO
                 }
                 size = sizeof(char);
             }
+            else if (data.GetType().Equals(typeof(bool[]))) //Char is internally sbyte
+            {
+                bool[] castedDataBool = data as bool[];
+                for (int i = 0; i < data.Length; i++)
+                {
+                    if (castedDataBool[i])
+                        writeStream.Write(true);
+                    else
+                        writeStream.Write(false);
+                }
+                size = sizeof(bool);
+            }
+
 
             else
                 throw new NotImplementedException("Writing arrays of " + data.GetType().ToString() + " to .mat file not implemented");
