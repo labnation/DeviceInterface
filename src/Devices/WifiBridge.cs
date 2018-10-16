@@ -1,6 +1,7 @@
 ﻿using LabNation.DeviceInterface.Hardware;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace LabNation.DeviceInterface.Devices
 {
@@ -41,6 +42,7 @@ namespace LabNation.DeviceInterface.Devices
 
         private List<AccessPointInfo> ParseAccessPoints(string rawAnswer)
         {
+            Regex re_caps = new Regex(@"capability:.*\(0x(?<caps>[0-9a-fA-F]+)\)", RegexOptions.Compiled);
             string[] lines = rawAnswer.Split(new[] { "\n" }, StringSplitOptions.None);
 
             int lineID = 0;
@@ -59,6 +61,7 @@ namespace LabNation.DeviceInterface.Devices
                     ap.BSSID = line.Split(new string[] { " ", "(" }, StringSplitOptions.RemoveEmptyEntries)[1];
                     ap.TKIP = false; //to be sure
                     ap.CCMP = false; //to be sure
+                    ap.Authentication = "";
                 }
                 else
                 {
@@ -83,8 +86,14 @@ namespace LabNation.DeviceInterface.Devices
                         if (line.IndexOf("CCMP") > 0) ap.CCMP = true;
                         if (line.IndexOf("TKIP") > 0) ap.TKIP = true;
                     }
+                    else if (re_caps.IsMatch(line))
+                    {
+                        ap.capabilities = (ApCapabilities)Convert.ToInt32(re_caps.Match(line).Groups["caps"].Value, 16);
+                    }
                 }
             }
+            if (ap.SSID != null)
+                aps.Add(ap);
 
             return aps;
         }
