@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using LabNation.DeviceInterface.Hardware;
 
-namespace LabNation.DeviceInterface.Hardware
+namespace LabNation.DeviceInterface.Devices
 {
     public struct AccessPointInfo
     {
@@ -17,8 +18,9 @@ namespace LabNation.DeviceInterface.Hardware
 
     public interface IWifiBridge : IHardwareInterface
     {
+        Version Version { get; }
         List<AccessPointInfo> GetAccessPoints();
-        string SetAccessPoint(string ssid, string bssid, string enc, string key);
+        void SetAccessPoint(string ssid, string bssid, string enc, string key);
         void Reset();
         void Reboot();
     }

@@ -14,9 +14,9 @@ namespace LabNation.DeviceInterface.Hardware
 {
     public delegate void OnInterfaceDisconnect(SmartScopeInterfaceEthernet hardwareInterface);
 
-    public class SmartScopeInterfaceEthernet: ISmartScopeInterface
+    public class SmartScopeInterfaceEthernet : ISmartScopeInterface
     {
-        
+
         public bool Connected { get { return this.controlClient.Connected; } }
         private IPAddress serverIp;
         private int serverPort;
@@ -38,7 +38,7 @@ namespace LabNation.DeviceInterface.Hardware
             this.onDisconnect = onDisconnect;
             this.Connect();
         }
-			
+
         private void Connect()
         {
             controlClient.ReceiveTimeout = Net.Net.TIMEOUT_RX;
@@ -58,11 +58,12 @@ namespace LabNation.DeviceInterface.Hardware
         }
 
         private string serial;
-        public string Serial { 
-            get 
+        public string Serial
+        {
+            get
             {
                 return serial;
-            } 
+            }
         }
 
         public void GetControllerRegister(ScopeController ctrl, uint address, uint length, out byte[] data)
@@ -83,7 +84,7 @@ namespace LabNation.DeviceInterface.Hardware
             if (destroyed)
                 return;
             int recvd = 0;
-			int recvdTotal = 0;
+            int recvdTotal = 0;
             while (length > 0)
             {
                 if (!s.Connected)
@@ -94,7 +95,7 @@ namespace LabNation.DeviceInterface.Hardware
                 try
                 {
                     int triesLeft = Net.Net.TIMEOUT_RX;
-                    while (!s.Poll(1000, SelectMode.SelectRead)) 
+                    while (!s.Poll(1000, SelectMode.SelectRead))
                     {
                         triesLeft--;
                         if (triesLeft < 0)
@@ -103,7 +104,7 @@ namespace LabNation.DeviceInterface.Hardware
                             Destroy();
                             return;
                         }
-                        
+
                     }
                     recvd = s.Receive(buffer, offset + recvdTotal, length, SocketFlags.None);
                 }
@@ -128,8 +129,8 @@ namespace LabNation.DeviceInterface.Hardware
             {
                 if (dataSocket == null)
                 {
-					byte[] portBytes = Request(Net.Net.Command.DATA_PORT);
-					this.dataPort = BitConverter.ToUInt16(portBytes, 0);
+                    byte[] portBytes = Request(Net.Net.Command.DATA_PORT);
+                    this.dataPort = BitConverter.ToUInt16(portBytes, 0);
                     dataClient.Connect(this.serverIp, this.dataPort);
                     dataClient.ReceiveBufferSize = Net.Net.DATA_SOCKET_BUFFER_SIZE;
                     dataSocket = dataClient.Client;
@@ -161,7 +162,8 @@ namespace LabNation.DeviceInterface.Hardware
                 int len = hdr.n_bursts * hdr.bytes_per_burst;
                 SocketReceive(dataSocket, Constants.SZ_HDR, len, buffer);
                 return Constants.SZ_HDR + len;
-            } catch (SocketException se)
+            }
+            catch (SocketException se)
             {
                 throw new ScopeIOException("Socket exception: " + se.Message);
             }
@@ -169,12 +171,14 @@ namespace LabNation.DeviceInterface.Hardware
 
         public byte[] PicFirmwareVersion { get { return Request(Net.Net.Command.PIC_FW_VERSION); } }
 
+        public byte[] ServerVersion { get { return Request(Net.Net.Command.SERVER_VERSION); } }
+
         public string GetAccessPoints()
         {
             byte[] aps = Request(Net.Net.Command.LEDE_LIST_APS);
             return System.Text.Encoding.UTF8.GetString(aps);
         }
-        public string SetAccessPoint(string ssid, string bssid, string enc, string key)
+        public void SetAccessPoint(string ssid, string bssid, string enc, string key)
         {
             int length = ssid.Length + bssid.Length + enc.Length + key.Length;
             byte[] ap_param = new byte[length + 4];
@@ -192,8 +196,9 @@ namespace LabNation.DeviceInterface.Hardware
             Encoding.ASCII.GetBytes(key).CopyTo(ap_param, offset);
             offset += key.Length;
 
-            byte[] result = Request(Net.Net.Command.LEDE_CONNECT_AP, ap_param);
-            return System.Text.Encoding.UTF8.GetString(result);
+            Request(Net.Net.Command.LEDE_CONNECT_AP, ap_param);
+            Destroy(false);
+            return;
         }
         public void BridgeReset()
         {
@@ -224,6 +229,10 @@ namespace LabNation.DeviceInterface.Hardware
 
         public void Destroy()
         {
+            this.Destroy(true);
+        }
+        private void Destroy(bool tryDisconnect = true)
+        {
             if (destroyed)
                 return;
             Logger.Debug(" ----- DESTROYING ---- ");
@@ -232,11 +241,14 @@ namespace LabNation.DeviceInterface.Hardware
             if (this.onDisconnect != null)
                 onDisconnect(this);
 
-            try
+            if (tryDisconnect)
             {
-                Request(Net.Net.Command.DISCONNECT);
+                try
+                {
+                    Request(Net.Net.Command.DISCONNECT);
+                }
+                catch (ScopeIOException) { }
             }
-            catch (ScopeIOException) { }
 
             try
             {
@@ -272,7 +284,8 @@ namespace LabNation.DeviceInterface.Hardware
                     {
                         toSend -= controlSocket.Send(data, data.Length - toSend, toSend, SocketFlags.None);
                     }
-                } catch(Exception se)
+                }
+                catch (Exception se)
                 {
                     Logger.Error("Failure while sending to socket, destroying: {0}" + se.Message);
                     Destroy();
@@ -289,8 +302,8 @@ namespace LabNation.DeviceInterface.Hardware
                     case Net.Net.Command.DATA_PORT:
                     case Net.Net.Command.ACQUISITION:
                     case Net.Net.Command.LEDE_LIST_APS:
-                    case Net.Net.Command.LEDE_CONNECT_AP:
                     case Net.Net.Command.LEDE_RESET:
+                    case Net.Net.Command.SERVER_VERSION:
                         List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, msgBuffer, ref msgBufferLength);
                         if (l == null)
                         {
@@ -324,7 +337,7 @@ namespace LabNation.DeviceInterface.Hardware
                             return reply.data;
                     default:
                         return null;
-                } 
+                }
             }
         }
     }

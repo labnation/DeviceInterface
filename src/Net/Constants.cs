@@ -45,6 +45,7 @@ namespace LabNation.DeviceInterface.Net
             LEDE_RESET = 0x41,
             LEDE_CONNECT_AP = 0x42,
             LEDE_REBOOT = 0x43,
+            SERVER_VERSION = 0x50,
         }
 
         internal static byte[] msgHeader(this Command command, int len)
@@ -81,7 +82,7 @@ namespace LabNation.DeviceInterface.Net
                 if (validLength < HDR_SZ)
                     return null;
 
-                int length = (buffer[offset]) + (buffer[offset + 1] << 8) + (buffer[offset + 2] << 16) + (buffer[offset+3] << 24);
+                int length = (buffer[offset]) + (buffer[offset + 1] << 8) + (buffer[offset + 2] << 16) + (buffer[offset + 3] << 24);
                 if (validLength < length)
                     return null;
                 if (length == 0)
@@ -104,23 +105,23 @@ namespace LabNation.DeviceInterface.Net
         internal static List<Message> ReceiveMessage(Socket socket, byte[] msgBuffer, ref int msgBufferLength)
         {
             int bytesReceived = 0;
-			int bytesConsumed = 0;
+            int bytesConsumed = 0;
 
-			List<Message> msgList = new List<Message>();
-			while (msgList.Count == 0)
-			{
-				try
-				{
+            List<Message> msgList = new List<Message>();
+            while (msgList.Count == 0)
+            {
+                try
+                {
 
                     int triesLeft = Net.TIMEOUT_RX;
                     while (!socket.Poll(1000, SelectMode.SelectRead)) { }
                     bytesReceived = socket.Receive(msgBuffer, msgBufferLength, msgBuffer.Length - msgBufferLength, SocketFlags.None);
-				}
-				catch
-				{
-					Logger.Info("Network connection closed unexpectedly => resetting");
-					return null; //in case of non-graceful disconnects (crash, network failure)
-				}
+                }
+                catch
+                {
+                    Logger.Info("Network connection closed unexpectedly => resetting");
+                    return null; //in case of non-graceful disconnects (crash, network failure)
+                }
 
 #if DEBUGFILE
             DateTime now = DateTime.Now;
@@ -129,28 +130,28 @@ namespace LabNation.DeviceInterface.Net
 #endif
 
                 if (bytesReceived > msgBuffer.Length)
-					throw new Exception("TCP/IP socket buffer overflow!");
+                    throw new Exception("TCP/IP socket buffer overflow!");
 
-				if (bytesReceived == 0) //this would indicate a network error
-					return null;
+                if (bytesReceived == 0) //this would indicate a network error
+                    return null;
 
-				msgBufferLength += bytesReceived;
+                msgBufferLength += bytesReceived;
 
-				// Parsing message and build list
+                // Parsing message and build list
 
-				while (true)
-				{
-					Message m = Message.FromBuffer(msgBuffer, bytesConsumed, msgBufferLength - bytesConsumed);
-					if (m == null)
-						break;
+                while (true)
+                {
+                    Message m = Message.FromBuffer(msgBuffer, bytesConsumed, msgBufferLength - bytesConsumed);
+                    if (m == null)
+                        break;
 
                     //Move remaining valid data to beginning
                     bytesConsumed += m.length;
-					msgList.Add(m);
-				}
-			}
-			msgBufferLength -= bytesConsumed;
-			Buffer.BlockCopy(msgBuffer, bytesConsumed, msgBuffer, 0, msgBufferLength);
+                    msgList.Add(m);
+                }
+            }
+            msgBufferLength -= bytesConsumed;
+            Buffer.BlockCopy(msgBuffer, bytesConsumed, msgBuffer, 0, msgBufferLength);
             return msgList;
         }
 
@@ -173,7 +174,7 @@ namespace LabNation.DeviceInterface.Net
             res[offset++] = (byte)(length);
             res[offset++] = (byte)(length >> 8);
 
-            if(data != null)
+            if (data != null)
                 Buffer.BlockCopy(data, 0, res, offset, length);
 
             return res;

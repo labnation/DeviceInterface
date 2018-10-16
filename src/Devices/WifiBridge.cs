@@ -15,12 +15,11 @@ namespace LabNation.DeviceInterface.Devices
 
         public List<AccessPointInfo> GetAccessPoints()
         {
-            //TODO: Parse returned string
             return ParseAccessPoints(this.iface.GetAccessPoints());
         }
-        public string SetAccessPoint(string ssid, string bssid, string enc, string key)
+        public void SetAccessPoint(string ssid, string bssid, string enc, string key)
         {
-            return this.iface.SetAccessPoint(ssid, bssid, enc, key);
+            this.iface.SetAccessPoint(ssid, bssid, enc, key);
         }
         public void Reset()
         {
@@ -90,5 +89,13 @@ namespace LabNation.DeviceInterface.Devices
             return aps;
         }
 
+        public Version Version
+        {
+            get
+            {
+                byte[] b = this.iface.ServerVersion;
+                return new Version(b[1], b[0]);
+            }
+        }
     }
 }
