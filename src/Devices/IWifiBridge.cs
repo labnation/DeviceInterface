@@ -41,6 +41,7 @@ namespace LabNation.DeviceInterface.Devices
     public interface IWifiBridge : IHardwareInterface
     {
         Version Version { get; }
+        String Info { get; }
         List<AccessPointInfo> GetAccessPoints();
         void SetAccessPoint(string ssid, string bssid, string enc, string key);
         void Reset();

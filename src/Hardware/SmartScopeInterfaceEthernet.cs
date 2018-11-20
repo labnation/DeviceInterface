@@ -173,6 +173,8 @@ namespace LabNation.DeviceInterface.Hardware
 
         public byte[] ServerVersion { get { return Request(Net.Net.Command.SERVER_VERSION); } }
 
+        public string ServerInfo{ get { return Encoding.UTF8.GetString(Request(Net.Net.Command.SERVER_INFO)); } }
+
         public string GetAccessPoints()
         {
             byte[] aps = Request(Net.Net.Command.LEDE_LIST_APS);
@@ -304,6 +306,7 @@ namespace LabNation.DeviceInterface.Hardware
                     case Net.Net.Command.LEDE_LIST_APS:
                     case Net.Net.Command.LEDE_RESET:
                     case Net.Net.Command.SERVER_VERSION:
+                    case Net.Net.Command.SERVER_INFO:
                         List<Net.Net.Message> l = Net.Net.ReceiveMessage(controlSocket, msgBuffer, ref msgBufferLength);
                         if (l == null)
                         {

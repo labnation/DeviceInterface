@@ -106,5 +106,13 @@ namespace LabNation.DeviceInterface.Devices
                 return new Version(b[1], b[0]);
             }
         }
+
+        public string Info
+        {
+            get
+            {
+                return this.iface.ServerInfo;
+            }
+        }
     }
 }
