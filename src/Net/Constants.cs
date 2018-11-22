@@ -15,7 +15,7 @@ namespace LabNation.DeviceInterface.Net
         public const string REPLY_DOMAIN = "local.";
         public const string TXT_DATA_PORT = "DATA_PORT";
         public const string VERSION = "0.0.0.1";
-        public const int BUF_SIZE = 8 * 1024;
+        public const int BUF_SIZE = 128 * 1024;
         public const int ACQUISITION_PACKET_SIZE = Constants.SZ_HDR + Constants.FETCH_SIZE_MAX;
         public const int DATA_SOCKET_BUFFER_SIZE = ACQUISITION_PACKET_SIZE * 2;
         public const int HDR_SZ = 5;
