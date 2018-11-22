@@ -212,6 +212,11 @@ namespace LabNation.DeviceInterface.Hardware
             Request(Net.Net.Command.LEDE_REBOOT);
         }
 
+        public void SetDefaultAccessPoint()
+        {
+            Request(Net.Net.Command.LEDE_MODE_AP);
+        }
+
         public void Reset()
         {
             Logger.Debug("Reset requested - Destroying");

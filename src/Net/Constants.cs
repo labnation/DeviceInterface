@@ -45,6 +45,7 @@ namespace LabNation.DeviceInterface.Net
             LEDE_RESET = 0x41,
             LEDE_CONNECT_AP = 0x42,
             LEDE_REBOOT = 0x43,
+            LEDE_MODE_AP = 0x44,
             SERVER_VERSION = 0x50,
             SERVER_INFO = 0x51,
         }

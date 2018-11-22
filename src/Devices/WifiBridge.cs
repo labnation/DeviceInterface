@@ -30,6 +30,10 @@ namespace LabNation.DeviceInterface.Devices
         {
             this.iface.BridgeReboot();
         }
+        public void SetDefaultAccessPoint()
+        {
+            this.iface.SetDefaultAccessPoint();
+        }
 
         public string Serial
         {

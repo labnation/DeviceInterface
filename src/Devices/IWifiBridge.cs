@@ -46,5 +46,6 @@ namespace LabNation.DeviceInterface.Devices
         void SetAccessPoint(string ssid, string bssid, string enc, string key);
         void Reset();
         void Reboot();
+        void SetDefaultAccessPoint();
     }
 }
