@@ -3,7 +3,7 @@
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.1</Version>
+        <Version>v9.0</Version>
       </Platform>
       <Platform Name="Windows">
         <Version>v4.0</Version>
@@ -101,15 +101,15 @@
     <Compile Include="src\Hardware\InterfaceManagerXamarin.cs">
       <Platforms>Android</Platforms>
     </Compile>
-    
+
     <Compile Include="src\Hardware\IHardwareInterface.cs" />
     <Compile Include="src\Hardware\DummyInterface.cs" />
-    
+
     <Compile Include="src\Hardware\ISmartScopeInterface.cs" />
     <Compile Include="src\Hardware\SmartScopeInterfaceUsb.cs" />
     <Compile Include="src\Hardware\SmartScopeInterfaceEthernet.cs"/>
 
-    <Compile Include="src\Hardware\ISmartScopeHardwareUsb.cs" />    
+    <Compile Include="src\Hardware\ISmartScopeHardwareUsb.cs" />
     <Compile Include="src\Hardware\SmartScopeHardwareLibUsb.cs">
       <Platforms>Linux,MacOS</Platforms>
     </Compile>
@@ -119,7 +119,7 @@
     <Compile Include="src\Hardware\SmartScopeHardwareXamarin.cs">
       <Platforms>Android</Platforms>
     </Compile>
-    
+
     <Compile Include="src\Net\Constants.cs"/>
     <Compile Include="src\Net\InterfaceServer.cs">
       <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
@@ -127,7 +127,7 @@
     <Compile Include="src\Net\Monitor.cs">
       <Platforms>Linux,MacOS,Windows,WindowsGL</Platforms>
     </Compile>
-    
+
     <Compile Include="src\Properties\AssemblyInfo.cs" />
     <Compile Include="src\Resources.cs" />
     <None Include="src\Hardware\ScopeConstants_GEN.tt">
@@ -159,7 +159,7 @@
     <EmbeddedResource Include="blobs\SmartScope_A17.bin" />
 	<EmbeddedResource Include="blobs\SmartScope_A18.bin" />
     <EmbeddedResource Include="blobs\SmartScopeHackerSpecial.bin" />
-	
+
 	<Content Include="driver\wdi-simple.exe">
 		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		<Platforms>Windows,WindowsGL</Platforms>

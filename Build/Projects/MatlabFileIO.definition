@@ -7,7 +7,7 @@
     <PlatformSpecificOutputFolder>True</PlatformSpecificOutputFolder>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.1</Version>
+        <Version>v9.0</Version>
       </Platform>
       <Platform Name="Windows">
         <Version>v4.0</Version>
@@ -20,7 +20,7 @@
       </Platform>
       <Platform Name="Linux">
         <Version>v4.0</Version>
-      </Platform>      
+      </Platform>
     </FrameworkVersions>
     <CustomDefinitions>
       <Platform Name="Android">TRACE;ANDROID</Platform>

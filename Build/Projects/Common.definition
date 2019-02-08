@@ -3,7 +3,7 @@
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.1</Version>
+        <Version>v9.0</Version>
       </Platform>
     <Platform Name="Windows">
         <Version>v4.0</Version>
@@ -27,7 +27,7 @@
       <Platform Name="Linux">TRACE;LINUX</Platform>
       <Platform Name="MacOS">MONOMAC</Platform>
       <Platform Name="Windows">TRACE;WINDOWS</Platform>
-	  <Platform Name="WindowsGL">TRACE;WINDOWS</Platform>	  
+	  <Platform Name="WindowsGL">TRACE;WINDOWS</Platform>
     </CustomDefinitions>
 	<NoWarn>1591</NoWarn>
   </Properties>
