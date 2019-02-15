@@ -76,7 +76,10 @@ namespace LabNation.DeviceInterface.Devices
                 return null;
             
             T[] output = new T[outputLength];
-            Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
+
+            if (triggerIndex - holdoff >= 0) //crash prevention CrashReport 20181231122235225
+                Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
+
             return output;
         }
 
