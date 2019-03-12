@@ -140,7 +140,7 @@ null, deviceConnectHandler) { }
 #if ANDROID
             OnInterfaceChanged(DummyInterface.Audio, true);
 #else
-            OnInterfaceChanged(DummyInterface.Generator, true);
+            OnInterfaceChanged(new DummyInterfaceGenerator(), true);
 #endif
 
             pollThread.Start();

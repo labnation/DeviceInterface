@@ -39,7 +39,7 @@ namespace LabNation.DeviceInterface.Devices {
             {
                 this._hardwareInterface = value;
                 double origAcqLength = AcquisitionLength;
-                if (value == DummyInterface.Audio)
+                if (value.Serial == DummyInterface.Audio)
                     BASE_SAMPLE_PERIOD = 1f / 44100f;
                 else
                     BASE_SAMPLE_PERIOD = 10e-9;
@@ -47,7 +47,7 @@ namespace LabNation.DeviceInterface.Devices {
 
                 if (acquisitionRunning)
                 {
-                    if (value == DummyInterface.Audio)
+                    if (value.Serial == DummyInterface.Audio)
                         InitAudioJack();
                     else
                         KillAudioJack();
@@ -57,9 +57,9 @@ namespace LabNation.DeviceInterface.Devices {
 
         public string Serial { get { return HardwareInterface.Serial; } }
 
-        public bool isAudio { get { return this.HardwareInterface == DummyInterface.Audio; } }
-        public bool isGenerator { get { return this.HardwareInterface == DummyInterface.Generator; } }
-        public bool isFile { get { return this.HardwareInterface == DummyInterface.File; } }
+        public bool isAudio { get { return this.HardwareInterface.Serial == DummyInterface.Audio; } }
+        public bool isGenerator { get { return this.HardwareInterface.Serial == DummyInterface.Generator; } }
+        public bool isFile { get { return this.HardwareInterface.Serial == DummyInterface.File; } }
 
         public DataSources.DataSource DataSourceScope { get; private set; }
 		private DateTime timeOrigin;
@@ -571,6 +571,7 @@ namespace LabNation.DeviceInterface.Devices {
                         return null;
                     }
 
+                    //ANALOG CHANNELS DATA GENERATION
 					foreach (AnalogChannel channel in channelsToAcquireDataFor)
                     {
                         if (!ChannelConfig.ContainsKey(channel)) return null;
@@ -578,13 +579,21 @@ namespace LabNation.DeviceInterface.Devices {
                         if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                             continue;
                         float[] wave;
-                        if(HardwareInterface == DummyInterface.Generator)
+                        if (HardwareInterface.Serial == DummyInterface.Generator)
                             wave = DummyScope.GenerateWave(waveLengthCurrent,
                                 SamplePeriodCurrent,
                                 timeOffset.Ticks / 1e7,
                                 ChannelConfig[channel]);
-                        else if( HardwareInterface == DummyInterface.File)
-                            wave = GetWaveFromFile(channel, waveLengthCurrent, SamplePeriodCurrent, timeOffset.Ticks / 1e7);
+                        else if (HardwareInterface.Serial == DummyInterface.File)
+                        {
+                            double timeOffsetFromFile = 0;
+                            wave = (hardwareInterface as DummyInterfaceFromFile).GetWaveFromFile(channel, ref waveLengthCurrent, ref SamplePeriodCurrent, ref timeOffsetFromFile); //in case of FileReader, the file actually dictates most of the settings
+                            acquisitionDepthCurrent = waveLengthCurrent;
+                            //timeOffset = new TimeSpan((long)(timeOffsetFromFile * 1e7));
+                            //ViewPortTimeSpan = SamplePeriodCurrent * (double)waveLengthCurrent;
+                            //ViewPortOffset = 0; //MUSTFIX
+                            //acquisitionDepthCurrent = waveLengthCurrent;
+                        }
 #if ANDROID
                         else if( hardwareInterface == DummyInterface.Audio) {
 							//fetch audio data
@@ -616,8 +625,8 @@ namespace LabNation.DeviceInterface.Devices {
                         else
                             throw new Exception("Unsupported dummy interface");
 
-						//coupling, noise injection in SW
-                        if (!isAudio)
+						//coupling, noise injection in SW. Not needed for File or Audio generators
+                        if (isGenerator)
                         {
 							if (ChannelConfig [channel].coupling == Coupling.AC)
 								DummyScope.RemoveDcComponent (ref wave, ChannelConfig [channel].frequency, SamplePeriodCurrent);
@@ -627,9 +636,12 @@ namespace LabNation.DeviceInterface.Devices {
 						}
                         waveAnalog[channel].AddRange(wave);
                     }
-                    if (!isAudio && logicAnalyserEnabledCurrent)
+
+                    //DIGITAL CHANNELS DATA GENERATION
+                    if (!isAudio && logicAnalyserEnabledCurrent) //MUSTFIX: add LA support for FileReader
                         waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
 
+                    //SEARCH TRIGGER POSITION. STORE IN triggerIndex
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
                     double triggerTimeout = 0.0;
                     if (AcquisitionModeCurrent == AcquisitionMode.AUTO)
@@ -656,6 +668,7 @@ namespace LabNation.DeviceInterface.Devices {
                     }
                     awaitingTrigger = !triggerDetected;
 
+                    //END DATA GENERATION WHILE LOOP
                     //break out of while loop if trigger was detected
                     if (triggerDetected)
                     {
@@ -664,10 +677,10 @@ namespace LabNation.DeviceInterface.Devices {
                         break;
                     }
 
-                    //break out of while loop if triggerWasForced or synthetical 10ms limit was reached
+                    //break out of while loop if triggerWasForced or synthetical 10ms limit was reached or when reading from file
                     if (
                         forceTrigger ||
-                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout)
+                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout) || isFile
                     )
                     {
                         forceTrigger = false;
@@ -676,24 +689,32 @@ namespace LabNation.DeviceInterface.Devices {
                         break;
                     }
 
+                    //HOUSEKEEPING WHILE LOOP
                     //keep track of time of first samplemoment
                     var timePassed = new TimeSpan((long)(waveLengthCurrent * SamplePeriodCurrent * 1e7));
                     timeOffset = timeOffset.Add(timePassed);
-                }
-
+                } // end of while loop -- at this point 'waveAnalog' and 'waveDigital' contains useful data. Either because the trigger has been found, too much time has passed or data has been read from file
+                
+                //CPU-GPU OPTIMISATION
                 //crop wave to only displayable part and store in buffer    
-				foreach(AnalogChannel channel in channelsToAcquireDataFor)
+                foreach (AnalogChannel channel in channelsToAcquireDataFor)
                 {
                     if (logicAnalyserEnabledCurrent && channel == logicAnalyserChannelCurrent)
                         continue;
-                    acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepthCurrent, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
+                    else if (isFile)
+                        acquisitionBufferAnalog[channel] = waveAnalog[channel].ToArray();
+                    else
+                        acquisitionBufferAnalog[channel] = DummyScope.CropWave(acquisitionDepthCurrent, waveAnalog[channel].ToArray(), triggerIndex, triggerHoldoffInSamples);
                 }
                 acquisitionBufferDigital = DummyScope.CropWave(acquisitionDepthCurrent, waveDigital.ToArray(), triggerIndex, triggerHoldoffInSamples);
+                //from this point onwards, 'waveAnalog' and 'waveDigital' are no longer used. data now stored instead in 'acquisitionBufferAnalog' and 'acquisitionBufferDigital'
+
                 if (StopPending)
                 {
                     acquisitionRunning = false;
                 }
-            }
+            }// ends 'if (acquisitionRunning)'. so when stopped both buffers contain the data of the previous call.
+
             lock (viewportUpdateLock)
             {
                 if (!viewportUpdate)
@@ -704,27 +725,31 @@ namespace LabNation.DeviceInterface.Devices {
             if (acquisitionBufferAnalog == null) return null;
             if (acquisitionBufferAnalog.Count == 0) return null;
 
+            //VIEWPORT DECIMATION.
             //Decrease the number of samples till viewport sample period is larger than 
             //or equal to the full sample rate
             uint samples = VIEWPORT_SAMPLES_MAX;
             int viewportDecimation = 0;
-            while (true)
+            if (!isFile)
             {
-                viewportDecimation = (int)Math.Ceiling(Math.Log(ViewPortTimeSpan / (samples + 2) / SamplePeriodCurrent, 2));
-                if (viewportDecimation >= 0)
-                    break;
-                samples /= 2;
-            }
+                while (true)
+                {
+                    viewportDecimation = (int)Math.Ceiling(Math.Log(ViewPortTimeSpan / (samples + 2) / SamplePeriodCurrent, 2));
+                    if (viewportDecimation >= 0)
+                        break;
+                    samples /= 2;
+                }
 
-            if (viewportDecimation > VIEW_DECIMATION_MAX)
-            {
-                Logger.Warn("Clipping view decimation! better decrease the sample rate!");
-                viewportDecimation = VIEW_DECIMATION_MAX;
+                if (viewportDecimation > VIEW_DECIMATION_MAX)
+                {
+                    Logger.Warn("Clipping view decimation! better decrease the sample rate!");
+                    viewportDecimation = VIEW_DECIMATION_MAX;
+                }                
             }
             int viewportSamples = (int)(ViewPortTimeSpan / (SamplePeriodCurrent * Math.Pow(2, viewportDecimation))) + 2;
             int viewportOffsetLocal = (int)(ViewPortOffset / SamplePeriodCurrent);
 
-            
+            //CREATE DATAPACKAGESCOPE
             p = new DataPackageScope(this.GetType(),
                     acquisitionDepthCurrent, SamplePeriodCurrent, 
                     viewportSamples, (Int64)(ViewPortOffset / SamplePeriodCurrent),
@@ -749,10 +774,11 @@ namespace LabNation.DeviceInterface.Devices {
                     continue;
                 if (SendOverviewBuffer)
                 {
-                    Array arr = GetViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH);
+                    Array arr = DecimateViewport(acquisitionBufferAnalog[ch], 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH);
                     p.SetData(ChannelDataSourceScope.Overview, ch, arr);
                 }
-                p.SetData(ChannelDataSourceScope.Viewport, ch, GetViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples));
+                var decimatedViewport = DecimateViewport(acquisitionBufferAnalog[ch], viewportOffsetLocal, viewportDecimation, viewportSamples);
+                p.SetData(ChannelDataSourceScope.Viewport, ch, decimatedViewport);
                 p.SetData(ChannelDataSourceScope.Acquisition, ch, acquisitionBufferAnalog[ch]);
 
                 //set dummy minmax values
@@ -766,8 +792,8 @@ namespace LabNation.DeviceInterface.Devices {
             if (logicAnalyserEnabledCurrent)
             {
                 if (SendOverviewBuffer)
-                    p.SetData(ChannelDataSourceScope.Overview, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
-                p.SetData(ChannelDataSourceScope.Viewport, LogicAnalyserChannel.LA, GetViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
+                    p.SetData(ChannelDataSourceScope.Overview, LogicAnalyserChannel.LA, DecimateViewport(acquisitionBufferDigital, 0, (int)(Math.Log(acquisitionDepthCurrent / OVERVIEW_LENGTH, 2)), OVERVIEW_LENGTH));
+                p.SetData(ChannelDataSourceScope.Viewport, LogicAnalyserChannel.LA, DecimateViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
                 p.SetData(ChannelDataSourceScope.Acquisition, LogicAnalyserChannel.LA, acquisitionBufferDigital);
             }
 
@@ -778,7 +804,7 @@ namespace LabNation.DeviceInterface.Devices {
             return p;
         }
 
-        public static T[] GetViewport<T>(T[] buffer, int offset, int decimation, int length)
+        public static T[] DecimateViewport<T>(T[] buffer, int offset, int decimation, int length)
         {
             if (buffer == null)
                 return null;

@@ -9,7 +9,7 @@ using LabNation.Common;
 namespace LabNation.DeviceInterface.Devices
 {
     partial class DummyScope
-    {
+    {/*
         private static Dictionary<AnalogChannel, float[]> readChannel = null;
         private static double[] readTime = null;
         private static double samplePeriodOriginal = 0;
@@ -49,6 +49,6 @@ namespace LabNation.DeviceInterface.Devices
                 wave = concat.Take((int)waveLength).ToArray();
             }
             return wave;
-        }
+        }*/
     }
 }

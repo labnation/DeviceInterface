@@ -102,8 +102,8 @@ namespace MatlabFileIO
             
             //Read and reshape data
             t = MatfileHelper.ReadTag(matrixStream);
-            if (t.length / MatfileHelper.MatlabBytesPerType(t.dataType) != elements)
-                throw new IOException("Read dimensions didn't correspond to header dimensions");
+            //if (t.length / MatfileHelper.MatlabBytesPerType(t.dataType) != elements)
+               // throw new IOException("Read dimensions didn't correspond to header dimensions");
                     
             Array readBytes;
             if (t.data == null)
