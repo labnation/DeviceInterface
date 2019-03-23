@@ -48,10 +48,12 @@ namespace LabNation.DeviceInterface.Hardware
 
         private void LoadDataFromFile(string filename)
         {
-            MatfileReader matfileReader = new MatlabFileIO.MatfileReader(@"C:\Recording44.mat");
+            MatfileReader matfileReader = new MatlabFileIO.MatfileReader(filename);
+            if (!matfileReader.Variables.ContainsKey("SamplePeriodInSeconds"))
+                throw new Exception(".mat file not compatible");
 
             //load data
-            dataChA = LoadAnalogChannelFromMatlabFile("ChannelA", matfileReader);
+                dataChA = LoadAnalogChannelFromMatlabFile("ChannelA", matfileReader);
             dataChB = LoadAnalogChannelFromMatlabFile("ChannelB", matfileReader);
             samplePeriod = (double)matfileReader.Variables["SamplePeriodInSeconds"].data;
 
