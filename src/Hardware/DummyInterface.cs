@@ -38,8 +38,11 @@ namespace LabNation.DeviceInterface.Hardware
         private List<float[]> dataChB;
         private Dictionary<Channel, int> indexers;
         private double samplePeriod;
+        private int nrWaveforms;
+        private int nrSamples;
 
         public double AcquisitionLenght { get; private set; }
+        public float RelativeFilePosition { get; private set; }
 
         public DummyInterfaceFromFile(string filename) : base(DummyInterface.File)
         {
@@ -63,8 +66,10 @@ namespace LabNation.DeviceInterface.Hardware
             indexers.Add(AnalogChannel.ChB, 0);
 
             //calc fixed values
+            nrSamples = dataChA[0].Length;
+            nrWaveforms = dataChA.Count;
             if (dataChA.Count > 0)
-                this.AcquisitionLenght = samplePeriod * dataChA[0].Length;
+                this.AcquisitionLenght = samplePeriod * (double)nrSamples;
             else
                 this.AcquisitionLenght = 0;
         }
@@ -103,6 +108,8 @@ namespace LabNation.DeviceInterface.Hardware
             //increment to next line
             if (++indexers[channel] >= dataChA.Count)
                 indexers[channel] = 0;
+
+            RelativeFilePosition = (float)indexers[channel] / (float)nrWaveforms;
 
             //since this wave was read from file: file dictates following settings
             samplePeriod = this.samplePeriod;
