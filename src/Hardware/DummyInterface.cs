@@ -28,10 +28,6 @@ namespace LabNation.DeviceInterface.Hardware
             else
                 return AnalogChannel.List.ToList();
         }
-
-        //public static DummyInterface Audio = new DummyInterface("Audio");
-        //public static DummyInterface Generator = new DummyInterface("Generator");
-        //public static DummyInterface File = new DummyInterface("File");
     }
 
     public class DummyInterfaceAudio : DummyInterface { public DummyInterfaceAudio() : base(DummyInterface.Audio) { } }
@@ -41,26 +37,34 @@ namespace LabNation.DeviceInterface.Hardware
         private List<float[]> dataChA;
         private List<float[]> dataChB;
         private Dictionary<Channel, int> indexers;
-        private double samplePeriod;        
+        private double samplePeriod;
+
+        public double AcquisitionLenght { get; private set; }
 
         public DummyInterfaceFromFile(string filename) : base(DummyInterface.File)
         {
             this.LoadDataFromFile(filename);
         }
 
-
         private void LoadDataFromFile(string filename)
         {
-            //this really gets called way too often during initialization
             MatfileReader matfileReader = new MatlabFileIO.MatfileReader(@"C:\Recording44.mat");
 
+            //load data
             dataChA = LoadAnalogChannelFromMatlabFile("ChannelA", matfileReader);
             dataChB = LoadAnalogChannelFromMatlabFile("ChannelB", matfileReader);
             samplePeriod = (double)matfileReader.Variables["SamplePeriodInSeconds"].data;
 
+            //init
             indexers = new Dictionary<Devices.Channel, int>();
             indexers.Add(AnalogChannel.ChA, 0);
             indexers.Add(AnalogChannel.ChB, 0);
+
+            //calc fixed values
+            if (dataChA.Count > 0)
+                this.AcquisitionLenght = samplePeriod * dataChA[0].Length;
+            else
+                this.AcquisitionLenght = 0;
         }
 
         private List<float[]> LoadAnalogChannelFromMatlabFile(string channelName, MatfileReader matfileReader)
@@ -83,7 +87,7 @@ namespace LabNation.DeviceInterface.Hardware
                     dataCh.Add(temp);
                 }
                 return dataCh;
-            }
+            }            
         }
 
         public float[] GetWaveFromFile(AnalogChannel channel, ref uint waveLength, ref double samplePeriod, ref double timeOffset)
@@ -102,7 +106,7 @@ namespace LabNation.DeviceInterface.Hardware
             samplePeriod = this.samplePeriod;
             waveLength = (uint)wave.Length;
             timeOffset = 0;
-            
+
             return wave;
         }
 

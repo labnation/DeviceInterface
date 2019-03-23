@@ -434,7 +434,13 @@ namespace LabNation.DeviceInterface.Devices {
         }
         public double AcquisitionLengthMax
         {
-            get { return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * DECIMATION_MAX; }
+            get
+            {
+                if (_hardwareInterface is DummyInterfaceFromFile)
+                    return (_hardwareInterface as DummyInterfaceFromFile).AcquisitionLenght;
+                else
+                    return ACQUISITION_DEPTH_MAX * BASE_SAMPLE_PERIOD * DECIMATION_MAX;
+            }
         }
 
         public bool PreferPartial { get; set; }
@@ -657,14 +663,21 @@ namespace LabNation.DeviceInterface.Devices {
                     else
                     //detect analog trigger
                     {
-                        if (triggerValue == null) return null;
-                        if (triggerValue.source == null) return null;
+                        if (this.isFile)
+                        {
+                            triggerDetected = true; //causes CPU load reduction (as skipping trigger detection) and required to jump out of while loop
+                        }
+                        else
+                        {
+                            if (triggerValue == null) return null;
+                            if (triggerValue.source == null) return null;
 
-                        if (triggerValue.source == TriggerSource.External)
-                            triggerDetected = false;
-                        triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerValue.channel].ToArray(), triggerValue,
-                            triggerHoldoffInSamples, triggerThreshold, triggerWidth,
-                            acquisitionDepthCurrent, out triggerIndex);
+                            if (triggerValue.source == TriggerSource.External)
+                                triggerDetected = false;
+                            triggerDetected = DummyScope.DoTriggerAnalog(waveAnalog[triggerValue.channel].ToArray(), triggerValue,
+                                triggerHoldoffInSamples, triggerThreshold, triggerWidth,
+                                acquisitionDepthCurrent, out triggerIndex);
+                        }
                     }
                     awaitingTrigger = !triggerDetected;
 
@@ -677,11 +690,10 @@ namespace LabNation.DeviceInterface.Devices {
                         break;
                     }
 
-                    //break out of while loop if triggerWasForced or synthetical 10ms limit was reached or when reading from file
+                    //break out of while loop if triggerWasForced or synthetical 10ms limit was reached
                     if (
                         forceTrigger ||
-                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout) || isFile
-                    )
+                        (triggerTimeout > 0 && waveAnalog[AnalogChannel.ChA].Count * SamplePeriodCurrent >= triggerTimeout))
                     {
                         forceTrigger = false;
                         triggerIndex = triggerHoldoffInSamples;
