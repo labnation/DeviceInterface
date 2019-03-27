@@ -12,7 +12,7 @@
         <Version>v4.5</Version>
       </Platform>
       <Platform Name="Linux">
-        <Version>v4.0</Version>
+        <Version>v4.5</Version>
       </Platform>
       </FrameworkVersions>
     <RootNamespace>LabNation.SmartScopeServer</RootNamespace>
@@ -57,6 +57,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>
     </BundleResource>
-    
+
   </Files>
 </Project>

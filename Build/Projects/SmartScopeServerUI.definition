@@ -12,7 +12,7 @@
         <Version>v4.5</Version>
       </Platform>
       <Platform Name="Linux">
-        <Version>v4.0</Version>
+        <Version>v4.5</Version>
       </Platform>
       </FrameworkVersions>
     <RootNamespace>LabNation.SmartScopeServerUI</RootNamespace>
@@ -52,7 +52,7 @@
       <ExcludePlatforms>MacOS</ExcludePlatforms>
     </Compile>
     <Compile Include="Program.cs"/>
-    
+
     <Compile Include="AppDelegate.cs">
       <Platforms>MacOS</Platforms>
     </Compile>
@@ -101,6 +101,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Platforms>MacOS</Platforms>
     </BundleResource>
-    
+
   </Files>
 </Project>
