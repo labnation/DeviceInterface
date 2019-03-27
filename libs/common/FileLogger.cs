@@ -9,18 +9,18 @@ using System.Collections.Concurrent;
 namespace LabNation.Common
 {
 
-	#if !ANDROID
+#if !ANDROID
     public class ConsoleLogger : FileLogger
     {
         //NOTE: the streamwrite is in fact not used by the parent class,
         // It writes immediately to the console (to use color)
         public ConsoleLogger(LogLevel level)
-            : base(new StreamWriter(Console.OpenStandardOutput()), level) 
+            : base(new StreamWriter(Console.OpenStandardOutput()), level)
         {
             this.useConsoleColor = true;
         }
     }
-	#endif
+#endif
     public class FileLogger
     {
         static List<FileLogger> loggers = new List<FileLogger>();
@@ -29,10 +29,10 @@ namespace LabNation.Common
         ConcurrentQueue<LogMessage> logQueue;
         bool running;
         LogLevel logLevel;
-		#if !ANDROID
+#if !ANDROID
         protected bool useConsoleColor = false;
         ConsoleColor oldColor = Console.ForegroundColor;
-        #endif
+#endif
         public FileLogger(StreamWriter writer, LogLevel level)
         {
             this.logLevel = level;
@@ -40,7 +40,7 @@ namespace LabNation.Common
             logQueue = new ConcurrentQueue<LogMessage>();
             Logger.AddQueue(logQueue);
 
-            dumpThread = new Thread(dumpThreadStart);
+            dumpThread = new Thread(dumpThreadStart) { Name = "log dump thread" };
             running = true;
             dumpThread.Start();
             loggers.Add(this);
@@ -53,7 +53,7 @@ namespace LabNation.Common
             level
             )
         {
-	        Logger.Info("Started file logger in " + ((FileStream)this.writer.BaseStream).Name);
+            Logger.Info("Started file logger in " + ((FileStream)this.writer.BaseStream).Name);
         }
 
         public static void StopAll()
@@ -81,12 +81,12 @@ namespace LabNation.Common
                         if (entry.level > logLevel) continue;
                         string message = "";
                         //Don't print timestamp/origin if last message wasn't ended with newline
-                        if(previousEntry.end == "\n") 
+                        if (previousEntry.end == "\n")
                             message += entry.timestamp.ToString().PadRight(22) + entry.level.ToString().PadRight(6);
                         message += entry.message + entry.end;
 
                         previousEntry = entry;
-						#if !IOS && !ANDROID
+#if !IOS && !ANDROID
                         if (useConsoleColor && entry.color.HasValue)
                         {
                             oldColor = Console.ForegroundColor;
@@ -95,8 +95,8 @@ namespace LabNation.Common
                             Console.ForegroundColor = oldColor;
                         }
                         else
-						#endif
-						writer.Write(message);
+#endif
+                            writer.Write(message);
                     }
                 }
                 writer.Flush();
