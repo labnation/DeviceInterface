@@ -3,7 +3,7 @@
   <Properties>
     <FrameworkVersions>
       <Platform Name="Windows">
-        <Version>v4.0</Version>
+        <Version>v4.5</Version>
       </Platform>
       <Platform Name="WindowsGL">
         <Version>v4.0</Version>
