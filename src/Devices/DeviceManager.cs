@@ -138,7 +138,7 @@ null, deviceConnectHandler) { }
 #endif
 
 #if ANDROID
-            OnInterfaceChanged(DummyInterface.Audio, true);
+            OnInterfaceChanged(new DummyInterfaceAudio(), true);
 #else
             OnInterfaceChanged(new DummyInterfaceGenerator(), true);
 #endif

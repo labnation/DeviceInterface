@@ -601,7 +601,7 @@ namespace LabNation.DeviceInterface.Devices {
                             //acquisitionDepthCurrent = waveLengthCurrent;
                         }
 #if ANDROID
-                        else if( hardwareInterface == DummyInterface.Audio) {
+                        else if(hardwareInterface.Serial == DummyInterface.Audio) {
 							//fetch audio data
 							if (audioJack == null) return null;
 							byte[] audioData = new byte[audioBufferLengthInBytes];
