@@ -36,7 +36,8 @@ namespace LabNation.DeviceInterface.Hardware
     {
         private List<float[]> dataChA;
         private List<float[]> dataChB;
-        private Dictionary<Channel, int> indexers;
+        private List<byte[]> dataLA;
+        private int currentRecord = 0;
 
         public double SamplePeriod { get; private set; }
         public int NrSamples { get; private set; }
@@ -56,48 +57,53 @@ namespace LabNation.DeviceInterface.Hardware
                 throw new Exception(".mat file not compatible");
 
             //load data
-            dataChA = LoadAnalogChannelFromMatlabFile("ChannelA", matfileReader);
-            dataChB = LoadAnalogChannelFromMatlabFile("ChannelB", matfileReader);
+            dataChA = LoadAnalogChannelFromMatlabFile<float>("ChannelA", matfileReader);
+            dataChB = LoadAnalogChannelFromMatlabFile<float>("ChannelB", matfileReader);
+            dataLA = LoadAnalogChannelFromMatlabFile<byte>("ChannelLA", matfileReader);
             SamplePeriod = (double)matfileReader.Variables["SamplePeriodInSeconds"].data;
 
-            //init
-            indexers = new Dictionary<Devices.Channel, int>();
-            indexers.Add(AnalogChannel.ChA, 0);
-            indexers.Add(AnalogChannel.ChB, 0);
-
             //calc fixed values
-            NrSamples = dataChA[0].Length;
-            NrWaveforms = dataChA.Count;
-            if (dataChA.Count > 0)
+            if (dataChA != null)
+            {
+                NrSamples = dataChA[0].Length;
+                NrWaveforms = dataChA.Count;
+            }
+            else
+            {
+                NrSamples = dataLA[0].Length;
+                NrWaveforms = dataLA.Count;
+            }
+            
+            if (NrWaveforms > 0)
                 this.AcquisitionLenght = SamplePeriod * (double)NrSamples;
             else
                 this.AcquisitionLenght = 0;
         }
 
-        private List<float[]> LoadAnalogChannelFromMatlabFile(string channelName, MatfileReader matfileReader)
+        private List<T[]> LoadAnalogChannelFromMatlabFile<T>(string channelName, MatfileReader matfileReader)
         {
             //if ChannelA data exists: extract slowly into memory in a format which is fast to look up
-            if (!matfileReader.Variables.ContainsKey("ChannelA"))
+            if (!matfileReader.Variables.ContainsKey(channelName))
             {
                 return null;
             }
             else
             {
-                List<float[]> dataCh = new List<float[]>();
-                var voltages = matfileReader.Variables[channelName].data;
+                List<T[]> dataCh = new List<T[]>();
+                var readValues = matfileReader.Variables[channelName].data;
 
-                if (voltages is float[])
+                if (readValues is T[])
                 {
-                    dataCh.Add((float[])voltages);
+                    dataCh.Add((T[])readValues);
                 }
-                else if (voltages is float[,])
+                else if (readValues is T[,])
                 {
-                    float[,] voltages2d = (float[,])voltages;
-                    for (int i = 0; i < voltages2d.GetLength(0); i++)
+                    T[,] values2d = (T[,])readValues;
+                    for (int i = 0; i < values2d.GetLength(0); i++)
                     {
-                        float[] temp = new float[voltages2d.GetLength(1)];
+                        T[] temp = new T[values2d.GetLength(1)];
                         for (int j = 0; j < temp.Length; j++)
-                            temp[j] = voltages2d[i, j];
+                            temp[j] = values2d[i, j];
                         dataCh.Add(temp);
                     }
                 }
@@ -106,26 +112,41 @@ namespace LabNation.DeviceInterface.Hardware
             }            
         }
 
-        public float[] GetWaveFromFile(AnalogChannel channel, ref uint waveLength, ref double samplePeriod, ref double timeOffset)
+        public T[] GetWaveFromFile<T>(Channel channel, ref uint waveLength, ref double samplePeriod)
         {
-            float[] wave = null;
+            Array wave = null;
             if (channel == AnalogChannel.ChA)
-                wave = dataChA[indexers[channel]];
+            {
+                if (dataChA == null) return new T[0];
+                if (dataChA.Count < currentRecord + 1) return new T[0];
+                wave = dataChA[currentRecord];
+            }
             else if (channel == AnalogChannel.ChB)
-                wave = dataChB[indexers[channel]];
-
-            //increment to next line
-            if (++indexers[channel] >= dataChA.Count)
-                indexers[channel] = 0;
-
-            RelativeFilePosition = (float)indexers[channel] / (float)NrWaveforms;
+            {
+                if (dataChB == null) return new T[0];
+                if (dataChB.Count < currentRecord + 1) return new T[0];
+                wave = dataChB[currentRecord];
+            }
+            else if (channel == LogicAnalyserChannel.LA)
+            {
+                if (dataLA == null) return new T[0];
+                if (dataLA.Count < currentRecord + 1) return new T[0];
+                wave = dataLA[currentRecord];
+            }
 
             //since this wave was read from file: file dictates following settings
             samplePeriod = this.SamplePeriod;
             waveLength = (uint)wave.Length;
-            timeOffset = 0;
 
-            return wave;
+            return (T[])wave;
+        }
+
+        public void IncrementRecord()
+        {
+            //increment to next line
+            if (++currentRecord >= NrWaveforms)
+                currentRecord = 0;
+            RelativeFilePosition = (float)currentRecord / (float)NrWaveforms;
         }
 
         public override List<AnalogChannel> ChannelsToAcquireDataFor()

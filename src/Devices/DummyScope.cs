@@ -617,9 +617,14 @@ namespace LabNation.DeviceInterface.Devices {
                                 ChannelConfig[channel]);
                         else if (HardwareInterface.Serial == DummyInterface.File)
                         {
-                            double timeOffsetFromFile = 0;
-                            wave = (hardwareInterface as DummyInterfaceFromFile).GetWaveFromFile(channel, ref waveLengthCurrent, ref SamplePeriodCurrent, ref timeOffsetFromFile); //in case of FileReader, the file actually dictates most of the settings
-                            acquisitionDepthCurrent = waveLengthCurrent;
+                            float[] data = (hardwareInterface as DummyInterfaceFromFile).GetWaveFromFile<float>(channel, ref waveLengthCurrent, ref SamplePeriodCurrent); //in case of FileReader, the file actually dictates most of the settings
+                            if (data.Length > 0)
+                            {
+                                wave = data;
+                                acquisitionDepthCurrent = waveLengthCurrent;
+                            }
+                            else
+                                wave = new float[waveLengthCurrent];
                             //timeOffset = new TimeSpan((long)(timeOffsetFromFile * 1e7));
                             //ViewPortTimeSpan = SamplePeriodCurrent * (double)waveLengthCurrent;
                             //ViewPortOffset = 0; //MUSTFIX
@@ -669,8 +674,22 @@ namespace LabNation.DeviceInterface.Devices {
                     }
 
                     //DIGITAL CHANNELS DATA GENERATION
-                    if (!isAudio && logicAnalyserEnabledCurrent) //MUSTFIX: add LA support for FileReader
-                        waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
+                    if (logicAnalyserEnabledCurrent)
+                    {
+                        if (isFile)
+                        {
+                            byte[] data = (HardwareInterface as DummyInterfaceFromFile).GetWaveFromFile<byte>(LogicAnalyserChannel.LA, ref waveLengthCurrent, ref SamplePeriodCurrent);
+                            if (data.Length > 0)
+                            {
+                                waveDigital.AddRange(data);
+                                acquisitionDepthCurrent = waveLengthCurrent;
+                            }
+                            else
+                                waveDigital.AddRange(new byte[waveLengthCurrent]);
+                        }
+                        else if (!isAudio) //MUSTFIX: add LA support for FileReader
+                            waveDigital.AddRange(DummyScope.GenerateWaveDigital(waveLengthCurrent, SamplePeriodCurrent, timeOffset.TotalSeconds));
+                    }
 
                     //SEARCH TRIGGER POSITION. STORE IN triggerIndex
                     triggerHoldoffInSamples = (int)(TriggerHoldoffCurrent / SamplePeriodCurrent);
@@ -691,6 +710,7 @@ namespace LabNation.DeviceInterface.Devices {
                         if (this.isFile)
                         {
                             triggerDetected = true; //causes CPU load reduction (as skipping trigger detection) and required to jump out of while loop
+                            triggerIndex = triggerHoldoffInSamples;
                         }
                         else
                         {
@@ -833,6 +853,10 @@ namespace LabNation.DeviceInterface.Devices {
                 p.SetData(ChannelDataSourceScope.Viewport, LogicAnalyserChannel.LA, DecimateViewport(acquisitionBufferDigital, viewportOffsetLocal, viewportDecimation, viewportSamples));
                 p.SetData(ChannelDataSourceScope.Acquisition, LogicAnalyserChannel.LA, acquisitionBufferDigital);
             }
+
+            //in case of reading from file: increment to next record
+            if (isFile)
+                (HardwareInterface as DummyInterfaceFromFile).IncrementRecord();
 
             if (acquisitionMode == AcquisitionMode.SINGLE)
                 acquisitionRunning = false;
