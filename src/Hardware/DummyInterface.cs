@@ -37,12 +37,12 @@ namespace LabNation.DeviceInterface.Hardware
         private List<float[]> dataChA;
         private List<float[]> dataChB;
         private Dictionary<Channel, int> indexers;
-        private double samplePeriod;
-        private int nrWaveforms;
-        private int nrSamples;
 
+        public double SamplePeriod { get; private set; }
+        public int NrSamples { get; private set; }
         public double AcquisitionLenght { get; private set; }
         public float RelativeFilePosition { get; private set; }
+        public int NrWaveforms { get; private set; }
 
         public DummyInterfaceFromFile(string filename) : base(DummyInterface.File)
         {
@@ -56,9 +56,9 @@ namespace LabNation.DeviceInterface.Hardware
                 throw new Exception(".mat file not compatible");
 
             //load data
-                dataChA = LoadAnalogChannelFromMatlabFile("ChannelA", matfileReader);
+            dataChA = LoadAnalogChannelFromMatlabFile("ChannelA", matfileReader);
             dataChB = LoadAnalogChannelFromMatlabFile("ChannelB", matfileReader);
-            samplePeriod = (double)matfileReader.Variables["SamplePeriodInSeconds"].data;
+            SamplePeriod = (double)matfileReader.Variables["SamplePeriodInSeconds"].data;
 
             //init
             indexers = new Dictionary<Devices.Channel, int>();
@@ -66,10 +66,10 @@ namespace LabNation.DeviceInterface.Hardware
             indexers.Add(AnalogChannel.ChB, 0);
 
             //calc fixed values
-            nrSamples = dataChA[0].Length;
-            nrWaveforms = dataChA.Count;
+            NrSamples = dataChA[0].Length;
+            NrWaveforms = dataChA.Count;
             if (dataChA.Count > 0)
-                this.AcquisitionLenght = samplePeriod * (double)nrSamples;
+                this.AcquisitionLenght = SamplePeriod * (double)NrSamples;
             else
                 this.AcquisitionLenght = 0;
         }
@@ -85,14 +85,23 @@ namespace LabNation.DeviceInterface.Hardware
             {
                 List<float[]> dataCh = new List<float[]>();
                 var voltages = matfileReader.Variables[channelName].data;
-                float[,] voltages2d = (float[,])voltages;
-                for (int i = 0; i < voltages2d.GetLength(0); i++)
+
+                if (voltages is float[])
                 {
-                    float[] temp = new float[voltages2d.GetLength(1)];
-                    for (int j = 0; j < temp.Length; j++)
-                        temp[j] = voltages2d[i, j];
-                    dataCh.Add(temp);
+                    dataCh.Add((float[])voltages);
                 }
+                else if (voltages is float[,])
+                {
+                    float[,] voltages2d = (float[,])voltages;
+                    for (int i = 0; i < voltages2d.GetLength(0); i++)
+                    {
+                        float[] temp = new float[voltages2d.GetLength(1)];
+                        for (int j = 0; j < temp.Length; j++)
+                            temp[j] = voltages2d[i, j];
+                        dataCh.Add(temp);
+                    }
+                }
+
                 return dataCh;
             }            
         }
@@ -109,10 +118,10 @@ namespace LabNation.DeviceInterface.Hardware
             if (++indexers[channel] >= dataChA.Count)
                 indexers[channel] = 0;
 
-            RelativeFilePosition = (float)indexers[channel] / (float)nrWaveforms;
+            RelativeFilePosition = (float)indexers[channel] / (float)NrWaveforms;
 
             //since this wave was read from file: file dictates following settings
-            samplePeriod = this.samplePeriod;
+            samplePeriod = this.SamplePeriod;
             waveLength = (uint)wave.Length;
             timeOffset = 0;
 

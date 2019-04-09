@@ -117,7 +117,20 @@ namespace LabNation.DeviceInterface.Devices {
                     _decimation = value;
             }
         }
-        public double SamplePeriod { get { return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation); } }
+        public double SamplePeriod
+        {
+            get
+            {
+                if (isFile)
+                {
+                    return (HardwareInterface as DummyInterfaceFromFile).SamplePeriod;
+                }
+                else
+                {
+                    return BASE_SAMPLE_PERIOD * Math.Pow(2, decimation);
+                }
+            }
+        }
         public double AcquisitionTimeSpan { get { return SamplesToTime(AcquisitionDepth); } } 
         public double SamplesToTime(uint samples)
         {
@@ -456,9 +469,14 @@ namespace LabNation.DeviceInterface.Devices {
                 double samples = value / BASE_SAMPLE_PERIOD;
                 if (isAudio)
                 {
-					AcquisitionDepth = (uint)samples;
-					decimation = 0;
-				} else {
+                    AcquisitionDepth = (uint)samples;
+                    decimation = 0;
+                } else if (isFile)
+                {
+                    AcquisitionDepth = (uint)(HardwareInterface as DummyInterfaceFromFile).NrSamples;
+                }
+                else
+                {
 					double ratio = (double)samples / OVERVIEW_LENGTH;
 					int log2OfRatio = (int)Math.Ceiling (Math.Log (ratio, 2));
 					if (log2OfRatio < 0)
@@ -487,19 +505,26 @@ namespace LabNation.DeviceInterface.Devices {
                     }
                     else
                     {
-                        double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
-                        if (log2OfRatio != (int)log2OfRatio && !isAudio)
+                        if (isFile)
                         {
-                            //this only happens on some platforms. If it happens, the difference is like 20,9999999996641 vs 20
-                            //probably rounding issue -> round and correct instead of crash
-                            Logger.Error("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N  ---  " + log2OfRatio.ToString() + " vs " + ((int)log2OfRatio).ToString());
-                            log2OfRatio = (int)Math.Round(log2OfRatio);
-                            value = (uint)Math.Pow(2, log2OfRatio);
-                        }
-                        if (value > ACQUISITION_DEPTH_MAX)
-                            acquisitionDepth = ACQUISITION_DEPTH_MAX;
-                        else
                             acquisitionDepth = value;
+                        }
+                        else
+                        {
+                            double log2OfRatio = Math.Log((double)value / OVERVIEW_LENGTH, 2);
+                            if (log2OfRatio != (int)log2OfRatio && !isAudio)
+                            {
+                                //this only happens on some platforms. If it happens, the difference is like 20,9999999996641 vs 20
+                                //probably rounding issue -> round and correct instead of crash
+                                Logger.Error("Acquisition depth must be " + OVERVIEW_LENGTH + " * 2^N  ---  " + log2OfRatio.ToString() + " vs " + ((int)log2OfRatio).ToString());
+                                log2OfRatio = (int)Math.Round(log2OfRatio);
+                                value = (uint)Math.Pow(2, log2OfRatio);
+                            }
+                            if (value > ACQUISITION_DEPTH_MAX)
+                                acquisitionDepth = ACQUISITION_DEPTH_MAX;
+                            else
+                                acquisitionDepth = value;
+                        }
                     }
                 }
             }
