@@ -72,13 +72,11 @@ namespace LabNation.DeviceInterface.Devices
 
         public static T[] CropWave<T>(uint outputLength, T[] sourceWave, int triggerIndex, int holdoff)
         {
-            if (triggerIndex - holdoff + outputLength > sourceWave.Length) 
-                return null;
-            
             T[] output = new T[outputLength];
 
-            if (triggerIndex - holdoff >= 0) //crash prevention CrashReport 20181231122235225
-                Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
+            if (triggerIndex - holdoff >= 0)
+                if (triggerIndex - holdoff + outputLength <= sourceWave.Length)
+                    Array.Copy(sourceWave, triggerIndex - holdoff, output, 0, outputLength);
 
             return output;
         }
